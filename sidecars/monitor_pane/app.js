@@ -1,0 +1,2719 @@
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-16 20:23:00
+// Description: Upgrade Token Monitor frontend to v1.1 — rename threshold labels to
+// 上下文占用监控/提醒线/最大窗口, add 3-section settings drawer (context limits, subscription plan,
+// active per-model tariff editor + ledger resync), and upgrade Tab 2 into multi-period 用量统计.
+// ============================================================================
+
+(() => {
+  'use strict';
+
+  const POLL_INTERVAL_MS = 1000;
+  const STOPWATCH_INTERVAL_MS = 100;
+
+  const apiFetch = (...args) => (window.sidecar?.fetch || fetch)(...args);
+  const boundConvId = window.sidecar?.conversationId || '';
+
+  let selectedConv = boundConvId;
+  let lastEtag = '';
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 10:15:00
+// Description: Add v0.2.2 state fields (lang, tokenUnit, compact copy timer, trend scroll
+// preservation) and complete zh/en I18N catalog with t() & applyStaticTranslations().
+// ============================================================================
+  const VALID_TOKEN_UNITS = ['auto', 'wan_yi', 'exact', 'm'];
+  const VALID_LANGUAGES = ['zh', 'en'];
+
+  const state = {
+    homeConvId: boundConvId,
+    snapshot: null,
+    activeTab: 'current',
+    costScope: 'withChildren',
+    spikesExpanded: false,
+    drawerOpen: false,
+    requestSeq: 0,
+    serverClockOffsetMs: 0,
+    lastStopwatchText: '',
+    toastTimer: null,
+    lastError: '',
+    // v1.1 settings & multi-period state
+    selectedProfileId: 'auto',
+    draftModelOverrides: {},
+    resyncConfirmArmed: false,
+    resyncTimer: null,
+    globalPeriod: 'today',
+    trendMetric: 'cost',
+    convListMode: 'recent',
+    selectedSeriesIdx: null,
+    // v0.2.2 bilingual, token unit, /compact & trend scroll state
+    lang: 'zh',
+    tokenUnit: 'auto',
+    pendingPrefSaves: 0,
+    compactCopiedUntil: 0,
+    compactTimer: null,
+    trendScrollKey: '',
+    trendScrollLeft: 0,
+    trendNeedsRightAlign: false,
+    isDraggingTrend: false,
+    pendingGlobalRerender: false,
+  };
+
+  const I18N = {
+    zh: {
+      'header.waiting': '等待会话',
+      'header.generating': '⚡ Generating',
+      'header.tools': '🔧 Tools',
+      'header.idle': '● Idle',
+      'header.currentModel': '当前模型',
+      'header.modelTitle': '当前模型: {model}',
+      'header.settingsLabel': '计价与上下文设置',
+      'header.nonboundRegion': '非当前绑定会话提示',
+      'header.viewingDefault': '正在查看其他会话',
+      'header.viewing': '正在查看: {label}',
+      'header.backToCurrent': '返回当前对话',
+      'tabs.navLabel': '监控视图切换',
+      'tabs.current': '当前会话',
+      'tabs.global': '用量统计',
+      'empty.title': '暂无活跃会话数据',
+      'empty.desc': '等待当前对话生成首个模型步骤，或前往「用量统计」选择历史会话进行诊断。',
+      'empty.gotoGlobal': '查看用量统计',
+      'common.sessionPrefix': '会话 {id}',
+      'common.standaloneOpenHint': '独立浏览器模式下不可直接跳转，已切换到监控视图',
+      'common.fetchErrorPrefix': '监控数据拉取异常: {msg}',
+      'common.backendConnFailed': '连接后台失败',
+      'common.relSec': '{n}s 前',
+      'common.relMin': '{n}m 前',
+      'common.relHour': '{n}h 前',
+      'speed.title': 'Token 生成速度',
+      'speed.measuredSteps': '已测 {count} 步',
+      'speed.weightedAvg': '加权均速 ',
+      'speed.peak': '峰值 ',
+      'speed.latest': '最新步 ',
+      'speed.sparkAria': '近期步骤生成速度趋势',
+      'speed.lastSteps': '近 {count} 步趋势',
+      'speed.empty': '暂无已测速步骤',
+      'cost.title': '等效费用',
+      'cost.scopeAria': '统计范围切换',
+      'cost.withChildren': '含子代理',
+      'cost.withChildrenCount': '含子代理 ({count})',
+      'cost.mainOnly': '仅主对话',
+      'cost.steps': '步数 ',
+      'cost.subSharePaid': '占月订阅费 ({plan} · {fee}) 的 {pct}%',
+      'cost.subShareFree': '当前为 {plan} ($0/月) · 本会话省下 {cost}',
+      'cost.chipHitRate': '缓存命中率',
+      'cost.chipOutput': '累计输出',
+      'cost.chipCacheRead': '缓存读取',
+      'cost.chipUncached': '未缓存输入',
+      'context.title': '上下文占用监控',
+      'context.compactBtn': '⚡ 压缩 /compact',
+      'context.compactCopied': '✓ 已复制',
+      'context.compactTitle': '复制 /compact 命令并在聊天框发送',
+      'context.compactToast': '已复制 /compact，在聊天输入框 Ctrl+V 回车即可压缩上下文',
+      'context.compactFailed': '复制失败，请手动在聊天框输入 /compact',
+      'context.tickTitle': '提醒线: {soft} ({pct}%)',
+      'context.currentTok': '当前 {tokens} tok',
+      'context.limitsRow': '提醒线 {soft} · 最大窗口 {hard}',
+      'context.healthy': 'HEALTHY · 上下文充裕 (提醒线 {soft} 已用 {softPct}%)',
+      'context.warning': 'WARNING · 已超提醒线 ({soft})，建议适时执行 /compact',
+      'context.critical': 'CRITICAL · 逼近最大窗口 ({hard})，强烈建议立即执行 /compact',
+      'cache.title': 'Prompt Cache 与增量诊断',
+      'cache.hitRate': '命中率 {pct}%',
+      'cache.chipHit': '本步缓存命中',
+      'cache.chipUncached': '未命中新输入',
+      'cache.chipNetDelta': '本步净增量',
+      'cache.spikesTitle': '上下文增量诊断 (Top Spikes{count})',
+      'cache.expandAll': '展开全部 ({count})',
+      'cache.collapse': '收起',
+      'cache.spikesEmpty': '暂未检测到显著上下文跃迁',
+      'childrenModels.title': '子代理 / Swarm 与模型分布',
+      'childrenModels.membersCount': '{count} 个关联成员',
+      'childrenModels.liveSubhead': 'Subagent / Swarm 实时状态',
+      'childrenModels.childGenerating': '⚡ Generating',
+      'childrenModels.childRunning': '🔧 Running',
+      'childrenModels.childIdle': '● Idle',
+      'childrenModels.inspectBtn': '监控',
+      'childrenModels.openChatBtn': '打开对话',
+      'childrenModels.modelsSubhead': '按模型分布',
+      'childrenModels.colModel': '模型',
+      'childrenModels.colSteps': '步数',
+      'childrenModels.colInput': '输入',
+      'childrenModels.colCache': '缓存',
+      'childrenModels.colOutput': '输出',
+      'childrenModels.colTotal': '总计',
+      'childrenModels.colTotalTip': '输入 + 缓存 + 输出总吞吐量',
+      'childrenModels.colCost': '费用',
+      'childrenModels.rateTip': '{model}\n计价档: {profile} ({rate})',
+      'childrenModels.modelsEmpty': '暂无模型步骤分布',
+      'periods.today': '今日',
+      'periods.7d': '近 7 天',
+      'periods.30d': '近 30 天',
+      'periods.all': '全部历史',
+      'periods.aria': '统计时间范围',
+      'roi.title': '订阅方案节省对比',
+      'roi.autoBadge': '自动识别 · {plan} ({fee}/月)',
+      'roi.manualBadge': '{plan} ({fee}/月)',
+      'roi.badgeTitle': '点击调整订阅档位或单价',
+      'roi.freeHero': '🎉 免费档已零费用抵扣 {cost}',
+      'roi.freeCaption': '{period}按量等效 {cost} · 订阅成本 {zero}',
+      'roi.netSaved': '🎉 已净省 {cost}',
+      'roi.multBadge': '{mult}x 回本',
+      'roi.paybackPct': '回本进度 {pct}%',
+      'roi.toBreakEven': '还差 {cost} 回本',
+      'roi.paidCaption': '{period} Token 等效 {cost} vs 周期折算订阅 {prorated}（整月 {monthly}）',
+      'global.summaryTitle': '{period}用量汇总',
+      'global.stepsCount': '{count} 步',
+      'global.unitAria': 'Token 数量单位切换',
+      'global.kpiSessions': '涉及会话',
+      'global.activeWithArchived': '活跃 {active} 天 · 含 {archived} 已归档',
+      'global.activeDays': '活跃 {active} / {span} 天',
+      'global.kpiTotalTokens': '总吞吐 Tokens',
+      'global.avgOutSub': '日均 {avg} · Out {out}',
+      'global.kpiCacheHit': '缓存命中率',
+      'global.uncachedSub': '新输入 {input}',
+      'global.kpiEstCost': 'API 等效总计',
+      'global.avgDailyCost': '日均 {cost}',
+      'global.trendHourTitle': '24 小时分时趋势',
+      'global.trendWeekTitle': '历史每周趋势',
+      'global.trendDayTitle': '{period}每日趋势',
+      'global.trendMetricAria': '趋势图指标',
+      'global.metricCost': '费用',
+      'global.metricTokens': 'Tokens',
+      'global.trendPrompt': '悬停或点击柱条查看时段明细',
+      'global.trendEmptyDetail': '暂无趋势数据',
+      'global.trendEmpty': '当前时段暂无用量趋势数据',
+      'global.bucketDetail': '{range} · 等效 {cost} · 总计 {total} tok (Out {out})',
+      'global.modelsTitle': '{period}模型消耗分布',
+      'global.colChats': '会话',
+      'global.modelsEmpty': '当前时段暂无模型消耗记录',
+      'global.convSortAria': '会话排序模式',
+      'global.sortRecent': '最近活跃',
+      'global.sortTop': '高消耗 Top 20',
+      'global.topConvsTitle': '{period}高消耗会话 ({count})',
+      'global.recentConvsTitle': '近期会话列表 ({count})',
+      'global.badgeArchived': '已归档',
+      'global.badgeToday': '今日',
+      'global.openChat': '跳转对话',
+      'global.itemGenerating': '⚡ 生成中',
+      'global.itemTools': '🔧 工具中',
+      'global.itemIdle': '● 空闲',
+      'global.convsEmpty': '暂无匹配会话记录',
+      'settings.title': '计价与上下文设置',
+      'settings.subtitle': '按在役模型自动细分计价 · 订阅对比实时重算',
+      'settings.sec1Title': '上下文与币种',
+      'settings.softLimitLabel': '提醒线 (tokens)',
+      'settings.hardLimitLabel': '最大窗口 (tokens)',
+      'settings.tokenUnitLabel': 'Token 显示单位',
+      'settings.unitAuto': 'K / M / B (自动缩放)',
+      'settings.unitWanYi': '万 / 亿 (中文单位)',
+      'settings.unitExact': '1,234,567 (精确整数)',
+      'settings.unitM': '固定 M (百万)',
+      'settings.currencyLabel': '货币单位',
+      'settings.cnyRateLabel': '汇率 (1 USD = ? CNY)',
+      'settings.sec2Title': '当前订阅方案',
+      'settings.subPlanLabel': '订阅档位',
+      'settings.subAuto': '自动识别 (推荐)',
+      'settings.subFree': 'Free ($0 / 月)',
+      'settings.subPro': 'Google AI Pro ($19.99 / 月)',
+      'settings.subUltra5x': 'Google AI Ultra 5x ($99.99 / 月)',
+      'settings.subUltra20x': 'Google AI Ultra 20x ($199.99 / 月)',
+      'settings.subCustom': '自定义月费',
+      'settings.subCustomLabel': '自定义月费 (USD / 月)',
+      'settings.subDetectedHint': '当前自动识别结果: {plan} (${usd}/月)',
+      'settings.sec3Title': '在役模型单价配置 (USD / 1M Tokens)',
+      'settings.resetModel': '恢复此模型默认',
+      'settings.resetAllModels': '全部恢复默认',
+      'settings.modelSelectLabel': '选择模型档位 (保存前可连续切换修改多个模型)',
+      'settings.inputPriceLabel': 'Input / 1M ($)',
+      'settings.cachedPriceLabel': 'Cached / 1M ($)',
+      'settings.outputPriceLabel': 'Output / 1M ($)',
+      'settings.longTierPrefix': '>200k 长上下文阶梯倍乘',
+      'settings.longTierHint': '(超过 200k 时输入 ×2、输出 ×1.5)',
+      'settings.catalogSummary': '查看全部在役模型当前生效单价',
+      'settings.catalogModelCol': '模型档位',
+      'settings.resyncIdle': '按磁盘重新同步账本',
+      'settings.resyncTitle': '清除已删除会话归档并按磁盘现有日志重建历史账本',
+      'settings.resyncArmed': '再次点击确认按磁盘重建',
+      'settings.resyncSyncing': '正在同步磁盘日志…',
+      'settings.resyncDone': '已同步 {count} 个磁盘会话',
+      'settings.resyncFailed': '同步失败: {msg}',
+      'settings.cancel': '收起',
+      'settings.save': '保存设置',
+      'settings.errSoftLimit': '提醒线需 >= 1000',
+      'settings.errHardLimit': '最大窗口需 >= 提醒线',
+      'settings.errCnyRate': '汇率必须大于 0',
+      'settings.errCustomSub': '自定义月费需为非负数字',
+      'settings.errPrices': '单价必须为有效非负数字',
+      'settings.saving': '保存中…',
+      'settings.saveFailedDefault': '保存失败',
+      'settings.saveFailed': '保存失败: {msg}',
+      'settings.savedToast': '计价与上下文设置已保存',
+    },
+    en: {
+      'header.waiting': 'Waiting',
+      'header.generating': '⚡ Generating',
+      'header.tools': '🔧 Tools',
+      'header.idle': '● Idle',
+      'header.currentModel': 'Current Model',
+      'header.modelTitle': 'Model: {model}',
+      'header.settingsLabel': 'Pricing & Context Settings',
+      'header.nonboundRegion': 'Non-bound conversation notice',
+      'header.viewingDefault': 'Viewing another session',
+      'header.viewing': 'Viewing: {label}',
+      'header.backToCurrent': 'Back to Current',
+      'tabs.navLabel': 'Monitor views',
+      'tabs.current': 'Current',
+      'tabs.global': 'Analytics',
+      'empty.title': 'No Active Session Data',
+      'empty.desc': 'Waiting for the first model step in this chat, or open Analytics to inspect historical sessions.',
+      'empty.gotoGlobal': 'Open Analytics',
+      'common.sessionPrefix': 'Session {id}',
+      'common.standaloneOpenHint': 'Cannot focus host chat in standalone browser mode; switched to monitor view',
+      'common.fetchErrorPrefix': 'Failed to fetch metrics: {msg}',
+      'common.backendConnFailed': 'Backend connection failed',
+      'common.relSec': '{n}s ago',
+      'common.relMin': '{n}m ago',
+      'common.relHour': '{n}h ago',
+      'speed.title': 'Generation Speed',
+      'speed.measuredSteps': '{count} steps',
+      'speed.weightedAvg': 'Weighted Avg ',
+      'speed.peak': 'Peak ',
+      'speed.latest': 'Latest ',
+      'speed.sparkAria': 'Recent step generation speed trend',
+      'speed.lastSteps': 'Last {count} steps',
+      'speed.empty': 'No timed steps yet',
+      'cost.title': 'Equivalent Cost',
+      'cost.scopeAria': 'Cost scope',
+      'cost.withChildren': 'With Subagents',
+      'cost.withChildrenCount': 'With Subagents ({count})',
+      'cost.mainOnly': 'Main Only',
+      'cost.steps': 'Steps ',
+      'cost.subSharePaid': '{pct}% of monthly {plan} ({fee})',
+      'cost.subShareFree': 'On {plan} ($0/mo) · covered {cost} this chat',
+      'cost.chipHitRate': 'Cache Hit',
+      'cost.chipOutput': 'Total Output',
+      'cost.chipCacheRead': 'Cache Read',
+      'cost.chipUncached': 'Uncached In',
+      'context.title': 'Context Usage',
+      'context.compactBtn': '⚡ Compact',
+      'context.compactCopied': '✓ Copied',
+      'context.compactTitle': 'Copy /compact command to paste in chat',
+      'context.compactToast': 'Copied /compact — paste (Ctrl+V) and press Enter in chat',
+      'context.compactFailed': 'Copy failed — please type /compact in chat',
+      'context.tickTitle': 'Alert limit: {soft} ({pct}%)',
+      'context.currentTok': 'Current {tokens} tok',
+      'context.limitsRow': 'Alert {soft} · Max {hard}',
+      'context.healthy': 'HEALTHY · Context healthy ({softPct}% of {soft} alert limit)',
+      'context.warning': 'WARNING · Exceeded {soft} alert limit — consider /compact',
+      'context.critical': 'CRITICAL · Approaching {hard} max window — run /compact now',
+      'cache.title': 'Prompt Cache & Spikes',
+      'cache.hitRate': 'Hit Rate {pct}%',
+      'cache.chipHit': 'Step Cache Hit',
+      'cache.chipUncached': 'Uncached Input',
+      'cache.chipNetDelta': 'Net Delta',
+      'cache.spikesTitle': 'Top Context Spikes{count}',
+      'cache.expandAll': 'Expand All ({count})',
+      'cache.collapse': 'Collapse',
+      'cache.spikesEmpty': 'No significant context spikes detected',
+      'childrenModels.title': 'Subagents / Swarm & Models',
+      'childrenModels.membersCount': '{count} members',
+      'childrenModels.liveSubhead': 'Live Subagents / Swarm',
+      'childrenModels.childGenerating': '⚡ Generating',
+      'childrenModels.childRunning': '🔧 Running',
+      'childrenModels.childIdle': '● Idle',
+      'childrenModels.inspectBtn': 'Inspect',
+      'childrenModels.openChatBtn': 'Open Chat',
+      'childrenModels.modelsSubhead': 'By Model',
+      'childrenModels.colModel': 'Model',
+      'childrenModels.colSteps': 'Steps',
+      'childrenModels.colInput': 'Input',
+      'childrenModels.colCache': 'Cache',
+      'childrenModels.colOutput': 'Output',
+      'childrenModels.colTotal': 'Total',
+      'childrenModels.colTotalTip': 'Input + Cache + Output total throughput',
+      'childrenModels.colCost': 'Cost',
+      'childrenModels.rateTip': '{model}\nTier: {profile} ({rate})',
+      'childrenModels.modelsEmpty': 'No model breakdown yet',
+      'periods.today': 'Today',
+      'periods.7d': '7 Days',
+      'periods.30d': '30 Days',
+      'periods.all': 'All Time',
+      'periods.aria': 'Time range',
+      'roi.title': 'Subscription ROI',
+      'roi.autoBadge': 'Auto · {plan} ({fee}/mo)',
+      'roi.manualBadge': '{plan} ({fee}/mo)',
+      'roi.badgeTitle': 'Click to configure plan or pricing',
+      'roi.freeHero': '🎉 Free tier covered {cost} at $0',
+      'roi.freeCaption': '{period} est. API {cost} · Plan cost {zero}',
+      'roi.netSaved': '🎉 Net Saved {cost}',
+      'roi.multBadge': '{mult}x ROI',
+      'roi.paybackPct': 'Payback {pct}%',
+      'roi.toBreakEven': '{cost} to break even',
+      'roi.paidCaption': '{period} API value {cost} vs prorated plan {prorated} ({monthly}/mo)',
+      'global.summaryTitle': '{period} Usage Summary',
+      'global.stepsCount': '{count} steps',
+      'global.unitAria': 'Token unit switcher',
+      'global.kpiSessions': 'Sessions',
+      'global.activeWithArchived': 'Active {active}d · {archived} archived',
+      'global.activeDays': 'Active {active} / {span} d',
+      'global.kpiTotalTokens': 'Total Tokens',
+      'global.avgOutSub': 'Avg/d {avg} · Out {out}',
+      'global.kpiCacheHit': 'Cache Hit',
+      'global.uncachedSub': 'Uncached {input}',
+      'global.kpiEstCost': 'Est. API Cost',
+      'global.avgDailyCost': 'Avg {cost}/d',
+      'global.trendHourTitle': '24h Hourly Trend',
+      'global.trendWeekTitle': 'Weekly Trend',
+      'global.trendDayTitle': '{period} Daily Trend',
+      'global.trendMetricAria': 'Trend metric',
+      'global.metricCost': 'Cost',
+      'global.metricTokens': 'Tokens',
+      'global.trendPrompt': 'Hover or click a bar to inspect',
+      'global.trendEmptyDetail': 'No trend data',
+      'global.trendEmpty': 'No usage trend data for this period',
+      'global.bucketDetail': '{range} · Cost {cost} · Total {total} tok (Out {out})',
+      'global.modelsTitle': '{period} Model Breakdown',
+      'global.colChats': 'Chats',
+      'global.modelsEmpty': 'No model usage in this period',
+      'global.convSortAria': 'Conversation sort order',
+      'global.sortRecent': 'Recent',
+      'global.sortTop': 'Top 20 Cost',
+      'global.topConvsTitle': '{period} Top Cost ({count})',
+      'global.recentConvsTitle': 'Recent Sessions ({count})',
+      'global.badgeArchived': 'Archived',
+      'global.badgeToday': 'Today',
+      'global.openChat': 'Open Chat',
+      'global.itemGenerating': '⚡ Generating',
+      'global.itemTools': '🔧 Tools',
+      'global.itemIdle': '● Idle',
+      'global.convsEmpty': 'No matching conversations',
+      'settings.title': 'Pricing & Context Settings',
+      'settings.subtitle': 'Per-model pricing tiers · Live subscription ROI',
+      'settings.sec1Title': 'Context & Display',
+      'settings.softLimitLabel': 'Alert Limit (tokens)',
+      'settings.hardLimitLabel': 'Max Window (tokens)',
+      'settings.tokenUnitLabel': 'Token Unit',
+      'settings.unitAuto': 'K / M / B (Auto)',
+      'settings.unitWanYi': '万 / 亿 (10k / 100M)',
+      'settings.unitExact': '1,234,567 (Exact)',
+      'settings.unitM': 'Fixed M (Millions)',
+      'settings.currencyLabel': 'Currency',
+      'settings.cnyRateLabel': 'FX Rate (1 USD = ? CNY)',
+      'settings.sec2Title': 'Subscription Plan',
+      'settings.subPlanLabel': 'Plan Tier',
+      'settings.subAuto': 'Auto-Detect (Recommended)',
+      'settings.subFree': 'Free ($0 / mo)',
+      'settings.subPro': 'Google AI Pro ($19.99 / mo)',
+      'settings.subUltra5x': 'Google AI Ultra 5x ($99.99 / mo)',
+      'settings.subUltra20x': 'Google AI Ultra 20x ($199.99 / mo)',
+      'settings.subCustom': 'Custom Monthly Fee',
+      'settings.subCustomLabel': 'Custom Fee (USD / mo)',
+      'settings.subDetectedHint': 'Auto-detected plan: {plan} (${usd}/mo)',
+      'settings.sec3Title': 'Model Pricing Overrides (USD / 1M Tokens)',
+      'settings.resetModel': 'Reset Model',
+      'settings.resetAllModels': 'Reset All',
+      'settings.modelSelectLabel': 'Select Model Profile (switch & edit multiple before saving)',
+      'settings.inputPriceLabel': 'Input / 1M ($)',
+      'settings.cachedPriceLabel': 'Cached / 1M ($)',
+      'settings.outputPriceLabel': 'Output / 1M ($)',
+      'settings.longTierPrefix': '>200k Long-Context Multiplier',
+      'settings.longTierHint': '(Input ×2, Output ×1.5 above 200k)',
+      'settings.catalogSummary': 'View All Effective Model Rates',
+      'settings.catalogModelCol': 'Model Tier',
+      'settings.resyncIdle': 'Resync Ledger from Disk',
+      'settings.resyncTitle': 'Clear archived entries and rebuild ledger from disk logs',
+      'settings.resyncArmed': 'Click Again to Confirm',
+      'settings.resyncSyncing': 'Syncing disk logs…',
+      'settings.resyncDone': 'Synced {count} disk conversations',
+      'settings.resyncFailed': 'Sync failed: {msg}',
+      'settings.cancel': 'Close',
+      'settings.save': 'Save',
+      'settings.errSoftLimit': 'Alert limit must be >= 1000',
+      'settings.errHardLimit': 'Max window must be >= alert limit',
+      'settings.errCnyRate': 'FX rate must be > 0',
+      'settings.errCustomSub': 'Custom fee must be a non-negative number',
+      'settings.errPrices': 'Prices must be valid non-negative numbers',
+      'settings.saving': 'Saving…',
+      'settings.saveFailedDefault': 'Save failed',
+      'settings.saveFailed': 'Save failed: {msg}',
+      'settings.savedToast': 'Pricing & context settings saved',
+    },
+  };
+
+  const PLAN_LABELS = {
+    zh: {
+      auto: '自动识别',
+      free: 'Free',
+      pro: 'Google AI Pro',
+      ultra_5x: 'Google AI Ultra 5x',
+      ultra_20x: 'Google AI Ultra 20x',
+      custom: '自定义月费',
+    },
+    en: {
+      auto: 'Auto',
+      free: 'Free',
+      pro: 'Google AI Pro',
+      ultra_5x: 'Google AI Ultra 5x',
+      ultra_20x: 'Google AI Ultra 20x',
+      custom: 'Custom Plan',
+    },
+  };
+
+  const MODEL_GROUP_EN = {
+    'Gemini 系列': 'Gemini Series',
+    'Claude 系列': 'Claude Series',
+    '其他在役模型': 'Other Active Models',
+    '默认回退': 'Default Fallback',
+  };
+
+  const MODEL_PROFILE_EN = {
+    'gemini-4-argon': { label: 'Gemini 4 Argon', hint: 'High/Med/Low · Orchestrator (Argon)' },
+    'gemini-4-carbon': { label: 'Gemini 4 Carbon', hint: 'High/Med/Low · Orchestrator (Carbon)' },
+    'gemini-4-hydrogen': { label: 'Gemini 4 Hydrogen', hint: 'XHigh/High/Med/Low' },
+    'gemini-3-8-flash': { label: 'Gemini 3.8 Flash', hint: 'High/Med/Low · Subagent Flash' },
+    'claude-opus-5-5': { label: 'Claude Opus 5.5', hint: '5.5 / 4.6 · High/Med/Low' },
+    'claude-sonnet-5-5': { label: 'Claude Sonnet 5.5', hint: 'High/Med/Low' },
+    'gpt-oss-120b': { label: 'GPT-OSS 120B', hint: 'Medium' },
+    auto: { label: 'Auto (Default)', hint: 'Fallback when no model is specified' },
+  };
+
+  function t(key, vars = null) {
+    const langTable = I18N[state.lang] || I18N.zh;
+    let str = langTable[key] ?? I18N.zh[key] ?? key;
+    if (vars && typeof vars === 'object') {
+      str = str.replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined && vars[k] !== null ? String(vars[k]) : ''));
+    }
+    return str;
+  }
+
+  function getPeriodLabel(rangeKey) {
+    const k = rangeKey || 'today';
+    const key = `periods.${k}`;
+    return (I18N[state.lang] && I18N[state.lang][key]) ? t(key) : t('periods.today');
+  }
+
+  function getPlanLabel(planId, fallback = '') {
+    const table = PLAN_LABELS[state.lang] || PLAN_LABELS.zh;
+    return table[planId] || fallback || planId || '';
+  }
+
+  function localizeConvTitle(rawTitle) {
+    const s = String(rawTitle || '');
+    if (state.lang === 'en' && s.startsWith('已归档父会话 ')) {
+      return `Archived Parent ${s.slice('已归档父会话 '.length)}`;
+    }
+    return s;
+  }
+
+  function applyStaticTranslations() {
+    document.documentElement.lang = state.lang === 'en' ? 'en' : 'zh-CN';
+    const langBtn = document.getElementById('btn-lang-toggle');
+    if (langBtn) {
+      langBtn.textContent = state.lang === 'zh' ? 'EN' : '中';
+      const tip = state.lang === 'zh' ? 'Switch to English' : '切换为中文';
+      langBtn.title = tip;
+      langBtn.setAttribute('aria-label', tip);
+    }
+    for (const node of document.querySelectorAll('[data-i18n]')) {
+      const key = node.getAttribute('data-i18n');
+      if (key) node.textContent = t(key);
+    }
+    for (const node of document.querySelectorAll('[data-i18n-title]')) {
+      const key = node.getAttribute('data-i18n-title');
+      if (key) node.title = t(key);
+    }
+    for (const node of document.querySelectorAll('[data-i18n-aria-label]')) {
+      const key = node.getAttribute('data-i18n-aria-label');
+      if (key) node.setAttribute('aria-label', t(key));
+    }
+    if (state.resyncConfirmArmed) {
+      const resyncBtn = document.getElementById('btn-resync-ledger');
+      if (resyncBtn) resyncBtn.textContent = t('settings.resyncArmed');
+    }
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 10:15:00
+// ============================================================================
+
+  const $ = (id) => document.getElementById(id);
+
+  // ---------------- Theme Synchronization ----------------
+  function syncScheme() {
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;color:var(--background, #f6f7f9)';
+    document.documentElement.appendChild(probe);
+    const computed = getComputedStyle(probe).color;
+    probe.remove();
+    const nums = (computed.match(/[\d.]+/g) || []).map(Number);
+    if (nums.length >= 3) {
+      const scale = computed.startsWith('color(') ? 1 : 255;
+      const [r, g, b] = nums.slice(0, 3).map((v) => v / scale);
+      const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      const theme = lum < 0.5 ? 'dark' : 'light';
+      if (document.documentElement.dataset.theme !== theme) {
+        document.documentElement.dataset.theme = theme;
+      }
+    }
+  }
+
+  syncScheme();
+  new MutationObserver(syncScheme).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['style'],
+  });
+  window.addEventListener('message', (event) => {
+    if (event.data?.type === 'theme-change') {
+      syncScheme();
+    }
+  });
+
+  // ---------------- Safe DOM & Format Helpers ----------------
+  function el(tag, props = null, ...children) {
+    const node = document.createElement(tag);
+    if (props) {
+      for (const [key, val] of Object.entries(props)) {
+        if (val === undefined || val === null || val === false) continue;
+        if (key === 'className') {
+          node.className = val;
+        } else if (key === 'textContent') {
+          node.textContent = String(val);
+        } else if (key === 'dataset' && typeof val === 'object') {
+          for (const [dKey, dVal] of Object.entries(val)) {
+            if (dVal !== undefined && dVal !== null) {
+              node.dataset[dKey] = String(dVal);
+            }
+          }
+        } else if (key === 'style' && typeof val === 'object') {
+          Object.assign(node.style, val);
+        } else if (key.startsWith('on') && typeof val === 'function') {
+          node.addEventListener(key.slice(2).toLowerCase(), val);
+        } else {
+          node.setAttribute(key, val === true ? '' : String(val));
+        }
+      }
+    }
+    for (const child of children) {
+      appendChildSafe(node, child);
+    }
+    return node;
+  }
+
+  function appendChildSafe(parent, child) {
+    if (child === null || child === undefined || child === false) return;
+    if (Array.isArray(child)) {
+      for (const item of child) appendChildSafe(parent, item);
+      return;
+    }
+    if (child instanceof Node) {
+      parent.appendChild(child);
+    } else {
+      parent.appendChild(document.createTextNode(String(child)));
+    }
+  }
+
+  function num(val, fallback = 0) {
+    const n = Number(val);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function fmtInt(val) {
+    return Math.round(num(val, 0)).toLocaleString('en-US');
+  }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 10:15:00
+// Description: Implement 4-mode fmtTokens (auto/wan_yi/exact/m), localized fmtRelTime,
+// safe clipboard copy helper, and partial prefs sync helper (patchPrefs).
+// ============================================================================
+  function fmtTokens(val) {
+    const n = num(val, 0);
+    const abs = Math.abs(n);
+    const sign = n < 0 ? '-' : '';
+    const unit = VALID_TOKEN_UNITS.includes(state.tokenUnit) ? state.tokenUnit : 'auto';
+    if (unit === 'wan_yi') {
+      if (abs >= 1e8) return `${sign}${(abs / 1e8).toFixed(2)}亿`;
+      if (abs >= 1e4) return `${sign}${(abs / 1e4).toFixed(1)}万`;
+      return `${sign}${Math.round(abs)}`;
+    }
+    if (unit === 'exact') {
+      const rounded = Math.round(n);
+      return rounded === 0 ? '0' : rounded.toLocaleString('en-US');
+    }
+    if (unit === 'm') {
+      if (abs === 0) return '0';
+      return abs >= 10000
+        ? `${sign}${(abs / 1e6).toFixed(2)}M`
+        : `${sign}${(abs / 1e6).toFixed(4)}M`;
+    }
+    if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(2)}B`;
+    if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(2)}M`;
+    if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(1)}k`;
+    return `${sign}${Math.round(abs)}`;
+  }
+
+  function fmtDeltaTokens(val) {
+    const n = num(val, 0);
+    const prefix = n >= 0 ? '+' : '';
+    return `${prefix}${fmtTokens(n)}`;
+  }
+
+  function fmtRate(val) {
+    const n = Number(val);
+    if (!Number.isFinite(n) || n <= 0) return '—';
+    return n >= 100 ? n.toFixed(0) : n.toFixed(1);
+  }
+
+  function fmtPct(val) {
+    const n = num(val, 0);
+    return `${n.toFixed(1)}%`;
+  }
+
+  function fmtCost(val, currency = 'USD') {
+    const n = num(val, 0);
+    const code = currency || 'USD';
+    return `${code} ${n.toFixed(4)}`;
+  }
+
+  function fmtCostCompact(val, currency = 'USD') {
+    const n = num(val, 0);
+    const code = currency || 'USD';
+    return Math.abs(n) >= 1 ? `${code} ${n.toFixed(2)}` : `${code} ${n.toFixed(4)}`;
+  }
+
+  function fmtUnitPrice(val) {
+    const n = num(val, 0);
+    return n >= 1 ? n.toFixed(2) : n >= 0.1 ? n.toFixed(3).replace(/0$/, '') : n.toFixed(3);
+  }
+
+  function shortId(id) {
+    const s = String(id || '');
+    return s.length > 10 ? s.slice(0, 8) : s || '—';
+  }
+
+  function workspaceBase(ws) {
+    const s = String(ws || '').trim();
+    if (!s) return '';
+    const cleaned = s.replace(/[\\/]+$/, '');
+    const parts = cleaned.split(/[\\/]/);
+    return parts[parts.length - 1] || s;
+  }
+
+  function fmtRelTime(ms) {
+    const tMs = Number(ms);
+    if (!Number.isFinite(tMs) || tMs <= 0) return '';
+    const diffSec = Math.max(0, Math.floor((Date.now() - tMs) / 1000));
+    if (diffSec < 60) return t('common.relSec', { n: diffSec });
+    if (diffSec < 3600) return t('common.relMin', { n: Math.floor(diffSec / 60) });
+    if (diffSec < 86400) return t('common.relHour', { n: Math.floor(diffSec / 3600) });
+    const d = new Date(tMs);
+    return `${d.getMonth() + 1}/${d.getDate()}`;
+  }
+
+  function getServerNowMs() {
+    return Date.now() + state.serverClockOffsetMs;
+  }
+
+  function fmtElapsed(sinceMs) {
+    const start = Number(sinceMs);
+    if (!Number.isFinite(start) || start <= 0) return '';
+    const sec = Math.max(0, (getServerNowMs() - start) / 1000);
+    return `${sec.toFixed(1)}s`;
+  }
+
+  function showToast(msg) {
+    const banner = $('toast-banner');
+    if (!banner) return;
+    banner.textContent = msg;
+    banner.classList.remove('hidden');
+    if (state.toastTimer) clearTimeout(state.toastTimer);
+    state.toastTimer = setTimeout(() => {
+      banner.classList.add('hidden');
+    }, 2600);
+  }
+
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // Fallback to hidden textarea when clipboard API is blocked in sandboxed iframe.
+      }
+    }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return Boolean(ok);
+    } catch {
+      return false;
+    }
+  }
+
+  async function patchPrefs(partial) {
+    state.pendingPrefSaves += 1;
+    state.requestSeq += 1;
+    try {
+      const res = await apiFetch('/api/prefs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(partial),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data?.ok) throw new Error(data?.error || t('settings.saveFailedDefault'));
+      lastEtag = '';
+      if (state.snapshot) {
+        if (data.prefs) state.snapshot.prefs = data.prefs;
+        if (data.pricingCatalog) state.snapshot.pricingCatalog = data.pricingCatalog;
+      }
+      if (data.prefs && !state.drawerOpen) {
+        populateSettingsForm(data.prefs);
+      }
+    } catch (err) {
+      showToast(t('settings.saveFailed', { msg: err?.message || 'error' }));
+    } finally {
+      state.pendingPrefSaves = Math.max(0, state.pendingPrefSaves - 1);
+    }
+  }
+
+  function openConversationInHost(convId) {
+    if (!convId) return;
+    const toggle = window.sidecar?.ui?.toggleConversation;
+    if (typeof toggle === 'function') {
+      toggle(convId);
+    } else {
+      showToast(t('common.standaloneOpenHint'));
+      selectConversation(convId);
+    }
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 10:15:00
+// ============================================================================
+
+  function selectConversation(convId) {
+    if (!convId) return;
+    selectedConv = convId;
+    lastEtag = '';
+    setActiveTab('current');
+    pollSnapshot(true);
+  }
+
+  function getCatalogList() {
+    return Array.isArray(state.snapshot?.pricingCatalog) ? state.snapshot.pricingCatalog : [];
+  }
+
+  // ============================================================================
+  // [MODIFIED BEGIN] 2026-11-16 21:11:00
+  // Description: Align raw model ID profile matching for v1.2 tier-free slugs (argon, carbon/orchestrator/gemini-pro, hydrogen, flash/worker, claude-opus-5-5/4-6).
+  // ============================================================================
+  function matchProfileIdForModel(modelName) {
+    const s = String(modelName || '').toLowerCase();
+    if (/argon/.test(s)) return 'gemini-4-argon';
+    if (/carbon|orchestrator|gemini[\s-]*(?:[23][\w.-]*[\s-]*)?pro|^pro$/.test(s)) return 'gemini-4-carbon';
+    if (/hydrogen/.test(s)) return 'gemini-4-hydrogen';
+    if (/flash/.test(s)) return 'gemini-3-8-flash';
+    if (/claude[\s-]*opus/.test(s)) return 'claude-opus-5-5';
+    if (/claude[\s-]*(?:sonnet|haiku)/.test(s)) return 'claude-sonnet-5-5';
+    if (/gpt[\s-]*oss/.test(s)) return 'gpt-oss-120b';
+    return 'auto';
+  }
+  // ============================================================================
+  // [MODIFIED END] 2026-11-16 21:11:00
+  // ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 10:15:00
+// Description: Localize tabs, settings drawer, model catalog groups/hints, validation,
+// resync workflow, and header status/banner; add tokenUnit and 400k/500k defaults to prefs.
+// ============================================================================
+  // ---------------- Tabs & Settings Drawer ----------------
+  function setActiveTab(tab) {
+    if (tab !== 'current' && tab !== 'global') return;
+    state.activeTab = tab;
+    const btnCurr = $('tabbtn-current');
+    const btnGlobal = $('tabbtn-global');
+    const panelCurr = $('tab-current');
+    const panelGlobal = $('tab-global');
+
+    const isCurr = tab === 'current';
+    btnCurr.classList.toggle('active', isCurr);
+    btnCurr.setAttribute('aria-selected', String(isCurr));
+    btnGlobal.classList.toggle('active', !isCurr);
+    btnGlobal.setAttribute('aria-selected', String(!isCurr));
+    panelCurr.classList.toggle('hidden', !isCurr);
+    panelCurr.classList.toggle('active', isCurr);
+    panelGlobal.classList.toggle('hidden', isCurr);
+    panelGlobal.classList.toggle('active', !isCurr);
+    if (!isCurr) {
+      syncTrendScrollPosition();
+    }
+  }
+
+  function resetResyncConfirm() {
+    state.resyncConfirmArmed = false;
+    if (state.resyncTimer) {
+      clearTimeout(state.resyncTimer);
+      state.resyncTimer = null;
+    }
+    const btn = $('btn-resync-ledger');
+    if (btn) {
+      btn.textContent = t('settings.resyncIdle');
+      btn.classList.remove('is-armed');
+    }
+  }
+
+  function setDrawerOpen(open) {
+    state.drawerOpen = Boolean(open);
+    const drawer = $('settings-drawer');
+    const btn = $('btn-settings');
+    drawer.classList.toggle('hidden', !state.drawerOpen);
+    btn.setAttribute('aria-expanded', String(state.drawerOpen));
+    resetResyncConfirm();
+    if (state.drawerOpen) {
+      $('settings-feedback').textContent = '';
+      $('settings-feedback').className = 'settings-feedback';
+      if (state.snapshot?.prefs) {
+        const activeModel = state.snapshot?.current?.activeModel;
+        if (activeModel) {
+          state.selectedProfileId = matchProfileIdForModel(activeModel);
+        }
+        populateSettingsForm(state.snapshot.prefs);
+      }
+    }
+  }
+
+  function getLocalizedProfileMeta(item) {
+    if (state.lang === 'en') {
+      const enMeta = MODEL_PROFILE_EN[item.id];
+      return {
+        group: MODEL_GROUP_EN[item.group] || item.group,
+        label: enMeta?.label || item.label,
+        hint: enMeta?.hint || item.hint,
+      };
+    }
+    return {
+      group: item.group,
+      label: item.label,
+      hint: item.hint,
+    };
+  }
+
+  function getEffectiveDraftUsd(profileId) {
+    const catalog = getCatalogList();
+    const item = catalog.find((p) => p.id === profileId) || catalog[0];
+    if (!item) {
+      return {
+        inputPer1M: 2,
+        cachedPer1M: 0.2,
+        outputPer1M: 10,
+        longContextTier: true,
+        isOverridden: false,
+        defaultUsd: { inputPer1M: 2, cachedPer1M: 0.2, outputPer1M: 10, longContextTier: true },
+      };
+    }
+    const ov = state.draftModelOverrides[item.id];
+    return {
+      inputPer1M: ov ? num(ov.inputPer1M, item.defaultUsd.inputPer1M) : item.defaultUsd.inputPer1M,
+      cachedPer1M: ov ? num(ov.cachedPer1M, item.defaultUsd.cachedPer1M) : item.defaultUsd.cachedPer1M,
+      outputPer1M: ov ? num(ov.outputPer1M, item.defaultUsd.outputPer1M) : item.defaultUsd.outputPer1M,
+      longContextTier:
+        ov && typeof ov.longContextTier === 'boolean'
+          ? ov.longContextTier
+          : Boolean(item.defaultUsd.longContextTier),
+      isOverridden: Boolean(ov),
+      defaultUsd: item.defaultUsd,
+    };
+  }
+
+  function renderModelSelectOptions() {
+    const select = $('pref-model-select');
+    const catalog = getCatalogList();
+    if (!select || catalog.length === 0) return;
+
+    const groups = new Map();
+    for (const item of catalog) {
+      const loc = getLocalizedProfileMeta(item);
+      if (!groups.has(loc.group)) groups.set(loc.group, []);
+      groups.get(loc.group).push({ item, loc });
+    }
+
+    const optGroups = [];
+    for (const [groupLabel, entries] of groups.entries()) {
+      const og = el('optgroup', { label: groupLabel },
+        entries.map(({ item, loc }) => {
+          const isModified = Boolean(state.draftModelOverrides[item.id]);
+          const suffix = isModified ? ' *' : '';
+          return el('option', {
+            value: item.id,
+            textContent: `${loc.label} (${loc.hint})${suffix}`,
+          });
+        }),
+      );
+      optGroups.push(og);
+    }
+    select.replaceChildren(...optGroups);
+    if (catalog.some((c) => c.id === state.selectedProfileId)) {
+      select.value = state.selectedProfileId;
+    } else {
+      state.selectedProfileId = catalog[0].id;
+      select.value = state.selectedProfileId;
+    }
+  }
+
+  function loadSelectedProfileInputs() {
+    const eff = getEffectiveDraftUsd(state.selectedProfileId);
+    $('pref-input-price').value = eff.inputPer1M;
+    $('pref-cached-price').value = eff.cachedPer1M;
+    $('pref-output-price').value = eff.outputPer1M;
+    $('pref-long-tier').checked = eff.longContextTier;
+    renderCatalogPreviewTable();
+  }
+
+  function stageCurrentProfileFromInputs() {
+    const catalog = getCatalogList();
+    const item = catalog.find((p) => p.id === state.selectedProfileId);
+    if (!item) return;
+
+    const inputPer1M = Number($('pref-input-price').value);
+    const cachedPer1M = Number($('pref-cached-price').value);
+    const outputPer1M = Number($('pref-output-price').value);
+    const longContextTier = Boolean($('pref-long-tier').checked);
+    if (
+      !Number.isFinite(inputPer1M) || inputPer1M < 0 ||
+      !Number.isFinite(cachedPer1M) || cachedPer1M < 0 ||
+      !Number.isFinite(outputPer1M) || outputPer1M < 0
+    ) {
+      return;
+    }
+
+    const d = item.defaultUsd;
+    const isDefault =
+      Math.abs(inputPer1M - d.inputPer1M) < 1e-9 &&
+      Math.abs(cachedPer1M - d.cachedPer1M) < 1e-9 &&
+      Math.abs(outputPer1M - d.outputPer1M) < 1e-9 &&
+      longContextTier === Boolean(d.longContextTier);
+
+    if (isDefault) {
+      delete state.draftModelOverrides[item.id];
+    } else {
+      state.draftModelOverrides[item.id] = {
+        inputPer1M,
+        cachedPer1M,
+        outputPer1M,
+        longContextTier,
+      };
+    }
+    renderModelSelectOptions();
+    renderCatalogPreviewTable();
+  }
+
+  function renderCatalogPreviewTable() {
+    const wrap = $('catalog-preview-table');
+    const catalog = getCatalogList();
+    if (!wrap || catalog.length === 0) return;
+
+    const currency = $('pref-currency')?.value === 'CNY' ? 'CNY' : 'USD';
+    const cnyRate = Math.max(0.01, num($('pref-cny-rate')?.value, 7.25));
+    const fx = currency === 'CNY' ? cnyRate : 1;
+
+    wrap.replaceChildren(
+      el('table', { className: 'data-table tabular-nums' },
+        el('thead', null,
+          el('tr', null,
+            el('th', null, t('settings.catalogModelCol')),
+            el('th', { className: 'num' }, 'In'),
+            el('th', { className: 'num' }, 'Cache'),
+            el('th', { className: 'num' }, 'Out'),
+            el('th', null, '>200k'),
+          ),
+        ),
+        el('tbody', null,
+          catalog.map((item) => {
+            const eff = getEffectiveDraftUsd(item.id);
+            const loc = getLocalizedProfileMeta(item);
+            return el('tr', { className: eff.isOverridden ? 'is-overridden' : '' },
+              el('td', {
+                className: 'model-cell',
+                textContent: `${loc.label}${eff.isOverridden ? ' *' : ''}`,
+                title: loc.hint,
+              }),
+              el('td', { className: 'num', textContent: fmtUnitPrice(eff.inputPer1M * fx) }),
+              el('td', { className: 'num', textContent: fmtUnitPrice(eff.cachedPer1M * fx) }),
+              el('td', { className: 'num', textContent: fmtUnitPrice(eff.outputPer1M * fx) }),
+              el('td', { textContent: eff.longContextTier ? '×2 / ×1.5' : '—' }),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  function updateConditionalSettingsFields() {
+    const currency = $('pref-currency').value === 'CNY' ? 'CNY' : 'USD';
+    $('pref-cny-rate-wrap').classList.toggle('hidden', currency !== 'CNY');
+
+    const subPlan = $('pref-sub-plan').value;
+    $('pref-sub-custom-wrap').classList.toggle('hidden', subPlan !== 'custom');
+
+    const subInfo = state.snapshot?.global?.subscription;
+    const hintEl = $('pref-sub-detected-hint');
+    if (subPlan === 'auto' && subInfo) {
+      const detectedLabel = getPlanLabel(subInfo.detectedPlanId, subInfo.detectedPlanLabel);
+      hintEl.textContent = t('settings.subDetectedHint', {
+        plan: detectedLabel,
+        usd: num(subInfo.detectedMonthlyUsd, 0).toFixed(2),
+      });
+      hintEl.classList.remove('hidden');
+    } else {
+      hintEl.textContent = '';
+      hintEl.classList.add('hidden');
+    }
+    renderCatalogPreviewTable();
+  }
+
+  function populateSettingsForm(prefs) {
+    if (!prefs) return;
+    $('pref-soft-limit').value = num(prefs.softContextLimit, 400000);
+    $('pref-hard-limit').value = num(prefs.hardContextLimit, 500000);
+    const unitSelect = $('pref-token-unit');
+    if (unitSelect) {
+      unitSelect.value = VALID_TOKEN_UNITS.includes(prefs.tokenUnit) ? prefs.tokenUnit : 'auto';
+    }
+    $('pref-currency').value = prefs.currency === 'CNY' ? 'CNY' : 'USD';
+    $('pref-cny-rate').value = num(prefs.cnyRate, 7.25);
+    $('pref-sub-plan').value = prefs.subscriptionPlan || 'auto';
+    $('pref-sub-custom-usd').value = num(prefs.customSubscriptionMonthlyUsd, 99.99);
+
+    state.draftModelOverrides = {};
+    if (prefs.modelOverrides && typeof prefs.modelOverrides === 'object') {
+      for (const [k, v] of Object.entries(prefs.modelOverrides)) {
+        if (v && typeof v === 'object') state.draftModelOverrides[k] = { ...v };
+      }
+    }
+
+    renderModelSelectOptions();
+    loadSelectedProfileInputs();
+    updateConditionalSettingsFields();
+  }
+
+  async function saveSettings(event) {
+    event.preventDefault();
+    const feedback = $('settings-feedback');
+    const saveBtn = $('btn-settings-save');
+
+    stageCurrentProfileFromInputs();
+
+    const softContextLimit = Number($('pref-soft-limit').value);
+    const hardContextLimit = Number($('pref-hard-limit').value);
+    const rawUnit = $('pref-token-unit')?.value || 'auto';
+    const tokenUnit = VALID_TOKEN_UNITS.includes(rawUnit) ? rawUnit : 'auto';
+    const currency = $('pref-currency').value === 'CNY' ? 'CNY' : 'USD';
+    const cnyRate = Number($('pref-cny-rate').value);
+    const subscriptionPlan = $('pref-sub-plan').value || 'auto';
+    const customSubscriptionMonthlyUsd = Number($('pref-sub-custom-usd').value);
+    const inputPer1M = Number($('pref-input-price').value);
+    const cachedPer1M = Number($('pref-cached-price').value);
+    const outputPer1M = Number($('pref-output-price').value);
+
+    if (!Number.isFinite(softContextLimit) || softContextLimit < 1000) {
+      feedback.textContent = t('settings.errSoftLimit');
+      feedback.className = 'settings-feedback is-error';
+      return;
+    }
+    if (!Number.isFinite(hardContextLimit) || hardContextLimit < softContextLimit) {
+      feedback.textContent = t('settings.errHardLimit');
+      feedback.className = 'settings-feedback is-error';
+      return;
+    }
+    if (currency === 'CNY' && (!Number.isFinite(cnyRate) || cnyRate <= 0)) {
+      feedback.textContent = t('settings.errCnyRate');
+      feedback.className = 'settings-feedback is-error';
+      return;
+    }
+    if (
+      subscriptionPlan === 'custom' &&
+      (!Number.isFinite(customSubscriptionMonthlyUsd) || customSubscriptionMonthlyUsd < 0)
+    ) {
+      feedback.textContent = t('settings.errCustomSub');
+      feedback.className = 'settings-feedback is-error';
+      return;
+    }
+    if (
+      !Number.isFinite(inputPer1M) || inputPer1M < 0 ||
+      !Number.isFinite(cachedPer1M) || cachedPer1M < 0 ||
+      !Number.isFinite(outputPer1M) || outputPer1M < 0
+    ) {
+      feedback.textContent = t('settings.errPrices');
+      feedback.className = 'settings-feedback is-error';
+      return;
+    }
+
+    saveBtn.disabled = true;
+    feedback.textContent = t('settings.saving');
+    feedback.className = 'settings-feedback';
+
+    try {
+      const payload = {
+        softContextLimit: Math.round(softContextLimit),
+        hardContextLimit: Math.round(hardContextLimit),
+        tokenUnit,
+        language: state.lang,
+        currency,
+        cnyRate,
+        subscriptionPlan,
+        customSubscriptionMonthlyUsd,
+        resetAllModels: Object.keys(state.draftModelOverrides).length === 0,
+        modelOverrides: {},
+      };
+      for (const item of getCatalogList()) {
+        payload.modelOverrides[item.id] = state.draftModelOverrides[item.id] || null;
+      }
+
+      const res = await apiFetch('/api/prefs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      if (!data?.ok) {
+        throw new Error(data?.error || t('settings.saveFailedDefault'));
+      }
+      state.tokenUnit = tokenUnit;
+      lastEtag = '';
+      setDrawerOpen(false);
+      showToast(t('settings.savedToast'));
+      await pollSnapshot(true);
+    } catch (err) {
+      feedback.textContent = t('settings.saveFailed', { msg: err.message });
+      feedback.className = 'settings-feedback is-error';
+    } finally {
+      saveBtn.disabled = false;
+    }
+  }
+
+  async function handleResyncLedgerClick() {
+    const btn = $('btn-resync-ledger');
+    const feedback = $('settings-feedback');
+    if (!state.resyncConfirmArmed) {
+      state.resyncConfirmArmed = true;
+      btn.textContent = t('settings.resyncArmed');
+      btn.classList.add('is-armed');
+      if (state.resyncTimer) clearTimeout(state.resyncTimer);
+      state.resyncTimer = setTimeout(resetResyncConfirm, 3500);
+      return;
+    }
+
+    resetResyncConfirm();
+    btn.disabled = true;
+    feedback.textContent = t('settings.resyncSyncing');
+    feedback.className = 'settings-feedback';
+    try {
+      const res = await apiFetch('/api/resync-ledger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data?.ok) throw new Error(data?.error || t('settings.saveFailedDefault'));
+      lastEtag = '';
+      feedback.textContent = t('settings.resyncDone', { count: fmtInt(data.conversationsCount) });
+      feedback.className = 'settings-feedback is-ok';
+      await pollSnapshot(true);
+    } catch (err) {
+      feedback.textContent = t('settings.resyncFailed', { msg: err.message });
+      feedback.className = 'settings-feedback is-error';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // ---------------- Render Header & Stopwatch ----------------
+  function formatStatusText(current) {
+    if (!current) return t('header.waiting');
+    if (current.status === 'GENERATING') {
+      const elapsed = fmtElapsed(current.generatingSinceMs);
+      return elapsed ? `${t('header.generating')} ${elapsed}` : t('header.generating');
+    }
+    if (current.status === 'RUNNING_TOOLS') {
+      const prog = current.toolProgress;
+      const countPart = prog && Number.isFinite(prog.total)
+        ? `(${num(prog.done, 0)}/${num(prog.total, 0)})`
+        : '';
+      const label = current.activeToolLabel ? `: ${current.activeToolLabel}` : '';
+      return `${t('header.tools')} ${countPart}${label}`.trim();
+    }
+    return t('header.idle');
+  }
+
+  function renderHeader(snap) {
+    const current = snap?.current || null;
+    const statusPill = $('status-pill');
+    const statusText = $('status-text');
+    const modelText = $('model-text');
+
+    let statusClass = 'status-empty';
+    if (current?.status === 'GENERATING') statusClass = 'status-generating';
+    else if (current?.status === 'RUNNING_TOOLS') statusClass = 'status-tools';
+    else if (current) statusClass = 'status-idle';
+
+    statusPill.className = `status-pill ${statusClass}`;
+    const nextText = formatStatusText(current);
+    statusText.textContent = nextText;
+    statusPill.title = nextText;
+    state.lastStopwatchText = nextText;
+
+    const modelName = current?.activeModel || '—';
+    modelText.textContent = modelName;
+    $('model-pill').title = modelName !== '—'
+      ? t('header.modelTitle', { model: modelName })
+      : t('header.currentModel');
+
+    // Non-bound conversation banner
+    const banner = $('nonbound-banner');
+    const viewingId = current?.conversationId || selectedConv;
+    const isNonBound = Boolean(
+      state.homeConvId && viewingId && viewingId !== state.homeConvId
+    );
+    banner.classList.toggle('hidden', !isNonBound);
+    if (isNonBound) {
+      const label = localizeConvTitle(current?.title) || shortId(viewingId);
+      $('nonbound-label').textContent = t('header.viewing', { label });
+      $('nonbound-label').title = `${label} (${viewingId})`;
+    }
+
+    // Today conversation count badge
+    const badge = $('tab-today-badge');
+    const todayCount = num(snap?.global?.todayConversationsCount, 0);
+    badge.textContent = String(todayCount);
+    badge.classList.toggle('hidden', todayCount <= 0);
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 10:15:00
+// ============================================================================
+
+  function tickLiveStopwatch() {
+    if (document.hidden) return;
+    const current = state.snapshot?.current;
+    if (current?.status === 'GENERATING' && current?.generatingSinceMs) {
+      const nextText = formatStatusText(current);
+      if (nextText !== state.lastStopwatchText) {
+        $('status-text').textContent = nextText;
+        state.lastStopwatchText = nextText;
+      }
+    }
+
+    const childTimers = document.querySelectorAll('[data-child-since]');
+    for (const node of childTimers) {
+      const since = Number(node.dataset.childSince);
+      if (!Number.isFinite(since) || since <= 0) continue;
+      const next = `⚡ ${fmtElapsed(since)}`;
+      if (node.textContent !== next) {
+        node.textContent = next;
+      }
+    }
+  }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 10:15:00
+// Description: Localize Tab 1 cards (Speed, Cost, Context, Cache, Children), add one-click
+// /compact button with clipboard copy + warning/critical highlight, and remove cluttered
+// cache-saved cost displays from Cost card.
+// ============================================================================
+  // ---------------- Render Tab 1: Current Conversation ----------------
+  function renderSpeedCard(current) {
+    const card = $('card-speed');
+    const speed = current.speed || {};
+    const recent = Array.isArray(speed.recentSteps) ? speed.recentSteps : [];
+    const latestRate = fmtRate(speed.latestStepTokPerSec);
+    const avgRate = fmtRate(speed.weightedAvgTokPerSec);
+    const peakRate = fmtRate(speed.peakTokPerSec);
+    const outTok = num(speed.latestStepOutputTokens, 0);
+    const durSec = Number(speed.latestStepDurationSec);
+    const latestStepDetail = outTok > 0 && Number.isFinite(durSec) && durSec > 0
+      ? `${fmtInt(outTok)} tok / ${durSec.toFixed(1)}s`
+      : '—';
+
+    const maxRate = recent.reduce((m, s) => Math.max(m, num(s.tokPerSec, 0)), 0);
+    const sparkBars = recent.length > 0
+      ? recent.map((s, idx) => {
+          const r = num(s.tokPerSec, 0);
+          const pct = maxRate > 0 ? Math.max(10, Math.round((r / maxRate) * 100)) : 12;
+          const isLast = idx === recent.length - 1;
+          const tip = `#${num(s.stepIndex, idx)}: ${fmtRate(r)} tok/s (${fmtInt(s.outputTokens)} tok / ${num(s.durationSec, 0).toFixed(1)}s)${s.model ? ' · ' + s.model : ''}`;
+          return el('span', {
+            className: `spark-bar${isLast ? ' latest' : ''}`,
+            style: { height: `${pct}%` },
+            title: tip,
+          });
+        })
+      : [el('span', { className: 'empty-inline', textContent: t('speed.empty') })];
+
+    card.replaceChildren(
+      el('div', { className: 'card-head' },
+        el('div', { className: 'card-title' },
+          el('span', { className: 'card-title-dot' }),
+          t('speed.title'),
+        ),
+        el('span', {
+          className: 'muted-hint tabular-nums',
+          textContent: t('speed.measuredSteps', { count: fmtInt(speed.measuredStepsCount) }),
+        }),
+      ),
+      el('div', { className: 'hero-value-row tabular-nums' },
+        el('span', { className: 'hero-value', textContent: latestRate }),
+        el('span', { className: 'hero-unit', textContent: 'tok/s' }),
+      ),
+      el('div', { className: 'sub-stats tabular-nums' },
+        el('span', { className: 'sub-stat' }, t('speed.weightedAvg'), el('strong', null, `${avgRate} tok/s`)),
+        el('span', { className: 'sub-stat' }, t('speed.peak'), el('strong', null, `${peakRate} tok/s`)),
+        el('span', { className: 'sub-stat' }, t('speed.latest'), el('strong', null, latestStepDetail)),
+      ),
+      el('div', { className: 'sparkline-wrap' },
+        el('div', { className: 'sparkline', 'aria-label': t('speed.sparkAria') }, sparkBars),
+        recent.length > 0
+          ? el('div', { className: 'spark-caption tabular-nums' },
+              el('span', { textContent: t('speed.lastSteps', { count: recent.length }) }),
+              el('span', { textContent: `Peak ${peakRate} tok/s` }),
+            )
+          : null,
+      ),
+    );
+  }
+
+  function renderCostCard(current, prefs) {
+    const card = $('card-cost');
+    const totals = current.totals || {};
+    const currency = prefs?.currency || 'USD';
+    const hasChildren = Array.isArray(current.children) && current.children.length > 0;
+    const scopeKey = state.costScope === 'mainOnly' ? 'mainOnly' : 'withChildren';
+    const scopeData = totals[scopeKey] || totals.mainOnly || totals.withChildren || {};
+
+    const costActual = num(scopeData.costActual, 0);
+
+    const sub = current.subscription || null;
+    const sharePct =
+      scopeKey === 'mainOnly' ? sub?.mainOnlySharePct : sub?.withChildrenSharePct;
+    let subAnchorNode = null;
+    if (sub) {
+      const planLabel = getPlanLabel(sub.planId, sub.planLabel);
+      const subText =
+        sub.monthlyFee > 0 && Number.isFinite(Number(sharePct))
+          ? t('cost.subSharePaid', {
+              plan: planLabel,
+              fee: fmtCostCompact(sub.monthlyFee, currency),
+              pct: Number(sharePct).toFixed(1),
+            })
+          : sub.monthlyFee === 0
+            ? t('cost.subShareFree', {
+                plan: planLabel,
+                cost: fmtCostCompact(costActual, currency),
+              })
+            : null;
+      if (subText) {
+        subAnchorNode = el('div', { className: 'sub-anchor-note tabular-nums', textContent: subText });
+      }
+    }
+
+    const togglePill = el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('cost.scopeAria') },
+      el('button', {
+        type: 'button',
+        className: `seg-btn${scopeKey === 'withChildren' ? ' active' : ''}`,
+        textContent: hasChildren
+          ? t('cost.withChildrenCount', { count: current.children.length })
+          : t('cost.withChildren'),
+        onClick: () => {
+          if (state.costScope !== 'withChildren') {
+            state.costScope = 'withChildren';
+            if (state.snapshot?.current) renderCostCard(state.snapshot.current, state.snapshot.prefs);
+          }
+        },
+      }),
+      el('button', {
+        type: 'button',
+        className: `seg-btn${scopeKey === 'mainOnly' ? ' active' : ''}`,
+        textContent: t('cost.mainOnly'),
+        onClick: () => {
+          if (state.costScope !== 'mainOnly') {
+            state.costScope = 'mainOnly';
+            if (state.snapshot?.current) renderCostCard(state.snapshot.current, state.snapshot.prefs);
+          }
+        },
+      }),
+    );
+
+    card.replaceChildren(
+      el('div', { className: 'card-head' },
+        el('div', { className: 'card-title' },
+          el('span', { className: 'card-title-dot' }),
+          t('cost.title'),
+        ),
+        togglePill,
+      ),
+      el('div', { className: 'hero-value-row tabular-nums' },
+        el('span', { className: 'hero-value', textContent: fmtCost(costActual, currency) }),
+      ),
+      el('div', { className: 'sub-stats tabular-nums' },
+        el('span', { className: 'sub-stat' }, t('cost.steps'), el('strong', null, fmtInt(scopeData.stepsCount))),
+      ),
+      subAnchorNode,
+      el('div', { className: 'mini-chips tabular-nums' },
+        el('div', { className: 'mini-chip' },
+          el('span', { className: 'mini-chip-label', textContent: t('cost.chipHitRate') }),
+          el('span', { className: 'mini-chip-val', textContent: fmtPct(scopeData.cacheHitRatePct) }),
+        ),
+        el('div', { className: 'mini-chip' },
+          el('span', { className: 'mini-chip-label', textContent: t('cost.chipOutput') }),
+          el('span', { className: 'mini-chip-val', title: fmtInt(scopeData.outputTokens), textContent: fmtTokens(scopeData.outputTokens) }),
+        ),
+        el('div', { className: 'mini-chip' },
+          el('span', { className: 'mini-chip-label', textContent: t('cost.chipCacheRead') }),
+          el('span', { className: 'mini-chip-val', title: fmtInt(scopeData.cacheReadTokens), textContent: fmtTokens(scopeData.cacheReadTokens) }),
+        ),
+        el('div', { className: 'mini-chip' },
+          el('span', { className: 'mini-chip-label', textContent: t('cost.chipUncached') }),
+          el('span', { className: 'mini-chip-val', title: fmtInt(scopeData.inputUncachedTokens), textContent: fmtTokens(scopeData.inputUncachedTokens) }),
+        ),
+      ),
+    );
+  }
+
+  function renderContextCard(current) {
+    const card = $('card-context');
+    const ctx = current.context || {};
+    const currentTotal = num(ctx.currentTotal, 0);
+    const softLimit = Math.max(1, num(ctx.softLimit, 400000));
+    const hardLimit = Math.max(1, num(ctx.hardLimit, 500000));
+    const hardPct = num(ctx.hardUsagePct, (currentTotal / hardLimit) * 100);
+    const softPct = num(ctx.softUsagePct, (currentTotal / softLimit) * 100);
+    const rawLevel = ctx.usageLevel;
+    const level = ['HEALTHY', 'WARNING', 'CRITICAL'].includes(rawLevel)
+      ? rawLevel
+      : 'HEALTHY';
+
+    const softMarkerPct = Math.min(100, Math.max(0, (softLimit / hardLimit) * 100));
+    const totalBarPct = Math.min(100, Math.max(0, (currentTotal / hardLimit) * 100));
+    const healthyPct = level === 'HEALTHY'
+      ? totalBarPct
+      : Math.min(totalBarPct, softMarkerPct);
+    const overflowPct = Math.max(0, totalBarPct - healthyPct);
+
+    const levelMessages = {
+      HEALTHY: t('context.healthy', { soft: fmtTokens(softLimit), softPct: softPct.toFixed(1) }),
+      WARNING: t('context.warning', { soft: fmtTokens(softLimit) }),
+      CRITICAL: t('context.critical', { hard: fmtTokens(hardLimit) }),
+    };
+
+    const isCopied = state.compactCopiedUntil > Date.now();
+    const compactClasses = [
+      'compact-btn',
+      level === 'WARNING' ? 'is-warning' : level === 'CRITICAL' ? 'is-critical' : '',
+      isCopied ? 'is-copied' : '',
+    ].filter(Boolean).join(' ');
+
+    const compactBtn = el('button', {
+      type: 'button',
+      className: compactClasses,
+      title: t('context.compactTitle'),
+      textContent: isCopied ? t('context.compactCopied') : t('context.compactBtn'),
+      onClick: async () => {
+        const copied = await copyTextToClipboard('/compact');
+        state.compactCopiedUntil = Date.now() + 1800;
+        if (state.compactTimer) clearTimeout(state.compactTimer);
+        state.compactTimer = setTimeout(() => {
+          state.compactCopiedUntil = 0;
+          if (state.snapshot?.current) renderContextCard(state.snapshot.current);
+        }, 1800);
+        if (state.snapshot?.current) renderContextCard(state.snapshot.current);
+
+        const viewingId = current.conversationId || selectedConv;
+        const isNonBound = Boolean(
+          state.homeConvId && viewingId && viewingId !== state.homeConvId,
+        );
+        if (isNonBound && typeof window.sidecar?.ui?.toggleConversation === 'function') {
+          window.sidecar.ui.toggleConversation(viewingId);
+        }
+        showToast(copied ? t('context.compactToast') : t('context.compactFailed'));
+      },
+    });
+
+    card.replaceChildren(
+      el('div', { className: 'card-head' },
+        el('div', { className: 'card-title' },
+          el('span', { className: 'card-title-dot' }),
+          t('context.title'),
+        ),
+        el('div', { className: 'ctx-head-right' },
+          el('span', {
+            className: 'ctx-summary-num tabular-nums',
+            title: `${fmtInt(currentTotal)} / ${fmtInt(hardLimit)} tokens`,
+            textContent: `${fmtTokens(currentTotal)} / ${fmtTokens(hardLimit)} (${hardPct.toFixed(1)}%)`,
+          }),
+          compactBtn,
+        ),
+      ),
+      el('div', { className: 'ctx-bar-wrap' },
+        el('div', { className: 'ctx-bar-track', role: 'progressbar', 'aria-valuenow': Math.round(hardPct), 'aria-valuemin': 0, 'aria-valuemax': 100 },
+          el('div', {
+            className: 'ctx-seg-healthy',
+            style: { width: `${healthyPct.toFixed(2)}%` },
+          }),
+          overflowPct > 0
+            ? el('div', {
+                className: `ctx-seg-overflow ${level === 'CRITICAL' ? 'is-critical' : 'is-warning'}`,
+                style: { width: `${overflowPct.toFixed(2)}%` },
+              })
+            : null,
+        ),
+        el('div', {
+          className: 'ctx-soft-tick',
+          style: { left: `${softMarkerPct.toFixed(2)}%` },
+          title: t('context.tickTitle', { soft: fmtInt(softLimit), pct: softMarkerPct.toFixed(1) }),
+        }),
+      ),
+      el('div', { className: 'ctx-scale-row tabular-nums' },
+        el('span', { textContent: t('context.currentTok', { tokens: fmtInt(currentTotal) }) }),
+        el('span', { textContent: t('context.limitsRow', { soft: fmtTokens(softLimit), hard: fmtTokens(hardLimit) }) }),
+      ),
+      el('div', { className: `level-banner ${level}` },
+        el('span', { textContent: levelMessages[level] }),
+      ),
+    );
+  }
+
+  function renderCacheCard(current) {
+    const card = $('card-cache');
+    const ctx = current.context || {};
+    const cacheRead = num(ctx.latestCacheRead, 0);
+    const uncached = num(ctx.latestInputUncached, 0);
+    const hitPct = num(ctx.latestCacheHitRatePct, 0);
+    const netDelta = num(ctx.latestNetDelta, 0);
+    const spikes = Array.isArray(ctx.topSpikes) ? ctx.topSpikes : [];
+
+    const totalLatest = cacheRead + uncached;
+    const hitBarPct = totalLatest > 0 ? (cacheRead / totalLatest) * 100 : 0;
+    const missBarPct = totalLatest > 0 ? 100 - hitBarPct : 0;
+
+    const visibleSpikes = state.spikesExpanded ? spikes : spikes.slice(0, 3);
+    const canToggleSpikes = spikes.length > 3;
+
+    const spikesSection = el('div', null,
+      el('div', { className: 'spikes-header' },
+        el('span', {
+          className: 'spikes-title',
+          textContent: t('cache.spikesTitle', { count: spikes.length ? ` · ${spikes.length}` : '' }),
+        }),
+        canToggleSpikes
+          ? el('button', {
+              type: 'button',
+              className: 'mini-btn',
+              textContent: state.spikesExpanded
+                ? t('cache.collapse')
+                : t('cache.expandAll', { count: spikes.length }),
+              onClick: () => {
+                state.spikesExpanded = !state.spikesExpanded;
+                if (state.snapshot?.current) renderCacheCard(state.snapshot.current);
+              },
+            })
+          : null,
+      ),
+      spikes.length > 0
+        ? el('div', { className: 'spikes-list' },
+            visibleSpikes.map((sp) => {
+              const summary = sp.triggerSummary || 'Context jump';
+              return el('div', { className: 'spike-row', title: summary },
+                el('div', { className: 'spike-left' },
+                  el('span', { className: 'spike-step tabular-nums', textContent: `#${num(sp.stepIndex, 0)}` }),
+                  el('span', { className: 'spike-summary', textContent: summary }),
+                ),
+                el('div', {
+                  className: 'spike-right tabular-nums',
+                  title: `+${fmtInt(sp.deltaTokens)} → ${fmtInt(sp.totalAfter)}`,
+                },
+                  `+${fmtTokens(sp.deltaTokens)}`,
+                  el('span', { className: 'spike-after', textContent: `→ ${fmtTokens(sp.totalAfter)}` }),
+                ),
+              );
+            }),
+          )
+        : el('div', { className: 'empty-inline', textContent: t('cache.spikesEmpty') }),
+    );
+
+    card.replaceChildren(
+      el('div', { className: 'card-head' },
+        el('div', { className: 'card-title' },
+          el('span', { className: 'card-title-dot' }),
+          t('cache.title'),
+        ),
+        el('span', {
+          className: 'muted-hint tabular-nums',
+          textContent: t('cache.hitRate', { pct: hitPct.toFixed(1) }),
+        }),
+      ),
+      el('div', { className: 'cache-seg-track', title: `Cache Read ${fmtInt(cacheRead)} / Uncached ${fmtInt(uncached)}` },
+        el('div', { className: 'cache-seg-hit', style: { width: `${hitBarPct.toFixed(2)}%` } }),
+        el('div', { className: 'cache-seg-miss', style: { width: `${missBarPct.toFixed(2)}%` } }),
+      ),
+      el('div', { className: 'cache-metrics-row tabular-nums' },
+        el('div', { className: 'mini-chip' },
+          el('span', { className: 'mini-chip-label', textContent: t('cache.chipHit') }),
+          el('span', { className: 'mini-chip-val', title: fmtInt(cacheRead), textContent: `${fmtTokens(cacheRead)} (${hitPct.toFixed(1)}%)` }),
+        ),
+        el('div', { className: 'mini-chip' },
+          el('span', { className: 'mini-chip-label', textContent: t('cache.chipUncached') }),
+          el('span', { className: 'mini-chip-val', title: fmtInt(uncached), textContent: fmtTokens(uncached) }),
+        ),
+        el('div', { className: 'mini-chip' },
+          el('span', { className: 'mini-chip-label', textContent: t('cache.chipNetDelta') }),
+          el('span', { className: 'mini-chip-val', title: fmtInt(netDelta), textContent: fmtDeltaTokens(netDelta) }),
+        ),
+      ),
+      spikesSection,
+    );
+  }
+
+  function renderChildrenAndModelsCard(current, prefs) {
+    const card = $('card-children-models');
+    const currency = prefs?.currency || 'USD';
+    const children = Array.isArray(current.children) ? current.children : [];
+    const byModel = Array.isArray(current.totals?.byModel) ? current.totals.byModel : [];
+
+    const nodes = [
+      el('div', { className: 'card-head' },
+        el('div', { className: 'card-title' },
+          el('span', { className: 'card-title-dot' }),
+          t('childrenModels.title'),
+        ),
+        children.length > 0
+          ? el('span', {
+              className: 'muted-hint tabular-nums',
+              textContent: t('childrenModels.membersCount', { count: children.length }),
+            })
+          : null,
+      ),
+    ];
+
+    if (children.length > 0) {
+      nodes.push(
+        el('div', { className: 'children-section' },
+          el('div', { className: 'section-subhead', textContent: t('childrenModels.liveSubhead') }),
+          el('div', { className: 'children-list' },
+            children.map((ch) => {
+              const kind = ch.kind === 'swarm' ? 'swarm' : 'subagent';
+              const status = ch.status || 'IDLE';
+              const statusSpan = el('span', {
+                className: `child-status tabular-nums ${status}`,
+                textContent: status === 'GENERATING' && ch.generatingSinceMs
+                  ? `⚡ ${fmtElapsed(ch.generatingSinceMs)}`
+                  : status === 'GENERATING'
+                    ? t('childrenModels.childGenerating')
+                    : status === 'RUNNING_TOOLS'
+                      ? t('childrenModels.childRunning')
+                      : t('childrenModels.childIdle'),
+              });
+              if (status === 'GENERATING' && ch.generatingSinceMs) {
+                statusSpan.dataset.childSince = String(ch.generatingSinceMs);
+              }
+
+              return el('div', { className: 'child-row' },
+                el('div', { className: 'child-top' },
+                  el('div', { className: 'child-id-group' },
+                    el('span', { className: 'child-name', textContent: ch.name || shortId(ch.conversationId) }),
+                    el('span', { className: `kind-badge ${kind}`, textContent: kind === 'swarm' ? 'Swarm' : 'Subagent' }),
+                    ch.role && ch.role !== ch.name
+                      ? el('span', { className: 'muted-hint', textContent: ch.role })
+                      : null,
+                  ),
+                  statusSpan,
+                ),
+                el('div', { className: 'child-meta' },
+                  el('div', { className: 'child-stats tabular-nums' },
+                    el('span', { textContent: ch.model || 'Auto' }),
+                    el('span', { title: fmtInt(ch.contextTotal), textContent: `Ctx ${fmtTokens(ch.contextTotal)}` }),
+                    el('span', { textContent: `${fmtRate(ch.latestTokPerSec)} tok/s` }),
+                    el('span', { title: fmtInt(ch.outputTokens), textContent: `Out ${fmtTokens(ch.outputTokens)}` }),
+                    el('span', { textContent: fmtCost(ch.costActual, currency) }),
+                  ),
+                  el('div', { className: 'child-actions' },
+                    el('button', {
+                      type: 'button',
+                      className: 'mini-btn accent',
+                      textContent: t('childrenModels.inspectBtn'),
+                      onClick: () => selectConversation(ch.conversationId),
+                    }),
+                    el('button', {
+                      type: 'button',
+                      className: 'mini-btn',
+                      textContent: t('childrenModels.openChatBtn'),
+                      onClick: () => openConversationInHost(ch.conversationId),
+                    }),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      );
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 10:15:00
+// ============================================================================
+
+    // ============================================================================
+    // [MODIFIED BEGIN] 2026-11-16 21:11:00
+    // Description: Expand Tab 1 per-model breakdown table to 7 columns with 总计 (input + cache + output total throughput tokens) and raw model ID display.
+    // ============================================================================
+    // ============================================================================
+    // [MODIFIED BEGIN] 2026-11-17 10:15:00
+    // Description: Localize Tab 1 per-model table headers, tooltips, and empty label.
+    // ============================================================================
+    nodes.push(
+      el('div', { className: 'section-subhead', textContent: t('childrenModels.modelsSubhead') }),
+      byModel.length > 0
+        ? el('div', { className: 'table-scroll' },
+            el('table', { className: 'data-table tabular-nums' },
+              el('thead', null,
+                el('tr', null,
+                  el('th', null, t('childrenModels.colModel')),
+                  el('th', { className: 'num' }, t('childrenModels.colSteps')),
+                  el('th', { className: 'num' }, t('childrenModels.colInput')),
+                  el('th', { className: 'num' }, t('childrenModels.colCache')),
+                  el('th', { className: 'num' }, t('childrenModels.colOutput')),
+                  el('th', { className: 'num total-col', title: t('childrenModels.colTotalTip') }, t('childrenModels.colTotal')),
+                  el('th', { className: 'num' }, t('childrenModels.colCost')),
+                ),
+              ),
+              el('tbody', null,
+                byModel.map((row) => {
+                  const profLabel = state.lang === 'en' && row.profileId && MODEL_PROFILE_EN[row.profileId]
+                    ? MODEL_PROFILE_EN[row.profileId].label
+                    : row.profileLabel;
+                  const rateTip = profLabel
+                    ? t('childrenModels.rateTip', {
+                        model: row.model || 'Auto',
+                        profile: profLabel,
+                        rate: row.rateDisplay || '',
+                      })
+                    : row.model || 'Auto';
+                  const totalTok = num(row.totalTokens, num(row.inputUncachedTokens, 0) + num(row.cacheReadTokens, 0) + num(row.outputTokens, 0));
+                  return el('tr', null,
+                    el('td', { className: 'model-cell', title: rateTip, textContent: row.model || 'Auto' }),
+                    el('td', { className: 'num', textContent: fmtInt(row.stepsCount) }),
+                    el('td', { className: 'num', title: fmtInt(row.inputUncachedTokens), textContent: fmtTokens(row.inputUncachedTokens) }),
+                    el('td', { className: 'num', title: fmtInt(row.cacheReadTokens), textContent: fmtTokens(row.cacheReadTokens) }),
+                    el('td', { className: 'num', title: fmtInt(row.outputTokens), textContent: fmtTokens(row.outputTokens) }),
+                    el('td', { className: 'num total-col', title: fmtInt(totalTok), textContent: fmtTokens(totalTok) }),
+                    el('td', { className: 'num', textContent: fmtCost(row.costActual, currency) }),
+                  );
+                }),
+              ),
+            ),
+          )
+        : el('div', { className: 'empty-inline', textContent: t('childrenModels.modelsEmpty') }),
+    );
+    // ============================================================================
+    // [MODIFIED END] 2026-11-17 10:15:00
+    // ============================================================================
+    // ============================================================================
+    // [MODIFIED END] 2026-11-16 21:11:00
+    // ============================================================================
+
+    card.replaceChildren(...nodes);
+  }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 10:15:00
+// Description: Localize fallback session title in renderCurrentTab.
+// ============================================================================
+  function renderCurrentTab(snap) {
+    const emptyEl = $('current-empty');
+    const contentEl = $('current-content');
+    const current = snap?.current || null;
+
+    if (!current) {
+      emptyEl.classList.remove('hidden');
+      contentEl.classList.add('hidden');
+      return;
+    }
+
+    emptyEl.classList.add('hidden');
+    contentEl.classList.remove('hidden');
+
+    const titleText = localizeConvTitle(current.title) || t('common.sessionPrefix', { id: shortId(current.conversationId) });
+    $('conv-title').textContent = titleText;
+    $('conv-title').title = `${titleText} (${current.conversationId})`;
+
+    const wsBase = workspaceBase(current.workspace);
+    $('conv-workspace').textContent = wsBase;
+    $('conv-workspace').title = current.workspace || '';
+
+    renderSpeedCard(current);
+    renderCostCard(current, snap.prefs);
+    renderContextCard(current);
+    renderCacheCard(current);
+    renderChildrenAndModelsCard(current, snap.prefs);
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 10:15:00
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 10:15:00
+// Description: Add Tab 2 bilingual translation (resolving period name via rangeKey),
+// 4-mode token unit toggle pill in Usage Summary header, muted avg-daily-cost sub-line,
+// horizontally scrollable & mouse-draggable trend bar chart with scroll preservation,
+// and EN/ZH header toggle binding.
+// ============================================================================
+  function attachTrendChartInteractions(scrollEl) {
+    let isDown = false;
+    let dragged = false;
+    let startX = 0;
+    let startScrollLeft = 0;
+    let activePointerId = null;
+    let suppressClickUntil = 0;
+
+    scrollEl.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      isDown = true;
+      dragged = false;
+      activePointerId = e.pointerId;
+      startX = e.clientX;
+      startScrollLeft = scrollEl.scrollLeft;
+    });
+
+    scrollEl.addEventListener('pointermove', (e) => {
+      if (!isDown || e.pointerId !== activePointerId) return;
+      const dx = e.clientX - startX;
+      if (!dragged && Math.abs(dx) > 5) {
+        dragged = true;
+        state.isDraggingTrend = true;
+        scrollEl.classList.add('is-dragging');
+        try {
+          scrollEl.setPointerCapture(e.pointerId);
+        } catch {
+          // Ignore if detached
+        }
+      }
+      if (dragged) {
+        scrollEl.scrollLeft = startScrollLeft - dx;
+        state.trendScrollLeft = scrollEl.scrollLeft;
+      }
+    });
+
+    const endDrag = (e) => {
+      if (!isDown || (e.pointerId !== undefined && e.pointerId !== activePointerId)) return;
+      isDown = false;
+      activePointerId = null;
+      state.isDraggingTrend = false;
+      scrollEl.classList.remove('is-dragging');
+      if (e.pointerId !== undefined) {
+        try {
+          if (scrollEl.hasPointerCapture?.(e.pointerId)) {
+            scrollEl.releasePointerCapture(e.pointerId);
+          }
+        } catch {
+          // Ignore release errors
+        }
+      }
+      if (dragged) {
+        suppressClickUntil = Date.now() + 80;
+      }
+      if (state.pendingGlobalRerender && state.snapshot) {
+        state.pendingGlobalRerender = false;
+        renderGlobalTab(state.snapshot);
+      }
+    };
+
+    scrollEl.addEventListener('pointerup', endDrag);
+    scrollEl.addEventListener('pointercancel', endDrag);
+    scrollEl.addEventListener('pointerleave', () => {
+      if (isDown && !dragged) {
+        isDown = false;
+        activePointerId = null;
+      }
+    });
+
+    scrollEl.addEventListener(
+      'click',
+      (e) => {
+        if (dragged || Date.now() < suppressClickUntil) {
+          e.preventDefault();
+          e.stopPropagation();
+          dragged = false;
+        }
+      },
+      true,
+    );
+
+    scrollEl.addEventListener(
+      'wheel',
+      (e) => {
+        if (e.deltaY !== 0 && scrollEl.scrollWidth > scrollEl.clientWidth) {
+          e.preventDefault();
+          scrollEl.scrollLeft += e.deltaY;
+          state.trendScrollLeft = scrollEl.scrollLeft;
+        }
+      },
+      { passive: false },
+    );
+
+    scrollEl.addEventListener('scroll', () => {
+      if (!state.trendNeedsRightAlign && scrollEl.scrollWidth > 0) {
+        state.trendScrollLeft = scrollEl.scrollLeft;
+      }
+    });
+  }
+
+  function syncTrendScrollPosition() {
+    if (state.activeTab !== 'global') return;
+    const scrollEl = $('global-content')?.querySelector('.trend-scroll');
+    if (!scrollEl) return;
+    const apply = () => {
+      if (!scrollEl.isConnected || state.activeTab !== 'global') return;
+      if (state.trendNeedsRightAlign) {
+        scrollEl.scrollLeft = scrollEl.scrollWidth;
+        state.trendScrollLeft = scrollEl.scrollLeft;
+        state.trendNeedsRightAlign = false;
+      } else {
+        scrollEl.scrollLeft = state.trendScrollLeft;
+      }
+    };
+    apply();
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(apply);
+    }
+  }
+
+  // ---------------- Render Tab 2: Multi-Period Usage Statistics ----------------
+  function renderGlobalTab(snap) {
+    const container = $('global-content');
+    const g = snap?.global || {};
+    const currency = snap?.prefs?.currency || 'USD';
+    const periods = g.periods || {};
+    const periodKey = ['today', '7d', '30d', 'all'].includes(state.globalPeriod)
+      ? state.globalPeriod
+      : 'today';
+
+    const fallbackToday = {
+      rangeKey: 'today',
+      startDate: g.todayDate || '',
+      endDate: g.todayDate || '',
+      spanDaysCount: 1,
+      activeDaysCount: num(g.todayConversationsCount, 0) > 0 ? 1 : 0,
+      conversationsCount: num(g.todayConversationsCount, 0),
+      archivedConversationsCount: 0,
+      stepsCount: 0,
+      inputTokens: num(g.todayInputTokens, 0),
+      cacheReadTokens: num(g.todayCacheReadTokens, 0),
+      outputTokens: num(g.todayOutputTokens, 0),
+      totalTokens: num(g.todayInputTokens, 0) + num(g.todayCacheReadTokens, 0) + num(g.todayOutputTokens, 0),
+      cacheHitRatePct: num(g.todayCacheHitRatePct, 0),
+      costActual: num(g.todayCostActual, 0),
+      avgDailyCost: num(g.todayCostActual, 0),
+      avgDailyTokens: num(g.todayInputTokens, 0) + num(g.todayCacheReadTokens, 0) + num(g.todayOutputTokens, 0),
+      trendGranularity: 'hour',
+      series: [],
+      byModel: Array.isArray(g.todayByModel) ? g.todayByModel : [],
+      topConversations: [],
+      subscription: null,
+    };
+
+    const period = periods[periodKey] || periods.today || fallbackToday;
+    const effectiveRangeKey = period.rangeKey || periodKey;
+    const periodTitle = getPeriodLabel(effectiveRangeKey);
+    const recent = Array.isArray(g.recentConversations) ? g.recentConversations : [];
+    const viewingId = snap?.current?.conversationId || selectedConv;
+
+    // 1. Period Switcher Bar
+    const periodDefs = [
+      { key: 'today', label: getPeriodLabel('today') },
+      { key: '7d', label: getPeriodLabel('7d') },
+      { key: '30d', label: getPeriodLabel('30d') },
+      { key: 'all', label: getPeriodLabel('all') },
+    ];
+    const dateRangeLabel =
+      period.startDate && period.endDate && period.startDate !== period.endDate
+        ? `${period.startDate} ~ ${period.endDate}`
+        : period.startDate || g.todayDate || getPeriodLabel('today');
+
+    const periodBar = el('div', { className: 'period-bar' },
+      el('div', { className: 'period-tabs', role: 'group', 'aria-label': t('periods.aria') },
+        periodDefs.map((d) => el('button', {
+          type: 'button',
+          className: `period-btn${periodKey === d.key ? ' active' : ''}`,
+          textContent: d.label,
+          onClick: () => {
+            if (state.globalPeriod !== d.key) {
+              state.globalPeriod = d.key;
+              state.selectedSeriesIdx = null;
+              if (state.snapshot) renderGlobalTab(state.snapshot);
+            }
+          },
+        })),
+      ),
+      el('span', { className: 'period-range-text tabular-nums', textContent: dateRangeLabel }),
+    );
+
+    // 2. Subscription Value & Savings Card
+    const sub = period.subscription || null;
+    let subRoiCard = null;
+    if (sub) {
+      const planName = getPlanLabel(sub.planId, sub.planLabel);
+      const planBadgeText = sub.isAutoDetected
+        ? t('roi.autoBadge', { plan: planName, fee: fmtCostCompact(sub.monthlyFee, currency) })
+        : t('roi.manualBadge', { plan: planName, fee: fmtCostCompact(sub.monthlyFee, currency) });
+
+      let heroNode;
+      let barPct = 0;
+      let barClass = 'roi-fill';
+      let captionText = '';
+
+      if (sub.monthlyFee <= 0) {
+        barPct = 100;
+        barClass = 'roi-fill is-paid';
+        heroNode = el('div', { className: 'roi-hero is-paid tabular-nums' },
+          t('roi.freeHero', { cost: fmtCostCompact(sub.tokenCost, currency) }),
+        );
+        captionText = t('roi.freeCaption', {
+          period: periodTitle,
+          cost: fmtCostCompact(sub.tokenCost, currency),
+          zero: fmtCostCompact(0, currency),
+        });
+      } else if (sub.isPaidOff) {
+        barPct = 100;
+        barClass = 'roi-fill is-paid';
+        const multText = Number.isFinite(sub.roiMultiplier)
+          ? t('roi.multBadge', { mult: sub.roiMultiplier.toFixed(2) })
+          : '';
+        heroNode = el('div', { className: 'roi-hero-row tabular-nums' },
+          el('span', { className: 'roi-hero is-paid', textContent: t('roi.netSaved', { cost: fmtCostCompact(sub.netSavings, currency) }) }),
+          multText ? el('span', { className: 'roi-mult-badge', textContent: multText }) : null,
+        );
+        captionText = t('roi.paidCaption', {
+          period: periodTitle,
+          cost: fmtCostCompact(sub.tokenCost, currency),
+          prorated: fmtCostCompact(sub.proratedFee, currency),
+          monthly: fmtCostCompact(sub.monthlyFee, currency),
+        });
+      } else {
+        barPct = Math.min(100, Math.max(0, num(sub.paybackPct, 0)));
+        heroNode = el('div', { className: 'roi-hero-row tabular-nums' },
+          el('span', { className: 'roi-hero', textContent: t('roi.paybackPct', { pct: barPct.toFixed(1) }) }),
+          el('span', { className: 'muted-hint', textContent: t('roi.toBreakEven', { cost: fmtCostCompact(-sub.netSavings, currency) }) }),
+        );
+        captionText = t('roi.paidCaption', {
+          period: periodTitle,
+          cost: fmtCostCompact(sub.tokenCost, currency),
+          prorated: fmtCostCompact(sub.proratedFee, currency),
+          monthly: fmtCostCompact(sub.monthlyFee, currency),
+        });
+      }
+
+      subRoiCard = el('article', { className: 'card sub-roi-card' },
+        el('div', { className: 'card-head' },
+          el('div', { className: 'card-title' },
+            el('span', { className: 'card-title-dot' }),
+            t('roi.title'),
+          ),
+          el('button', {
+            type: 'button',
+            className: 'mini-btn accent tabular-nums',
+            textContent: planBadgeText,
+            title: t('roi.badgeTitle'),
+            onClick: () => setDrawerOpen(true),
+          }),
+        ),
+        heroNode,
+        el('div', { className: 'roi-track' },
+          el('div', { className: barClass, style: { width: `${barPct.toFixed(1)}%` } }),
+        ),
+        el('div', { className: 'roi-caption tabular-nums', textContent: captionText }),
+      );
+    }
+
+    // 3. Period KPI Strip + 4-mode Unit Switcher Pill
+    const unitDefs = [
+      { key: 'auto', label: 'K/M' },
+      { key: 'wan_yi', label: '万/亿' },
+      { key: 'exact', label: '1,234' },
+      { key: 'm', label: 'M' },
+    ];
+    const unitToggle = el('div', { className: 'seg-toggle unit-toggle', role: 'group', 'aria-label': t('global.unitAria') },
+      unitDefs.map((u) => el('button', {
+        type: 'button',
+        className: `seg-btn${state.tokenUnit === u.key ? ' active' : ''}`,
+        textContent: u.label,
+        onClick: () => {
+          if (state.tokenUnit !== u.key) {
+            state.tokenUnit = u.key;
+            const unitSelect = $('pref-token-unit');
+            if (unitSelect) unitSelect.value = u.key;
+            if (state.snapshot?.prefs) state.snapshot.prefs.tokenUnit = u.key;
+            if (state.snapshot) {
+              renderCurrentTab(state.snapshot);
+              renderGlobalTab(state.snapshot);
+            }
+            patchPrefs({ tokenUnit: u.key });
+          }
+        },
+      })),
+    );
+
+    const convSubHint =
+      period.archivedConversationsCount > 0
+        ? t('global.activeWithArchived', {
+            active: fmtInt(period.activeDaysCount),
+            archived: fmtInt(period.archivedConversationsCount),
+          })
+        : t('global.activeDays', {
+            active: fmtInt(period.activeDaysCount),
+            span: fmtInt(period.spanDaysCount),
+          });
+
+    const summaryCard = el('article', { className: 'card' },
+      el('div', { className: 'card-head' },
+        el('div', { className: 'card-title' },
+          el('span', { className: 'card-title-dot' }),
+          t('global.summaryTitle', { period: periodTitle }),
+        ),
+        el('div', { className: 'summary-head-right' },
+          el('span', { className: 'muted-hint tabular-nums', textContent: t('global.stepsCount', { count: fmtInt(period.stepsCount) }) }),
+          unitToggle,
+        ),
+      ),
+      el('div', { className: 'kpi-strip tabular-nums' },
+        el('div', { className: 'kpi-tile' },
+          el('span', { className: 'kpi-label', textContent: t('global.kpiSessions') }),
+          el('span', { className: 'kpi-val', textContent: fmtInt(period.conversationsCount) }),
+          el('span', { className: 'muted-hint', textContent: convSubHint }),
+        ),
+        el('div', { className: 'kpi-tile' },
+          el('span', { className: 'kpi-label', textContent: t('global.kpiTotalTokens') }),
+          el('span', { className: 'kpi-val', title: fmtInt(period.totalTokens), textContent: fmtTokens(period.totalTokens) }),
+          el('span', {
+            className: 'muted-hint',
+            title: `${fmtInt(period.avgDailyTokens)} / ${fmtInt(period.outputTokens)}`,
+            textContent: t('global.avgOutSub', {
+              avg: fmtTokens(period.avgDailyTokens),
+              out: fmtTokens(period.outputTokens),
+            }),
+          }),
+        ),
+        el('div', { className: 'kpi-tile' },
+          el('span', { className: 'kpi-label', textContent: t('global.kpiCacheHit') }),
+          el('span', { className: 'kpi-val', textContent: fmtPct(period.cacheHitRatePct) }),
+          el('span', {
+            className: 'muted-hint',
+            title: fmtInt(period.inputTokens),
+            textContent: t('global.uncachedSub', { input: fmtTokens(period.inputTokens) }),
+          }),
+        ),
+        el('div', { className: 'kpi-tile' },
+          el('span', { className: 'kpi-label', textContent: t('global.kpiEstCost') }),
+          el('span', { className: 'kpi-val', textContent: fmtCostCompact(period.costActual, currency) }),
+          el('span', {
+            className: 'muted-hint',
+            textContent: t('global.avgDailyCost', { cost: fmtCostCompact(period.avgDailyCost, currency) }),
+          }),
+        ),
+      ),
+    );
+
+    // 4. Adaptive Horizontally Scrollable & Mouse-Draggable Trend Bar Chart Card
+    const series = Array.isArray(period.series) ? period.series : [];
+    const metricKey = state.trendMetric === 'tokens' ? 'tokens' : 'cost';
+    const isWeekly = period.trendGranularity === 'week';
+    const trendTitle =
+      period.trendGranularity === 'hour'
+        ? t('global.trendHourTitle')
+        : isWeekly
+          ? t('global.trendWeekTitle')
+          : t('global.trendDayTitle', { period: periodTitle });
+
+    const nextScrollKey = `${periodKey}:${series.length}`;
+    if (state.trendScrollKey !== nextScrollKey) {
+      state.trendScrollKey = nextScrollKey;
+      state.trendNeedsRightAlign = true;
+    }
+
+    const metricToggle = el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('global.trendMetricAria') },
+      el('button', {
+        type: 'button',
+        className: `seg-btn${metricKey === 'cost' ? ' active' : ''}`,
+        textContent: t('global.metricCost'),
+        onClick: () => {
+          if (state.trendMetric !== 'cost') {
+            state.trendMetric = 'cost';
+            if (state.snapshot) renderGlobalTab(state.snapshot);
+          }
+        },
+      }),
+      el('button', {
+        type: 'button',
+        className: `seg-btn${metricKey === 'tokens' ? ' active' : ''}`,
+        textContent: t('global.metricTokens'),
+        onClick: () => {
+          if (state.trendMetric !== 'tokens') {
+            state.trendMetric = 'tokens';
+            if (state.snapshot) renderGlobalTab(state.snapshot);
+          }
+        },
+      }),
+    );
+
+    const seriesValues = series.map((s) =>
+      metricKey === 'tokens' ? num(s.totalTokens, 0) : num(s.costActual, 0),
+    );
+    const maxSeriesVal = seriesValues.reduce((m, v) => Math.max(m, v), 0);
+
+    let defaultActiveIdx = series.length > 0 ? series.length - 1 : -1;
+    if (defaultActiveIdx >= 0 && seriesValues[defaultActiveIdx] === 0) {
+      for (let idx = series.length - 1; idx >= 0; idx--) {
+        if (seriesValues[idx] > 0) {
+          defaultActiveIdx = idx;
+          break;
+        }
+      }
+    }
+    const activeIdx =
+      state.selectedSeriesIdx !== null &&
+      state.selectedSeriesIdx >= 0 &&
+      state.selectedSeriesIdx < series.length
+        ? state.selectedSeriesIdx
+        : defaultActiveIdx;
+
+    const formatBucketDetail = (bucket) => {
+      if (!bucket) return t('global.trendPrompt');
+      return t('global.bucketDetail', {
+        range: bucket.rangeText || bucket.label,
+        cost: fmtCostCompact(bucket.costActual, currency),
+        total: fmtTokens(bucket.totalTokens),
+        out: fmtTokens(bucket.outputTokens),
+      });
+    };
+
+    const detailStrip = el('div', {
+      className: 'trend-detail tabular-nums',
+      textContent: activeIdx >= 0 ? formatBucketDetail(series[activeIdx]) : t('global.trendEmptyDetail'),
+    });
+
+    let trendScrollEl = null;
+    if (series.length > 0) {
+      trendScrollEl = el('div', { className: 'trend-scroll' },
+        el('div', { className: 'trend-track' },
+          series.map((bucket, idx) => {
+            const v = seriesValues[idx];
+            const hPct = maxSeriesVal > 0 && v > 0 ? Math.max(8, Math.round((v / maxSeriesVal) * 100)) : 3;
+            const isZero = v <= 0;
+            const isSelected = idx === activeIdx;
+            const barBtn = el('button', {
+              type: 'button',
+              className: `trend-col${isWeekly ? ' is-weekly' : ''}${isZero ? ' is-zero' : ''}${isSelected ? ' is-selected' : ''}`,
+              title: formatBucketDetail(bucket),
+              onMouseEnter: () => {
+                if (!state.isDraggingTrend) {
+                  detailStrip.textContent = formatBucketDetail(bucket);
+                }
+              },
+              onClick: () => {
+                state.selectedSeriesIdx = idx;
+                detailStrip.textContent = formatBucketDetail(bucket);
+                barBtn.parentElement?.querySelectorAll('.trend-col').forEach((n, i) => {
+                  n.classList.toggle('is-selected', i === idx);
+                });
+              },
+            },
+              el('div', { className: 'trend-bar-track' },
+                el('div', { className: 'trend-bar-fill', style: { height: `${hPct}%` } }),
+              ),
+              el('span', { className: 'trend-col-label tabular-nums', textContent: bucket.label }),
+            );
+            return barBtn;
+          }),
+        ),
+      );
+      attachTrendChartInteractions(trendScrollEl);
+    }
+
+    const trendCard = el('article', { className: 'card' },
+      el('div', { className: 'card-head' },
+        el('div', { className: 'card-title' },
+          el('span', { className: 'card-title-dot' }),
+          trendTitle,
+        ),
+        metricToggle,
+      ),
+      trendScrollEl
+        ? [trendScrollEl, detailStrip]
+        : el('div', { className: 'empty-inline', textContent: t('global.trendEmpty') }),
+    );
+// ============================================================================
+// [MODIFIED END] 2026-11-17 10:15:00
+// ============================================================================
+
+    // ============================================================================
+    // [MODIFIED BEGIN] 2026-11-16 21:11:00
+    // Description: Expand Tab 2 multi-period model breakdown table to 7 columns with 总计 (input + cache + output total throughput tokens) and raw model ID display.
+    // ============================================================================
+    // ============================================================================
+    // [MODIFIED BEGIN] 2026-11-17 10:15:00
+    // Description: Localize Tab 2 per-model breakdown card title, column headers, tooltips, and empty label.
+    // ============================================================================
+    // 5. Period By-Model Breakdown Card
+    const periodByModel = Array.isArray(period.byModel) ? period.byModel : [];
+    const modelCard = el('article', { className: 'card' },
+      el('div', { className: 'card-head' },
+        el('div', { className: 'card-title' },
+          el('span', { className: 'card-title-dot' }),
+          t('global.modelsTitle', { period: periodTitle }),
+        ),
+      ),
+      periodByModel.length > 0
+        ? el('div', { className: 'table-scroll' },
+            el('table', { className: 'data-table tabular-nums' },
+              el('thead', null,
+                el('tr', null,
+                  el('th', null, t('childrenModels.colModel')),
+                  el('th', { className: 'num' }, t('global.colChats')),
+                  el('th', { className: 'num' }, t('childrenModels.colInput')),
+                  el('th', { className: 'num' }, t('childrenModels.colCache')),
+                  el('th', { className: 'num' }, t('childrenModels.colOutput')),
+                  el('th', { className: 'num total-col', title: t('childrenModels.colTotalTip') }, t('childrenModels.colTotal')),
+                  el('th', { className: 'num' }, t('childrenModels.colCost')),
+                ),
+              ),
+              el('tbody', null,
+                periodByModel.map((row) => {
+                  const profLabel = state.lang === 'en' && row.profileId && MODEL_PROFILE_EN[row.profileId]
+                    ? MODEL_PROFILE_EN[row.profileId].label
+                    : row.profileLabel;
+                  const rateTip = profLabel
+                    ? t('childrenModels.rateTip', {
+                        model: row.model || 'Auto',
+                        profile: profLabel,
+                        rate: row.rateDisplay || '',
+                      })
+                    : row.model || 'Auto';
+                  const totalTok = num(row.totalTokens, num(row.inputTokens, 0) + num(row.cacheReadTokens, 0) + num(row.outputTokens, 0));
+                  return el('tr', null,
+                    el('td', { className: 'model-cell', title: rateTip, textContent: row.model || 'Auto' }),
+                    el('td', { className: 'num', textContent: fmtInt(row.conversationsCount) }),
+                    el('td', { className: 'num', title: fmtInt(row.inputTokens), textContent: fmtTokens(row.inputTokens) }),
+                    el('td', { className: 'num', title: fmtInt(row.cacheReadTokens), textContent: fmtTokens(row.cacheReadTokens) }),
+                    el('td', { className: 'num', title: fmtInt(row.outputTokens), textContent: fmtTokens(row.outputTokens) }),
+                    el('td', { className: 'num total-col', title: fmtInt(totalTok), textContent: fmtTokens(totalTok) }),
+                    el('td', { className: 'num', textContent: fmtCostCompact(row.costActual, currency) }),
+                  );
+                }),
+              ),
+            ),
+          )
+        : el('div', { className: 'empty-inline', textContent: t('global.modelsEmpty') }),
+    );
+    // ============================================================================
+    // [MODIFIED END] 2026-11-17 10:15:00
+    // ============================================================================
+    // ============================================================================
+    // [MODIFIED END] 2026-11-16 21:11:00
+    // ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 10:15:00
+// Description: Localize Recent/Top 20 conversations card, sync trend scroll position,
+// sync language/tokenUnit preferences in pollSnapshot, and bind EN/ZH header toggle.
+// ============================================================================
+    // 6. Conversations List Card (Recent Active | Top Cost in Period)
+    const listMode = state.convListMode === 'top' ? 'top' : 'recent';
+    const topConvs = Array.isArray(period.topConversations) ? period.topConversations : [];
+    const listItems = listMode === 'top' ? topConvs : recent;
+
+    const listToggle = el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('global.convSortAria') },
+      el('button', {
+        type: 'button',
+        className: `seg-btn${listMode === 'recent' ? ' active' : ''}`,
+        textContent: t('global.sortRecent'),
+        onClick: () => {
+          if (state.convListMode !== 'recent') {
+            state.convListMode = 'recent';
+            if (state.snapshot) renderGlobalTab(state.snapshot);
+          }
+        },
+      }),
+      el('button', {
+        type: 'button',
+        className: `seg-btn${listMode === 'top' ? ' active' : ''}`,
+        textContent: t('global.sortTop'),
+        onClick: () => {
+          if (state.convListMode !== 'top') {
+            state.convListMode = 'top';
+            if (state.snapshot) renderGlobalTab(state.snapshot);
+          }
+        },
+      }),
+    );
+
+    const recentCard = el('article', { className: 'card' },
+      el('div', { className: 'card-head' },
+        el('div', { className: 'card-title' },
+          el('span', { className: 'card-title-dot' }),
+          listMode === 'top'
+            ? t('global.topConvsTitle', { period: periodTitle, count: listItems.length })
+            : t('global.recentConvsTitle', { count: listItems.length }),
+        ),
+        listToggle,
+      ),
+      listItems.length > 0
+        ? el('div', { className: 'recent-list' },
+            listItems.map((item) => {
+              const onDisk = item.onDisk !== false;
+              const isSelected = onDisk && viewingId && item.conversationId === viewingId;
+              const title = localizeConvTitle(item.title) || t('common.sessionPrefix', { id: shortId(item.conversationId) });
+              const ws = workspaceBase(item.workspace);
+              const itemStatus = item.status || 'IDLE';
+
+              const rowProps = {
+                className: `recent-item${isSelected ? ' is-selected' : ''}${onDisk ? '' : ' is-archived'}`,
+                title: `${title}\n${item.workspace || ''}\n${item.conversationId}`,
+              };
+              if (onDisk) {
+                rowProps.role = 'button';
+                rowProps.tabIndex = 0;
+                rowProps.onClick = () => selectConversation(item.conversationId);
+                rowProps.onKeyDown = (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    selectConversation(item.conversationId);
+                  }
+                };
+              }
+
+              return el('div', rowProps,
+                el('div', { className: 'recent-top' },
+                  el('div', { className: 'recent-title-wrap' },
+                    !onDisk
+                      ? el('span', { className: 'archived-pill', textContent: t('global.badgeArchived') })
+                      : item.isToday
+                        ? el('span', { className: 'today-pill', textContent: t('global.badgeToday') })
+                        : null,
+                    el('span', { className: 'recent-title', textContent: title }),
+                  ),
+                  onDisk
+                    ? el('button', {
+                        type: 'button',
+                        className: 'mini-btn',
+                        textContent: t('global.openChat'),
+                        onClick: (e) => {
+                          e.stopPropagation();
+                          openConversationInHost(item.conversationId);
+                        },
+                      })
+                    : null,
+                ),
+                el('div', { className: 'recent-meta tabular-nums' },
+                  el('div', { className: 'recent-stats' },
+                    onDisk
+                      ? el('span', {
+                          className: `child-status ${itemStatus}`,
+                          textContent: itemStatus === 'GENERATING'
+                            ? t('global.itemGenerating')
+                            : itemStatus === 'RUNNING_TOOLS'
+                              ? t('global.itemTools')
+                              : t('global.itemIdle'),
+                        })
+                      : null,
+                    el('span', { textContent: item.activeModel || 'Auto' }),
+                    ws ? el('span', { textContent: ws }) : null,
+                    el('span', { textContent: fmtRelTime(item.updatedAtMs) }),
+                  ),
+                  el('div', { className: 'recent-stats' },
+                    onDisk ? el('span', { title: fmtInt(item.contextTotal), textContent: `Ctx ${fmtTokens(item.contextTotal)}` }) : null,
+                    onDisk ? el('span', { textContent: `${fmtRate(item.latestTokPerSec)} tok/s` }) : null,
+                    el('span', { title: fmtInt(item.outputTokens), textContent: `Out ${fmtTokens(item.outputTokens)}` }),
+                    el('span', { textContent: fmtCostCompact(item.costActual, currency) }),
+                  ),
+                ),
+              );
+            }),
+          )
+        : el('div', { className: 'empty-inline', textContent: t('global.convsEmpty') }),
+    );
+
+    const nodes = [periodBar, subRoiCard, summaryCard, trendCard, modelCard, recentCard].filter(Boolean);
+    container.replaceChildren(...nodes);
+    syncTrendScrollPosition();
+  }
+
+  // ---------------- Polling Loop ----------------
+  async function pollSnapshot(force = false) {
+    const seq = ++state.requestSeq;
+    const reqConv = selectedConv;
+    const reqEtag = force ? '' : lastEtag;
+
+    try {
+      const url = `/api/snapshot?conv=${encodeURIComponent(reqConv)}&etag=${encodeURIComponent(reqEtag)}`;
+      const res = await apiFetch(url, { method: 'GET' });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+
+      // Discard stale responses after conversation switch
+      if (seq !== state.requestSeq || reqConv !== selectedConv) {
+        return;
+      }
+
+      if (Number.isFinite(Number(data?.serverTimeMs))) {
+        state.serverClockOffsetMs = Number(data.serverTimeMs) - Date.now();
+      }
+
+      if (state.lastError) {
+        state.lastError = '';
+        $('error-banner').classList.add('hidden');
+      }
+
+      $('loading-state').classList.add('hidden');
+
+      if (data?.unchanged === true) {
+        if (data.etag) lastEtag = String(data.etag);
+        return;
+      }
+
+      lastEtag = String(data?.etag || '');
+      state.snapshot = data;
+      if (!state.homeConvId) {
+        state.homeConvId = boundConvId || data?.boundConversationId || data?.current?.conversationId || '';
+      }
+
+      if (state.pendingPrefSaves === 0 && data?.prefs) {
+        const nextLang = VALID_LANGUAGES.includes(data.prefs.language) ? data.prefs.language : 'zh';
+        const nextUnit = VALID_TOKEN_UNITS.includes(data.prefs.tokenUnit) ? data.prefs.tokenUnit : 'auto';
+        if (nextLang !== state.lang) {
+          state.lang = nextLang;
+          applyStaticTranslations();
+        }
+        state.tokenUnit = nextUnit;
+      }
+
+      if (!state.drawerOpen && data?.prefs) {
+        populateSettingsForm(data.prefs);
+      }
+
+      renderHeader(data);
+      renderCurrentTab(data);
+      if (state.isDraggingTrend) {
+        state.pendingGlobalRerender = true;
+      } else {
+        renderGlobalTab(data);
+      }
+    } catch (err) {
+      if (seq !== state.requestSeq) return;
+      $('loading-state').classList.add('hidden');
+      state.lastError = err?.message || t('common.backendConnFailed');
+      const errBanner = $('error-banner');
+      errBanner.textContent = t('common.fetchErrorPrefix', { msg: state.lastError });
+      errBanner.classList.remove('hidden');
+    }
+  }
+
+  // ---------------- Event Bindings & Bootstrap ----------------
+  function init() {
+    applyStaticTranslations();
+
+    $('btn-lang-toggle').addEventListener('click', () => {
+      state.lang = state.lang === 'zh' ? 'en' : 'zh';
+      applyStaticTranslations();
+      if (state.snapshot?.prefs) {
+        state.snapshot.prefs.language = state.lang;
+      }
+      if (state.lastError) {
+        $('error-banner').textContent = t('common.fetchErrorPrefix', { msg: state.lastError });
+      }
+      if (state.snapshot) {
+        renderHeader(state.snapshot);
+        renderCurrentTab(state.snapshot);
+        renderGlobalTab(state.snapshot);
+      }
+      if (state.drawerOpen) {
+        renderModelSelectOptions();
+        updateConditionalSettingsFields();
+      }
+      patchPrefs({ language: state.lang });
+    });
+
+    $('tabbtn-current').addEventListener('click', () => setActiveTab('current'));
+    $('tabbtn-global').addEventListener('click', () => setActiveTab('global'));
+    $('btn-goto-global').addEventListener('click', () => setActiveTab('global'));
+
+    $('btn-back-bound').addEventListener('click', () => {
+      if (state.homeConvId) {
+        selectConversation(state.homeConvId);
+      }
+    });
+
+    $('btn-settings').addEventListener('click', () => setDrawerOpen(!state.drawerOpen));
+    $('btn-settings-cancel').addEventListener('click', () => setDrawerOpen(false));
+    $('settings-form').addEventListener('submit', saveSettings);
+
+    $('pref-currency').addEventListener('change', updateConditionalSettingsFields);
+    $('pref-cny-rate').addEventListener('input', renderCatalogPreviewTable);
+    $('pref-sub-plan').addEventListener('change', updateConditionalSettingsFields);
+
+    $('pref-model-select').addEventListener('change', (e) => {
+      stageCurrentProfileFromInputs();
+      state.selectedProfileId = e.target.value;
+      loadSelectedProfileInputs();
+    });
+
+    ['pref-input-price', 'pref-cached-price', 'pref-output-price'].forEach((id) => {
+      $(id).addEventListener('input', stageCurrentProfileFromInputs);
+    });
+    $('pref-long-tier').addEventListener('change', stageCurrentProfileFromInputs);
+
+    $('btn-reset-model').addEventListener('click', () => {
+      delete state.draftModelOverrides[state.selectedProfileId];
+      renderModelSelectOptions();
+      loadSelectedProfileInputs();
+    });
+
+    $('btn-reset-all-models').addEventListener('click', () => {
+      state.draftModelOverrides = {};
+      renderModelSelectOptions();
+      loadSelectedProfileInputs();
+    });
+
+    $('btn-resync-ledger').addEventListener('click', handleResyncLedgerClick);
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        tickLiveStopwatch();
+      }
+    });
+
+    pollSnapshot(true);
+    setInterval(() => pollSnapshot(false), POLL_INTERVAL_MS);
+    setInterval(tickLiveStopwatch, STOPWATCH_INTERVAL_MS);
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 10:15:00
+// ============================================================================
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+// ============================================================================
+// [MODIFIED END] 2026-11-16 20:23:00
+// ============================================================================

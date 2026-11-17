@@ -1,0 +1,23 @@
+{
+  "command": "node",
+  "args": [
+    "main.mjs"
+  ],
+  "restart_policy": "always",
+  "display_name": "Token Monitor",
+  "description": "Live monitor for token generation speed (tok/s), active model, 400k/500k context thresholds with one-click /compact, bilingual EN/ZH UI, selectable token units, prompt cache hit rate, per-model pricing, subscription savings, and fork-deduplicated history.",
+  "has_web_ui": true,
+  "agent_permissions": {
+    "allows_user_interactions": false
+  },
+  "ui_config": {
+    "display_name": "Token Monitor",
+    "views": [
+      {
+        "path": "/",
+        "entrypoint": "SIDECAR_UI_ENTRYPOINT_AUX_PANE",
+        "title": "Token Monitor"
+      }
+    ]
+  }
+}

@@ -1,0 +1,274 @@
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-16 20:22:00
+Description: Upgrade Token Monitor HTML shell to v1.1 — rename threshold labels to
+上下文占用监控/提醒线/最大窗口, rename Tab 2 to 用量统计, and build 3-section settings
+drawer for context thresholds, subscription plans, and active per-model pricing.
+============================================================================ -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Token Monitor</title>
+  <script src="/preload.js"></script>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <!-- Top Sticky Header Bar -->
+    <header id="app-header" class="app-header">
+      <div class="header-top">
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-17 10:13:00
+Description: Add bilingual EN/ZH toggle button, data-i18n attributes on static DOM elements,
+4-mode token display unit selector (#pref-token-unit), and 400k/500k default limit placeholders.
+============================================================================ -->
+        <div class="header-pills">
+          <div id="status-pill" class="status-pill status-empty" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="status-text" class="status-text tabular-nums" data-i18n="header.waiting">等待会话</span>
+          </div>
+          <div id="model-pill" class="model-pill" title="当前模型" data-i18n-title="header.currentModel">
+            <span class="model-dot" aria-hidden="true"></span>
+            <span id="model-text" class="model-text">—</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button
+            id="btn-lang-toggle"
+            type="button"
+            class="lang-btn"
+            aria-label="Switch to English"
+            title="Switch to English"
+          >EN</button>
+          <button
+            id="btn-settings"
+            type="button"
+            class="icon-btn"
+            aria-label="计价与上下文设置"
+            aria-expanded="false"
+            aria-controls="settings-drawer"
+            title="计价与上下文设置"
+            data-i18n-aria-label="header.settingsLabel"
+            data-i18n-title="header.settingsLabel"
+          >
+            <svg class="icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <path d="M6.7 1.8h2.6l.4 1.5c.4.1.8.3 1.1.5l1.4-.7 1.8 1.8-.7 1.4c.2.3.4.7.5 1.1l1.5.4v2.6l-1.5.4c-.1.4-.3.8-.5 1.1l.7 1.4-1.8 1.8-1.4-.7c-.3.2-.7.4-1.1.5l-.4 1.5H6.7l-.4-1.5c-.4-.1-.8-.3-1.1-.5l-1.4.7-1.8-1.8.7-1.4c-.2-.3-.4-.7-.5-1.1L.7 9.3V6.7l1.5-.4c.1-.4.3-.8.5-1.1L2 3.8 3.8 2l1.4.7c.3-.2.7-.4 1.1-.5l.4-1.5Z"/>
+              <circle cx="8" cy="8" r="2.2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Non-bound conversation inspection banner -->
+      <div id="nonbound-banner" class="nonbound-banner hidden" role="region" aria-label="非当前绑定会话提示" data-i18n-aria-label="header.nonboundRegion">
+        <span id="nonbound-label" class="nonbound-label" data-i18n="header.viewingDefault">正在查看其他会话</span>
+        <button id="btn-back-bound" type="button" class="back-btn" data-i18n="header.backToCurrent">返回当前对话</button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="tabs" role="tablist" aria-label="监控视图切换" data-i18n-aria-label="tabs.navLabel">
+        <button
+          id="tabbtn-current"
+          type="button"
+          role="tab"
+          class="tab active"
+          data-tab="current"
+          aria-selected="true"
+          aria-controls="tab-current"
+        >
+          <span data-i18n="tabs.current">当前会话</span>
+        </button>
+        <button
+          id="tabbtn-global"
+          type="button"
+          role="tab"
+          class="tab"
+          data-tab="global"
+          aria-selected="false"
+          aria-controls="tab-global"
+        >
+          <span data-i18n="tabs.global">用量统计</span>
+          <span id="tab-today-badge" class="tab-badge tabular-nums hidden">0</span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- Collapsible Settings Drawer -->
+    <section id="settings-drawer" class="settings-drawer hidden" aria-label="计价与上下文设置" data-i18n-aria-label="header.settingsLabel">
+      <div class="drawer-inner">
+        <div class="drawer-header">
+          <span class="drawer-title" data-i18n="settings.title">计价与上下文设置</span>
+          <span class="drawer-subtitle" data-i18n="settings.subtitle">按在役模型自动细分计价 · 订阅对比实时重算</span>
+        </div>
+
+        <form id="settings-form" class="settings-form" novalidate>
+          <!-- Section 1: Context & Display -->
+          <div class="drawer-section">
+            <div class="drawer-section-title" data-i18n="settings.sec1Title">上下文与币种</div>
+            <div class="form-grid">
+              <label class="field">
+                <span class="field-label" data-i18n="settings.softLimitLabel">提醒线 (tokens)</span>
+                <input id="pref-soft-limit" type="number" min="1000" step="1000" placeholder="400000" class="field-input tabular-nums" required>
+              </label>
+              <label class="field">
+                <span class="field-label" data-i18n="settings.hardLimitLabel">最大窗口 (tokens)</span>
+                <input id="pref-hard-limit" type="number" min="1000" step="1000" placeholder="500000" class="field-input tabular-nums" required>
+              </label>
+              <label class="field">
+                <span class="field-label" data-i18n="settings.tokenUnitLabel">Token 显示单位</span>
+                <select id="pref-token-unit" class="field-input">
+                  <option value="auto" data-i18n="settings.unitAuto">K / M / B (自动缩放)</option>
+                  <option value="wan_yi" data-i18n="settings.unitWanYi">万 / 亿 (中文单位)</option>
+                  <option value="exact" data-i18n="settings.unitExact">1,234,567 (精确整数)</option>
+                  <option value="m" data-i18n="settings.unitM">固定 M (百万)</option>
+                </select>
+              </label>
+              <label class="field">
+                <span class="field-label" data-i18n="settings.currencyLabel">货币单位</span>
+                <select id="pref-currency" class="field-input">
+                  <option value="USD">USD ($)</option>
+                  <option value="CNY">CNY (¥)</option>
+                </select>
+              </label>
+              <label id="pref-cny-rate-wrap" class="field hidden">
+                <span class="field-label" data-i18n="settings.cnyRateLabel">汇率 (1 USD = ? CNY)</span>
+                <input id="pref-cny-rate" type="number" min="0.01" step="0.01" class="field-input tabular-nums" required>
+              </label>
+            </div>
+          </div>
+
+          <!-- Section 2: Subscription Plan -->
+          <div class="drawer-section">
+            <div class="drawer-section-title" data-i18n="settings.sec2Title">当前订阅方案</div>
+            <div class="form-grid form-grid-2">
+              <label class="field">
+                <span class="field-label" data-i18n="settings.subPlanLabel">订阅档位</span>
+                <select id="pref-sub-plan" class="field-input">
+                  <option value="auto" data-i18n="settings.subAuto">自动识别 (推荐)</option>
+                  <option value="free" data-i18n="settings.subFree">Free ($0 / 月)</option>
+                  <option value="pro" data-i18n="settings.subPro">Google AI Pro ($19.99 / 月)</option>
+                  <option value="ultra_5x" data-i18n="settings.subUltra5x">Google AI Ultra 5x ($99.99 / 月)</option>
+                  <option value="ultra_20x" data-i18n="settings.subUltra20x">Google AI Ultra 20x ($199.99 / 月)</option>
+                  <option value="custom" data-i18n="settings.subCustom">自定义月费</option>
+                </select>
+              </label>
+              <label id="pref-sub-custom-wrap" class="field hidden">
+                <span class="field-label" data-i18n="settings.subCustomLabel">自定义月费 (USD / 月)</span>
+                <input id="pref-sub-custom-usd" type="number" min="0" step="0.01" class="field-input tabular-nums">
+              </label>
+            </div>
+            <div id="pref-sub-detected-hint" class="muted-hint"></div>
+          </div>
+
+          <!-- Section 3: Active Per-Model Pricing -->
+          <div class="drawer-section">
+            <div class="drawer-section-head">
+              <span class="drawer-section-title" data-i18n="settings.sec3Title">在役模型单价配置 (USD / 1M Tokens)</span>
+              <div class="drawer-inline-actions">
+                <button id="btn-reset-model" type="button" class="mini-btn" data-i18n="settings.resetModel">恢复此模型默认</button>
+                <button id="btn-reset-all-models" type="button" class="mini-btn" data-i18n="settings.resetAllModels">全部恢复默认</button>
+              </div>
+            </div>
+
+            <label class="field">
+              <span class="field-label" data-i18n="settings.modelSelectLabel">选择模型档位 (保存前可连续切换修改多个模型)</span>
+              <select id="pref-model-select" class="field-input"></select>
+            </label>
+
+            <div class="form-grid">
+              <label class="field">
+                <span class="field-label" data-i18n="settings.inputPriceLabel">Input / 1M ($)</span>
+                <input id="pref-input-price" type="number" min="0" step="0.001" class="field-input tabular-nums" required>
+              </label>
+              <label class="field">
+                <span class="field-label" data-i18n="settings.cachedPriceLabel">Cached / 1M ($)</span>
+                <input id="pref-cached-price" type="number" min="0" step="0.001" class="field-input tabular-nums" required>
+              </label>
+              <label class="field">
+                <span class="field-label" data-i18n="settings.outputPriceLabel">Output / 1M ($)</span>
+                <input id="pref-output-price" type="number" min="0" step="0.001" class="field-input tabular-nums" required>
+              </label>
+            </div>
+
+            <label class="checkbox-row">
+              <input id="pref-long-tier" type="checkbox">
+              <span><span data-i18n="settings.longTierPrefix">&gt;200k 长上下文阶梯倍乘</span> <span class="muted-hint" data-i18n="settings.longTierHint">(超过 200k 时输入 ×2、输出 ×1.5)</span></span>
+            </label>
+
+            <details class="catalog-preview">
+              <summary class="catalog-summary" data-i18n="settings.catalogSummary">查看全部在役模型当前生效单价</summary>
+              <div id="catalog-preview-table" class="table-scroll"></div>
+            </details>
+          </div>
+
+          <div class="drawer-footer">
+            <div class="drawer-left-actions">
+              <button id="btn-resync-ledger" type="button" class="mini-btn" title="清除已删除会话归档并按磁盘现有日志重建历史账本" data-i18n="settings.resyncIdle" data-i18n-title="settings.resyncTitle">按磁盘重新同步账本</button>
+              <span id="settings-feedback" class="settings-feedback" aria-live="polite"></span>
+            </div>
+            <div class="drawer-actions">
+              <button id="btn-settings-cancel" type="button" class="btn-ghost" data-i18n="settings.cancel">收起</button>
+              <button id="btn-settings-save" type="submit" class="btn-primary" data-i18n="settings.save">保存设置</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Main View Area -->
+    <main class="main-content">
+      <div id="toast-banner" class="toast-banner hidden" role="status" aria-live="polite"></div>
+      <div id="error-banner" class="error-banner hidden" role="alert"></div>
+
+      <!-- Initial Loading Skeleton -->
+      <div id="loading-state" class="loading-state" aria-live="polite">
+        <div class="skel-grid">
+          <div class="card skel-card"><div class="skel-line w-40"></div><div class="skel-line w-70 lg"></div><div class="skel-line w-90"></div></div>
+          <div class="card skel-card"><div class="skel-line w-45"></div><div class="skel-line w-65 lg"></div><div class="skel-line w-85"></div></div>
+        </div>
+        <div class="card skel-card"><div class="skel-line w-35"></div><div class="skel-line w-100"></div><div class="skel-line w-60"></div></div>
+      </div>
+
+      <!-- Tab 1: Current Conversation -->
+      <section id="tab-current" class="tab-panel active" role="tabpanel" aria-labelledby="tabbtn-current">
+        <div id="current-empty" class="card empty-state hidden">
+          <div class="empty-icon" aria-hidden="true">◎</div>
+          <div class="empty-title" data-i18n="empty.title">暂无活跃会话数据</div>
+          <div class="empty-desc" data-i18n="empty.desc">等待当前对话生成首个模型步骤，或前往「用量统计」选择历史会话进行诊断。</div>
+          <button id="btn-goto-global" type="button" class="btn-secondary" data-i18n="empty.gotoGlobal">查看用量统计</button>
+        </div>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-17 10:13:00
+============================================================================ -->
+
+        <div id="current-content" class="view-stack hidden">
+          <div id="conv-strip" class="conv-strip">
+            <span id="conv-title" class="conv-title">—</span>
+            <span id="conv-workspace" class="conv-workspace"></span>
+          </div>
+
+          <div class="hero-grid">
+            <article id="card-speed" class="card metric-card"></article>
+            <article id="card-cost" class="card metric-card"></article>
+          </div>
+
+          <article id="card-context" class="card"></article>
+          <article id="card-cache" class="card"></article>
+          <article id="card-children-models" class="card"></article>
+        </div>
+      </section>
+
+      <!-- Tab 2: Usage Statistics -->
+      <section id="tab-global" class="tab-panel hidden" role="tabpanel" aria-labelledby="tabbtn-global">
+        <div id="global-content" class="view-stack"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-16 20:22:00
+============================================================================ -->

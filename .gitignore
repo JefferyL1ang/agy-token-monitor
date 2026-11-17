@@ -1,0 +1,8 @@
+node_modules/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+agy-token-monitor-state/
+monitor_state.json
+usage_ledger.json
