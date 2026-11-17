@@ -131,6 +131,14 @@
       'context.healthy': 'HEALTHY · 上下文充裕 (提醒线 {soft} 已用 {softPct}%)',
       'context.warning': 'WARNING · 已超提醒线 ({soft})，建议适时执行 /compact',
       'context.critical': 'CRITICAL · 逼近最大窗口 ({hard})，强烈建议立即执行 /compact',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 16:08:00
+// Description: Add post-compaction banner I18N string (zh).
+// ============================================================================
+      'context.compactedBanner': '已压缩 · 压缩前 {preTotal} → 摘要 {summary} tok（发送下条消息后刷新精确窗口）',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 16:08:00
+// ============================================================================
       'cache.title': 'Prompt Cache 与增量诊断',
       'cache.hitRate': '命中率 {pct}%',
       'cache.chipHit': '本步缓存命中',
@@ -373,6 +381,14 @@
       'context.healthy': 'HEALTHY · Context healthy ({softPct}% of {soft} alert limit)',
       'context.warning': 'WARNING · Exceeded {soft} alert limit — consider /compact',
       'context.critical': 'CRITICAL · Approaching {hard} max window — run /compact now',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 16:08:00
+// Description: Add post-compaction banner I18N string (en).
+// ============================================================================
+      'context.compactedBanner': 'Compacted · {preTotal} → {summary} tok summary (exact context updates on next message)',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 16:08:00
+// ============================================================================
       'cache.title': 'Prompt Cache & Spikes',
       'cache.hitRate': 'Hit Rate {pct}%',
       'cache.chipHit': 'Step Cache Hit',
@@ -2078,9 +2094,23 @@
         el('span', { textContent: t('context.currentTok', { tokens: fmtInt(currentTotal) }) }),
         el('span', { textContent: t('context.limitsRow', { soft: fmtTokens(softLimit), hard: fmtTokens(hardLimit) }) }),
       ),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 16:08:00
+// Description: Render post-compaction banner inside .level-banner when ctx.compactedPendingTurn is true.
+// ============================================================================
       el('div', { className: `level-banner ${level}` },
-        el('span', { textContent: levelMessages[level] }),
+        el('span', {
+          textContent: Boolean(ctx.compactedPendingTurn)
+            ? t('context.compactedBanner', {
+                preTotal: fmtInt(num(ctx.compactedPreTotal, 0)),
+                summary: fmtInt(num(ctx.compactionSummaryTokens, currentTotal)),
+              })
+            : levelMessages[level],
+        }),
       ),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 16:08:00
+// ============================================================================
     );
   }
 

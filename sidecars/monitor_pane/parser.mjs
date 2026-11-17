@@ -1676,23 +1676,45 @@ export function computeLiveStatus(parsed) {
     };
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 16:09:30
+// Description: Resolve post-/compact live status to IDLE when a completed
+// COMPACTION_SUMMARY follows the latest USER_INPUT with no subsequent wakeup.
+// ============================================================================
   let lastUserIdx = -1;
   let lastPlannerIdx = -1;
+  let lastCompactionIdx = -1;
   for (let i = steps.length - 1; i >= 0; i--) {
     if (lastUserIdx < 0 && steps[i].type === 'USER_INPUT') lastUserIdx = i;
     if (lastPlannerIdx < 0 && steps[i].type === 'PLANNER_RESPONSE') lastPlannerIdx = i;
-    if (lastUserIdx >= 0 && lastPlannerIdx >= 0) break;
+    if (lastCompactionIdx < 0 && steps[i].type === 'COMPACTION_SUMMARY') lastCompactionIdx = i;
+    if (lastUserIdx >= 0 && lastPlannerIdx >= 0 && lastCompactionIdx >= 0) break;
+  }
+
+  if (lastUserIdx > lastPlannerIdx) {
+    if (lastCompactionIdx > lastUserIdx && steps[lastCompactionIdx].status === 'DONE') {
+      const postCompactionWakeup = steps
+        .slice(lastCompactionIdx + 1)
+        .find((s) => s.type === 'SYSTEM_MESSAGE' && s.isWakeupMessage);
+      if (postCompactionWakeup) {
+        return {
+          status: 'GENERATING',
+          generatingSinceMs: postCompactionWakeup.createdAtMs ?? statMtimeMs,
+          toolProgress: null,
+          activeToolLabel: '',
+        };
+      }
+      return { status: 'IDLE', generatingSinceMs: null, toolProgress: null, activeToolLabel: '' };
+    }
+    return {
+      status: 'GENERATING',
+      generatingSinceMs: steps[lastUserIdx].createdAtMs ?? statMtimeMs,
+      toolProgress: null,
+      activeToolLabel: '',
+    };
   }
 
   if (lastPlannerIdx < 0) {
-    if (lastUserIdx >= 0) {
-      return {
-        status: 'GENERATING',
-        generatingSinceMs: steps[lastUserIdx].createdAtMs ?? statMtimeMs,
-        toolProgress: null,
-        activeToolLabel: '',
-      };
-    }
     if (last.type === 'SYSTEM_MESSAGE') {
       return {
         status: 'GENERATING',
@@ -1703,15 +1725,9 @@ export function computeLiveStatus(parsed) {
     }
     return { status: 'IDLE', generatingSinceMs: null, toolProgress: null, activeToolLabel: '' };
   }
-
-  if (lastUserIdx > lastPlannerIdx) {
-    return {
-      status: 'GENERATING',
-      generatingSinceMs: steps[lastUserIdx].createdAtMs ?? statMtimeMs,
-      toolProgress: null,
-      activeToolLabel: '',
-    };
-  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 16:09:30
+// ============================================================================
 
   const planner = steps[lastPlannerIdx];
   const calls = Array.isArray(planner.tool_calls) ? planner.tool_calls : [];
@@ -2371,10 +2387,20 @@ export function computeContext(parsed, prefs = DEFAULT_PREFS) {
   const softLimit = Number(prefs.softContextLimit) || DEFAULT_PREFS.softContextLimit;
   const hardLimit = Number(prefs.hardContextLimit) || DEFAULT_PREFS.hardContextLimit;
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 16:09:30
+// Description: Surface post-/compact summary tokens as currentTotal when a
+// DONE COMPACTION_SUMMARY follows the latest PLANNER_RESPONSE, while keeping
+// pre-compaction cache telemetry and topSpikes intact.
+// ============================================================================
   const tokenIndices = [];
+  let lastCompactionIdx = -1;
   for (let i = 0; i < steps.length; i++) {
     if (steps[i].type === 'PLANNER_RESPONSE' && steps[i].hasTokenTelemetry) {
       tokenIndices.push(i);
+    }
+    if (steps[i].type === 'COMPACTION_SUMMARY' && steps[i].status === 'DONE') {
+      lastCompactionIdx = i;
     }
   }
 
@@ -2392,21 +2418,36 @@ export function computeContext(parsed, prefs = DEFAULT_PREFS) {
       usageLevel: 'HEALTHY',
       watermarkLevel: 'HEALTHY',
       topSpikes: [],
+      compactedPendingTurn: false,
+      compactedPreTotal: 0,
+      compactionSummaryTokens: 0,
     };
   }
 
-  const latest = steps[tokenIndices[tokenIndices.length - 1]];
+  const latestTokenIdx = tokenIndices[tokenIndices.length - 1];
+  const latest = steps[latestTokenIdx];
   const prev = tokenIndices.length >= 2 ? steps[tokenIndices[tokenIndices.length - 2]] : null;
 
-  const currentTotal = latest.input_tokens + latest.cache_read_tokens;
+  const latestPlannerTotal = latest.input_tokens + latest.cache_read_tokens;
   const prevTotal = prev ? prev.input_tokens + prev.cache_read_tokens : 0;
   const latestInputUncached = latest.input_tokens;
   const latestCacheRead = latest.cache_read_tokens;
-  const latestCacheHitRatePct = currentTotal > 0 ? (latestCacheRead / currentTotal) * 100 : 0;
-  const latestNetDelta = prev ? currentTotal - prevTotal : 0;
+  const latestCacheHitRatePct =
+    latestPlannerTotal > 0 ? (latestCacheRead / latestPlannerTotal) * 100 : 0;
+
+  const compactedPendingTurn = lastCompactionIdx > latestTokenIdx;
+  const compactedPreTotal = compactedPendingTurn ? latestPlannerTotal : 0;
+  const compactionSummaryTokens = compactedPendingTurn
+    ? Math.max(0, Number(steps[lastCompactionIdx].output_tokens) || 0)
+    : 0;
+  const currentTotal = compactedPendingTurn ? compactionSummaryTokens : latestPlannerTotal;
+  const latestNetDelta = compactedPendingTurn ? 0 : prev ? currentTotal - prevTotal : 0;
 
   const hardUsagePct = hardLimit > 0 ? (currentTotal / hardLimit) * 100 : 0;
   const softUsagePct = softLimit > 0 ? (currentTotal / softLimit) * 100 : 0;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 16:09:30
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:13:00
 // Description: Replace hardcoded 0.8*hardLimit with 3-tier criticalThreshold
@@ -2458,6 +2499,16 @@ export function computeContext(parsed, prefs = DEFAULT_PREFS) {
     usageLevel,
     watermarkLevel: usageLevel,
     topSpikes: spikes.slice(0, 5),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 16:09:30
+// Description: Expose post-compaction banner metadata on computeContext().
+// ============================================================================
+    compactedPendingTurn,
+    compactedPreTotal,
+    compactionSummaryTokens,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 16:09:30
+// ============================================================================
   };
 }
 
@@ -3419,9 +3470,19 @@ export function createUsageLedger(initialData = null) {
         const stepModel = normalizeModelId(item.model || 'Auto');
         if (stepModel !== 'Auto') activeModel = stepModel;
         observedProfiles.add(resolveModelProfile(stepModel).id);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 16:09:30
+// Description: Update recovered-parent latestContextTotal on DONE compaction
+// summary items in sortedItems.
+// ============================================================================
         if (item.isPlanner) {
           latestContextTotal = (item.input_tokens || 0) + (item.cache_read_tokens || 0);
+        } else if (item.isCompactionDone) {
+          latestContextTotal = Math.max(0, Number(item.output_tokens) || 0);
         }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 16:09:30
+// ============================================================================
         totalOutputTokens += item.output_tokens || 0;
         const stepMs = Number.isFinite(item.createdAtMs)
           ? item.createdAtMs
@@ -3666,9 +3727,19 @@ export function createUsageLedger(initialData = null) {
         const clonedStepsRaw = [];
 
         for (const step of parsed.steps) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 16:09:30
+// Description: Reset Tab 2 ledger latestContextTotal to summary output_tokens
+// on DONE COMPACTION_SUMMARY and propagate isCompactionDone for cloned steps.
+// ============================================================================
           if (step.type === 'PLANNER_RESPONSE' && step.hasTokenTelemetry) {
             latestContextTotal = step.input_tokens + step.cache_read_tokens;
+          } else if (step.type === 'COMPACTION_SUMMARY' && step.status === 'DONE') {
+            latestContextTotal = Math.max(0, Number(step.output_tokens) || 0);
           }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 16:09:30
+// ============================================================================
           if (!isBillableTokenStep(step)) continue;
 
           const stepModel = normalizeModelId(
@@ -3689,6 +3760,14 @@ export function createUsageLedger(initialData = null) {
                 cache_read_tokens: step.cache_read_tokens,
                 output_tokens: step.output_tokens,
                 isPlanner: step.type === 'PLANNER_RESPONSE',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 16:09:30
+// Description: Record whether cloned step is a completed COMPACTION_SUMMARY.
+// ============================================================================
+                isCompactionDone: step.type === 'COMPACTION_SUMMARY' && step.status === 'DONE',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 16:09:30
+// ============================================================================
               });
             }
             continue;

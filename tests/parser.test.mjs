@@ -64,6 +64,14 @@ import {
 // [MODIFIED END] 2026-11-17 15:15:00
 // ============================================================================
   computeContext,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 16:08:26
+// Description: Import computeLiveStatus for post-/compact state machine unit tests.
+// ============================================================================
+  computeLiveStatus,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 16:08:26
+// ============================================================================
   computeSpeed,
   computeStepCost,
   computeSubscriptionComparison,
@@ -3346,4 +3354,275 @@ test('pricing_sync discovers 3.5-3.7 Flash models sorted by capability and resol
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-17 15:15:00
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 16:08:26
+// Description: Add unit and integration tests for post-/compact live status
+// IDLE recovery, provisional summary context tracking (compactedPendingTurn),
+// post-compaction PLANNER_RESPONSE reset, billable totals preservation, and
+// zh/en I18N key parity for context.compactedBanner.
+// ============================================================================
+test('computeLiveStatus settles to IDLE after /compact USER_INPUT + DONE COMPACTION_SUMMARY and stays GENERATING until DONE', () => {
+  const t0 = Date.parse('2026-11-17T07:50:00Z');
+  const t1 = Date.parse('2026-11-17T07:51:00Z');
+  const t2 = Date.parse('2026-11-17T07:51:05Z');
+  const t3 = Date.parse('2026-11-17T07:52:00Z');
+
+  // 1. /compact USER_INPUT with NO COMPACTION_SUMMARY (DONE) after it yet -> GENERATING
+  const pendingCompactParsed = {
+    statMtimeMs: t1 + 1000,
+    steps: [
+      {
+        step_index: 0,
+        type: 'PLANNER_RESPONSE',
+        status: 'DONE',
+        createdAtMs: t0,
+        hasTokenTelemetry: true,
+        input_tokens: 2507,
+        cache_read_tokens: 482200,
+        output_tokens: 200,
+        tool_calls: [],
+      },
+      {
+        step_index: 1,
+        type: 'USER_INPUT',
+        status: 'DONE',
+        createdAtMs: t1,
+      },
+    ],
+  };
+  const pendingRes = computeLiveStatus(pendingCompactParsed);
+  assert.equal(pendingRes.status, 'GENERATING');
+  assert.equal(pendingRes.generatingSinceMs, t1);
+  assert.equal(pendingRes.toolProgress, null);
+  assert.equal(pendingRes.activeToolLabel, '');
+
+  // 2. Same /compact USER_INPUT followed by COMPACTION_SUMMARY with status !== 'DONE' -> still GENERATING
+  const runningCompactParsed = {
+    statMtimeMs: t2,
+    steps: [
+      ...pendingCompactParsed.steps,
+      {
+        step_index: 2,
+        type: 'COMPACTION_SUMMARY',
+        status: 'RUNNING',
+        createdAtMs: t2,
+        hasTokenTelemetry: true,
+        input_tokens: 3091,
+        cache_read_tokens: 483328,
+        output_tokens: 3739,
+      },
+    ],
+  };
+  assert.equal(computeLiveStatus(runningCompactParsed).status, 'GENERATING');
+
+  // 3. /compact USER_INPUT followed by COMPACTION_SUMMARY with status === 'DONE' (no newer USER_INPUT or wakeup) -> IDLE
+  const doneCompactParsed = {
+    statMtimeMs: t2,
+    steps: [
+      ...pendingCompactParsed.steps,
+      {
+        step_index: 2,
+        type: 'COMPACTION_SUMMARY',
+        status: 'DONE',
+        createdAtMs: t2,
+        hasTokenTelemetry: true,
+        input_tokens: 3091,
+        cache_read_tokens: 483328,
+        output_tokens: 3739,
+      },
+    ],
+  };
+  assert.deepEqual(computeLiveStatus(doneCompactParsed), {
+    status: 'IDLE',
+    generatingSinceMs: null,
+    toolProgress: null,
+    activeToolLabel: '',
+  });
+
+  // 4. Newer USER_INPUT after DONE COMPACTION_SUMMARY -> GENERATING again
+  const postCompactUserParsed = {
+    statMtimeMs: t3,
+    steps: [
+      ...doneCompactParsed.steps,
+      {
+        step_index: 3,
+        type: 'USER_INPUT',
+        status: 'DONE',
+        createdAtMs: t3,
+      },
+    ],
+  };
+  const postUserRes = computeLiveStatus(postCompactUserParsed);
+  assert.equal(postUserRes.status, 'GENERATING');
+  assert.equal(postUserRes.generatingSinceMs, t3);
+
+  // 5. Wakeup SYSTEM_MESSAGE after DONE COMPACTION_SUMMARY -> GENERATING again
+  const postCompactWakeupParsed = {
+    statMtimeMs: t3,
+    steps: [
+      ...doneCompactParsed.steps,
+      {
+        step_index: 3,
+        type: 'SYSTEM_MESSAGE',
+        status: 'DONE',
+        createdAtMs: t3,
+        isWakeupMessage: true,
+      },
+    ],
+  };
+  const wakeupRes = computeLiveStatus(postCompactWakeupParsed);
+  assert.equal(wakeupRes.status, 'GENERATING');
+  assert.equal(wakeupRes.generatingSinceMs, t3);
+});
+
+test('computeContext switches to provisional summary tokens after /compact and resets on next PLANNER_RESPONSE while preserving billable totals', () => {
+  clearParserCache();
+  const { root, appData } = makeTempEnv();
+  try {
+    const convId = 'd1d1d1d1-1111-4111-8111-111111111111';
+    const baseMs = Date.parse('2026-11-17T08:00:00Z');
+
+    // Step 0..2: Pre-compaction CRITICAL PLANNER_RESPONSE (2507 + 482200 = 484707), /compact USER_INPUT, DONE CHECKPOINT
+    const preAndCompactionLines = [
+      {
+        step_index: 0,
+        type: 'USER_INPUT',
+        status: 'DONE',
+        created_at: new Date(baseMs).toISOString(),
+        content: '<USER_REQUEST>Long session work</USER_REQUEST>',
+      },
+      {
+        step_index: 1,
+        type: 'PLANNER_RESPONSE',
+        status: 'DONE',
+        created_at: new Date(baseMs + 1000).toISOString(),
+        input_tokens: 2507,
+        cache_read_tokens: 482200,
+        output_tokens: 200,
+        tool_calls: [],
+      },
+      {
+        step_index: 2,
+        type: 'USER_INPUT',
+        status: 'DONE',
+        created_at: new Date(baseMs + 2000).toISOString(),
+        content: '/compact',
+      },
+      {
+        step_index: 3,
+        type: 'CHECKPOINT',
+        status: 'DONE',
+        created_at: new Date(baseMs + 5000).toISOString(),
+        input_tokens: 3091,
+        cache_read_tokens: 483328,
+        output_tokens: 3739,
+      },
+    ];
+
+    writeConversation(appData, convId, {
+      compactLines: preAndCompactionLines,
+      mtimeMs: baseMs + 6000,
+    });
+
+    const paths = resolveConversationPaths(convId, [appData]);
+    const parsedCompacted = parseTranscript(convId, paths);
+    assert.deepEqual(computeLiveStatus(parsedCompacted), {
+      status: 'IDLE',
+      generatingSinceMs: null,
+      toolProgress: null,
+      activeToolLabel: '',
+    });
+
+    const ctxCompacted = computeContext(parsedCompacted, DEFAULT_PREFS);
+    assert.equal(ctxCompacted.compactedPendingTurn, true);
+    assert.equal(ctxCompacted.compactedPreTotal, 484707);
+    assert.equal(ctxCompacted.compactionSummaryTokens, 3739);
+    assert.equal(ctxCompacted.currentTotal, 3739);
+    assert.equal(ctxCompacted.usageLevel, 'HEALTHY');
+    assert.equal(ctxCompacted.watermarkLevel, 'HEALTHY');
+    assert.equal(ctxCompacted.latestNetDelta, 0);
+
+    // analyzeConversation must reflect IDLE + HEALTHY compacted context AND billable compaction tokens
+    const analyzedCompacted = analyzeConversation(convId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.equal(analyzedCompacted.status, 'IDLE');
+    assert.equal(analyzedCompacted.context.compactedPendingTurn, true);
+    assert.equal(analyzedCompacted.context.compactedPreTotal, 484707);
+    assert.equal(analyzedCompacted.context.compactionSummaryTokens, 3739);
+    assert.equal(analyzedCompacted.context.currentTotal, 3739);
+    assert.equal(analyzedCompacted.context.usageLevel, 'HEALTHY');
+    assert.equal(analyzedCompacted.context.latestNetDelta, 0);
+    const plannerTotal = 2507 + 482200 + 200;
+    const compactionBillable = 3091 + 483328 + 3739;
+    assert.equal(analyzedCompacted.totals.mainOnly.stepsCount, 2);
+    assert.equal(analyzedCompacted.totals.mainOnly.inputUncachedTokens, 2507 + 3091);
+    assert.equal(analyzedCompacted.totals.mainOnly.cacheReadTokens, 482200 + 483328);
+    assert.equal(analyzedCompacted.totals.mainOnly.outputTokens, 200 + 3739);
+    assert.equal(analyzedCompacted.totals.mainOnly.totalTokens, plannerTotal + compactionBillable);
+
+    // Next turn arrives after compaction: new PLANNER_RESPONSE resets provisional compaction flags
+    const postTurnLines = [
+      ...preAndCompactionLines,
+      {
+        step_index: 4,
+        type: 'USER_INPUT',
+        status: 'DONE',
+        created_at: new Date(baseMs + 10000).toISOString(),
+        content: '<USER_REQUEST>Continue after compact</USER_REQUEST>',
+      },
+      {
+        step_index: 5,
+        type: 'PLANNER_RESPONSE',
+        status: 'DONE',
+        created_at: new Date(baseMs + 12000).toISOString(),
+        input_tokens: 29507,
+        cache_read_tokens: 0,
+        output_tokens: 173,
+        tool_calls: [],
+      },
+    ];
+
+    writeConversation(appData, convId, {
+      compactLines: postTurnLines,
+      mtimeMs: baseMs + 13000,
+    });
+
+    const parsedPostTurn = parseTranscript(convId, paths);
+    const ctxPostTurn = computeContext(parsedPostTurn, DEFAULT_PREFS);
+    assert.equal(ctxPostTurn.compactedPendingTurn, false);
+    assert.equal(ctxPostTurn.compactedPreTotal, 0);
+    assert.equal(ctxPostTurn.compactionSummaryTokens, 0);
+    assert.equal(ctxPostTurn.currentTotal, 29507);
+    assert.equal(ctxPostTurn.usageLevel, 'HEALTHY');
+    assert.equal(ctxPostTurn.watermarkLevel, 'HEALTHY');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('app.js I18N zh/en tables maintain 100% key parity including context.compactedBanner', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const appSource = readFileSync(join(testDir, '..', 'sidecars', 'monitor_pane', 'app.js'), 'utf-8');
+  const zhStart = appSource.indexOf('const I18N = {');
+  assert.ok(zhStart >= 0, 'I18N object should exist in app.js');
+  const zhBlockMatch = appSource.slice(zhStart).match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(zhBlockMatch, 'Both zh and en blocks should be extractable from I18N');
+
+  const extractKeys = (block) => {
+    const keys = [];
+    for (const match of block.matchAll(/^\s*'([^']+)'\s*:/gm)) {
+      keys.push(match[1]);
+    }
+    return keys;
+  };
+
+  const zhKeys = extractKeys(zhBlockMatch[1]);
+  const enKeys = extractKeys(zhBlockMatch[2]);
+  assert.ok(zhKeys.includes('context.compactedBanner'));
+  assert.ok(enKeys.includes('context.compactedBanner'));
+  assert.deepEqual([...zhKeys].sort(), [...enKeys].sort());
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-17 16:08:26
 // ============================================================================
