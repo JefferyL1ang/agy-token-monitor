@@ -34,6 +34,20 @@ Description: Add bilingual EN/ZH toggle button, data-i18n attributes on static D
           </div>
         </div>
         <div class="header-actions">
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-17 18:55:00
+Description: Add header new-release notification pill button (#btn-update-pill).
+============================================================================ -->
+          <button
+            id="btn-update-pill"
+            type="button"
+            class="update-pill-btn hidden"
+            aria-haspopup="dialog"
+            aria-controls="update-modal"
+          ></button>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-17 18:55:00
+============================================================================ -->
           <button
             id="btn-lang-toggle"
             type="button"
@@ -228,6 +242,18 @@ Description: Add official model/pricing sync status bar and manual sync trigger 
             </details>
           </div>
 
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-17 18:55:00
+Description: Add current plugin version status bar and manual update check button (#update-check-bar) in settings drawer.
+============================================================================ -->
+          <div id="update-check-bar" class="pricing-sync-bar update-check-bar">
+            <span id="update-version-status" class="pricing-sync-status muted-hint tabular-nums"></span>
+            <button id="btn-check-update" type="button" class="mini-btn" data-i18n="settings.checkUpdateBtn" data-i18n-title="settings.checkUpdateTitle">↻ 检查更新</button>
+          </div>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-17 18:55:00
+============================================================================ -->
+
           <div class="drawer-footer">
             <div class="drawer-left-actions">
               <button id="btn-resync-ledger" type="button" class="mini-btn" title="清除已删除会话归档并按磁盘现有日志重建历史账本" data-i18n="settings.resyncIdle" data-i18n-title="settings.resyncTitle">按磁盘重新同步账本</button>
@@ -290,6 +316,48 @@ Description: Add official model/pricing sync status bar and manual sync trigger 
         <div id="global-content" class="view-stack"></div>
       </section>
     </main>
+
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-17 18:55:00
+Description: Add accessible release-notes preview & one-click hot-update dialog (#update-modal).
+============================================================================ -->
+    <div
+      id="update-modal"
+      class="update-modal-backdrop hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="update-modal-title"
+    >
+      <div class="update-modal-card">
+        <div class="update-modal-head">
+          <div class="update-modal-title-group">
+            <div class="update-modal-title-row">
+              <h2 id="update-modal-title" class="update-modal-title" data-i18n="update.modalTitle">发现新版本</h2>
+              <span id="update-modal-ver" class="update-modal-ver tabular-nums"></span>
+            </div>
+            <div id="update-modal-date" class="update-modal-date tabular-nums muted-hint hidden"></div>
+          </div>
+          <button
+            id="btn-update-close"
+            type="button"
+            class="update-close-btn"
+            aria-label="仅收起，保留顶栏提示按钮"
+            title="仅收起，保留顶栏提示按钮"
+            data-i18n-aria-label="update.closeTip"
+            data-i18n-title="update.closeTip"
+          >×</button>
+        </div>
+        <div id="update-notes-body" class="update-notes-body"></div>
+        <div id="update-modal-feedback" class="update-modal-feedback hidden" role="status" aria-live="polite"></div>
+        <div class="update-modal-footer">
+          <button id="btn-update-skip" type="button" class="btn-ghost" data-i18n="update.skipBtn">跳过此版本</button>
+          <button id="btn-update-confirm" type="button" class="btn-primary" data-i18n="update.confirmBtn">立即热更新</button>
+        </div>
+      </div>
+    </div>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-17 18:55:00
+============================================================================ -->
   </div>
 
   <script src="/app.js"></script>

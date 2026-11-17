@@ -28,12 +28,15 @@
 - **Bilingual UI & Flexible Token Units**:
   - Switch between **English** and **Chinese** (`EN / 中`) in one click from the top bar.
   - Choose between `K / M / B`, `万 / 亿`, exact integers (`1,234,567`), or fixed `M` token units.
+- **In-Panel Release Update Check & Hot Update**:
+  - Checks GitHub Releases automatically on startup and every 4 hours (with manual check in Settings), and lets you preview release notes directly in the panel.
+  - Supports one-click hot update with SHA-256 verification while keeping local settings and usage history intact, or skipping the current version until the next release.
 
 ### Installation
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.2.3.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.2.4.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -72,6 +75,7 @@ agy-token-monitor/
 │       ├── package.json               # Sidecar package manifest
 │       ├── sidecar.json               # Aux Pane entrypoint config
 │       ├── pricing_sync.mjs           # Daily model & pricing sync module
+│       ├── release_updater.mjs        # GitHub Release check & hot-update module
 │       ├── parser.mjs                 # Read-only SQLite & transcript parser
 │       ├── main.mjs                   # Sidecar HTTP server & file watcher
 │       ├── index.html                 # Panel HTML
@@ -121,12 +125,15 @@ node --test tests/parser.test.mjs
 - **中英双语切换与多种 Token 单位**：
   - 顶部栏设置按钮旁支持一键切换 **中文 / 英文**（`EN / 中`）。
   - 支持 `K / M / B`、`万 / 亿`、精确整数（`1,234,567`）和固定 `M` 四种 Token 显示单位。
+- **内置版本检测与一键热更新**：
+  - 启动时及每 4 小时自动检测 GitHub Releases 新版本（也可在设置中手动检查），支持在面板内直接预览更新说明。
+  - 支持经 SHA-256 校验的一键热更新，更新过程完整保留本地配置与历史用量记录；也可选择跳过当前版本，直到下个新版本发布再提醒。
 
 ### 安装方式
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.3.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.4.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 
@@ -146,6 +153,34 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".\scripts\sync-plugin.ps1" 
 
 1. 在 Antigravity 的 Customizations 页面打开 `[Token Monitor](customization://agy-token-monitor)` 并开启插件（即时生效，无需重启）。
 2. 点击右侧辅助面板顶部的 `+` 号选择 **Token Monitor** 打开面板（或直接点击对话中的 `[Token Monitor](sidecar://agy-token-monitor/monitor_pane/)` 链接）。
+
+### 目录结构
+
+```text
+agy-token-monitor/
+├── plugin.json                        # 插件清单
+├── README.md                          # 说明文档（中 / 英）
+├── assets/
+│   └── logo.svg                       # 插件图标
+├── skills/
+│   └── token-monitor/
+│       └── SKILL.md                   # 从对话打开面板的引导技能
+├── scripts/
+│   └── sync-plugin.ps1                # 本地插件同步与校验脚本
+├── sidecars/
+│   └── monitor_pane/
+│       ├── package.json               # Sidecar 包声明
+│       ├── sidecar.json               # 辅助面板入口配置
+│       ├── pricing_sync.mjs           # 每日模型、价格与汇率同步模块
+│       ├── release_updater.mjs        # GitHub Release 版本检测与热更新模块
+│       ├── parser.mjs                 # 只读 SQLite 与会话记录解析模块
+│       ├── main.mjs                   # Sidecar HTTP 服务与文件监听
+│       ├── index.html                 # 面板页面结构
+│       ├── styles.css                 # 自适应主题样式
+│       └── app.js                     # 前端交互逻辑
+└── tests/
+    └── parser.test.mjs                # 单元测试与独立接口测试
+```
 
 ### 本地调试与测试
 

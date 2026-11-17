@@ -6,6 +6,14 @@
 // ROI comparison, /api/resync-ledger, and code hot-reload.
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:30
+// Description: Import randomUUID and resolve for release hot-update bootId and pluginRoot resolution.
+// ============================================================================
+import { randomUUID } from 'node:crypto';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
 import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:45:00
@@ -15,7 +23,14 @@ import { homedir, tmpdir } from 'node:os';
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:45:00
 // ============================================================================
-import { dirname, join } from 'node:path';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:30
+// Description: Import resolve alongside dirname and join from node:path.
+// ============================================================================
+import { dirname, join, resolve } from 'node:path';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   DEFAULT_PREFS,
@@ -55,8 +70,34 @@ import {
 // model & pricing auto-sync and dynamic profile ID validation.
 // ============================================================================
 import { createPricingSyncManager } from './pricing_sync.mjs';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:30
+// Description: Import createReleaseUpdater and initialize pluginRoot, APP_VERSION,
+// BOOT_ID, and SKIPPED_RELEASE_TAG_RE for v0.2.4 one-click hot updates.
+// ============================================================================
+import { createReleaseUpdater } from './release_updater.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const pluginRoot = resolve(__dirname, '..', '..');
+
+function readPluginVersion(rootDir) {
+  try {
+    const raw = JSON.parse(readFileSync(join(rootDir, 'plugin.json'), 'utf-8'));
+    if (typeof raw?.version === 'string' && raw.version.trim()) {
+      return raw.version.trim();
+    }
+  } catch {
+    // Fallback to default version below.
+  }
+  return '0.2.4';
+}
+
+const APP_VERSION = readPluginVersion(pluginRoot);
+const BOOT_ID = randomUUID();
+const SKIPPED_RELEASE_TAG_RE = /^(?:v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?|)$/i;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
 const PROFILE_ID_RE = /^[a-z0-9][a-z0-9._-]{0,63}$/i;
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:42:00
@@ -176,6 +217,20 @@ const pricingSync = createPricingSyncManager({
   stateDir,
   baseCatalog: MODEL_PRICING_CATALOG,
 });
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:30
+// Description: Initialize releaseUpdater and hotUpdateInProgress flag so
+// mid-extraction file writes do not trigger premature codeReloadTimer exit.
+// ============================================================================
+const releaseUpdater = createReleaseUpdater({
+  stateDir,
+  pluginRoot,
+  currentVersion: APP_VERSION,
+});
+let hotUpdateInProgress = false;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
 
 const FALLBACK_BASE_PROFILE = {
   inputPer1M: 2.0,
@@ -273,6 +328,14 @@ function sanitizeLoadedPrefs(rawPrefs) {
     subscriptionPlan: DEFAULT_PREFS.subscriptionPlan,
     customSubscriptionMonthlyUsd: DEFAULT_PREFS.customSubscriptionMonthlyUsd,
     longContextThreshold: DEFAULT_PREFS.longContextThreshold,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:30
+// Description: Include skippedReleaseTag default in sanitizeLoadedPrefs.
+// ============================================================================
+    skippedReleaseTag: DEFAULT_PREFS.skippedReleaseTag,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
     modelOverrides: {},
   };
   if (!rawPrefs || typeof rawPrefs !== 'object') return merged;
@@ -321,6 +384,19 @@ function sanitizeLoadedPrefs(rawPrefs) {
   ) {
     merged.subscriptionPlan = rawPrefs.subscriptionPlan;
   }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:30
+// Description: Restore persisted skippedReleaseTag when valid semver tag or empty.
+// ============================================================================
+  if (typeof rawPrefs.skippedReleaseTag === 'string') {
+    const trimmedSkipped = rawPrefs.skippedReleaseTag.trim();
+    if (trimmedSkipped.length <= 64 && SKIPPED_RELEASE_TAG_RE.test(trimmedSkipped)) {
+      merged.skippedReleaseTag = trimmedSkipped;
+    }
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:42:00
 // Description: Preserve persisted user modelOverrides on load without pruning
@@ -574,6 +650,24 @@ function validateAndMergePrefs(currentPrefs, input) {
     next.subscriptionPlan = input.subscriptionPlan;
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:30
+// Description: Validate optional skippedReleaseTag preference in /api/prefs.
+// ============================================================================
+  if (input.skippedReleaseTag !== undefined) {
+    if (typeof input.skippedReleaseTag !== 'string') {
+      return { error: 'skippedReleaseTag must be a string.' };
+    }
+    const trimmedSkipped = input.skippedReleaseTag.trim();
+    if (trimmedSkipped.length > 64 || !SKIPPED_RELEASE_TAG_RE.test(trimmedSkipped)) {
+      return { error: 'skippedReleaseTag must be empty or a valid semver release tag.' };
+    }
+    next.skippedReleaseTag = trimmedSkipped;
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
+
   if (input.resetAllModels === true) {
     next.modelOverrides = {};
   } else if (input.modelOverrides !== undefined) {
@@ -757,6 +851,15 @@ const watchedCodePaths = [
   join(__dirname, 'main.mjs'),
   join(__dirname, 'parser.mjs'),
   join(__dirname, 'pricing_sync.mjs'),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:30
+// Description: Watch release_updater.mjs and pause codeReloadTimer while
+// hotUpdateInProgress is true so mid-update extraction completes atomically.
+// ============================================================================
+  join(__dirname, 'release_updater.mjs'),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
 ];
 const initialCodeMtimes = new Map(
   watchedCodePaths.map((p) => {
@@ -769,6 +872,14 @@ const initialCodeMtimes = new Map(
 );
 const codeReloadTimer = !isStandalone
   ? setInterval(() => {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:30
+// Description: Guard codeReloadTimer callback against mid-extraction premature exit.
+// ============================================================================
+      if (hotUpdateInProgress) return;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
       for (const p of watchedCodePaths) {
         try {
           const s = statSync(p);
@@ -960,17 +1071,28 @@ app.api(
         }
       }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:30
+// Description: Trigger periodic 4h background release check, compute updateStatus,
+// include release state in snapshot ETag, and expose appVersion, bootId, and updateStatus.
+// ============================================================================
+      releaseUpdater.maybeCheckForUpdates(() => {
+        prefsVersion += 1;
+      });
+      const updateStatus = releaseUpdater.getPublicStatus(state.prefs.skippedReleaseTag);
+
       const etag = [
         targetConv || '-',
         `p${prefsVersion}`,
         `m${metadataStore.getVersion()}`,
         currentRaw?._etagPart || '-',
         globalRaw._etagPart || '-',
+        `u:${updateStatus.latestTag}:${updateStatus.shouldPrompt ? 1 : 0}:${updateStatus.checking ? 1 : 0}`,
       ].join('|');
 
       const serverTimeMs = Date.now();
       if (data?.etag && data.etag === etag) {
-        return { unchanged: true, etag, serverTimeMs };
+        return { unchanged: true, etag, serverTimeMs, appVersion: APP_VERSION, bootId: BOOT_ID };
       }
 
       let current = null;
@@ -989,14 +1111,20 @@ app.api(
         unchanged: false,
         etag,
         serverTimeMs,
+        appVersion: APP_VERSION,
+        bootId: BOOT_ID,
         boundConversationId,
         prefs: state.prefs,
+        updateStatus,
         pricingSync: pricingSync.getPublicStatus(),
         pricingCatalog: buildEffectivePricingCatalog(state.prefs, runtimeCatalog),
         subscriptionCatalog: SUBSCRIPTION_CATALOG,
         current,
         global,
       };
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
     } catch (err) {
       console.error(`[monitor_pane] /api/snapshot failed: ${err?.stack || err}`);
       return new Response(JSON.stringify({ error: err?.message || 'Internal snapshot error' }), {
@@ -1060,6 +1188,76 @@ app.api(
 );
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:42:00
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:30
+// Description: Add POST /api/check-update and POST /api/apply-update endpoints
+// for manual release checks and one-click SHA-256 verified hot-update + clean respawn.
+// ============================================================================
+app.api(
+  '/api/check-update',
+  async () => {
+    const res = await releaseUpdater.checkForUpdatesNow();
+    prefsVersion += 1;
+    return {
+      ok: res.ok,
+      appVersion: APP_VERSION,
+      bootId: BOOT_ID,
+      updateStatus: releaseUpdater.getPublicStatus(state.prefs.skippedReleaseTag),
+    };
+  },
+  'POST',
+);
+
+app.api(
+  '/api/apply-update',
+  async () => {
+    hotUpdateInProgress = true;
+    try {
+      const res = await releaseUpdater.applyLatestUpdate();
+      if (!res.ok) {
+        hotUpdateInProgress = false;
+        return {
+          ...res,
+          appVersion: APP_VERSION,
+          bootId: BOOT_ID,
+          updateStatus: releaseUpdater.getPublicStatus(state.prefs.skippedReleaseTag),
+        };
+      }
+      if (state.prefs.skippedReleaseTag) {
+        state.prefs.skippedReleaseTag = '';
+        persistStateNow();
+      }
+      prefsVersion += 1;
+      if (!isStandalone || process.env.ENABLE_STANDALONE_UPDATE_EXIT === '1') {
+        const exitTimer = setTimeout(() => shutdown(), 350);
+        exitTimer.unref?.();
+      } else {
+        hotUpdateInProgress = false;
+      }
+      return {
+        ...res,
+        appVersion: APP_VERSION,
+        bootId: BOOT_ID,
+        updateStatus: releaseUpdater.getPublicStatus(state.prefs.skippedReleaseTag),
+      };
+    } catch (err) {
+      hotUpdateInProgress = false;
+      return {
+        ok: false,
+        reason: 'apply_failed',
+        error: err?.message || 'Failed to apply update.',
+        appVersion: APP_VERSION,
+        bootId: BOOT_ID,
+        updateStatus: releaseUpdater.getPublicStatus(state.prefs.skippedReleaseTag),
+      };
+    }
+  },
+  'POST',
+);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:30
 // ============================================================================
 
 // ============================================================================

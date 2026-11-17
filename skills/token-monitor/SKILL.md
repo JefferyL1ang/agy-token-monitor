@@ -4,15 +4,16 @@ description: >-
   Open or guide the user to the Antigravity Token Monitor Aux Pane (`sidecar://agy-token-monitor/monitor_pane/`)
   to inspect live token generation speed (tok/s) scoped to the active model, 400k/500k context usage thresholds
   and one-click `/compact` helper, bilingual EN/ZH UI, selectable token units, session total token consumption
-  in Equivalent Cost, prompt cache hit rate, subagent/swarm aggregation, dedicated Gemini 3.1 Pro pricing & daily
-  dual-channel official model/pricing auto-sync, subscription ROI, and SQLite fork-deduplicated multi-period
-  (today / 7d / 30d / all-time) usage history.
+  in Equivalent Cost, prompt cache hit rate, subagent/swarm aggregation, daily official model/pricing/FX
+  auto-sync, in-panel GitHub Release update check & hot update, subscription ROI, and SQLite fork-deduplicated
+  multi-period (today / 7d / 30d / all-time) usage history.
   Use whenever the user asks to monitor token speed, check context usage or `/compact` timing, inspect
   cache hit rate or context spikes, check session total tokens, switch token units or language, sync or
-  customize model pricing, compare token cost vs subscription price, or open the Token Monitor panel.
+  customize model pricing, check or install plugin updates, compare token cost vs subscription price, or open
+  the Token Monitor panel.
 ---
 
-# Token Monitor (`v0.2.3` Beta)
+# Token Monitor (`v0.2.4` Beta)
 
 The `agy-token-monitor` plugin provides a real-time, pure read-only Auxiliary Pane (`Token Monitor`) backed by the `monitor_pane` sidecar.
 
@@ -24,10 +25,11 @@ The `agy-token-monitor` plugin provides a real-time, pure read-only Auxiliary Pa
 - **Session Total Tokens & Equivalent Cost**: Tab 1's Equivalent Cost card displays session `Total Tokens` (`总 Token 消耗`, computed from uncached input + cache read + output tokens, scoped dynamically to `With Subagents` / `Main Only` and formatted with the selected `tokenUnit`) alongside step count, and Tab 2 conversation rows also display per-session `Total` tokens.
 - **Prompt Cache & Spike Diagnostics**: Latest cache hit rate (`%`), uncached input, net token delta, and top 5 positive context jumps (`topSpikes`) with triggering tool summaries.
 - **Subagent & Swarm Aggregation**: Aggregates token usage and cost across child subagents and swarm workers (`With Subagents` vs `Main Only`) while keeping the main conversation's context size strictly isolated.
-- **Daily Official Pricing Sync, Dedicated `Gemini 3.1 Pro` Tier & Subscription ROI**:
+- **Daily Official Pricing Sync, Per-Model Rates & Subscription ROI**:
   - Automatically syncs official model lists & Paid Tier pricing once per day on open via dual channels (`ai.google.dev/gemini-api/docs/pricing` + `models.dev/api.json` with `litellm` fallback and effective-date awareness) into `pricing_cache.json` inside `sidecar_data`, auto-discovers newly released flagship Gemini chat models and locally observed slugs, keeps user-customized `*` overrides highest priority, offers a **`↻ Sync Now` / `↻ 立即同步`** button, and falls back gracefully offline (`4.5s` timeout).
   - Separates `Gemini 3.1 Pro` (`$2.00` / `$0.20` / `$12.00` per 1M tokens, `>200k` `×2` / `×1.5`) into its own model tier alongside Gemini 4 `Carbon`/`Argon`/`Hydrogen`, `Gemini 3.8 Flash`, `Claude Opus 5.5`/`4.6`, `Claude Sonnet 5.5`, `GPT-OSS 120B`, and `Auto`, with an interactive clickable effective rates table for direct rate editing.
   - Read-only `conversations/<id>.db` + `conversation_summaries.db` Protobuf tracking deduplicates forked/branched/rewound conversations via `originCascadeId` and `botId`, normalizes `gemini-pro-default` to `gemini-3.1-pro` and strips effort-tier suffixes to raw model IDs, and compares equivalent API value against automatic/custom subscription plans (`Free` / `Pro` / `Ultra 5x` / `Ultra 20x` / `Custom`) across `today`, `7d`, `30d`, and scrollable `all-time` charts backed by `usage_ledger.json`.
+- **In-Panel Release Update Check & Hot Update**: Automatically checks GitHub Releases on startup and every 4 hours (cached in `update_cache.json` with ETag `304` support, plus manual check in Settings), previews localized EN/ZH release notes in an in-panel modal, lets users skip a release tag until the next version, and applies one-click SHA-256 verified hot updates while keeping local preferences (`monitor_state.json`) and usage history (`usage_ledger.json`) intact.
 
 ## How to Surface the Panel Link
 

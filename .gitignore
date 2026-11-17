@@ -7,4 +7,5 @@ agy-token-monitor-state/
 monitor_state.json
 usage_ledger.json
 pricing_cache.json
+update_cache.json
 *.zip

@@ -236,6 +236,14 @@ export const DEFAULT_PREFS = Object.freeze({
   subscriptionPlan: 'auto',
   customSubscriptionMonthlyUsd: 99.99,
   longContextThreshold: 200000,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 18:55:00
+// Description: Add skippedReleaseTag default preference for v0.2.4 release hot-update prompt skipping.
+// ============================================================================
+  skippedReleaseTag: '',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 18:55:00
+// ============================================================================
   modelOverrides: Object.freeze({}),
 });
 // ============================================================================

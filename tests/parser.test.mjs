@@ -10,7 +10,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 18:54:00
+// Description: Import createHash, cpSync, and readdirSync for v0.2.4 release
+// hot-update SHA-256 verification and isolated plugin directory E2E tests.
+// ============================================================================
+import { createHash } from 'node:crypto';
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 18:54:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:50:00
 // Description: Import node:http for local mock HTTP E2E tests of pricing sync.
@@ -114,6 +133,22 @@ import {
 } from '../sidecars/monitor_pane/pricing_sync.mjs';
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:50:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 18:54:00
+// Description: Import release_updater exports for v0.2.4 semver, ZIP archive
+// security, ETag 304 caching, and SHA-256 hot-update unit & E2E tests.
+// ============================================================================
+import {
+  buildZipBuffer,
+  compareSemver,
+  createReleaseUpdater,
+  normalizeReleaseTag,
+  parseSemver,
+  parseZipBuffer,
+} from '../sidecars/monitor_pane/release_updater.mjs';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 18:54:00
 // ============================================================================
 
 function makeTempEnv() {
@@ -4025,4 +4060,585 @@ test('app.js static polling safety: serial polling, zero requestSeq, I18N parity
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-17 17:27:07
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 18:54:00
+// Description: Add v0.2.4 unit and standalone HTTP E2E tests for release_updater
+// semver comparison & tag normalization, buildZipBuffer/parseZipBuffer prefix
+// stripping & Zip-Slip rejection, SHA-256/manifest/.git guards, ETag 304 Not
+// Modified cache preservation, and end-to-end skip + hot-update preserving user prefs.
+// ============================================================================
+test('release_updater semver parsing, comparison, and release tag normalization', () => {
+  const parsed = parseSemver('v0.2.5');
+  assert.ok(parsed);
+  assert.equal(parsed.major, 0);
+  assert.equal(parsed.minor, 2);
+  assert.equal(parsed.patch, 5);
+
+  const parsedBeta = parseSemver('V0.2.5-beta.1');
+  assert.ok(parsedBeta);
+  assert.equal(parsedBeta.major, 0);
+  assert.equal(parsedBeta.minor, 2);
+  assert.equal(parsedBeta.patch, 5);
+  assert.equal(parseSemver('not-a-semver'), null);
+
+  assert.equal(compareSemver('v0.2.5', '0.2.4'), 1);
+  assert.equal(compareSemver('0.2.4', 'v0.2.5'), -1);
+  assert.equal(compareSemver('0.2.5', '0.2.5-beta.1'), 1);
+  assert.equal(compareSemver('0.2.5-beta.1', '0.2.5'), -1);
+  assert.equal(compareSemver('0.2.5-beta.1', '0.2.4'), 1);
+  assert.equal(compareSemver('v0.2.4', '0.2.4'), 0);
+  assert.equal(compareSemver('0.10.0', '0.2.9'), 1);
+
+  assert.equal(normalizeReleaseTag('V0.2.5'), 'v0.2.5');
+  assert.equal(normalizeReleaseTag('0.2.5'), 'v0.2.5');
+  assert.equal(normalizeReleaseTag('  v0.2.5  '), 'v0.2.5');
+  assert.equal(normalizeReleaseTag(''), '');
+  assert.equal(DEFAULT_PREFS.skippedReleaseTag, '');
+});
+
+test('buildZipBuffer & parseZipBuffer round-trip prefix stripping and Zip-Slip / path-whitelist guards', () => {
+  const manifestStr = JSON.stringify({ name: 'agy-token-monitor', version: '0.2.5' }, null, 2);
+  const readmeStr = '# Token Monitor v0.2.5\n\n## 中文\n- 极速热更新校验\n';
+  const mainStr = 'console.log("token-monitor-v0.2.5");\n';
+
+  const zipBuf = buildZipBuffer([
+    { name: 'agy-token-monitor/plugin.json', data: manifestStr },
+    { name: 'agy-token-monitor/README.md', data: readmeStr },
+    { name: 'agy-token-monitor/sidecars/monitor_pane/main.mjs', data: Buffer.from(mainStr, 'utf-8') },
+  ]);
+  assert.ok(Buffer.isBuffer(zipBuf));
+  assert.ok(zipBuf.length > 0);
+
+  const extracted = parseZipBuffer(zipBuf);
+  const byRel = new Map(extracted.map((e) => [e.relPath, e.data.toString('utf-8')]));
+  assert.deepEqual([...byRel.keys()].sort(), [
+    'README.md',
+    'plugin.json',
+    'sidecars/monitor_pane/main.mjs',
+  ]);
+  assert.equal(byRel.get('plugin.json'), manifestStr);
+  assert.equal(byRel.get('README.md'), readmeStr);
+  assert.equal(byRel.get('sidecars/monitor_pane/main.mjs'), mainStr);
+
+  // Zip-Slip, absolute path, Windows drive, .git, and unmanaged top-level directory rejections
+  const forbiddenPaths = [
+    '../evil.mjs',
+    'agy-token-monitor/../evil.mjs',
+    '/abs/path',
+    'C:\\evil',
+    '.git/config',
+    'agy-token-monitor/.git/config',
+    'unmanaged_dir/foo.txt',
+    'agy-token-monitor/unmanaged_dir/foo.txt',
+    'sidecar_data/monitor_state.json',
+    'plugin.json\0.txt',
+  ];
+  for (const badName of forbiddenPaths) {
+    const badZip = buildZipBuffer([{ name: badName, data: 'forbidden' }]);
+    assert.throws(() => parseZipBuffer(badZip), `Expected parseZipBuffer to reject "${badName}"`);
+  }
+
+  // Archive entry-count cap guard
+  assert.throws(() => parseZipBuffer(zipBuf, { maxEntries: 2 }));
+});
+
+test('createReleaseUpdater enforces .git guard, SHA-256 integrity, plugin.json manifest checks, and ETag 304 caching', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'tm-release-updater-guards-'));
+  try {
+    const validZip025 = buildZipBuffer([
+      {
+        name: 'agy-token-monitor/plugin.json',
+        data: JSON.stringify({ name: 'agy-token-monitor', version: '0.2.5' }),
+      },
+      { name: 'agy-token-monitor/sidecars/monitor_pane/main.mjs', data: '// v0.2.5\n' },
+    ]);
+    const validSha025 = createHash('sha256').update(validZip025).digest('hex');
+    const ghAssetUrl =
+      'https://github.com/JefferyL1ang/agy-token-monitor/releases/download/v0.2.5/agy-token-monitor-v0.2.5.zip';
+    const ghHtmlUrl = 'https://github.com/JefferyL1ang/agy-token-monitor/releases/tag/v0.2.5';
+
+    const buildReleasePayload = ({ tag = 'v0.2.5', digest = `sha256:${validSha025}`, size = validZip025.length, body = '## English\n- Notes' } = {}) => ({
+      tag_name: tag,
+      name: `Release ${tag}`,
+      published_at: '2026-11-17T10:00:00Z',
+      html_url: ghHtmlUrl,
+      body,
+      assets: [
+        {
+          name: `agy-token-monitor-${tag}.zip`,
+          size,
+          digest,
+          browser_download_url: ghAssetUrl,
+        },
+      ],
+    });
+
+    // 1. Refuses overwriting a directory containing .git when allowGitRepoOverwrite is false
+    const gitPluginRoot = join(root, 'plugin-with-git');
+    const gitStateDir = join(root, 'state-git');
+    mkdirSync(join(gitPluginRoot, '.git'), { recursive: true });
+    writeFileSync(
+      join(gitPluginRoot, 'plugin.json'),
+      JSON.stringify({ name: 'agy-token-monitor', version: '0.2.4' }),
+      'utf-8',
+    );
+    const gitUpdater = createReleaseUpdater({
+      stateDir: gitStateDir,
+      pluginRoot: gitPluginRoot,
+      currentVersion: '0.2.4',
+      allowGitRepoOverwrite: false,
+      fetchImpl: async (url) => {
+        if (String(url).includes('/releases/latest')) {
+          return new Response(JSON.stringify(buildReleasePayload()), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        return new Response(validZip025, { status: 200 });
+      },
+    });
+    const gitRes = await gitUpdater.applyLatestUpdate();
+    assert.equal(gitRes.ok, false);
+    assert.equal(gitRes.reason, 'git_repo');
+    assert.ok(typeof gitRes.fallbackUrl === 'string' && gitRes.fallbackUrl.startsWith('https://github.com/'));
+
+    // 2. Rejects SHA-256 digest mismatch with reason === 'integrity_failed'
+    const cleanPluginRoot = join(root, 'plugin-clean');
+    mkdirSync(join(cleanPluginRoot, 'sidecars', 'monitor_pane'), { recursive: true });
+    writeFileSync(
+      join(cleanPluginRoot, 'plugin.json'),
+      JSON.stringify({ name: 'agy-token-monitor', version: '0.2.4' }),
+      'utf-8',
+    );
+    writeFileSync(join(cleanPluginRoot, 'sidecars', 'monitor_pane', 'main.mjs'), '// v0.2.4\n', 'utf-8');
+
+    const badDigestUpdater = createReleaseUpdater({
+      stateDir: join(root, 'state-bad-digest'),
+      pluginRoot: cleanPluginRoot,
+      currentVersion: '0.2.4',
+      fetchImpl: async (url) => {
+        if (String(url).includes('/releases/latest')) {
+          return new Response(
+            JSON.stringify(buildReleasePayload({ digest: `sha256:${'0'.repeat(64)}` })),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+        return new Response(validZip025, { status: 200 });
+      },
+    });
+    const badDigestRes = await badDigestUpdater.applyLatestUpdate();
+    assert.equal(badDigestRes.ok, false);
+    assert.equal(badDigestRes.reason, 'integrity_failed');
+    assert.equal(JSON.parse(readFileSync(join(cleanPluginRoot, 'plugin.json'), 'utf-8')).version, '0.2.4');
+
+    // 3. Rejects archive missing plugin.json even when SHA-256 matches
+    const missingManifestZip = buildZipBuffer([
+      { name: 'agy-token-monitor/sidecars/monitor_pane/main.mjs', data: '// missing plugin.json\n' },
+    ]);
+    const missingManifestSha = createHash('sha256').update(missingManifestZip).digest('hex');
+    const missingManifestUpdater = createReleaseUpdater({
+      stateDir: join(root, 'state-no-manifest'),
+      pluginRoot: cleanPluginRoot,
+      currentVersion: '0.2.4',
+      fetchImpl: async (url) => {
+        if (String(url).includes('/releases/latest')) {
+          return new Response(
+            JSON.stringify(
+              buildReleasePayload({
+                digest: `sha256:${missingManifestSha}`,
+                size: missingManifestZip.length,
+              }),
+            ),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+        return new Response(missingManifestZip, { status: 200 });
+      },
+    });
+    const missingManifestRes = await missingManifestUpdater.applyLatestUpdate();
+    assert.equal(missingManifestRes.ok, false);
+    assert.equal(JSON.parse(readFileSync(join(cleanPluginRoot, 'plugin.json'), 'utf-8')).version, '0.2.4');
+
+    // 4. Rejects downgrade plugin.json (version 0.2.3 <= 0.2.4) even when tag_name is v0.2.5 and SHA-256 matches
+    const downgradeZip = buildZipBuffer([
+      {
+        name: 'agy-token-monitor/plugin.json',
+        data: JSON.stringify({ name: 'agy-token-monitor', version: '0.2.3' }),
+      },
+      { name: 'agy-token-monitor/sidecars/monitor_pane/main.mjs', data: '// downgrade\n' },
+    ]);
+    const downgradeSha = createHash('sha256').update(downgradeZip).digest('hex');
+    const downgradeUpdater = createReleaseUpdater({
+      stateDir: join(root, 'state-downgrade'),
+      pluginRoot: cleanPluginRoot,
+      currentVersion: '0.2.4',
+      fetchImpl: async (url) => {
+        if (String(url).includes('/releases/latest')) {
+          return new Response(
+            JSON.stringify(
+              buildReleasePayload({
+                digest: `sha256:${downgradeSha}`,
+                size: downgradeZip.length,
+              }),
+            ),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+        return new Response(downgradeZip, { status: 200 });
+      },
+    });
+    const downgradeRes = await downgradeUpdater.applyLatestUpdate();
+    assert.equal(downgradeRes.ok, false);
+    assert.equal(JSON.parse(readFileSync(join(cleanPluginRoot, 'plugin.json'), 'utf-8')).version, '0.2.4');
+
+    // 5. ETag 304 Not Modified preserves cached latestTag, hasUpdate, and releaseNotes without re-downloading
+    let nowMs = 1_760_000_000_000;
+    let apiCalls = 0;
+    let zipDownloads = 0;
+    let capturedIfNoneMatch = '';
+    const notesText = '## English\n- Cached notes preserved\n\n## 中文\n- 保留缓存更新日志';
+    const etagStateDir = join(root, 'state-etag');
+
+    const etagUpdater = createReleaseUpdater({
+      stateDir: etagStateDir,
+      pluginRoot: cleanPluginRoot,
+      currentVersion: '0.2.4',
+      nowFn: () => nowMs,
+      fetchImpl: async (url, init = {}) => {
+        if (String(url).includes('/releases/latest')) {
+          apiCalls += 1;
+          const rawHeaders = init.headers || {};
+          if (rawHeaders instanceof Headers) {
+            capturedIfNoneMatch = rawHeaders.get('if-none-match') || '';
+          } else {
+            const matchEntry = Object.entries(rawHeaders).find(
+              ([k]) => k.toLowerCase() === 'if-none-match',
+            );
+            capturedIfNoneMatch = matchEntry ? String(matchEntry[1]) : '';
+          }
+          if (apiCalls === 1) {
+            return new Response(JSON.stringify(buildReleasePayload({ body: notesText })), {
+              status: 200,
+              headers: {
+                'Content-Type': 'application/json',
+                ETag: '"etag-v025-cached"',
+              },
+            });
+          }
+          return new Response(null, {
+            status: 304,
+            headers: { ETag: '"etag-v025-cached"' },
+          });
+        }
+        zipDownloads += 1;
+        return new Response(validZip025, { status: 200 });
+      },
+    });
+
+    const firstCheck = await etagUpdater.checkForUpdatesNow();
+    assert.equal(firstCheck.ok, true);
+    assert.equal(firstCheck.status.latestTag, 'v0.2.5');
+    assert.equal(firstCheck.status.hasUpdate, true);
+    assert.equal(firstCheck.status.releaseNotes, notesText);
+    assert.equal(zipDownloads, 0);
+
+    nowMs += 5 * 60 * 60 * 1000;
+    const secondCheck = await etagUpdater.checkForUpdatesNow();
+    assert.equal(secondCheck.ok, true);
+    assert.equal(apiCalls, 2);
+    assert.equal(capturedIfNoneMatch, '"etag-v025-cached"');
+    assert.equal(zipDownloads, 0);
+
+    const statusAfter304 = etagUpdater.getPublicStatus();
+    assert.equal(statusAfter304.latestTag, 'v0.2.5');
+    assert.equal(statusAfter304.hasUpdate, true);
+    assert.equal(statusAfter304.releaseNotes, notesText);
+    assert.equal(statusAfter304.lastCheckedAtMs, nowMs);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('standalone HTTP E2E hot-update lifecycle: check-update, skip-version, next-release unskip, and SHA-256 apply-update preserving user prefs', async () => {
+  const { root, appData } = makeTempEnv();
+  const tempStateDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'data');
+  mkdirSync(tempStateDir, { recursive: true });
+  const fakeHome = join(root, 'home');
+  mkdirSync(fakeHome, { recursive: true });
+
+  // Pre-seed custom user preferences in tempStateDir/monitor_state.json
+  writeFileSync(
+    join(tempStateDir, 'monitor_state.json'),
+    JSON.stringify(
+      {
+        prefsSchemaVersion: 3,
+        stepEndTimes: {},
+        prefs: {
+          ...DEFAULT_PREFS,
+          currency: 'CNY',
+          cnyRateMode: 'manual',
+          cnyRate: 7.18,
+          tokenUnit: 'exact',
+        },
+      },
+      null,
+      2,
+    ),
+    'utf-8',
+  );
+
+  // Copy current plugin files into isolated tempPluginDir (NO .git folder!)
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = join(__dirname, '..');
+  const tempPluginDir = join(root, 'temp-plugin');
+  mkdirSync(tempPluginDir, { recursive: true });
+  cpSync(join(repoRoot, 'plugin.json'), join(tempPluginDir, 'plugin.json'));
+  cpSync(join(repoRoot, 'README.md'), join(tempPluginDir, 'README.md'));
+  cpSync(join(repoRoot, 'assets'), join(tempPluginDir, 'assets'), { recursive: true });
+  cpSync(join(repoRoot, 'skills'), join(tempPluginDir, 'skills'), { recursive: true });
+  cpSync(
+    join(repoRoot, 'sidecars', 'monitor_pane'),
+    join(tempPluginDir, 'sidecars', 'monitor_pane'),
+    { recursive: true },
+  );
+  assert.equal(existsSync(join(tempPluginDir, '.git')), false);
+
+  const sidecarDir = join(tempPluginDir, 'sidecars', 'monitor_pane');
+  const origPluginJson = JSON.parse(readFileSync(join(tempPluginDir, 'plugin.json'), 'utf-8'));
+  const origReadme = readFileSync(join(tempPluginDir, 'README.md'), 'utf-8');
+  const sidecarFiles = readdirSync(sidecarDir);
+
+  function buildReleaseBundle(version, notesBody) {
+    const entries = [
+      {
+        name: 'agy-token-monitor/plugin.json',
+        data: JSON.stringify({ ...origPluginJson, version }, null, 2) + '\n',
+      },
+      {
+        name: 'agy-token-monitor/README.md',
+        data: `${origReadme}\n<!-- release-${version} -->\n`,
+      },
+    ];
+    for (const file of sidecarFiles) {
+      const fullPath = join(sidecarDir, file);
+      const rawBuf = readFileSync(fullPath);
+      if (file === 'main.mjs') {
+        const markedMain = `// HOT_UPDATE_E2E_MARKER_${version}\n${rawBuf.toString('utf-8')}`;
+        entries.push({
+          name: `agy-token-monitor/sidecars/monitor_pane/${file}`,
+          data: Buffer.from(markedMain, 'utf-8'),
+        });
+      } else {
+        entries.push({
+          name: `agy-token-monitor/sidecars/monitor_pane/${file}`,
+          data: rawBuf,
+        });
+      }
+    }
+    const zipBuf = buildZipBuffer(entries);
+    const sha256Hex = createHash('sha256').update(zipBuf).digest('hex');
+    return { version, tag: `v${version}`, notesBody, zipBuf, sha256Hex };
+  }
+
+  let activeBundle = buildReleaseBundle(
+    '0.9.9',
+    '## English\n- Fast update\n\n## 中文\n- 极速热更新',
+  );
+  let mockPort = 0;
+
+  const mockServer = createServer((req, res) => {
+    if (req.url === '/releases/latest') {
+      const payload = {
+        tag_name: activeBundle.tag,
+        name: `Token Monitor ${activeBundle.tag}`,
+        published_at: '2026-11-17T10:30:00Z',
+        html_url: `https://github.com/JefferyL1ang/agy-token-monitor/releases/tag/${activeBundle.tag}`,
+        body: activeBundle.notesBody,
+        assets: [
+          {
+            name: `agy-token-monitor-${activeBundle.tag}.zip`,
+            size: activeBundle.zipBuf.length,
+            digest: `sha256:${activeBundle.sha256Hex}`,
+            browser_download_url: `http://127.0.0.1:${mockPort}/asset.zip`,
+          },
+        ],
+      };
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        ETag: `"etag-${activeBundle.tag}"`,
+      });
+      res.end(JSON.stringify(payload));
+      return;
+    }
+    if (req.url === '/asset.zip') {
+      res.writeHead(200, {
+        'Content-Type': 'application/zip',
+        'Content-Length': String(activeBundle.zipBuf.length),
+      });
+      res.end(activeBundle.zipBuf);
+      return;
+    }
+    res.writeHead(404);
+    res.end('not found');
+  });
+
+  await new Promise((resolveListen) => mockServer.listen(0, '127.0.0.1', resolveListen));
+  mockPort = mockServer.address().port;
+
+  // Pick an ephemeral free port for standalone sidecar
+  const portProbe = createServer();
+  await new Promise((r) => portProbe.listen(0, '127.0.0.1', r));
+  const sidecarPort = portProbe.address().port;
+  await new Promise((r) => portProbe.close(() => r()));
+
+  const sdkCandidates = [
+    join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+    join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+  ].filter((p) => existsSync(p));
+
+  const env = { ...process.env };
+  delete env.ANTIGRAVITY_LS_ADDRESS;
+  delete env.ANTIGRAVITY_CSRF_TOKEN;
+  delete env.ANTIGRAVITY_SIDECAR_WEB_PORT;
+  delete env.ANTIGRAVITY_CONVERSATION_ID;
+  delete env.ANTIGRAVITY_SIDECAR_UI_TOKEN;
+  delete env.ANTIGRAVITY_AGENTAPI_EXE;
+  delete env.ENABLE_STANDALONE_UPDATE_EXIT;
+  if (sdkCandidates[0]) {
+    env.SIDECAR_SDK_PATH = sdkCandidates[0];
+  }
+  env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = tempStateDir;
+  env.RELEASE_UPDATE_API_URL = `http://127.0.0.1:${mockPort}/releases/latest`;
+  env.RELEASE_UPDATE_ALLOW_LOOPBACK = '1';
+  env.PRICING_SYNC_DISABLE_AUTO = '1';
+  env.USERPROFILE = fakeHome;
+  env.HOME = fakeHome;
+
+  const tempMainPath = join(sidecarDir, 'main.mjs');
+  const child = spawn(process.execPath, [tempMainPath, '--standalone', String(sidecarPort)], {
+    env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  try {
+    await new Promise((resolveReady, rejectReady) => {
+      if (child.exitCode !== null) {
+        rejectReady(new Error(`Sidecar exited prematurely (${child.exitCode})`));
+        return;
+      }
+      const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 5000);
+      let out = '';
+      child.stdout.on('data', (chunk) => {
+        out += chunk.toString();
+        if (out.includes(`[sidecar] listening on 127.0.0.1:${sidecarPort}`)) {
+          clearTimeout(timer);
+          resolveReady();
+        }
+      });
+      child.stderr.on('data', (chunk) => {
+        out += chunk.toString();
+      });
+      child.once('exit', (code) => {
+        clearTimeout(timer);
+        rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+      });
+    });
+
+    const base = `http://127.0.0.1:${sidecarPort}`;
+
+    // a) POST /api/check-update detects v0.9.9 and prompts user
+    const check1Res = await fetch(`${base}/api/check-update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    assert.equal(check1Res.status, 200);
+    const check1 = await check1Res.json();
+    assert.equal(check1.ok, true);
+    assert.equal(check1.updateStatus.hasUpdate, true);
+    assert.equal(check1.updateStatus.latestTag, 'v0.9.9');
+    assert.equal(check1.updateStatus.isSkipped, false);
+    assert.equal(check1.updateStatus.shouldPrompt, true);
+    assert.ok(check1.updateStatus.releaseNotes.includes('极速热更新'));
+
+    // b) POST /api/prefs with { skippedReleaseTag: 'v0.9.9' } -> snapshot suppresses prompt
+    const skipRes = await fetch(`${base}/api/prefs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skippedReleaseTag: 'v0.9.9' }),
+    });
+    assert.equal(skipRes.status, 200);
+    const skipBody = await skipRes.json();
+    assert.equal(skipBody.ok, true);
+    assert.equal(skipBody.prefs.skippedReleaseTag, 'v0.9.9');
+
+    const snapSkippedRes = await fetch(`${base}/api/snapshot`);
+    assert.equal(snapSkippedRes.status, 200);
+    const snapSkipped = await snapSkippedRes.json();
+    assert.equal(snapSkipped.updateStatus.hasUpdate, true);
+    assert.equal(snapSkipped.updateStatus.isSkipped, true);
+    assert.equal(snapSkipped.updateStatus.shouldPrompt, false);
+    assert.equal(snapSkipped.prefs.cnyRate, 7.18);
+
+    // c) Advance mock server to v0.10.0 -> check-update prompts again (v0.10.0 !== skipped v0.9.9)
+    activeBundle = buildReleaseBundle(
+      '0.10.0',
+      '## English\n- Next release v0.10.0\n\n## 中文\n- 下一版本 v0.10.0 热更新',
+    );
+    const check2Res = await fetch(`${base}/api/check-update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    assert.equal(check2Res.status, 200);
+    const check2 = await check2Res.json();
+    assert.equal(check2.ok, true);
+    assert.equal(check2.updateStatus.latestTag, 'v0.10.0');
+    assert.equal(check2.updateStatus.hasUpdate, true);
+    assert.equal(check2.updateStatus.isSkipped, false);
+    assert.equal(check2.updateStatus.shouldPrompt, true);
+
+    // d) POST /api/apply-update verifies SHA-256, writes v0.10.0 to tempPluginDir, clears skippedReleaseTag, preserves cnyRate=7.18
+    const applyRes = await fetch(`${base}/api/apply-update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    assert.equal(applyRes.status, 200);
+    const applyBody = await applyRes.json();
+    assert.equal(applyBody.ok, true);
+    assert.equal(applyBody.targetVersion, '0.10.0');
+
+    const updatedManifest = JSON.parse(readFileSync(join(tempPluginDir, 'plugin.json'), 'utf-8'));
+    assert.equal(updatedManifest.version, '0.10.0');
+
+    const updatedMainSource = readFileSync(tempMainPath, 'utf-8');
+    assert.ok(updatedMainSource.includes('// HOT_UPDATE_E2E_MARKER_0.10.0'));
+
+    const persistedState = JSON.parse(readFileSync(join(tempStateDir, 'monitor_state.json'), 'utf-8'));
+    assert.equal(persistedState.prefs.skippedReleaseTag, '');
+    assert.equal(persistedState.prefs.currency, 'CNY');
+    assert.equal(persistedState.prefs.cnyRateMode, 'manual');
+    assert.equal(persistedState.prefs.cnyRate, 7.18);
+    assert.equal(persistedState.prefs.tokenUnit, 'exact');
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill();
+      await new Promise((r) => {
+        if (child.exitCode !== null || child.signalCode !== null) return r();
+        const t = setTimeout(r, 3000);
+        child.once('exit', () => {
+          clearTimeout(t);
+          r();
+        });
+      });
+    }
+    await new Promise((r) => mockServer.close(() => r()));
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-17 18:54:00
 // ============================================================================

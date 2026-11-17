@@ -1,0 +1,1145 @@
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 18:55:00
+// Description: Zero-dependency GitHub Release checker, ZIP builder/extractor
+// with Zip-Slip & Zip-Bomb guards, SHA-256 integrity verification, and atomic
+// hot-updater for agy-token-monitor v0.2.4.
+// ============================================================================
+
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve, sep } from 'node:path';
+import { deflateRawSync, inflateRawSync } from 'node:zlib';
+
+const DEFAULT_RELEASE_API_URL =
+  'https://api.github.com/repos/JefferyL1ang/agy-token-monitor/releases/latest';
+const DEFAULT_RELEASES_HTML_URL =
+  'https://github.com/JefferyL1ang/agy-token-monitor/releases/latest';
+
+const CACHE_SCHEMA_VERSION = 1;
+const BOOT_SKIP_WINDOW_MS = 60 * 1000;
+const AUTO_CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000;
+const RETRY_COOLDOWN_MS = 15 * 60 * 1000;
+const CHECK_TIMEOUT_MS = 5000;
+const DOWNLOAD_TIMEOUT_MS = 15000;
+const MAX_RELEASE_NOTES_CHARS = 24000;
+
+const DEFAULT_ZIP_LIMITS = Object.freeze({
+  maxZipBytes: 10 * 1024 * 1024,
+  maxEntryBytes: 5 * 1024 * 1024,
+  maxTotalBytes: 25 * 1024 * 1024,
+  maxEntries: 128,
+});
+
+const ALLOWED_TOP_SEGMENTS = new Set([
+  'plugin.json',
+  'README.md',
+  'assets',
+  'skills',
+  'sidecars',
+  'scripts',
+  'tests',
+]);
+
+const ALLOWED_TOP_FILES = new Set(['plugin.json', 'README.md']);
+
+const ZIP_LOCAL_FILE_HEADER_SIG = 0x04034b50;
+const ZIP_CENTRAL_DIR_HEADER_SIG = 0x02014b50;
+const ZIP_EOCD_SIG = 0x06054b50;
+const ZIP_UTF8_FLAG = 0x0800;
+const ZIP_DOS_DEFAULT_DATE = 0x0021; // 1980-01-01
+
+const CRC32_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let k = 0; k < 8; k++) {
+      c = (c & 1) !== 0 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    }
+    table[i] = c >>> 0;
+  }
+  return table;
+})();
+
+function crc32(buf) {
+  let crc = 0xffffffff;
+  for (let i = 0; i < buf.length; i++) {
+    crc = CRC32_TABLE[(crc ^ buf[i]) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+/**
+ * Parses a SemVer string or release tag (stripping leading `v`/`V`).
+ * Returns `{ major, minor, patch, prerelease, raw }` or `null` if invalid.
+ */
+export function parseSemver(versionOrTag) {
+  if (typeof versionOrTag !== 'string') return null;
+  const trimmed = versionOrTag.trim();
+  if (!trimmed) return null;
+  const match = /^[vV]?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+([0-9A-Za-z.-]+))?$/.exec(
+    trimmed,
+  );
+  if (!match) return null;
+
+  const major = Number(match[1]);
+  const minor = Number(match[2]);
+  const patch = Number(match[3]);
+  if (!Number.isSafeInteger(major) || !Number.isSafeInteger(minor) || !Number.isSafeInteger(patch)) {
+    return null;
+  }
+
+  let prerelease = [];
+  if (match[4] !== undefined) {
+    prerelease = match[4].split('.');
+    if (prerelease.some((id) => id.length === 0)) return null;
+  }
+
+  const raw = `${major}.${minor}.${patch}${prerelease.length > 0 ? `-${prerelease.join('.')}` : ''}`;
+  return { major, minor, patch, prerelease, raw };
+}
+
+/**
+ * Compares two SemVer strings/tags according to SemVer 2.0.0 precedence.
+ * Returns `1` if `a > b`, `0` if equal (or unparseable), and `-1` if `a < b`.
+ */
+export function compareSemver(a, b) {
+  const pa =
+    a && typeof a === 'object' && Number.isSafeInteger(a.major) ? a : parseSemver(a);
+  const pb =
+    b && typeof b === 'object' && Number.isSafeInteger(b.major) ? b : parseSemver(b);
+  if (!pa || !pb) return 0;
+
+  if (pa.major !== pb.major) return pa.major > pb.major ? 1 : -1;
+  if (pa.minor !== pb.minor) return pa.minor > pb.minor ? 1 : -1;
+  if (pa.patch !== pb.patch) return pa.patch > pb.patch ? 1 : -1;
+
+  const preA = pa.prerelease || [];
+  const preB = pb.prerelease || [];
+  if (preA.length === 0 && preB.length === 0) return 0;
+  if (preA.length === 0) return 1;
+  if (preB.length === 0) return -1;
+
+  const len = Math.min(preA.length, preB.length);
+  for (let i = 0; i < len; i++) {
+    const idA = preA[i];
+    const idB = preB[i];
+    if (idA === idB) continue;
+    const aNum = /^\d+$/.test(idA);
+    const bNum = /^\d+$/.test(idB);
+    if (aNum && bNum) {
+      const na = Number(idA);
+      const nb = Number(idB);
+      if (na !== nb) return na > nb ? 1 : -1;
+    } else if (aNum && !bNum) {
+      return -1;
+    } else if (!aNum && bNum) {
+      return 1;
+    } else {
+      return idA > idB ? 1 : -1;
+    }
+  }
+
+  if (preA.length !== preB.length) {
+    return preA.length > preB.length ? 1 : -1;
+  }
+  return 0;
+}
+
+/**
+ * Trims and lowercases a release tag, normalizing `'0.2.5'` or `'V0.2.5'` to `'v0.2.5'`
+ * (and `''` -> `''`).
+ */
+export function normalizeReleaseTag(tag) {
+  if (typeof tag !== 'string') return '';
+  const trimmed = tag.trim().toLowerCase();
+  if (!trimmed) return '';
+  return trimmed.startsWith('v') ? trimmed : `v${trimmed}`;
+}
+
+/**
+ * Builds a standard ZIP archive Buffer from `Array<{ name: string, data: Buffer | string, method?: 0 | 8 }>`.
+ */
+export function buildZipBuffer(entries) {
+  if (!Array.isArray(entries)) {
+    throw new Error('buildZipBuffer requires an array of entries.');
+  }
+
+  const localParts = [];
+  const centralParts = [];
+  let localOffset = 0;
+
+  for (const item of entries) {
+    if (!item || typeof item.name !== 'string' || !item.name) {
+      throw new Error('Each ZIP entry must have a non-empty string name.');
+    }
+    const normName = item.name.replace(/\\/g, '/');
+    const nameBuf = Buffer.from(normName, 'utf-8');
+    const isDir = normName.endsWith('/');
+
+    const rawBuf = isDir
+      ? Buffer.alloc(0)
+      : Buffer.isBuffer(item.data)
+        ? item.data
+        : typeof item.data === 'string'
+          ? Buffer.from(item.data, 'utf-8')
+          : item.data instanceof Uint8Array
+            ? Buffer.from(item.data)
+            : Buffer.alloc(0);
+
+    const crc = crc32(rawBuf);
+    const useStore = isDir || rawBuf.length === 0 || item.method === 0;
+    const method = useStore ? 0 : 8;
+    const compBuf = useStore ? rawBuf : deflateRawSync(rawBuf);
+
+    const localHeader = Buffer.alloc(30);
+    localHeader.writeUInt32LE(ZIP_LOCAL_FILE_HEADER_SIG, 0);
+    localHeader.writeUInt16LE(20, 4);
+    localHeader.writeUInt16LE(ZIP_UTF8_FLAG, 6);
+    localHeader.writeUInt16LE(method, 8);
+    localHeader.writeUInt16LE(0, 10);
+    localHeader.writeUInt16LE(ZIP_DOS_DEFAULT_DATE, 12);
+    localHeader.writeUInt32LE(crc, 14);
+    localHeader.writeUInt32LE(compBuf.length, 18);
+    localHeader.writeUInt32LE(rawBuf.length, 22);
+    localHeader.writeUInt16LE(nameBuf.length, 26);
+    localHeader.writeUInt16LE(0, 28);
+
+    localParts.push(localHeader, nameBuf, compBuf);
+
+    const centralHeader = Buffer.alloc(46);
+    centralHeader.writeUInt32LE(ZIP_CENTRAL_DIR_HEADER_SIG, 0);
+    centralHeader.writeUInt16LE(20, 4);
+    centralHeader.writeUInt16LE(20, 6);
+    centralHeader.writeUInt16LE(ZIP_UTF8_FLAG, 8);
+    centralHeader.writeUInt16LE(method, 10);
+    centralHeader.writeUInt16LE(0, 12);
+    centralHeader.writeUInt16LE(ZIP_DOS_DEFAULT_DATE, 14);
+    centralHeader.writeUInt32LE(crc, 16);
+    centralHeader.writeUInt32LE(compBuf.length, 20);
+    centralHeader.writeUInt32LE(rawBuf.length, 24);
+    centralHeader.writeUInt16LE(nameBuf.length, 28);
+    centralHeader.writeUInt16LE(0, 30);
+    centralHeader.writeUInt16LE(0, 32);
+    centralHeader.writeUInt16LE(0, 34);
+    centralHeader.writeUInt16LE(0, 36);
+    centralHeader.writeUInt32LE(0, 38);
+    centralHeader.writeUInt32LE(localOffset, 42);
+
+    centralParts.push(centralHeader, nameBuf);
+    localOffset += localHeader.length + nameBuf.length + compBuf.length;
+  }
+
+  const centralDirSize = centralParts.reduce((sum, b) => sum + b.length, 0);
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(ZIP_EOCD_SIG, 0);
+  eocd.writeUInt16LE(0, 4);
+  eocd.writeUInt16LE(0, 6);
+  eocd.writeUInt16LE(entries.length, 8);
+  eocd.writeUInt16LE(entries.length, 10);
+  eocd.writeUInt32LE(centralDirSize, 12);
+  eocd.writeUInt32LE(localOffset, 16);
+  eocd.writeUInt16LE(0, 20);
+
+  return Buffer.concat([...localParts, ...centralParts, eocd]);
+}
+
+function normalizeAndValidateZipEntryPath(rawName) {
+  if (typeof rawName !== 'string' || !rawName) {
+    throw new Error('Invalid empty ZIP entry path.');
+  }
+  if (rawName.includes('\0')) {
+    throw new Error('Unsafe ZIP entry path: null byte.');
+  }
+  if (rawName.includes(':')) {
+    throw new Error(`Unsafe ZIP entry path (drive/colon): ${rawName}`);
+  }
+
+  let norm = rawName.replace(/\\/g, '/');
+  if (norm.startsWith('/')) {
+    throw new Error(`Unsafe ZIP entry path (leading slash): ${rawName}`);
+  }
+
+  const isDir = norm.endsWith('/');
+  const withoutTrailing = isDir ? norm.slice(0, -1) : norm;
+  if (!withoutTrailing) {
+    return null;
+  }
+  if (withoutTrailing.includes('//')) {
+    throw new Error(`Unsafe ZIP entry path (empty segment): ${rawName}`);
+  }
+
+  const rawSegments = withoutTrailing.split('/');
+  if (rawSegments.some((seg) => !seg || seg === '.' || seg === '..')) {
+    throw new Error(`Unsafe ZIP entry path traversal: ${rawName}`);
+  }
+
+  let stripped = withoutTrailing;
+  if (stripped === 'agy-token-monitor') {
+    if (isDir) return null;
+    throw new Error(`Disallowed root file entry: ${rawName}`);
+  }
+  if (stripped.startsWith('agy-token-monitor/')) {
+    stripped = stripped.slice('agy-token-monitor/'.length);
+  }
+  if (!stripped) {
+    return null;
+  }
+
+  const segments = stripped.split('/');
+  const topSeg = segments[0];
+  if (topSeg === '.git' || topSeg === 'sidecar_data' || !ALLOWED_TOP_SEGMENTS.has(topSeg)) {
+    throw new Error(`Disallowed top-level ZIP segment: ${topSeg}`);
+  }
+
+  if (isDir) {
+    if (ALLOWED_TOP_FILES.has(topSeg)) {
+      throw new Error(`Invalid directory entry for file segment: ${topSeg}`);
+    }
+    return null;
+  }
+
+  if (ALLOWED_TOP_FILES.has(topSeg) && segments.length !== 1) {
+    throw new Error(`Invalid nested path under top-level file segment: ${stripped}`);
+  }
+  if (!ALLOWED_TOP_FILES.has(topSeg) && segments.length < 2) {
+    throw new Error(`Expected directory path for segment: ${stripped}`);
+  }
+
+  return stripped;
+}
+
+/**
+ * Parses and validates a ZIP archive Buffer with Zip-Slip, Zip-Bomb, and CRC32 checks.
+ * Returns `Array<{ relPath: string, data: Buffer }>`.
+ */
+export function parseZipBuffer(zipBuf, limits = {}) {
+  const buf = Buffer.isBuffer(zipBuf)
+    ? zipBuf
+    : zipBuf instanceof Uint8Array
+      ? Buffer.from(zipBuf)
+      : null;
+  if (!buf) {
+    throw new Error('ZIP input must be a Buffer or Uint8Array.');
+  }
+
+  const maxZipBytes = limits?.maxZipBytes ?? DEFAULT_ZIP_LIMITS.maxZipBytes;
+  const maxEntryBytes = limits?.maxEntryBytes ?? DEFAULT_ZIP_LIMITS.maxEntryBytes;
+  const maxTotalBytes = limits?.maxTotalBytes ?? DEFAULT_ZIP_LIMITS.maxTotalBytes;
+  const maxEntries = limits?.maxEntries ?? DEFAULT_ZIP_LIMITS.maxEntries;
+
+  if (buf.length > maxZipBytes) {
+    throw new Error(`ZIP archive size (${buf.length}) exceeds limit (${maxZipBytes}).`);
+  }
+  if (buf.length < 22) {
+    throw new Error('Invalid or truncated ZIP archive.');
+  }
+
+  const minEocdOffset = Math.max(0, buf.length - 65557);
+  let eocdOffset = -1;
+  for (let off = buf.length - 22; off >= minEocdOffset; off--) {
+    if (buf.readUInt32LE(off) === ZIP_EOCD_SIG) {
+      const commentLen = buf.readUInt16LE(off + 20);
+      if (off + 22 + commentLen === buf.length) {
+        eocdOffset = off;
+        break;
+      }
+    }
+  }
+  if (eocdOffset < 0) {
+    throw new Error('Invalid ZIP archive: End of Central Directory not found.');
+  }
+
+  const diskNo = buf.readUInt16LE(eocdOffset + 4);
+  const cdDiskNo = buf.readUInt16LE(eocdOffset + 6);
+  const diskEntries = buf.readUInt16LE(eocdOffset + 8);
+  const totalEntries = buf.readUInt16LE(eocdOffset + 10);
+  const cdSize = buf.readUInt32LE(eocdOffset + 12);
+  const cdOffset = buf.readUInt32LE(eocdOffset + 16);
+
+  if (diskNo !== 0 || cdDiskNo !== 0 || diskEntries !== totalEntries) {
+    throw new Error('Multi-disk ZIP archives are not supported.');
+  }
+  if (totalEntries === 0xffff || cdSize === 0xffffffff || cdOffset === 0xffffffff) {
+    throw new Error('ZIP64 archives are not supported.');
+  }
+  if (totalEntries > maxEntries) {
+    throw new Error(`ZIP entry count (${totalEntries}) exceeds limit (${maxEntries}).`);
+  }
+  if (cdOffset + cdSize > eocdOffset) {
+    throw new Error('Invalid ZIP Central Directory bounds.');
+  }
+
+  const extracted = [];
+  const seenRelPaths = new Set();
+  let totalUncompressedBytes = 0;
+  let pos = cdOffset;
+  const cdEnd = cdOffset + cdSize;
+
+  for (let i = 0; i < totalEntries; i++) {
+    if (pos + 46 > cdEnd || buf.readUInt32LE(pos) !== ZIP_CENTRAL_DIR_HEADER_SIG) {
+      throw new Error('Corrupt ZIP Central Directory header.');
+    }
+
+    const flags = buf.readUInt16LE(pos + 8);
+    const method = buf.readUInt16LE(pos + 10);
+    const expectedCrc = buf.readUInt32LE(pos + 16);
+    const compSize = buf.readUInt32LE(pos + 20);
+    const uncompSize = buf.readUInt32LE(pos + 24);
+    const nameLen = buf.readUInt16LE(pos + 28);
+    const extraLen = buf.readUInt16LE(pos + 30);
+    const commentLen = buf.readUInt16LE(pos + 32);
+    const localHeaderOffset = buf.readUInt32LE(pos + 42);
+
+    const nextPos = pos + 46 + nameLen + extraLen + commentLen;
+    if (nextPos > cdEnd) {
+      throw new Error('Truncated ZIP Central Directory entry.');
+    }
+
+    if ((flags & 0x0001) !== 0) {
+      throw new Error('Encrypted ZIP entries are not supported.');
+    }
+    if (compSize === 0xffffffff || uncompSize === 0xffffffff || localHeaderOffset === 0xffffffff) {
+      throw new Error('ZIP64 entry fields are not supported.');
+    }
+
+    const rawName = buf.subarray(pos + 46, pos + 46 + nameLen).toString('utf-8');
+    pos = nextPos;
+
+    const relPath = normalizeAndValidateZipEntryPath(rawName);
+    if (relPath === null) {
+      continue;
+    }
+
+    const dedupeKey = relPath.toLowerCase();
+    if (seenRelPaths.has(dedupeKey)) {
+      throw new Error(`Duplicate ZIP entry path: ${relPath}`);
+    }
+    seenRelPaths.add(dedupeKey);
+
+    if (uncompSize > maxEntryBytes) {
+      throw new Error(`ZIP entry ${relPath} size (${uncompSize}) exceeds maxEntryBytes (${maxEntryBytes}).`);
+    }
+    if (compSize > maxZipBytes) {
+      throw new Error(`ZIP entry ${relPath} compressed size exceeds archive limit.`);
+    }
+    if (totalUncompressedBytes + uncompSize > maxTotalBytes) {
+      throw new Error(`Total uncompressed ZIP bytes exceed limit (${maxTotalBytes}).`);
+    }
+
+    if (
+      localHeaderOffset + 30 > cdOffset ||
+      buf.readUInt32LE(localHeaderOffset) !== ZIP_LOCAL_FILE_HEADER_SIG
+    ) {
+      throw new Error(`Invalid local file header for ${relPath}.`);
+    }
+
+    const localMethod = buf.readUInt16LE(localHeaderOffset + 8);
+    if (localMethod !== method) {
+      throw new Error(`Compression method mismatch for ${relPath}.`);
+    }
+    const localNameLen = buf.readUInt16LE(localHeaderOffset + 26);
+    const localExtraLen = buf.readUInt16LE(localHeaderOffset + 28);
+    const dataStart = localHeaderOffset + 30 + localNameLen + localExtraLen;
+    const dataEnd = dataStart + compSize;
+    if (dataEnd > cdOffset) {
+      throw new Error(`Compressed payload out of bounds for ${relPath}.`);
+    }
+
+    const compSlice = buf.subarray(dataStart, dataEnd);
+    let data;
+    if (method === 0) {
+      data = Buffer.from(compSlice);
+    } else if (method === 8) {
+      data = inflateRawSync(compSlice, { maxOutputLength: maxEntryBytes });
+    } else {
+      throw new Error(`Unsupported ZIP compression method (${method}) for ${relPath}.`);
+    }
+
+    if (data.length !== uncompSize) {
+      throw new Error(
+        `Uncompressed size mismatch for ${relPath}: expected ${uncompSize}, got ${data.length}.`,
+      );
+    }
+    const actualCrc = crc32(data);
+    if (actualCrc !== expectedCrc) {
+      throw new Error(`CRC32 checksum mismatch for ${relPath}.`);
+    }
+
+    totalUncompressedBytes += data.length;
+    extracted.push({ relPath, data });
+  }
+
+  return extracted;
+}
+
+function getHeaderValue(headers, name) {
+  if (!headers) return '';
+  if (typeof headers.get === 'function') {
+    return headers.get(name) || headers.get(name.toLowerCase()) || '';
+  }
+  if (typeof headers === 'object') {
+    const target = name.toLowerCase();
+    for (const [k, v] of Object.entries(headers)) {
+      if (k.toLowerCase() === target && typeof v === 'string') return v;
+    }
+  }
+  return '';
+}
+
+function isLoopbackUrlPrefix(rawUrl) {
+  return /^http:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?(?:\/|$)/i.test(String(rawUrl || '').trim());
+}
+
+function isAllowedAssetUrl(rawUrl, allowLoopback) {
+  if (typeof rawUrl !== 'string' || !rawUrl.trim()) return false;
+  let parsed;
+  try {
+    parsed = new URL(rawUrl.trim());
+  } catch {
+    return false;
+  }
+  const proto = parsed.protocol.toLowerCase();
+  const host = parsed.hostname.toLowerCase();
+  if (
+    proto === 'https:' &&
+    (host === 'github.com' ||
+      host.endsWith('.github.com') ||
+      host.endsWith('.githubusercontent.com'))
+  ) {
+    return true;
+  }
+  if (
+    allowLoopback &&
+    (proto === 'http:' || proto === 'https:') &&
+    (host === '127.0.0.1' || host === 'localhost')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function createEmptyCache() {
+  return {
+    schemaVersion: CACHE_SCHEMA_VERSION,
+    etag: '',
+    checkedFromVersion: '',
+    lastCheckedAtMs: null,
+    lastAttemptAtMs: null,
+    latestTag: '',
+    latestVersion: '',
+    releaseName: '',
+    publishedAt: '',
+    htmlUrl: '',
+    assetName: '',
+    assetSize: 0,
+    assetUrl: '',
+    assetDigest: '',
+    releaseNotes: '',
+    error: '',
+  };
+}
+
+function loadUpdateCache(cachePath) {
+  const fallback = createEmptyCache();
+  if (!cachePath || !existsSync(cachePath)) return fallback;
+  try {
+    const raw = JSON.parse(readFileSync(cachePath, 'utf-8'));
+    if (!raw || typeof raw !== 'object' || raw.schemaVersion !== CACHE_SCHEMA_VERSION) {
+      return fallback;
+    }
+    return {
+      schemaVersion: CACHE_SCHEMA_VERSION,
+      etag: typeof raw.etag === 'string' ? raw.etag : '',
+      checkedFromVersion:
+        typeof raw.checkedFromVersion === 'string' ? raw.checkedFromVersion : '',
+      lastCheckedAtMs: Number.isFinite(raw.lastCheckedAtMs) ? Number(raw.lastCheckedAtMs) : null,
+      lastAttemptAtMs: Number.isFinite(raw.lastAttemptAtMs) ? Number(raw.lastAttemptAtMs) : null,
+      latestTag: typeof raw.latestTag === 'string' ? raw.latestTag : '',
+      latestVersion: typeof raw.latestVersion === 'string' ? raw.latestVersion : '',
+      releaseName: typeof raw.releaseName === 'string' ? raw.releaseName : '',
+      publishedAt: typeof raw.publishedAt === 'string' ? raw.publishedAt : '',
+      htmlUrl: typeof raw.htmlUrl === 'string' ? raw.htmlUrl : '',
+      assetName: typeof raw.assetName === 'string' ? raw.assetName : '',
+      assetSize: Number.isFinite(raw.assetSize) && raw.assetSize >= 0 ? Number(raw.assetSize) : 0,
+      assetUrl: typeof raw.assetUrl === 'string' ? raw.assetUrl : '',
+      assetDigest: typeof raw.assetDigest === 'string' ? raw.assetDigest : '',
+      releaseNotes:
+        typeof raw.releaseNotes === 'string'
+          ? raw.releaseNotes.slice(0, MAX_RELEASE_NOTES_CHARS)
+          : '',
+      error: typeof raw.error === 'string' ? raw.error : '',
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function persistUpdateCache(stateDir, cachePath, cache) {
+  if (!stateDir || !cachePath) return;
+  const tmpPath = `${cachePath}.upd-${process.pid}.tmp`;
+  try {
+    mkdirSync(stateDir, { recursive: true });
+    const serialized = JSON.stringify(cache, null, 2);
+    writeFileSync(tmpPath, serialized, 'utf-8');
+    try {
+      renameSync(tmpPath, cachePath);
+    } catch (renameErr) {
+      try {
+        if (existsSync(tmpPath)) unlinkSync(tmpPath);
+      } catch {
+        // Ignore cleanup failure.
+      }
+      if (
+        renameErr &&
+        (renameErr.code === 'EPERM' || renameErr.code === 'EACCES' || renameErr.code === 'EBUSY')
+      ) {
+        writeFileSync(cachePath, serialized, 'utf-8');
+      } else {
+        throw renameErr;
+      }
+    }
+  } catch {
+    // Non-fatal cache write failure.
+  }
+}
+
+/**
+ * Creates a GitHub Release update checker and atomic hot-update installer.
+ */
+export function createReleaseUpdater(options = {}) {
+  const {
+    stateDir = '',
+    pluginRoot = '',
+    currentVersion: initialVersion = '0.2.4',
+    fetchImpl = globalThis.fetch,
+    nowFn = Date.now,
+    releaseApiUrl = process.env.RELEASE_UPDATE_API_URL || DEFAULT_RELEASE_API_URL,
+    allowGitRepoOverwrite = process.env.ALLOW_GIT_REPO_HOT_UPDATE === '1',
+    autoCheckDisabled = process.env.RELEASE_UPDATE_DISABLE_AUTO === '1',
+    allowLoopbackDownload = process.env.RELEASE_UPDATE_ALLOW_LOOPBACK === '1',
+  } = options || {};
+
+  let currentVersion =
+    typeof initialVersion === 'string' && initialVersion.trim() ? initialVersion.trim() : '0.2.4';
+  const effectiveAllowLoopback = Boolean(
+    allowLoopbackDownload || isLoopbackUrlPrefix(releaseApiUrl),
+  );
+
+  const cachePath = stateDir ? join(stateDir, 'update_cache.json') : '';
+  const cache = loadUpdateCache(cachePath);
+
+  let hasCheckedSinceBoot = false;
+  let checkPromise = null;
+  let applyPromise = null;
+
+  function getFallbackUrl() {
+    if (typeof cache.htmlUrl === 'string' && /^https?:\/\//i.test(cache.htmlUrl.trim())) {
+      return cache.htmlUrl.trim();
+    }
+    return DEFAULT_RELEASES_HTML_URL;
+  }
+
+  function getPublicStatus(skippedReleaseTag = '') {
+    const hasAsset = Boolean(cache.assetUrl);
+    const hasUpdate = Boolean(
+      cache.latestVersion && compareSemver(cache.latestVersion, currentVersion) > 0,
+    );
+    const isSkipped = Boolean(
+      hasUpdate &&
+        skippedReleaseTag &&
+        normalizeReleaseTag(skippedReleaseTag) === normalizeReleaseTag(cache.latestTag),
+    );
+    const shouldPrompt = Boolean(hasUpdate && !isSkipped);
+
+    return {
+      currentVersion,
+      latestTag: cache.latestTag || '',
+      latestVersion: cache.latestVersion || '',
+      releaseName: cache.releaseName || '',
+      publishedAt: cache.publishedAt || '',
+      htmlUrl: getFallbackUrl(),
+      assetName: cache.assetName || '',
+      assetSize: Number(cache.assetSize) || 0,
+      hasAsset,
+      hasUpdate,
+      isSkipped,
+      shouldPrompt,
+      checking: Boolean(checkPromise),
+      applying: Boolean(applyPromise),
+      lastCheckedAtMs: Number.isFinite(cache.lastCheckedAtMs) ? cache.lastCheckedAtMs : null,
+      error: cache.error || '',
+      releaseNotes: cache.releaseNotes || '',
+    };
+  }
+
+  async function executeCheck() {
+    const nowMs = nowFn();
+    cache.lastAttemptAtMs = nowMs;
+
+    if (typeof fetchImpl !== 'function') {
+      cache.error = 'fetch unavailable';
+      persistUpdateCache(stateDir, cachePath, cache);
+      return { ok: false };
+    }
+
+    try {
+      const headers = {
+        Accept: 'application/vnd.github+json',
+        'User-Agent': `agy-token-monitor/${currentVersion}`,
+      };
+      if (cache.etag) {
+        headers['If-None-Match'] = cache.etag;
+      }
+
+      const res = await fetchImpl(releaseApiUrl, {
+        signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
+        headers,
+      });
+
+      if (res && res.status === 304) {
+        const respEtag = getHeaderValue(res.headers, 'etag');
+        if (respEtag) cache.etag = respEtag;
+        cache.lastCheckedAtMs = nowMs;
+        cache.checkedFromVersion = currentVersion;
+        cache.error = '';
+        persistUpdateCache(stateDir, cachePath, cache);
+        return { ok: true };
+      }
+
+      if (!res || !res.ok) {
+        throw new Error(`Release check HTTP ${res?.status || 'ERR'}`);
+      }
+
+      const json = await res.json();
+      if (!json || typeof json !== 'object') {
+        throw new Error('Invalid JSON payload from release endpoint.');
+      }
+      if (json.draft === true) {
+        throw new Error('Latest release entry is marked as draft.');
+      }
+
+      const tagName = typeof json.tag_name === 'string' ? json.tag_name.trim() : '';
+      const parsedVer = parseSemver(tagName);
+      if (!tagName || !parsedVer) {
+        throw new Error('Invalid or missing semver tag_name in release metadata.');
+      }
+
+      const assets = Array.isArray(json.assets) ? json.assets : [];
+      const zipAssets = assets.filter(
+        (a) =>
+          a &&
+          typeof a.name === 'string' &&
+          /\.zip$/i.test(a.name.trim()) &&
+          typeof a.browser_download_url === 'string' &&
+          a.browser_download_url.trim().length > 0,
+      );
+      const selectedAsset =
+        zipAssets.find((a) => /^agy-token-monitor.*\.zip$/i.test(a.name.trim())) ||
+        zipAssets[0] ||
+        null;
+
+      const respEtag = getHeaderValue(res.headers, 'etag');
+      cache.etag = respEtag || '';
+      cache.checkedFromVersion = currentVersion;
+      cache.lastCheckedAtMs = nowMs;
+      cache.latestTag = tagName;
+      cache.latestVersion = parsedVer.raw;
+      cache.releaseName =
+        typeof json.name === 'string' && json.name.trim() ? json.name.trim() : tagName;
+      cache.publishedAt =
+        typeof json.published_at === 'string' ? json.published_at.trim() : '';
+      cache.htmlUrl =
+        typeof json.html_url === 'string' && json.html_url.trim()
+          ? json.html_url.trim()
+          : `https://github.com/JefferyL1ang/agy-token-monitor/releases/tag/${encodeURIComponent(tagName)}`;
+      cache.assetName = selectedAsset ? selectedAsset.name.trim() : '';
+      cache.assetSize =
+        selectedAsset && Number.isFinite(Number(selectedAsset.size)) && Number(selectedAsset.size) >= 0
+          ? Number(selectedAsset.size)
+          : 0;
+      cache.assetUrl = selectedAsset ? selectedAsset.browser_download_url.trim() : '';
+      cache.assetDigest =
+        selectedAsset && typeof selectedAsset.digest === 'string'
+          ? selectedAsset.digest.trim()
+          : '';
+      cache.releaseNotes =
+        typeof json.body === 'string' ? json.body.slice(0, MAX_RELEASE_NOTES_CHARS) : '';
+      cache.error = '';
+
+      persistUpdateCache(stateDir, cachePath, cache);
+      return { ok: true };
+    } catch (err) {
+      cache.error = (err?.message || 'Release check failed').slice(0, 240);
+      persistUpdateCache(stateDir, cachePath, cache);
+      return { ok: false };
+    }
+  }
+
+  function checkForUpdatesNow() {
+    hasCheckedSinceBoot = true;
+    if (!checkPromise) {
+      const p = executeCheck().finally(() => {
+        if (checkPromise === p) checkPromise = null;
+      });
+      checkPromise = p;
+    }
+    return checkPromise.then((res) => {
+      checkPromise = null;
+      return {
+        ok: Boolean(res?.ok),
+        status: getPublicStatus(),
+      };
+    });
+  }
+
+  function maybeCheckForUpdates(onUpdated = null) {
+    if (autoCheckDisabled || checkPromise || applyPromise) return false;
+    const nowMs = nowFn();
+    let shouldTrigger = false;
+
+    if (!hasCheckedSinceBoot) {
+      hasCheckedSinceBoot = true;
+      const recentlyCheckedSameVersion =
+        Number.isFinite(cache.lastCheckedAtMs) &&
+        nowMs - cache.lastCheckedAtMs >= 0 &&
+        nowMs - cache.lastCheckedAtMs < BOOT_SKIP_WINDOW_MS &&
+        cache.checkedFromVersion === currentVersion;
+      if (!recentlyCheckedSameVersion) {
+        shouldTrigger = true;
+      }
+    } else {
+      if (
+        Number.isFinite(cache.lastAttemptAtMs) &&
+        nowMs - cache.lastAttemptAtMs >= 0 &&
+        nowMs - cache.lastAttemptAtMs < RETRY_COOLDOWN_MS
+      ) {
+        return false;
+      }
+      const lastOkAge = Number.isFinite(cache.lastCheckedAtMs)
+        ? nowMs - cache.lastCheckedAtMs
+        : Infinity;
+      if (lastOkAge >= AUTO_CHECK_INTERVAL_MS || Boolean(cache.error)) {
+        shouldTrigger = true;
+      }
+    }
+
+    if (!shouldTrigger) return false;
+
+    checkForUpdatesNow()
+      .then(() => {
+        onUpdated?.();
+      })
+      .catch(() => {
+        onUpdated?.();
+      });
+    return true;
+  }
+
+  async function executeApply() {
+    try {
+      if (cache.lastCheckedAtMs === null && !cache.latestVersion) {
+        await checkForUpdatesNow();
+      }
+
+      const fallbackUrl = getFallbackUrl();
+      const hasUpdate = Boolean(
+        cache.latestVersion && compareSemver(cache.latestVersion, currentVersion) > 0,
+      );
+      if (!hasUpdate) {
+        return {
+          ok: false,
+          reason: 'up_to_date',
+          error: 'Already on the latest version.',
+          fallbackUrl,
+        };
+      }
+
+      if (!cache.assetUrl) {
+        return {
+          ok: false,
+          reason: 'no_asset',
+          error: 'Release archive asset not found.',
+          fallbackUrl,
+        };
+      }
+
+      if (!pluginRoot) {
+        return {
+          ok: false,
+          reason: 'missing_plugin_root',
+          error: 'Plugin root directory is not configured.',
+          fallbackUrl,
+        };
+      }
+
+      if (existsSync(join(pluginRoot, '.git')) && !allowGitRepoOverwrite) {
+        return {
+          ok: false,
+          reason: 'git_repo',
+          error: 'Running inside a Git working tree; auto-overwrite disabled.',
+          fallbackUrl,
+        };
+      }
+
+      if (!isAllowedAssetUrl(cache.assetUrl, effectiveAllowLoopback)) {
+        return {
+          ok: false,
+          reason: 'unsafe_asset_url',
+          error: 'Untrusted release asset download URL.',
+          fallbackUrl,
+        };
+      }
+
+      if (cache.assetSize > DEFAULT_ZIP_LIMITS.maxZipBytes) {
+        return {
+          ok: false,
+          reason: 'asset_too_large',
+          error: 'Release archive exceeds 10 MB limit.',
+          fallbackUrl,
+        };
+      }
+
+      if (typeof fetchImpl !== 'function') {
+        return {
+          ok: false,
+          reason: 'network_error',
+          error: 'fetch implementation is unavailable.',
+          fallbackUrl,
+        };
+      }
+
+      const res = await fetchImpl(cache.assetUrl, {
+        signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
+        headers: {
+          Accept: 'application/octet-stream, application/zip, */*',
+          'User-Agent': `agy-token-monitor/${currentVersion}`,
+        },
+      });
+
+      if (!res || !res.ok) {
+        return {
+          ok: false,
+          reason: 'download_failed',
+          error: `Failed to download release archive (HTTP ${res?.status || 'ERR'}).`,
+          fallbackUrl,
+        };
+      }
+
+      if (typeof res.url === 'string' && res.url.trim()) {
+        if (!isAllowedAssetUrl(res.url, effectiveAllowLoopback)) {
+          return {
+            ok: false,
+            reason: 'unsafe_asset_url',
+            error: 'Redirected to an untrusted release asset host.',
+            fallbackUrl,
+          };
+        }
+      }
+
+      const contentLenStr = getHeaderValue(res.headers, 'content-length');
+      if (contentLenStr && Number(contentLenStr) > DEFAULT_ZIP_LIMITS.maxZipBytes) {
+        return {
+          ok: false,
+          reason: 'asset_too_large',
+          error: 'Release archive exceeds 10 MB limit.',
+          fallbackUrl,
+        };
+      }
+
+      const zipBuf = Buffer.from(await res.arrayBuffer());
+      if (zipBuf.length === 0 || zipBuf.length > DEFAULT_ZIP_LIMITS.maxZipBytes) {
+        return {
+          ok: false,
+          reason: 'invalid_archive',
+          error: 'Downloaded archive is empty or exceeds 10 MB limit.',
+          fallbackUrl,
+        };
+      }
+
+      if (cache.assetDigest) {
+        const digestMatch = /^sha256:([0-9a-f]{64})$/i.exec(cache.assetDigest.trim());
+        if (!digestMatch) {
+          return {
+            ok: false,
+            reason: 'integrity_failed',
+            error: 'Invalid SHA-256 digest format in release metadata.',
+            fallbackUrl,
+          };
+        }
+        const expectedHex = digestMatch[1].toLowerCase();
+        const actualHex = createHash('sha256').update(zipBuf).digest('hex').toLowerCase();
+        if (actualHex !== expectedHex) {
+          return {
+            ok: false,
+            reason: 'integrity_failed',
+            error: 'SHA-256 digest mismatch.',
+            fallbackUrl,
+          };
+        }
+      }
+
+      let entries;
+      try {
+        entries = parseZipBuffer(zipBuf, DEFAULT_ZIP_LIMITS);
+      } catch (zipErr) {
+        return {
+          ok: false,
+          reason: 'invalid_archive',
+          error: zipErr?.message || 'Invalid ZIP archive.',
+          fallbackUrl,
+        };
+      }
+
+      const manifestEntry = entries.find((e) => e.relPath === 'plugin.json');
+      if (!manifestEntry) {
+        return {
+          ok: false,
+          reason: 'invalid_manifest',
+          error: 'Archive is missing plugin.json.',
+          fallbackUrl,
+        };
+      }
+
+      let manifest;
+      try {
+        manifest = JSON.parse(manifestEntry.data.toString('utf-8'));
+      } catch {
+        return {
+          ok: false,
+          reason: 'invalid_manifest',
+          error: 'Archive plugin.json is not valid JSON.',
+          fallbackUrl,
+        };
+      }
+
+      if (!manifest || manifest.name !== 'agy-token-monitor') {
+        return {
+          ok: false,
+          reason: 'invalid_manifest',
+          error: 'Archive plugin.json name must be agy-token-monitor.',
+          fallbackUrl,
+        };
+      }
+
+      const manifestSemver = parseSemver(manifest.version);
+      if (!manifestSemver || compareSemver(manifestSemver, currentVersion) <= 0) {
+        return {
+          ok: false,
+          reason: 'downgrade_rejected',
+          error: `Archive version (${manifest?.version || 'unknown'}) must be newer than ${currentVersion}.`,
+          fallbackUrl,
+        };
+      }
+
+      const mainEntry = entries.find((e) => e.relPath === 'sidecars/monitor_pane/main.mjs');
+      if (!mainEntry || mainEntry.data.length === 0) {
+        return {
+          ok: false,
+          reason: 'invalid_archive',
+          error: 'Archive is missing sidecars/monitor_pane/main.mjs.',
+          fallbackUrl,
+        };
+      }
+
+      const resolvedRoot = resolve(pluginRoot);
+      const rootPrefix =
+        process.platform === 'win32'
+          ? `${resolvedRoot.toLowerCase()}${sep}`
+          : `${resolvedRoot}${sep}`;
+
+      const sortedEntries = [...entries].sort((a, b) => {
+        const aLast = a.relPath === 'sidecars/monitor_pane/main.mjs' ? 1 : 0;
+        const bLast = b.relPath === 'sidecars/monitor_pane/main.mjs' ? 1 : 0;
+        return aLast - bLast;
+      });
+
+      let writeSeq = 0;
+      for (const entry of sortedEntries) {
+        const destPath = resolve(resolvedRoot, ...entry.relPath.split('/'));
+        const normDest = process.platform === 'win32' ? destPath.toLowerCase() : destPath;
+        if (!normDest.startsWith(rootPrefix)) {
+          throw new Error(`Refusing to write outside pluginRoot: ${entry.relPath}`);
+        }
+
+        mkdirSync(dirname(destPath), { recursive: true });
+        const tmpPath = `${destPath}.upd-${process.pid}-${writeSeq++}.tmp`;
+        try {
+          writeFileSync(tmpPath, entry.data);
+          renameSync(tmpPath, destPath);
+        } catch (writeErr) {
+          try {
+            if (existsSync(tmpPath)) unlinkSync(tmpPath);
+          } catch {
+            // Ignore temp cleanup failure.
+          }
+          if (
+            writeErr &&
+            (writeErr.code === 'EPERM' ||
+              writeErr.code === 'EACCES' ||
+              writeErr.code === 'EBUSY')
+          ) {
+            writeFileSync(destPath, entry.data);
+          } else {
+            throw writeErr;
+          }
+        }
+      }
+
+      const targetVersion = manifestSemver.raw;
+      const targetTag = cache.latestTag || normalizeReleaseTag(targetVersion);
+      currentVersion = targetVersion;
+      cache.checkedFromVersion = currentVersion;
+      cache.error = '';
+      persistUpdateCache(stateDir, cachePath, cache);
+
+      return {
+        ok: true,
+        targetVersion,
+        targetTag,
+        filesWritten: sortedEntries.length,
+        restarting: true,
+      };
+    } catch (err) {
+      const fallbackUrl = getFallbackUrl();
+      const errMsg = err?.message || 'Failed to apply release update.';
+      cache.error = errMsg.slice(0, 240);
+      persistUpdateCache(stateDir, cachePath, cache);
+      return {
+        ok: false,
+        reason: err?.reason || 'apply_failed',
+        error: errMsg,
+        fallbackUrl,
+      };
+    }
+  }
+
+  function applyLatestUpdate() {
+    if (applyPromise) {
+      return Promise.resolve({
+        ok: false,
+        reason: 'already_applying',
+        error: 'An update is already in progress.',
+        fallbackUrl: getFallbackUrl(),
+      });
+    }
+    const p = executeApply().finally(() => {
+      if (applyPromise === p) applyPromise = null;
+    });
+    applyPromise = p;
+    return p.then((res) => {
+      applyPromise = null;
+      return res;
+    });
+  }
+
+  return {
+    getPublicStatus,
+    maybeCheckForUpdates,
+    checkForUpdatesNow,
+    applyLatestUpdate,
+  };
+}
+
+// ============================================================================
+// [MODIFIED END] 2026-11-17 18:55:00
+// ============================================================================

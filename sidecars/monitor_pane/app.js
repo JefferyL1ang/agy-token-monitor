@@ -90,6 +90,18 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:35:00
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 18:57:00
+// Description: Add v0.2.4 release update check, modal, and hot-apply state fields.
+// ============================================================================
+    updateModalOpen: false,
+    updateChecking: false,
+    updateApplying: false,
+    activeUpdateStatus: null,
+    lastUpdatePillSig: '',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 18:57:00
+// ============================================================================
   };
 
   const I18N = {
@@ -350,6 +362,39 @@
       'settings.saveFailedDefault': '保存失败',
       'settings.saveFailed': '保存失败: {msg}',
       'settings.savedToast': '计价与上下文设置已保存',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 18:57:00
+// Description: Add v0.2.4 release update pill, settings version check bar, and hot-update modal i18n keys (zh).
+// ============================================================================
+      'settings.checkUpdateBtn': '↻ 检查更新',
+      'settings.checkUpdateTitle': '立即检查 GitHub Release 最新版本',
+      'settings.checkingUpdateBtn': '↻ 检查中…',
+      'settings.verChecking': '检查中...',
+      'settings.verUpToDate': '当前版本 v{cur} · 已是最新',
+      'settings.verAvailable': '当前版本 v{cur} · 可升级至 {tag}',
+      'settings.verSkipped': '当前版本 v{cur} · 已跳过 {tag}（点击查看）',
+      'settings.verCheckError': '当前版本 v{cur} · 检查更新未完成',
+      'settings.upToDateToast': '已是最新版本 (v{cur})',
+      'settings.checkUpdateFailedToast': '检查更新失败: {msg}',
+      'update.pillText': '↑ v{ver}',
+      'update.pillTitle': '发现新版本 {tag}，点击查看更新内容',
+      'update.modalTitle': '发现新版本',
+      'update.verRange': 'v{cur} → v{next}',
+      'update.publishedAt': '发布于 {date}',
+      'update.closeTip': '仅收起，保留顶栏提示按钮',
+      'update.skipBtn': '跳过此版本',
+      'update.skipToast': '已跳过 {tag}，将在下个新版本发布时再提醒',
+      'update.confirmBtn': '立即热更新',
+      'update.confirmApplying': '热更新中…',
+      'update.downloading': '正在下载并校验 SHA-256...',
+      'update.restarting': '正在重启服务并刷新界面...',
+      'update.applyFailed': '热更新未完成: {msg}',
+      'update.updatedToast': '✓ 已热更新至 v{ver}',
+      'update.fallbackLink': '前往 GitHub Release 手动下载',
+      'update.emptyNotes': '暂无详细更新说明，可前往 GitHub Release 查看详情。',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 18:57:00
+// ============================================================================
     },
     en: {
       'header.waiting': 'Waiting',
@@ -608,6 +653,39 @@
       'settings.saveFailedDefault': 'Save failed',
       'settings.saveFailed': 'Save failed: {msg}',
       'settings.savedToast': 'Pricing & context settings saved',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 18:57:00
+// Description: Add v0.2.4 release update pill, settings version check bar, and hot-update modal i18n keys (en).
+// ============================================================================
+      'settings.checkUpdateBtn': '↻ Check Update',
+      'settings.checkUpdateTitle': 'Check GitHub Releases for updates now',
+      'settings.checkingUpdateBtn': '↻ Checking…',
+      'settings.verChecking': 'Checking for updates...',
+      'settings.verUpToDate': 'Current v{cur} · Up to date',
+      'settings.verAvailable': 'Current v{cur} · Upgrade to {tag}',
+      'settings.verSkipped': 'Current v{cur} · Skipped {tag} (click to view)',
+      'settings.verCheckError': 'Current v{cur} · Update check offline',
+      'settings.upToDateToast': 'Already on the latest version (v{cur})',
+      'settings.checkUpdateFailedToast': 'Update check failed: {msg}',
+      'update.pillText': '↑ v{ver}',
+      'update.pillTitle': 'New release {tag} available — click to view changes',
+      'update.modalTitle': 'Update Available',
+      'update.verRange': 'v{cur} → v{next}',
+      'update.publishedAt': 'Published {date}',
+      'update.closeTip': 'Dismiss dialog (keep header update pill)',
+      'update.skipBtn': 'Skip Version',
+      'update.skipToast': 'Skipped {tag} — will notify on the next release',
+      'update.confirmBtn': 'Update Now',
+      'update.confirmApplying': 'Updating…',
+      'update.downloading': 'Downloading & verifying SHA-256...',
+      'update.restarting': 'Restarting sidecar & reloading...',
+      'update.applyFailed': 'Hot update failed: {msg}',
+      'update.updatedToast': '✓ Updated to v{ver}',
+      'update.fallbackLink': 'Download on GitHub Releases',
+      'update.emptyNotes': 'No release notes provided. View details on GitHub Releases.',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 18:57:00
+// ============================================================================
     },
   };
 
@@ -1233,6 +1311,14 @@
         populateSettingsForm(state.snapshot.prefs);
       } else {
         renderPricingSyncStatus();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 18:58:00
+// Description: Refresh release update status bar when opening settings drawer without snapshot prefs.
+// ============================================================================
+        renderUpdateCheckStatus();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 18:58:00
+// ============================================================================
       }
     }
   }
@@ -1553,6 +1639,14 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:35:00
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 18:58:00
+// Description: Refresh release update status bar when populating settings form.
+// ============================================================================
+    renderUpdateCheckStatus();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 18:58:00
+// ============================================================================
   }
 
   async function saveSettings(event) {
@@ -1826,6 +1920,551 @@
 // [MODIFIED END] 2026-11-17 11:35:00
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 18:58:00
+// Description: Implement v0.2.4 GitHub Release update pill, settings version check bar,
+// localized safe DOM release-notes parser (renderReleaseNotesDom), skip-version flow,
+// and SHA-256 verified hot-update + sidecar restart polling workflow.
+// ============================================================================
+  // ---------------- Release Update Check & Hot-Update Modal ----------------
+  function getCurrentAppVersion() {
+    const raw =
+      state.snapshot?.appVersion ||
+      state.snapshot?.updateStatus?.currentVersion ||
+      state.activeUpdateStatus?.currentVersion ||
+      '0.2.4';
+    return String(raw).trim().replace(/^[vV]/, '') || '0.2.4';
+  }
+
+  function getEffectiveUpdateStatus() {
+    return state.snapshot?.updateStatus || state.activeUpdateStatus || null;
+  }
+
+  function fmtReleaseDate(isoStr) {
+    if (!isoStr) return '';
+    const d = new Date(isoStr);
+    if (Number.isNaN(d.getTime())) return '';
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function extractLocalizedReleaseLines(markdownText, lang) {
+    const normalized = String(markdownText || '').replace(/\r\n?/g, '\n');
+    const allLines = normalized.split('\n');
+
+    const sections = [];
+    let currentSec = null;
+    for (const line of allLines) {
+      const h2Match = line.match(/^##\s+(.+?)\s*$/);
+      if (h2Match) {
+        const heading = h2Match[1].trim();
+        let secLang = '';
+        if (/^(?:中文|简体中文|zh(?:-cn)?)\b/i.test(heading) || heading.includes('中文')) {
+          secLang = 'zh';
+        } else if (/^(?:english|en)\b/i.test(heading)) {
+          secLang = 'en';
+        }
+        if (secLang) {
+          currentSec = { lang: secLang, lines: [] };
+          sections.push(currentSec);
+          continue;
+        }
+      }
+      if (currentSec) {
+        currentSec.lines.push(line);
+      }
+    }
+
+    const targetLang = lang === 'en' ? 'en' : 'zh';
+    const matchedSec = sections.find(
+      (s) => s.lang === targetLang && s.lines.some((l) => l.trim().length > 0),
+    );
+    const chosenLines = matchedSec ? matchedSec.lines : allLines;
+
+    // Strip trailing/embedded Installation / 安装方式 sections and horizontal rules
+    const filtered = [];
+    let skippingInstallLevel = 0;
+    for (const line of chosenLines) {
+      const hMatch = line.match(/^(#{1,4})\s+(.+?)\s*$/);
+      if (hMatch) {
+        const level = hMatch[1].length;
+        const hTitle = hMatch[2].trim();
+        if (/^(?:installation|install\b|安装方式|安装说明|安装指南|安装$)/i.test(hTitle)) {
+          skippingInstallLevel = level;
+          continue;
+        }
+        if (skippingInstallLevel > 0 && level <= skippingInstallLevel) {
+          skippingInstallLevel = 0;
+        }
+      }
+      if (skippingInstallLevel > 0) continue;
+      if (/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line)) continue;
+      filtered.push(line);
+    }
+
+    return filtered;
+  }
+
+  function parseInlineMarkdownTokens(lineText) {
+    const raw = String(lineText || '');
+    const parts = [];
+    const tokenRe = /\*\*([^*]+)\*\*|`([^`]+)`|\[([^\]]+)\]\([^)]+\)/g;
+    let lastIdx = 0;
+    let match;
+    while ((match = tokenRe.exec(raw)) !== null) {
+      if (match.index > lastIdx) {
+        parts.push(raw.slice(lastIdx, match.index));
+      }
+      if (match[1] !== undefined) {
+        parts.push(el('strong', { textContent: match[1] }));
+      } else if (match[2] !== undefined) {
+        parts.push(el('code', { className: 'update-notes-code', textContent: match[2] }));
+      } else if (match[3] !== undefined) {
+        parts.push(match[3]);
+      }
+      lastIdx = tokenRe.lastIndex;
+    }
+    if (lastIdx < raw.length) {
+      parts.push(raw.slice(lastIdx));
+    }
+    return parts.length > 0 ? parts : [raw];
+  }
+
+  function renderReleaseNotesDom(container, markdownText, lang) {
+    if (!container) return;
+    const lines = extractLocalizedReleaseLines(markdownText, lang);
+    const nodes = [];
+    let bulletItems = [];
+
+    const flushBullets = () => {
+      if (bulletItems.length > 0) {
+        nodes.push(el('ul', { className: 'update-notes-list' }, bulletItems));
+        bulletItems = [];
+      }
+    };
+
+    for (const rawLine of lines) {
+      const trimmed = rawLine.trim();
+      if (!trimmed) {
+        flushBullets();
+        continue;
+      }
+
+      const headingMatch = trimmed.match(/^#{1,4}\s+(.+?)\s*$/);
+      if (headingMatch) {
+        flushBullets();
+        const headingText = headingMatch[1].trim();
+        if (/^(?:中文|简体中文|english)\s*$/i.test(headingText)) {
+          continue;
+        }
+        nodes.push(el('h3', { className: 'update-notes-h' }, parseInlineMarkdownTokens(headingText)));
+        continue;
+      }
+
+      const bulletMatch = trimmed.match(/^(?:[-*•]|\d+\.)\s+(.+)$/);
+      if (bulletMatch) {
+        bulletItems.push(
+          el('li', { className: 'update-notes-item' }, parseInlineMarkdownTokens(bulletMatch[1].trim())),
+        );
+        continue;
+      }
+
+      flushBullets();
+      nodes.push(el('p', { className: 'update-notes-p' }, parseInlineMarkdownTokens(trimmed)));
+    }
+    flushBullets();
+
+    if (nodes.length === 0) {
+      container.replaceChildren(
+        el('div', { className: 'update-notes-empty', textContent: t('update.emptyNotes') }),
+      );
+      return;
+    }
+    container.replaceChildren(...nodes);
+  }
+
+  function renderUpdatePill(snap) {
+    const pillBtn = $('btn-update-pill');
+    if (!pillBtn) return;
+
+    const us = snap?.updateStatus || state.activeUpdateStatus || null;
+    const shouldShow = Boolean(us?.shouldPrompt && (us?.latestVersion || us?.latestTag));
+    pillBtn.classList.toggle('hidden', !shouldShow);
+    if (!shouldShow) return;
+
+    const cleanVer = String(us.latestVersion || us.latestTag || '').trim().replace(/^[vV]/, '');
+    const tagLabel = us.latestTag || `v${cleanVer}`;
+    const sig = `${state.lang}:${cleanVer}:${tagLabel}`;
+    if (state.lastUpdatePillSig !== sig || pillBtn.childElementCount === 0) {
+      state.lastUpdatePillSig = sig;
+      const tipText = t('update.pillTitle', { tag: tagLabel });
+      pillBtn.title = tipText;
+      pillBtn.setAttribute('aria-label', tipText);
+      pillBtn.replaceChildren(
+        el('span', { className: 'update-pill-dot', 'aria-hidden': 'true' }),
+        el('span', { className: 'update-pill-text', textContent: t('update.pillText', { ver: cleanVer }) }),
+      );
+    }
+  }
+
+  function renderUpdateCheckStatus() {
+    const statusEl = $('update-version-status');
+    const checkBtn = $('btn-check-update');
+    if (!statusEl) return;
+
+    const curVer = getCurrentAppVersion();
+    const us = getEffectiveUpdateStatus();
+    const isChecking = Boolean(state.updateChecking || us?.checking);
+    const isApplying = Boolean(state.updateApplying || us?.applying);
+
+    if (checkBtn) {
+      checkBtn.disabled = isChecking || isApplying;
+      checkBtn.textContent = isChecking ? t('settings.checkingUpdateBtn') : t('settings.checkUpdateBtn');
+    }
+
+    const hasUpdate = Boolean(us?.hasUpdate && (us?.latestTag || us?.latestVersion));
+    if (isChecking) {
+      statusEl.className = 'pricing-sync-status muted-hint tabular-nums';
+      statusEl.textContent = t('settings.verChecking');
+      statusEl.title = '';
+      statusEl.removeAttribute('role');
+      statusEl.removeAttribute('tabindex');
+      return;
+    }
+
+    if (hasUpdate) {
+      const cleanNext = String(us.latestVersion || us.latestTag || '').trim().replace(/^[vV]/, '');
+      const tag = us.latestTag || `v${cleanNext}`;
+      const skipped = Boolean(us.isSkipped);
+      statusEl.className = `pricing-sync-status muted-hint tabular-nums is-clickable${skipped ? '' : ' is-ok'}`;
+      statusEl.textContent = skipped
+        ? t('settings.verSkipped', { cur: curVer, tag })
+        : t('settings.verAvailable', { cur: curVer, tag });
+      statusEl.title = t('update.pillTitle', { tag });
+      statusEl.setAttribute('role', 'button');
+      statusEl.setAttribute('tabindex', '0');
+      return;
+    }
+
+    statusEl.removeAttribute('role');
+    statusEl.removeAttribute('tabindex');
+    if (us?.error && !us?.lastCheckedAtMs) {
+      statusEl.className = 'pricing-sync-status muted-hint tabular-nums is-offline';
+      statusEl.textContent = t('settings.verCheckError', { cur: curVer });
+      statusEl.title = String(us.error);
+      return;
+    }
+
+    statusEl.className = 'pricing-sync-status muted-hint tabular-nums';
+    statusEl.textContent = t('settings.verUpToDate', { cur: curVer });
+    statusEl.title = '';
+  }
+
+  function setUpdateModalFeedback(mode, message = '', fallbackUrl = '') {
+    const box = $('update-modal-feedback');
+    if (!box) return;
+    if (mode === 'hidden' || !message) {
+      box.className = 'update-modal-feedback hidden';
+      box.replaceChildren();
+      return;
+    }
+
+    const cls = mode === 'error' ? 'is-error' : 'is-progress';
+    box.className = `update-modal-feedback ${cls}`;
+    const children = [el('span', { textContent: message })];
+    const trimmedUrl = String(fallbackUrl || '').trim();
+    if (/^https:\/\//i.test(trimmedUrl)) {
+      children.push(
+        el('a', {
+          className: 'update-fallback-link',
+          href: trimmedUrl,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          textContent: `↗ ${t('update.fallbackLink')}`,
+        }),
+      );
+    }
+    box.replaceChildren(...children);
+  }
+
+  function syncUpdateModalControls() {
+    const busy = Boolean(state.updateApplying);
+    const confirmBtn = $('btn-update-confirm');
+    const skipBtn = $('btn-update-skip');
+    const closeBtn = $('btn-update-close');
+    if (confirmBtn) {
+      confirmBtn.disabled = busy;
+      confirmBtn.textContent = busy ? t('update.confirmApplying') : t('update.confirmBtn');
+    }
+    if (skipBtn) skipBtn.disabled = busy;
+    if (closeBtn) closeBtn.disabled = busy;
+  }
+
+  function renderUpdateModalContent() {
+    const us = getEffectiveUpdateStatus();
+    if (!us) return;
+
+    const curVer = String(us.currentVersion || getCurrentAppVersion()).trim().replace(/^[vV]/, '');
+    const nextVer = String(us.latestVersion || us.latestTag || '').trim().replace(/^[vV]/, '');
+    const verEl = $('update-modal-ver');
+    if (verEl) {
+      verEl.textContent = nextVer ? t('update.verRange', { cur: curVer, next: nextVer }) : `v${curVer}`;
+    }
+
+    const dateEl = $('update-modal-date');
+    if (dateEl) {
+      const dateStr = fmtReleaseDate(us.publishedAt);
+      if (dateStr) {
+        dateEl.textContent = t('update.publishedAt', { date: dateStr });
+        dateEl.classList.remove('hidden');
+      } else {
+        dateEl.textContent = '';
+        dateEl.classList.add('hidden');
+      }
+    }
+
+    renderReleaseNotesDom($('update-notes-body'), us.releaseNotes || '', state.lang);
+    syncUpdateModalControls();
+  }
+
+  function openUpdateModal(customStatus = null) {
+    const us = customStatus || getEffectiveUpdateStatus();
+    if (!us) return;
+    state.activeUpdateStatus = us;
+    state.updateModalOpen = true;
+    if (!state.updateApplying) {
+      setUpdateModalFeedback('hidden');
+    }
+    renderUpdateModalContent();
+    $('update-modal')?.classList.remove('hidden');
+    $('btn-update-confirm')?.focus();
+  }
+
+  function closeUpdateModal() {
+    if (state.updateApplying) return;
+    state.updateModalOpen = false;
+    $('update-modal')?.classList.add('hidden');
+  }
+
+  async function handleSkipUpdateClick() {
+    if (state.updateApplying) return;
+    const us = getEffectiveUpdateStatus();
+    const cleanNext = String(us?.latestVersion || us?.latestTag || '').trim().replace(/^[vV]/, '');
+    const tag = String(us?.latestTag || (cleanNext ? `v${cleanNext}` : '')).trim();
+    if (!tag) {
+      closeUpdateModal();
+      return;
+    }
+
+    if (state.snapshot) {
+      if (state.snapshot.prefs) state.snapshot.prefs.skippedReleaseTag = tag;
+      if (state.snapshot.updateStatus) {
+        state.snapshot.updateStatus = {
+          ...state.snapshot.updateStatus,
+          isSkipped: true,
+          shouldPrompt: false,
+        };
+      }
+    }
+    if (state.activeUpdateStatus) {
+      state.activeUpdateStatus = {
+        ...state.activeUpdateStatus,
+        isSkipped: true,
+        shouldPrompt: false,
+      };
+    }
+
+    closeUpdateModal();
+    if (state.snapshot) renderHeader(state.snapshot);
+    else renderUpdatePill(null);
+    renderUpdateCheckStatus();
+
+    await patchPrefs({ skippedReleaseTag: tag });
+    showToast(t('update.skipToast', { tag }));
+    pollSnapshot(true);
+  }
+
+  async function handleCheckUpdateClick() {
+    if (state.updateChecking || state.updateApplying) return;
+    state.updateChecking = true;
+    renderUpdateCheckStatus();
+    try {
+      const res = await apiFetch('/api/check-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      if (!state.snapshot) state.snapshot = {};
+      if (data?.appVersion) state.snapshot.appVersion = data.appVersion;
+      if (data?.bootId) state.snapshot.bootId = data.bootId;
+      if (data?.updateStatus) {
+        state.snapshot.updateStatus = data.updateStatus;
+        state.activeUpdateStatus = data.updateStatus;
+      }
+
+      state.updateChecking = false;
+      const us = data?.updateStatus || state.activeUpdateStatus;
+      if (us?.hasUpdate) {
+        if (us.isSkipped || state.snapshot?.prefs?.skippedReleaseTag) {
+          await patchPrefs({ skippedReleaseTag: '' });
+          us.isSkipped = false;
+          us.shouldPrompt = true;
+          if (state.snapshot?.prefs) state.snapshot.prefs.skippedReleaseTag = '';
+          if (state.snapshot?.updateStatus) {
+            state.snapshot.updateStatus.isSkipped = false;
+            state.snapshot.updateStatus.shouldPrompt = true;
+          }
+        }
+        renderUpdateCheckStatus();
+        if (state.snapshot) renderHeader(state.snapshot);
+        else renderUpdatePill({ updateStatus: us });
+        openUpdateModal(us);
+      } else if (data?.ok === false && us?.error) {
+        renderUpdateCheckStatus();
+        showToast(t('settings.checkUpdateFailedToast', { msg: us.error }));
+      } else {
+        renderUpdateCheckStatus();
+        const curVer = String(data?.appVersion || us?.currentVersion || getCurrentAppVersion())
+          .trim()
+          .replace(/^[vV]/, '');
+        showToast(t('settings.upToDateToast', { cur: curVer }));
+      }
+      lastEtag = '';
+      pollSnapshot(true);
+    } catch (err) {
+      state.updateChecking = false;
+      renderUpdateCheckStatus();
+      showToast(t('settings.checkUpdateFailedToast', { msg: err?.message || 'error' }));
+    }
+  }
+
+  function sleepMs(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function waitForRestartedSidecar(prevBootId, targetVersion) {
+    const cleanTarget = String(targetVersion || '').trim().replace(/^[vV]/, '');
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+      await sleepMs(400);
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 2500);
+      try {
+        const res = await apiFetch(
+          `/api/snapshot?conv=${encodeURIComponent(selectedConv)}&etag=`,
+          { method: 'GET', signal: ctrl.signal },
+        );
+        if (res.ok) {
+          const snap = await res.json();
+          const bootChanged = Boolean(prevBootId && snap?.bootId && snap.bootId !== prevBootId);
+          const snapVer = String(snap?.appVersion || '').trim().replace(/^[vV]/, '');
+          const verMatched = Boolean(cleanTarget && snapVer === cleanTarget);
+          if (bootChanged || verMatched) {
+            return true;
+          }
+        }
+      } catch {
+        // Sidecar is restarting; continue polling every 400ms
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    return false;
+  }
+
+  async function handleConfirmUpdateClick() {
+    if (state.updateApplying) return;
+    state.updateApplying = true;
+    syncUpdateModalControls();
+    renderUpdateCheckStatus();
+    setUpdateModalFeedback('progress', t('update.downloading'));
+
+    try {
+      const res = await apiFetch('/api/apply-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      let data = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+
+      if (!res.ok && !data) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      if (!data?.ok) {
+        state.updateApplying = false;
+        if (data?.updateStatus) {
+          state.activeUpdateStatus = data.updateStatus;
+          if (state.snapshot) state.snapshot.updateStatus = data.updateStatus;
+        }
+        syncUpdateModalControls();
+        renderUpdateCheckStatus();
+        const errMsg = data?.error || `HTTP ${res.status}`;
+        const fallbackUrl = data?.fallbackUrl || state.activeUpdateStatus?.htmlUrl || '';
+        setUpdateModalFeedback('error', t('update.applyFailed', { msg: errMsg }), fallbackUrl);
+        return;
+      }
+
+      const prevBootId = state.snapshot?.bootId || data?.bootId || '';
+      const rawTargetVer =
+        data?.targetVersion ||
+        state.activeUpdateStatus?.latestVersion ||
+        state.activeUpdateStatus?.latestTag ||
+        '';
+      const cleanTargetVer = String(rawTargetVer).trim().replace(/^[vV]/, '');
+
+      // Pause normal snapshot polling while the sidecar process restarts
+      if (state.pollTimer) {
+        clearTimeout(state.pollTimer);
+        state.pollTimer = null;
+      }
+      if (state.activePollController) {
+        try {
+          state.activePollController.abort('hot-update-restart');
+        } catch {
+          // Ignore abort error
+        }
+      }
+
+      setUpdateModalFeedback('progress', t('update.restarting'));
+      await waitForRestartedSidecar(prevBootId, cleanTargetVer);
+
+      try {
+        if (cleanTargetVer) {
+          sessionStorage.setItem('tm_updated_version', cleanTargetVer);
+        }
+        sessionStorage.setItem('tm_updated_lang', state.lang);
+      } catch {
+        // Ignore restricted sessionStorage in sandboxed contexts
+      }
+      window.location.reload();
+    } catch (err) {
+      state.updateApplying = false;
+      syncUpdateModalControls();
+      renderUpdateCheckStatus();
+      const fallbackUrl = state.activeUpdateStatus?.htmlUrl || '';
+      setUpdateModalFeedback(
+        'error',
+        t('update.applyFailed', { msg: err?.message || 'error' }),
+        fallbackUrl,
+      );
+      scheduleNextPoll(POLL_INTERVAL_MS, true);
+    }
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 18:58:00
+// ============================================================================
+
   // ---------------- Render Header & Stopwatch ----------------
   function formatStatusText(current) {
     if (!current) return t('header.waiting');
@@ -1885,6 +2524,15 @@
     const todayCount = num(snap?.global?.todayConversationsCount, 0);
     badge.textContent = String(todayCount);
     badge.classList.toggle('hidden', todayCount <= 0);
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:00
+// Description: Sync header release update pill visibility and version label in renderHeader.
+// ============================================================================
+    renderUpdatePill(snap);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:00
+// ============================================================================
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:15:00
@@ -3174,6 +3822,14 @@
 // abort handling, and adaptive 350ms chunked ledger-sync polling.
 // ============================================================================
   function scheduleNextPoll(delayMs, force = false) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:00
+// Description: Pause scheduled normal polling while sidecar hot-update restart is in progress.
+// ============================================================================
+    if (state.updateApplying) return;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:00
+// ============================================================================
     if (state.pollTimer) {
       clearTimeout(state.pollTimer);
       state.pollTimer = null;
@@ -3186,6 +3842,14 @@
   }
 
   async function pollSnapshot(force = false) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:00
+// Description: Skip normal snapshot polling while waitForRestartedSidecar owns restart polling.
+// ============================================================================
+    if (state.updateApplying) return;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:00
+// ============================================================================
     if (state.pollInFlight) {
       if (state.inFlightConv === selectedConv) {
         if (force) state.pendingForcePoll = true;
@@ -3313,6 +3977,20 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:35:00
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:00
+// Description: Sync activeUpdateStatus, settings version check bar, and open update modal on snapshot arrival.
+// ============================================================================
+      if (data?.updateStatus) {
+        state.activeUpdateStatus = data.updateStatus;
+      }
+      renderUpdateCheckStatus();
+      if (state.updateModalOpen && !state.updateApplying) {
+        renderUpdateModalContent();
+      }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:00
+// ============================================================================
 
       renderHeader(data);
       renderCurrentTab(data);
@@ -3327,6 +4005,14 @@
 // while ignoring switch-aborted requests, and schedule next serial poll in finally.
 // ============================================================================
     } catch (err) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:00
+// Description: Suppress transient fetch error banner while hot-update sidecar restart is active.
+// ============================================================================
+      if (state.updateApplying) return;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:00
+// ============================================================================
       if (epoch !== state.convEpoch || reqConv !== selectedConv || (!timedOut && controller.signal.aborted)) {
         return;
       }
@@ -3356,7 +4042,37 @@
 
   // ---------------- Event Bindings & Bootstrap ----------------
   function init() {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:00
+// Description: Check sessionStorage tm_updated_version on reload to show post-update toast,
+// re-translate update UI on language toggle, and bind update pill/settings/modal listeners.
+// ============================================================================
+    let pendingUpdatedVer = '';
+    try {
+      const savedLang = sessionStorage.getItem('tm_updated_lang');
+      if (savedLang && VALID_LANGUAGES.includes(savedLang)) {
+        state.lang = savedLang;
+      }
+      sessionStorage.removeItem('tm_updated_lang');
+      pendingUpdatedVer = sessionStorage.getItem('tm_updated_version') || '';
+      if (pendingUpdatedVer) {
+        sessionStorage.removeItem('tm_updated_version');
+      }
+    } catch {
+      // Ignore restricted sessionStorage access
+    }
+
     applyStaticTranslations();
+
+    if (pendingUpdatedVer) {
+      const cleanVer = pendingUpdatedVer.trim().replace(/^[vV]/, '');
+      if (cleanVer) {
+        showToast(t('update.updatedToast', { ver: cleanVer }));
+      }
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:00
+// ============================================================================
 
     $('btn-lang-toggle').addEventListener('click', () => {
       state.lang = state.lang === 'zh' ? 'en' : 'zh';
@@ -3383,7 +4099,25 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:35:00
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:00
+// Description: Re-translate #update-version-status when toggling language with drawer open.
+// ============================================================================
+        renderUpdateCheckStatus();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:00
+// ============================================================================
       }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:00
+// Description: Re-render localized release notes & labels when toggling language with update modal open.
+// ============================================================================
+      if (state.updateModalOpen) {
+        renderUpdateModalContent();
+      }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:00
+// ============================================================================
       patchPrefs({ language: state.lang });
     });
 
@@ -3451,6 +4185,46 @@
 // ============================================================================
 
     $('btn-resync-ledger').addEventListener('click', handleResyncLedgerClick);
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 19:00:00
+// Description: Bind release update pill, settings manual check bar, and hot-update modal controls.
+// ============================================================================
+    $('btn-update-pill')?.addEventListener('click', () => openUpdateModal());
+    $('btn-check-update')?.addEventListener('click', handleCheckUpdateClick);
+    $('update-version-status')?.addEventListener('click', () => {
+      const us = getEffectiveUpdateStatus();
+      if (us?.hasUpdate && !state.updateChecking) {
+        openUpdateModal(us);
+      }
+    });
+    $('update-version-status')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const us = getEffectiveUpdateStatus();
+        if (us?.hasUpdate && !state.updateChecking) {
+          e.preventDefault();
+          openUpdateModal(us);
+        }
+      }
+    });
+    $('btn-update-close')?.addEventListener('click', closeUpdateModal);
+    $('btn-update-skip')?.addEventListener('click', handleSkipUpdateClick);
+    $('btn-update-confirm')?.addEventListener('click', handleConfirmUpdateClick);
+    $('update-modal')?.addEventListener('click', (e) => {
+      if (e.target === $('update-modal')) {
+        closeUpdateModal();
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && state.updateModalOpen && !state.updateApplying) {
+        e.preventDefault();
+        closeUpdateModal();
+      }
+    });
+    renderUpdateCheckStatus();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 19:00:00
+// ============================================================================
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {

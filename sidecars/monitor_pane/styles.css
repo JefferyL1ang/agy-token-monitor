@@ -1984,5 +1984,346 @@ mouse-draggable .trend-scroll / .trend-track viewport and per-bar unclipped labe
 }
 
 /* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 18:55:45
+Description: Add v0.2.4 release notification pill (.update-pill-btn), settings version check bar (.update-check-bar), and accessible release-notes & hot-update dialog (.update-modal-backdrop / .update-modal-card) styles.
+============================================================================ */
+/* ---------------- v0.2.4 Release Update Pill & Hot-Update Modal ---------------- */
+.update-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: var(--r-pill);
+  border: 1px solid color-mix(in srgb, var(--tm-emerald) 44%, var(--tm-border));
+  background: color-mix(in srgb, var(--tm-emerald) 14%, var(--tm-card));
+  color: var(--tm-emerald);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+
+.update-pill-btn > * {
+  pointer-events: none;
+}
+
+.update-pill-btn:hover {
+  background: color-mix(in srgb, var(--tm-emerald) 23%, var(--tm-card));
+  border-color: color-mix(in srgb, var(--tm-cyan) 42%, var(--tm-emerald));
+}
+
+.update-pill-btn:active {
+  transform: scale(0.97);
+}
+
+.update-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--tm-emerald);
+  animation: tm-update-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tm-update-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--tm-emerald) 38%, transparent);
+  }
+  50% {
+    opacity: 0.72;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--tm-emerald) 0%, transparent);
+  }
+}
+
+.update-check-bar {
+  background: var(--tm-bg);
+  padding: 6px 9px;
+  border-radius: var(--r-md);
+}
+
+.pricing-sync-status.is-clickable {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
+.pricing-sync-status.is-clickable:hover {
+  color: var(--tm-cyan);
+}
+
+.update-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(10, 14, 23, 0.48);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+
+.update-modal-card {
+  max-width: 440px;
+  width: 100%;
+  max-height: min(82vh, 520px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-lg);
+  background: var(--tm-card);
+  border: 1px solid var(--tm-card-border);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.30), 0 2px 10px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+}
+
+.update-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--tm-border);
+  flex: none;
+}
+
+.update-modal-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.update-modal-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.update-modal-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--tm-fg);
+}
+
+.update-modal-ver {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  font-family: var(--tm-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tm-emerald);
+  background: color-mix(in srgb, var(--tm-emerald) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tm-emerald) 35%, transparent);
+  white-space: nowrap;
+}
+
+.update-modal-date {
+  font-size: 11px;
+  color: var(--tm-muted-fg);
+}
+
+.update-close-btn {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--tm-muted-fg);
+  font-size: 17px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.14s ease, color 0.14s ease;
+}
+
+.update-close-btn:hover:not(:disabled) {
+  background: var(--tm-hover);
+  color: var(--tm-fg);
+}
+
+.update-close-btn:disabled,
+.btn-ghost:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.update-notes-body {
+  flex: 1 1 auto;
+  min-height: 68px;
+  overflow-y: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--tm-fg);
+}
+
+.update-notes-h {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tm-cyan);
+  letter-spacing: 0.01em;
+}
+
+.update-notes-h:first-child {
+  margin-top: 0;
+}
+
+.update-notes-list {
+  margin: 0;
+  padding-left: 17px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.update-notes-item {
+  color: var(--tm-fg);
+  word-break: break-word;
+}
+
+.update-notes-p {
+  margin: 0;
+  color: var(--tm-muted-fg);
+  word-break: break-word;
+}
+
+.update-notes-code {
+  font-family: var(--tm-mono);
+  font-size: 11px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--tm-subtle);
+  border: 1px solid var(--tm-border);
+}
+
+.update-notes-empty {
+  font-size: 12px;
+  color: var(--tm-muted-fg);
+}
+
+.update-modal-feedback {
+  flex: none;
+  margin: 0 14px 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  font-size: 11.5px;
+  line-height: 1.4;
+  border: 1px solid var(--tm-border);
+  background: var(--tm-subtle);
+  color: var(--tm-fg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.update-modal-feedback.is-progress {
+  border-color: color-mix(in srgb, var(--tm-cyan) 38%, transparent);
+  background: color-mix(in srgb, var(--tm-cyan) 11%, var(--tm-card));
+  color: var(--tm-cyan);
+  font-weight: 600;
+}
+
+.update-modal-feedback.is-error {
+  border-color: color-mix(in srgb, var(--tm-rose) 38%, transparent);
+  background: color-mix(in srgb, var(--tm-rose) 12%, var(--tm-card));
+  color: var(--tm-rose);
+}
+
+.update-fallback-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: var(--r-sm);
+  background: var(--tm-card);
+  border: 1px solid color-mix(in srgb, var(--tm-cyan) 42%, var(--tm-border));
+  color: var(--tm-cyan);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.14s ease, border-color 0.14s ease;
+}
+
+.update-fallback-link:hover {
+  background: var(--tm-accent-host);
+  border-color: var(--tm-cyan);
+}
+
+.update-modal-footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--tm-border);
+  background: color-mix(in srgb, var(--tm-subtle) 55%, var(--tm-card));
+}
+
+@media (max-width: 360px) {
+  .update-pill-btn {
+    height: 28px;
+    padding: 0 7px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .lang-btn {
+    height: 28px;
+    min-width: 28px;
+    padding: 0 6px;
+  }
+
+  .icon-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .update-modal-backdrop {
+    padding: 10px;
+  }
+
+  .update-modal-head,
+  .update-notes-body,
+  .update-modal-footer {
+    padding-left: 11px;
+    padding-right: 11px;
+  }
+
+  .update-modal-feedback {
+    margin-left: 11px;
+    margin-right: 11px;
+  }
+
+  .update-modal-footer .btn-ghost,
+  .update-modal-footer .btn-primary {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-17 18:55:45
+============================================================================ */
+
+/* ============================================================================
 [MODIFIED END] 2026-11-16 20:24:00
 ============================================================================ */
