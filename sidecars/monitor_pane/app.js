@@ -889,9 +889,121 @@
     pollSnapshot(true);
   }
 
-  function getCatalogList() {
-    return Array.isArray(state.snapshot?.pricingCatalog) ? state.snapshot.pricingCatalog : [];
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:15:00
+// Description: Add client-side scoreModelPerformance and sortCatalogByPerformance
+// helpers and sort getCatalogList() top-to-bottom by capability while keeping
+// group order (Gemini -> Claude -> Other -> Auto).
+// ============================================================================
+  const GROUP_SORT_ORDER = {
+    'Gemini 系列': 0,
+    'Claude 系列': 1,
+    '其他在役模型': 2,
+    '默认回退': 3,
+  };
+
+  function parseGeminiVersion(s) {
+    const m = s.match(/gemini[\s_-]*(\d+(?:[._]\d+|-\d+(?=-|\s|$))?)/i);
+    if (!m || !m[1]) return 3.0;
+    const ver = Number(m[1].replace(/[_-]/g, '.'));
+    return Number.isFinite(ver) ? ver : 3.0;
   }
+
+  function parseClaudeVersion(s) {
+    const m =
+      s.match(/claude[\s_-]*(?:opus|sonnet|haiku)[\s_-]*(\d+(?:[._-]\d+)?)/i) ||
+      s.match(/claude[\s_-]*(\d+(?:[._-]\d+)?)/i);
+    if (!m || !m[1]) return 3.0;
+    const ver = Number(m[1].replace(/[_-]/g, '.'));
+    return Number.isFinite(ver) ? ver : 3.0;
+  }
+
+  function getModelGroupRank(item) {
+    if (!item) return 99;
+    const id = String(item.id || '').trim().toLowerCase();
+    if (id === 'auto') return 3;
+    const group = String(item.group || '');
+    if (Object.prototype.hasOwnProperty.call(GROUP_SORT_ORDER, group)) {
+      return GROUP_SORT_ORDER[group];
+    }
+    if (/^gemini/i.test(id)) return 0;
+    if (/^claude/i.test(id)) return 1;
+    return 2;
+  }
+
+  function scoreModelPerformance(item) {
+    if (!item) return -1000;
+    const id = String(item.id || '').trim();
+    const label = String(item.label || '').trim();
+    const lowerId = id.toLowerCase();
+    const group = String(item.group || '');
+    if (lowerId === 'auto' || group === '默认回退') {
+      return -1000;
+    }
+
+    const s = `${id} ${label}`.toLowerCase();
+    const previewPenalty = /-(?:preview|exp|experimental)\b/i.test(id) ? 1 : 0;
+
+    if (group === 'Gemini 系列' || /(?:^|[^a-z0-9])gemini(?=$|[^a-z0-9])/i.test(s)) {
+      const ver = parseGeminiVersion(s);
+      if (/(?:^|[^a-z0-9])(?:flash[\s_-]*lite|lite|nano|8b)(?=$|[^a-z0-9])/i.test(s)) {
+        return 2000 + ver * 100 - previewPenalty;
+      }
+      if (/(?:^|[^a-z0-9])flash(?=$|[^a-z0-9])/i.test(s)) {
+        return 5000 + ver * 100 - previewPenalty;
+      }
+      let sub = 50;
+      if (/(?:^|[^a-z0-9])ultra(?=$|[^a-z0-9])/i.test(s)) sub = 95;
+      else if (/(?:^|[^a-z0-9])carbon(?=$|[^a-z0-9])/i.test(s)) sub = 90;
+      else if (/(?:^|[^a-z0-9])argon(?=$|[^a-z0-9])/i.test(s)) sub = 80;
+      else if (/(?:^|[^a-z0-9])pro(?=$|[^a-z0-9])/i.test(s)) sub = 70;
+      else if (/(?:^|[^a-z0-9])hydrogen(?=$|[^a-z0-9])/i.test(s)) sub = 60;
+      return 10000 + ver * 100 + sub - previewPenalty;
+    }
+
+    if (group === 'Claude 系列' || /(?:^|[^a-z0-9])claude(?=$|[^a-z0-9])/i.test(s)) {
+      const ver = parseClaudeVersion(s);
+      if (/(?:^|[^a-z0-9])opus(?=$|[^a-z0-9])/i.test(s)) return 8000 + ver * 100 - previewPenalty;
+      if (/(?:^|[^a-z0-9])sonnet(?=$|[^a-z0-9])/i.test(s)) return 6000 + ver * 100 - previewPenalty;
+      if (/(?:^|[^a-z0-9])haiku(?=$|[^a-z0-9])/i.test(s)) return 3000 + ver * 100 - previewPenalty;
+      return 4000 + ver * 100 - previewPenalty;
+    }
+
+    return 0;
+  }
+
+  function sortCatalogByPerformance(catalog) {
+    if (!Array.isArray(catalog) || catalog.length === 0) return [];
+    return [...catalog].sort((a, b) => {
+      const aAuto = String(a?.id || '').trim().toLowerCase() === 'auto';
+      const bAuto = String(b?.id || '').trim().toLowerCase() === 'auto';
+      if (aAuto !== bAuto) return aAuto ? 1 : -1;
+
+      const groupDiff = getModelGroupRank(a) - getModelGroupRank(b);
+      if (groupDiff !== 0) return groupDiff;
+
+      const scoreDiff = scoreModelPerformance(b) - scoreModelPerformance(a);
+      if (Math.abs(scoreDiff) > 1e-9) return scoreDiff;
+
+      const outA = Number(a?.defaultUsd?.outputPer1M ?? a?.outputPer1M ?? 0) || 0;
+      const outB = Number(b?.defaultUsd?.outputPer1M ?? b?.outputPer1M ?? 0) || 0;
+      if (Math.abs(outB - outA) > 1e-9) return outB - outA;
+
+      const inA = Number(a?.defaultUsd?.inputPer1M ?? a?.inputPer1M ?? 0) || 0;
+      const inB = Number(b?.defaultUsd?.inputPer1M ?? b?.inputPer1M ?? 0) || 0;
+      if (Math.abs(inB - inA) > 1e-9) return inB - inA;
+
+      return String(a?.id || '').localeCompare(String(b?.id || ''));
+    });
+  }
+
+  function getCatalogList() {
+    const raw = Array.isArray(state.snapshot?.pricingCatalog) ? state.snapshot.pricingCatalog : [];
+    return sortCatalogByPerformance(raw);
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:15:00
+// ============================================================================
 
   // ============================================================================
   // [MODIFIED BEGIN] 2026-11-16 21:11:00
@@ -904,8 +1016,18 @@
 // ============================================================================
     const s = String(modelName || '').trim().toLowerCase();
     if (s) {
-      const exact = getCatalogList().find((item) => String(item.id || '').toLowerCase() === s);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:15:00
+// Description: Match exact catalog ID or label first before fallback regexes.
+// ============================================================================
+      const catalog = getCatalogList();
+      const exact =
+        catalog.find((item) => String(item.id || '').toLowerCase() === s) ||
+        catalog.find((item) => String(item.label || '').trim().toLowerCase() === s);
       if (exact) return exact.id;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:15:00
+// ============================================================================
     }
     if (/gemini[\s_-]*3\.?1[\s_-]*pro|gemini-pro-default/i.test(s)) return 'gemini-3.1-pro';
 // ============================================================================

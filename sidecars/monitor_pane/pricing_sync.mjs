@@ -8,7 +8,14 @@
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MODEL_PRICING_CATALOG, formatLocalDate } from './parser.mjs';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:15:00
+// Description: Import compareModelsByPerformance for performance-tier catalog sorting.
+// ============================================================================
+import { MODEL_PRICING_CATALOG, compareModelsByPerformance, formatLocalDate } from './parser.mjs';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:15:00
+// ============================================================================
 
 const DEFAULT_GOOGLE_PRICING_URL = 'https://ai.google.dev/gemini-api/docs/pricing';
 const DEFAULT_MODELS_DEV_URL = 'https://models.dev/api.json';
@@ -1276,6 +1283,17 @@ export function createPricingSyncManager({
             : p.longOutputMultiplier || (p.longContextTier ? 1.5 : 1.0),
         pattern:
           p.pattern instanceof RegExp ? p.pattern : compileModelPattern(p.patternStr, p.id),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:15:00
+// Description: Preserve fallbackPattern when cloning base catalog entries.
+// ============================================================================
+        fallbackPattern:
+          p.fallbackPattern instanceof RegExp
+            ? p.fallbackPattern
+            : compileModelPattern(p.fallbackPatternStr, ''),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:15:00
+// ============================================================================
       };
       baseEntries.push(entry);
       seenIds.add(entry.id.toLowerCase());
@@ -1376,36 +1394,24 @@ export function createPricingSyncManager({
     }
 
 // ============================================================================
-// [MODIFIED BEGIN] 2026-11-17 11:53:00
-// Description: Place discovered and promoted Gemini entries before catch-all
-// fallback patterns (gemini-4-carbon / gemini-3-8-flash) so display labels like
-// "Gemini 3.2 Pro" or "Gemini 4 Flash" match their dedicated entries too.
+// [MODIFIED BEGIN] 2026-11-17 15:15:00
+// Description: Sort all Gemini, Claude, and other runtime entries strictly by
+// performance tier using compareModelsByPerformance (fallbackPattern is decoupled
+// in 3-pass resolveModelProfile, so order reflects capability top-to-bottom).
 // ============================================================================
-    const geminiSpecific = [];
-    const geminiFallback = [];
+    const geminiList = [];
     const claudeList = [];
     const otherList = [];
-    for (const entry of baseEntries) {
-      if (entry.group === 'Gemini 系列') {
-        if (entry.id === 'gemini-4-carbon' || entry.id === 'gemini-3-8-flash') {
-          geminiFallback.push(entry);
-        } else {
-          geminiSpecific.push(entry);
-        }
-      } else if (entry.group === 'Claude 系列') {
-        claudeList.push(entry);
-      } else {
-        otherList.push(entry);
-      }
-    }
-    for (const entry of [...discoveredEntries, ...promotedEntries]) {
-      if (entry.group === 'Gemini 系列') geminiSpecific.push(entry);
+    for (const entry of [...baseEntries, ...discoveredEntries, ...promotedEntries]) {
+      if (entry.group === 'Gemini 系列') geminiList.push(entry);
       else if (entry.group === 'Claude 系列') claudeList.push(entry);
       else otherList.push(entry);
     }
-    const geminiList = [...geminiSpecific, ...geminiFallback];
+    geminiList.sort(compareModelsByPerformance);
+    claudeList.sort(compareModelsByPerformance);
+    otherList.sort(compareModelsByPerformance);
 // ============================================================================
-// [MODIFIED END] 2026-11-17 11:53:00
+// [MODIFIED END] 2026-11-17 15:15:00
 // ============================================================================
 
     const carbonRates = cache.syncedRates?.['gemini-4-carbon'] || cache.syncedRates?.['auto'];
@@ -1616,7 +1622,14 @@ export function createPricingSyncManager({
 
     cache.syncedRates = nextSyncedRates;
     cache.upstreamPool = nextUpstreamPool;
-    cache.discoveredModels = [...discoveredMap.values()];
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:15:00
+// Description: Sort discoveredModels by performance tier before persisting cache.
+// ============================================================================
+    cache.discoveredModels = [...discoveredMap.values()].sort(compareModelsByPerformance);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:15:00
+// ============================================================================
     cache.lastSyncLocalDate = formatLocalDate(nowMs);
     cache.lastSyncAtMs = nowMs;
     cache.lastAttemptAtMs = nowMs;

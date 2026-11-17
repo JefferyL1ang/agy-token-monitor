@@ -69,6 +69,26 @@ const SEEDED_ENUM_IDS = new Set(SEEDED_ENUM_ENTRIES.map(([k]) => k));
 export const MODEL_ENUM_MAP = new Map(SEEDED_ENUM_ENTRIES);
 
 export const MODEL_PRICING_CATALOG = Object.freeze([
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:15:00
+// Description: Order Gemini series strictly top-to-bottom by performance tier
+// (4 Carbon > 4 Argon > 4 Hydrogen > 3.1 Pro > 3.8 Flash) and decouple
+// catch-all fallback regexes into fallbackPattern so specific models never shadow.
+// ============================================================================
+  Object.freeze({
+    id: 'gemini-4-carbon',
+    group: 'Gemini 系列',
+    label: 'Gemini 4 Carbon',
+    hint: '含 High/Med/Low · Orchestrator (Carbon)',
+    inputPer1M: 2.0,
+    cachedPer1M: 0.2,
+    outputPer1M: 10.0,
+    longContextTier: true,
+    longInputMultiplier: 2.0,
+    longOutputMultiplier: 1.5,
+    pattern: /gemini[\s-]*4[\s-]*carbon|orchestrator[\s(-]*carbon|gemini-pro-orchestrator(?!-argon)/i,
+    fallbackPattern: /^gemini[\s-]*pro$|gemini[\s-]*[23](?!\.?1[\s_-]*pro).*pro|^pro$/i,
+  }),
   Object.freeze({
     id: 'gemini-4-argon',
     group: 'Gemini 系列',
@@ -82,41 +102,6 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     longOutputMultiplier: 1.5,
     pattern: /gemini[\s-]*4[\s-]*argon|orchestrator[\s(-]*argon|gemini-pro-orchestrator-argon/i,
   }),
-// ============================================================================
-// [MODIFIED BEGIN] 2026-11-17 11:40:00
-// Description: Add dedicated gemini-3.1-pro profile before gemini-4-carbon
-// and remove 3.1/pro-default matching from gemini-4-carbon's pattern.
-// ============================================================================
-  Object.freeze({
-    id: 'gemini-3.1-pro',
-    group: 'Gemini 系列',
-    label: 'Gemini 3.1 Pro',
-    hint: '含 Pro Preview / Default · ≤200k 标准档',
-    inputPer1M: 2.0,
-    cachedPer1M: 0.2,
-    outputPer1M: 12.0,
-    longContextTier: true,
-    longInputMultiplier: 2.0,
-    longOutputMultiplier: 1.5,
-    pattern: /gemini[\s_-]*3\.?1[\s_-]*pro|gemini-pro-default/i,
-  }),
-  Object.freeze({
-    id: 'gemini-4-carbon',
-    group: 'Gemini 系列',
-    label: 'Gemini 4 Carbon',
-    hint: '含 High/Med/Low · Orchestrator (Carbon)',
-    inputPer1M: 2.0,
-    cachedPer1M: 0.2,
-    outputPer1M: 10.0,
-    longContextTier: true,
-    longInputMultiplier: 2.0,
-    longOutputMultiplier: 1.5,
-    pattern:
-      /gemini[\s-]*4[\s-]*carbon|orchestrator[\s(-]*carbon|gemini-pro-orchestrator(?!-argon)|^gemini[\s-]*pro$|gemini[\s-]*[23].*pro|^pro$/i,
-  }),
-// ============================================================================
-// [MODIFIED END] 2026-11-17 11:40:00
-// ============================================================================
   Object.freeze({
     id: 'gemini-4-hydrogen',
     group: 'Gemini 系列',
@@ -131,6 +116,19 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     pattern: /gemini[\s-]*4[\s-]*hydrogen/i,
   }),
   Object.freeze({
+    id: 'gemini-3.1-pro',
+    group: 'Gemini 系列',
+    label: 'Gemini 3.1 Pro',
+    hint: '含 Pro Preview / Default · ≤200k 标准档',
+    inputPer1M: 2.0,
+    cachedPer1M: 0.2,
+    outputPer1M: 12.0,
+    longContextTier: true,
+    longInputMultiplier: 2.0,
+    longOutputMultiplier: 1.5,
+    pattern: /gemini[\s_-]*3\.?1[\s_-]*pro|gemini-pro-default/i,
+  }),
+  Object.freeze({
     id: 'gemini-3-8-flash',
     group: 'Gemini 系列',
     label: 'Gemini 3.8 Flash',
@@ -141,8 +139,12 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     longContextTier: false,
     longInputMultiplier: 2.0,
     longOutputMultiplier: 1.5,
-    pattern: /gemini.*flash|^flash(?:_lite)?$/i,
+    pattern: /gemini[\s_-]*3\.?8[\s_-]*flash|gemini-flash-worker/i,
+    fallbackPattern: /gemini.*flash|^flash(?:_lite)?$/i,
   }),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:15:00
+// ============================================================================
   Object.freeze({
     id: 'claude-opus-5-5',
     group: 'Claude 系列',
@@ -1771,6 +1773,131 @@ export function computeLiveStatus(parsed) {
 // resolveModelPricing, and buildEffectivePricingCatalog, and classify
 // gemini-3.1-pro under Pro subscription auto-detection.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:15:00
+// Description: Implement 3-pass resolveModelProfile (exact id/label -> specific
+// pattern -> fallbackPattern -> auto) and export scoreModelPerformance /
+// compareModelsByPerformance for capability-first catalog sorting.
+// ============================================================================
+const GROUP_SORT_ORDER = Object.freeze({
+  'Gemini 系列': 0,
+  'Claude 系列': 1,
+  '其他在役模型': 2,
+  '默认回退': 3,
+});
+
+function parseGeminiVersion(s) {
+  const m = s.match(/gemini[\s_-]*(\d+(?:[._]\d+|-\d+(?=-|\s|$))?)/i);
+  if (!m || !m[1]) return 3.0;
+  const ver = Number(m[1].replace(/[_-]/g, '.'));
+  return Number.isFinite(ver) ? ver : 3.0;
+}
+
+function parseClaudeVersion(s) {
+  const m =
+    s.match(/claude[\s_-]*(?:opus|sonnet|haiku)[\s_-]*(\d+(?:[._-]\d+)?)/i) ||
+    s.match(/claude[\s_-]*(\d+(?:[._-]\d+)?)/i);
+  if (!m || !m[1]) return 3.0;
+  const ver = Number(m[1].replace(/[_-]/g, '.'));
+  return Number.isFinite(ver) ? ver : 3.0;
+}
+
+function getModelGroupRank(item) {
+  if (!item) return 99;
+  const id = String(item.id || '').trim().toLowerCase();
+  if (id === 'auto') return 3;
+  const group = String(item.group || '');
+  if (Object.prototype.hasOwnProperty.call(GROUP_SORT_ORDER, group)) {
+    return GROUP_SORT_ORDER[group];
+  }
+  if (/^gemini/i.test(id)) return 0;
+  if (/^claude/i.test(id)) return 1;
+  return 2;
+}
+
+/**
+ * Computes a numeric capability score within a model family for descending sort.
+ */
+export function scoreModelPerformance(item) {
+  if (!item) return -1000;
+  const id = String(item.id || '').trim();
+  const label = String(item.label || '').trim();
+  const lowerId = id.toLowerCase();
+  const group = String(item.group || '');
+  if (lowerId === 'auto' || group === '默认回退') {
+    return -1000;
+  }
+
+  const s = `${id} ${label}`.toLowerCase();
+  const previewPenalty = /-(?:preview|exp|experimental)\b/i.test(id) ? 1 : 0;
+
+  if (group === 'Gemini 系列' || /(?:^|[^a-z0-9])gemini(?=$|[^a-z0-9])/i.test(s)) {
+    const ver = parseGeminiVersion(s);
+    if (/(?:^|[^a-z0-9])(?:flash[\s_-]*lite|lite|nano|8b)(?=$|[^a-z0-9])/i.test(s)) {
+      return 2000 + ver * 100 - previewPenalty;
+    }
+    if (/(?:^|[^a-z0-9])flash(?=$|[^a-z0-9])/i.test(s)) {
+      return 5000 + ver * 100 - previewPenalty;
+    }
+    let sub = 50;
+    if (/(?:^|[^a-z0-9])ultra(?=$|[^a-z0-9])/i.test(s)) sub = 95;
+    else if (/(?:^|[^a-z0-9])carbon(?=$|[^a-z0-9])/i.test(s)) sub = 90;
+    else if (/(?:^|[^a-z0-9])argon(?=$|[^a-z0-9])/i.test(s)) sub = 80;
+    else if (/(?:^|[^a-z0-9])pro(?=$|[^a-z0-9])/i.test(s)) sub = 70;
+    else if (/(?:^|[^a-z0-9])hydrogen(?=$|[^a-z0-9])/i.test(s)) sub = 60;
+    return 10000 + ver * 100 + sub - previewPenalty;
+  }
+
+  if (group === 'Claude 系列' || /(?:^|[^a-z0-9])claude(?=$|[^a-z0-9])/i.test(s)) {
+    const ver = parseClaudeVersion(s);
+    if (/(?:^|[^a-z0-9])opus(?=$|[^a-z0-9])/i.test(s)) return 8000 + ver * 100 - previewPenalty;
+    if (/(?:^|[^a-z0-9])sonnet(?=$|[^a-z0-9])/i.test(s)) return 6000 + ver * 100 - previewPenalty;
+    if (/(?:^|[^a-z0-9])haiku(?=$|[^a-z0-9])/i.test(s)) return 3000 + ver * 100 - previewPenalty;
+    return 4000 + ver * 100 - previewPenalty;
+  }
+
+  return 0;
+}
+
+/**
+ * Comparator sorting models by group priority, capability score, rates desc, and id asc.
+ */
+export function compareModelsByPerformance(a, b) {
+  const aAuto = String(a?.id || '').trim().toLowerCase() === 'auto';
+  const bAuto = String(b?.id || '').trim().toLowerCase() === 'auto';
+  if (aAuto !== bAuto) return aAuto ? 1 : -1;
+
+  const groupDiff = getModelGroupRank(a) - getModelGroupRank(b);
+  if (groupDiff !== 0) return groupDiff;
+
+  const scoreDiff = scoreModelPerformance(b) - scoreModelPerformance(a);
+  if (Math.abs(scoreDiff) > 1e-9) return scoreDiff;
+
+  const outA = Number(a?.defaultUsd?.outputPer1M ?? a?.outputPer1M ?? 0) || 0;
+  const outB = Number(b?.defaultUsd?.outputPer1M ?? b?.outputPer1M ?? 0) || 0;
+  if (Math.abs(outB - outA) > 1e-9) return outB - outA;
+
+  const inA = Number(a?.defaultUsd?.inputPer1M ?? a?.inputPer1M ?? 0) || 0;
+  const inB = Number(b?.defaultUsd?.inputPer1M ?? b?.inputPer1M ?? 0) || 0;
+  if (Math.abs(inB - inA) > 1e-9) return inB - inA;
+
+  return String(a?.id || '').localeCompare(String(b?.id || ''));
+}
+
+function resolveProfileRegex(profile, reKey, strKey) {
+  const direct = profile?.[reKey];
+  if (direct instanceof RegExp) return direct;
+  const raw = profile?.[strKey];
+  if (typeof raw === 'string' && raw) {
+    try {
+      return new RegExp(raw, 'i');
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 /**
  * Resolves the pricing catalog profile matching an Antigravity model display name or ID.
  */
@@ -1782,22 +1909,27 @@ export function resolveModelProfile(modelName, runtimeCatalog = null) {
   const s = typeof modelName === 'string' ? modelName.trim() : '';
   if (s) {
     const lower = s.toLowerCase();
-    const exact = list.find((p) => typeof p?.id === 'string' && p.id.toLowerCase() === lower);
-    if (exact) {
-      return exact;
-    }
+    // Pass 0: Exact match on lowercase id or lowercase label.
+    const exactId = list.find((p) => typeof p?.id === 'string' && p.id.toLowerCase() === lower);
+    if (exactId) return exactId;
+    const exactLabel = list.find(
+      (p) => typeof p?.label === 'string' && p.label.trim().toLowerCase() === lower,
+    );
+    if (exactLabel) return exactLabel;
+
+    // Pass 1: Specific profile pattern.
     for (const profile of list) {
       if (!profile) continue;
-      let re = null;
-      if (profile.pattern instanceof RegExp) {
-        re = profile.pattern;
-      } else if (typeof profile.patternStr === 'string' && profile.patternStr) {
-        try {
-          re = new RegExp(profile.patternStr, 'i');
-        } catch {
-          re = null;
-        }
+      const re = resolveProfileRegex(profile, 'pattern', 'patternStr');
+      if (re && re.test(s)) {
+        return profile;
       }
+    }
+
+    // Pass 2: Catch-all fallback pattern.
+    for (const profile of list) {
+      if (!profile) continue;
+      const re = resolveProfileRegex(profile, 'fallbackPattern', 'fallbackPatternStr');
       if (re && re.test(s)) {
         return profile;
       }
@@ -1805,6 +1937,9 @@ export function resolveModelProfile(modelName, runtimeCatalog = null) {
   }
   return list.find((p) => p?.id === 'auto') || PROFILE_BY_ID.get('auto');
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:15:00
+// ============================================================================
 
 /**
  * Resolves effective per-million token rates (and CNY conversion) for a model and prefs.

@@ -54,6 +54,15 @@ import {
 // ============================================================================
   buildEffectivePricingCatalog,
   clearParserCache,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:15:00
+// Description: Import compareModelsByPerformance and scoreModelPerformance for
+// performance-tier sorting and 3-pass model resolution unit tests.
+// ============================================================================
+  compareModelsByPerformance,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:15:00
+// ============================================================================
   computeContext,
   computeSpeed,
   computeStepCost,
@@ -70,6 +79,14 @@ import {
   resolveModelPricing,
   resolveModelProfile,
   resolveSubscriptionInfo,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:15:00
+// Description: Import scoreModelPerformance for capability score tests.
+// ============================================================================
+  scoreModelPerformance,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:15:00
+// ============================================================================
   summarizeGlobalAndRecent,
 } from '../sidecars/monitor_pane/parser.mjs';
 import {
@@ -3049,4 +3066,184 @@ test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro over
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:51:00
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:15:00
+// Description: Add unit tests for capability-first Gemini catalog sorting,
+// scoreModelPerformance / compareModelsByPerformance, discovered Flash tier
+// ordering, and 3-pass resolveModelProfile (exact -> pattern -> fallbackPattern).
+// ============================================================================
+test('built-in MODEL_PRICING_CATALOG orders Gemini series top-to-bottom by performance tier', () => {
+  const geminiIds = MODEL_PRICING_CATALOG
+    .filter((m) => m.group === 'Gemini 系列')
+    .map((m) => m.id);
+  assert.deepEqual(geminiIds, [
+    'gemini-4-carbon',
+    'gemini-4-argon',
+    'gemini-4-hydrogen',
+    'gemini-3.1-pro',
+    'gemini-3-8-flash',
+  ]);
+  assert.deepEqual(
+    MODEL_PRICING_CATALOG.map((m) => m.id),
+    [
+      'gemini-4-carbon',
+      'gemini-4-argon',
+      'gemini-4-hydrogen',
+      'gemini-3.1-pro',
+      'gemini-3-8-flash',
+      'claude-opus-5-5',
+      'claude-sonnet-5-5',
+      'gpt-oss-120b',
+      'auto',
+    ],
+  );
+});
+
+test('scoreModelPerformance & compareModelsByPerformance rank versions, tiers, preview penalties, and groups accurately', () => {
+  assert.ok(
+    scoreModelPerformance({ id: 'gemini-3-8-flash', group: 'Gemini 系列', label: 'Gemini 3.8 Flash' }) >
+      scoreModelPerformance({ id: 'gemini-3.7-flash', group: 'Gemini 系列', label: 'Gemini 3.7 Flash' }),
+  );
+  assert.ok(
+    scoreModelPerformance({ id: 'gemini-3.7-flash', group: 'Gemini 系列', label: 'Gemini 3.7 Flash' }) >
+      scoreModelPerformance({
+        id: 'gemini-3.5-flash-lite',
+        group: 'Gemini 系列',
+        label: 'Gemini 3.5 Flash Lite',
+      }),
+  );
+  assert.ok(
+    scoreModelPerformance({ id: 'gemini-3.1-pro', group: 'Gemini 系列', label: 'Gemini 3.1 Pro' }) >
+      scoreModelPerformance({
+        id: 'gemini-3.1-pro-preview',
+        group: 'Gemini 系列',
+        label: 'Gemini 3.1 Pro Preview',
+      }),
+  );
+  assert.ok(
+    scoreModelPerformance({
+      id: 'gemini-3.1-pro-preview',
+      group: 'Gemini 系列',
+      label: 'Gemini 3.1 Pro Preview',
+    }) > scoreModelPerformance({ id: 'gemini-3.0-pro', group: 'Gemini 系列', label: 'Gemini 3.0 Pro' }),
+  );
+  assert.ok(
+    scoreModelPerformance({ id: 'claude-opus-5-5', group: 'Claude 系列', label: 'Claude Opus 5.5' }) >
+      scoreModelPerformance({ id: 'claude-sonnet-5-5', group: 'Claude 系列', label: 'Claude Sonnet 5.5' }),
+  );
+  assert.ok(
+    scoreModelPerformance({ id: 'claude-sonnet-5-5', group: 'Claude 系列', label: 'Claude Sonnet 5.5' }) >
+      scoreModelPerformance({ id: 'claude-haiku-4-5', group: 'Claude 系列', label: 'Claude Haiku 4.5' }),
+  );
+
+  const shuffled = [
+    { id: 'auto', group: '默认回退', label: 'Auto (默认)', outputPer1M: 10, inputPer1M: 2 },
+    { id: 'gpt-oss-120b', group: '其他在役模型', label: 'GPT-OSS 120B', outputPer1M: 0.6, inputPer1M: 0.15 },
+    { id: 'claude-sonnet-5-5', group: 'Claude 系列', label: 'Claude Sonnet 5.5', outputPer1M: 10, inputPer1M: 2 },
+    { id: 'claude-opus-5-5', group: 'Claude 系列', label: 'Claude Opus 5.5', outputPer1M: 20, inputPer1M: 4 },
+    { id: 'gemini-3.5-flash-lite', group: 'Gemini 系列', label: 'Gemini 3.5 Flash Lite', outputPer1M: 0.4, inputPer1M: 0.1 },
+    { id: 'gemini-3-8-flash', group: 'Gemini 系列', label: 'Gemini 3.8 Flash', outputPer1M: 3.75, inputPer1M: 0.75 },
+    { id: 'gemini-4-carbon', group: 'Gemini 系列', label: 'Gemini 4 Carbon', outputPer1M: 10, inputPer1M: 2 },
+    { id: 'gemini-3.1-pro', group: 'Gemini 系列', label: 'Gemini 3.1 Pro', outputPer1M: 12, inputPer1M: 2 },
+  ];
+  shuffled.sort(compareModelsByPerformance);
+  assert.deepEqual(
+    shuffled.map((m) => m.id),
+    [
+      'gemini-4-carbon',
+      'gemini-3.1-pro',
+      'gemini-3-8-flash',
+      'gemini-3.5-flash-lite',
+      'claude-opus-5-5',
+      'claude-sonnet-5-5',
+      'gpt-oss-120b',
+      'auto',
+    ],
+  );
+});
+
+test('pricing_sync discovers 3.5-3.7 Flash models sorted by capability and resolves 3-pass profiles without shadowing', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'tm-sort-resolve-'));
+  const stateDir = join(root, 'state');
+  mkdirSync(stateDir, { recursive: true });
+  try {
+    const mockModelsDev = {
+      google: {
+        models: {
+          'gemini-3.5-flash-lite': {
+            id: 'gemini-3.5-flash-lite',
+            name: 'Gemini 3.5 Flash Lite',
+            cost: { input: 0.1, cache_read: 0.01, output: 0.4 },
+          },
+          'gemini-3.5-flash': {
+            id: 'gemini-3.5-flash',
+            name: 'Gemini 3.5 Flash',
+            cost: { input: 0.3, cache_read: 0.03, output: 1.5 },
+          },
+          'gemini-3.7-flash': {
+            id: 'gemini-3.7-flash',
+            name: 'Gemini 3.7 Flash',
+            cost: { input: 0.5, cache_read: 0.05, output: 2.5 },
+          },
+          'gemini-3.6-flash': {
+            id: 'gemini-3.6-flash',
+            name: 'Gemini 3.6 Flash',
+            cost: { input: 0.4, cache_read: 0.04, output: 2.0 },
+          },
+        },
+      },
+    };
+
+    const mgr = createPricingSyncManager({
+      stateDir,
+      baseCatalog: MODEL_PRICING_CATALOG,
+      googlePricingUrl: '',
+      liteLlmUrl: '',
+      autoSyncDisabled: true,
+      fetchImpl: async (url) => {
+        if (url.includes('models.dev')) {
+          return { ok: true, status: 200, json: async () => mockModelsDev };
+        }
+        return { ok: false, status: 404, text: async () => '' };
+      },
+    });
+
+    const syncRes = await mgr.syncNow([]);
+    assert.equal(syncRes.ok, true);
+
+    const runtimeCatalog = mgr.getRuntimeCatalog([]);
+    const geminiIds = runtimeCatalog.filter((m) => m.group === 'Gemini 系列').map((m) => m.id);
+    assert.deepEqual(geminiIds, [
+      'gemini-4-carbon',
+      'gemini-4-argon',
+      'gemini-4-hydrogen',
+      'gemini-3.1-pro',
+      'gemini-3-8-flash',
+      'gemini-3.7-flash',
+      'gemini-3.6-flash',
+      'gemini-3.5-flash',
+      'gemini-3.5-flash-lite',
+    ]);
+
+    const cacheJson = JSON.parse(readFileSync(join(stateDir, 'pricing_cache.json'), 'utf-8'));
+    assert.deepEqual(
+      cacheJson.discoveredModels.map((m) => m.id),
+      ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite'],
+    );
+
+    // Verify 3-pass lookup: exact id/label -> specific pattern -> catch-all fallbackPattern
+    assert.equal(resolveModelProfile('Gemini 3.7 Flash', runtimeCatalog).id, 'gemini-3.7-flash');
+    assert.equal(resolveModelProfile('Gemini 3.1 Pro (High)', runtimeCatalog).id, 'gemini-3.1-pro');
+    assert.equal(resolveModelProfile('Gemini 2.5 Pro', runtimeCatalog).id, 'gemini-4-carbon');
+    assert.equal(resolveModelProfile('Gemini Flash', runtimeCatalog).id, 'gemini-3-8-flash');
+    assert.equal(resolveModelProfile('Pro', runtimeCatalog).id, 'gemini-4-carbon');
+    assert.equal(resolveModelProfile('gemini-flash-worker-agy', runtimeCatalog).id, 'gemini-3-8-flash');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:15:00
 // ============================================================================
