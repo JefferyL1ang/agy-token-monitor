@@ -1,4 +1,4 @@
-# Token Monitor (`agy-token-monitor`) — v0.2.3 Beta
+# agy-token-monitor
 
 [English](#english) | [中文](#中文)
 
@@ -6,7 +6,7 @@
 
 ## English
 
-**Token Monitor (`agy-token-monitor` v0.2.3 Beta)** is a pure read-only, zero-intrusion Sidecar Auxiliary Pane plugin for **Antigravity**. Without modifying core conversation databases, transcripts, or global host configuration, it monitors live token generation speed (`tok/s`), active model switches, `400k / 500k` context usage with a one-click `/compact` helper, session total token consumption, daily dual-channel official model & pricing auto-sync, dedicated `Gemini 3.1 Pro` tiering, prompt cache hit rate, subagent/swarm aggregation, subscription ROI, and SQLite fork-deduplicated multi-period usage analytics.
+**agy-token-monitor** (v0.2.3 Beta) is a lightweight, low-memory-footprint, pure read-only, zero-intrusion Sidecar Auxiliary Pane plugin built and adapted for **Antigravity**. Without modifying core conversation databases, transcripts, or global host configuration, it provides live token generation speed (`tok/s`), active model switches, context usage monitoring with a one-click `/compact` helper, session total token consumption, daily dual-channel official model & pricing auto-sync, prompt cache hit rate, subagent/swarm aggregation, subscription ROI, and SQLite fork-deduplicated multi-period usage analytics.
 
 > **Beta Release Note (`v0.2.3`)**: This release uses `0.2.3` as a beta test version introducing **Daily Dual-Channel Official Model & Pricing Auto-Sync** (`ai.google.dev` + `models.dev` / `litellm` into `pricing_cache.json`), a **Dedicated `Gemini 3.1 Pro` Tier & Interactive Rate Editor** (fixing the `#pref-model-select` switching bug and supporting row-click editing), and **Session `Total Tokens` Consumption** in Tab 1's Equivalent Cost card and Tab 2 conversation items — building on `v0.2.2`'s bilingual EN/ZH UI, `400k / 500k` context defaults with one-click `/compact`, active-model-scoped speed calculation, and 4 selectable token display units.
 
@@ -90,7 +90,9 @@ agy-token-monitor/
 
 ### Installation & Global Sync (`scripts/sync-plugin.ps1`)
 
-Deploy the plugin files to `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`:
+**Option 1 — GitHub Release Archive**: Download `agy-token-monitor-v0.2.3.zip` directly from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor` (or `~/.gemini/config/plugins/agy-token-monitor`).
+
+**Option 2 — Sync from Source (`scripts/sync-plugin.ps1`)**: Deploy the plugin files to `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File ".\scripts\sync-plugin.ps1"
@@ -132,7 +134,7 @@ node --test tests/parser.test.mjs
 
 ## 中文
 
-**Token Monitor（`agy-token-monitor` v0.2.3 测试版）** 是面向 **Antigravity** 的纯只读、零侵入实时 Token 与上下文监控插件（Sidecar Auxiliary Pane）。在不修改任何核心对话数据库、Transcript 与全局配置文件的前提下，提供高精度生成速度（`tok/s`）、`400k / 500k` 上下文占用监控与一键 `/compact` 助手、会话总 Token 消耗展示、每日双通道官方模型与价格自动同步、`Gemini 3.1 Pro` 独立计价与交互式费率表、中英双语一键切换、四种 Token 显示单位、可拖拽滚动的多周期趋势图、SQLite 分支去重统计与分模型订阅回本对比。
+**agy-token-monitor**（v0.2.3 测试版）是一款专为 **Antigravity** 适配打造、轻量且内存占用低的纯只读、零侵入实时 Token 与上下文监控插件（Sidecar Auxiliary Pane）。在不修改任何核心对话数据库、Transcript 与全局配置文件的前提下，提供高精度生成速度（`tok/s`）、上下文占用监控与一键 `/compact` 助手、会话总 Token 消耗展示、每日双通道官方模型与价格自动同步、可点击交互式费率表、中英双语一键切换、四种 Token 显示单位、可拖拽滚动的多周期趋势图、SQLite 分支去重统计与分模型订阅回本对比。
 
 > **测试版本说明（`v0.2.3`）**：本版本按测试版规范采用 `0.2.3` 版本号，重点新增 **每日双通道官方模型与价格自动同步**（`ai.google.dev` + `models.dev` / `litellm` 落盘至 `pricing_cache.json`）、**`Gemini 3.1 Pro` 独立档位与可点击交互式费率表**（修复 `#pref-model-select` 下拉切换失效问题并支持点击表格行直接编辑），以及 Tab 1 等效成本卡片与 Tab 2 会话列表中的 **会话「总 Token 消耗」** 展示；同时延续 `v0.2.2` 的中英双语切换、`400k / 500k` 上下文阈值与一键 `/compact`、绑定在役模型测速及四种 Token 显示单位。
 
@@ -215,7 +217,9 @@ agy-token-monitor/
 
 ### 安装与同步部署 (`scripts/sync-plugin.ps1`)
 
-在 Windows PowerShell 中将插件文件同步部署到 `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`：
+**方式一 — 下载 GitHub Release 压缩包**：直接前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.3.zip`，将其中的 `agy-token-monitor` 文件夹解压至 `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`（或 `~/.gemini/config/plugins/agy-token-monitor`）即可。
+
+**方式二 — 从源码同步（`scripts/sync-plugin.ps1`）**：在 Windows PowerShell 中将插件文件同步部署到 `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File ".\scripts\sync-plugin.ps1"
