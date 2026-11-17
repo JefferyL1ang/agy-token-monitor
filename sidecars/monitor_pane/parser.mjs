@@ -173,7 +173,14 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
   }),
   Object.freeze({
     id: 'gpt-oss-120b',
-    group: '其他在役模型',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Rename model group label from 其他在役模型 to 其他现役模型.
+// ============================================================================
+    group: '其他现役模型',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
     label: 'GPT-OSS 120B',
     hint: 'Medium',
     inputPer1M: 0.15,
@@ -287,6 +294,25 @@ const summariesDbCache = new Map(); // sumDbPath -> { key, byConvId }
 // ============================================================================
 const subagentDescCache = new Map(); // parentConvId -> { cacheKey, descriptors }
 const MAX_SUBAGENT_DESC_CACHE = 2048;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Add bounded transcriptInvokeScanCache keyed by transcript stat
+// mtime:size to skip unchanged non-parent transcripts during findSubagentParentHint.
+// ============================================================================
+const transcriptInvokeScanCache = new Map(); // transcriptPath -> { tKey, hasInvokeSubagent, uuidsLower }
+
+function setTranscriptInvokeScanCache(transcriptPath, entry) {
+  if (transcriptInvokeScanCache.has(transcriptPath)) {
+    transcriptInvokeScanCache.delete(transcriptPath);
+  } else if (transcriptInvokeScanCache.size >= MAX_SUBAGENT_DESC_CACHE) {
+    const oldestKey = transcriptInvokeScanCache.keys().next().value;
+    if (oldestKey !== undefined) transcriptInvokeScanCache.delete(oldestKey);
+  }
+  transcriptInvokeScanCache.set(transcriptPath, entry);
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
 
 function setSubagentDescCache(parentConvId, entry) {
   if (subagentDescCache.has(parentConvId)) {
@@ -398,6 +424,14 @@ export function clearParserCache() {
 // Description: Clear subagentDescCache inside clearParserCache for test isolation.
 // ============================================================================
   subagentDescCache.clear();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Clear transcriptInvokeScanCache inside clearParserCache for test isolation.
+// ============================================================================
+  transcriptInvokeScanCache.clear();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 17:19:56
 // ============================================================================
@@ -1954,7 +1988,15 @@ export function computeLiveStatus(parsed) {
 const GROUP_SORT_ORDER = Object.freeze({
   'Gemini 系列': 0,
   'Claude 系列': 1,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Use 其他现役模型 rank 2 and keep 其他在役模型 as legacy alias.
+// ============================================================================
+  '其他现役模型': 2,
   '其他在役模型': 2,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
   '默认回退': 3,
 });
 
@@ -2961,7 +3003,15 @@ export function resolveChildrenAndSwarm(convId, parsed, modelByStepIdx, appDataD
     directDescriptors.push(desc);
   }
 
-  if (swarmInfo?.roster?.members) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Only attach swarm roster members as children of the Swarm
+// Coordinator so inspecting an individual Swarm Worker never leaks siblings.
+// ============================================================================
+  if (swarmInfo?.isCoordinator && swarmInfo?.roster?.members) {
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
     for (const [memberName, member] of Object.entries(swarmInfo.roster.members)) {
       const mId = member?.conversation_id;
       if (!isValidConversationId(mId)) continue;
@@ -3117,12 +3167,28 @@ function buildConversationTitle({
   return convId.slice(0, 8);
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Check subagentDescCache first in O(1), avoid redundant disk reads
+// via transcriptInvokeScanCache, and attach parentConversationId on matched hints.
+// ============================================================================
 function findSubagentParentHint(convId, appDataDirs, visited = new Set()) {
   const targetLower = convId.toLowerCase();
   if (visited.has(targetLower)) return null;
   visited.add(targetLower);
 
-  // Fast pass through already-cached transcripts first.
+  // Fast pass through already-cached subagent descriptor index first.
+  for (const [parentId, cached] of subagentDescCache) {
+    if (!parentId || parentId.toLowerCase() === targetLower) continue;
+    const match = cached?.descriptors?.find(
+      (d) => typeof d?.conversationId === 'string' && d.conversationId.toLowerCase() === targetLower,
+    );
+    if (match) {
+      return { ...match, parentConversationId: parentId };
+    }
+  }
+
+  // Fast pass through already-cached transcripts.
   for (const [, hit] of transcriptCache) {
     const parsed = hit?.parsed;
     if (!parsed || parsed.convId.toLowerCase() === targetLower) continue;
@@ -3138,12 +3204,16 @@ function findSubagentParentHint(convId, appDataDirs, visited = new Set()) {
             parsed,
             parentTimeline.modelByStepIdx,
           ).find((d) => d.conversationId.toLowerCase() === targetLower);
-          if (reMatched) return reMatched;
+          if (reMatched) return { ...reMatched, parentConversationId: parsed.convId };
         }
       }
-      return match;
+      return { ...match, parentConversationId: parsed.convId };
     }
   }
+
+  const isUuid36 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
+    targetLower,
+  );
 
   // Fallback scan on brain transcripts containing the child UUID.
   for (const appData of appDataDirs) {
@@ -3153,17 +3223,40 @@ function findSubagentParentHint(convId, appDataDirs, visited = new Set()) {
         continue;
       }
       const paths = resolveConversationPaths(candidateId, [appData]);
-      if (!paths || !existsSync(paths.transcriptPath)) continue;
+      if (!paths) continue;
+      const tStat = statOf(paths.transcriptPath);
+      if (tStat.size < 0) continue;
+      const tKey = `${tStat.mtimeMs}:${tStat.size}`;
       const cacheId = paths.dbPath || paths.transcriptPath;
-      if (!transcriptCache.has(cacheId)) {
+      const tHit = transcriptCache.get(cacheId);
+      if (tHit && tHit.parsed && tHit.tKey === tKey) {
+        // Already checked in the transcriptCache pass above.
+        continue;
+      }
+
+      const scanHit = transcriptInvokeScanCache.get(paths.transcriptPath);
+      if (scanHit && scanHit.tKey === tKey) {
+        if (!scanHit.hasInvokeSubagent) continue;
+        if (isUuid36 && scanHit.uuidsLower && !scanHit.uuidsLower.has(targetLower)) continue;
+      } else {
         let rawText = '';
         try {
           rawText = readFileSync(paths.transcriptPath, 'utf-8');
         } catch {
           continue;
         }
-        if (!rawText.toLowerCase().includes(targetLower)) continue;
+        const hasInvokeSubagent = rawText.includes('invoke_subagent');
+        const uuidsLower = hasInvokeSubagent
+          ? new Set((rawText.match(UUID_RE) || []).map((u) => u.toLowerCase()))
+          : null;
+        setTranscriptInvokeScanCache(paths.transcriptPath, {
+          tKey,
+          hasInvokeSubagent,
+          uuidsLower,
+        });
+        if (!hasInvokeSubagent || !rawText.toLowerCase().includes(targetLower)) continue;
       }
+
       const parentParsed = parseTranscript(candidateId, paths);
       if (!parentParsed) continue;
       const { modelByStepIdx } = resolveModelTimeline(parentParsed, 'Auto');
@@ -3178,15 +3271,18 @@ function findSubagentParentHint(convId, appDataDirs, visited = new Set()) {
               parentParsed,
               parentTimeline.modelByStepIdx,
             ).find((d) => d.conversationId.toLowerCase() === targetLower);
-            if (reMatched) return reMatched;
+            if (reMatched) return { ...reMatched, parentConversationId: candidateId };
           }
         }
-        return match;
+        return { ...match, parentConversationId: candidateId };
       }
     }
   }
   return null;
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
 
 /**
  * Analyzes a conversation and its subagent/swarm descendants cleanly without cycles.
@@ -3215,6 +3311,22 @@ export function analyzeConversation(convId, options = {}) {
   if (!parsed) return null;
 
   const swarmInfo = findSwarmMembership(convId, appDataDirs);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Read conversation_summaries.db once early to resolve
+// isSwarmWorker and summaryParentId alongside subagent parent discovery.
+// ============================================================================
+  const summaries = readConversationSummariesMap(appDataDirs);
+  const sumMeta = summaries.get(convId);
+  const isSwarmWorker = Boolean(swarmInfo && !swarmInfo.isCoordinator);
+  const summaryParentId =
+    typeof sumMeta?.parentConversationId === 'string' &&
+    isValidConversationId(sumMeta.parentConversationId)
+      ? sumMeta.parentConversationId
+      : '';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
   let defaultModel = normalizeModelId(options.defaultModel || 'Auto');
   let subagentHint = null;
   if (defaultModel === 'Auto' && swarmInfo && !swarmInfo.isCoordinator && swarmInfo.selfMember) {
@@ -3250,6 +3362,14 @@ export function analyzeConversation(convId, options = {}) {
 // accumulation so forked descendants never double-count any LLM API call.
 // ============================================================================
   const mainOnly = emptyBucket();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Accumulate isolated mainOnlyByModelMap alongside mainOnly.
+// ============================================================================
+  const mainOnlyByModelMap = new Map();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
   const withChildren = emptyBucket();
   const byModelMap = new Map();
   const localObservedProfiles = new Set([resolveModelProfile(activeModel, runtimeCatalog).id]);
@@ -3258,7 +3378,14 @@ export function analyzeConversation(convId, options = {}) {
 
   accumulateStepsInto(
     mainOnly,
-    null,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Populate mainOnlyByModelMap from main conversation's own steps.
+// ============================================================================
+    mainOnlyByModelMap,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
     localObservedProfiles,
     parsed,
     modelByStepIdx,
@@ -3376,12 +3503,24 @@ export function analyzeConversation(convId, options = {}) {
   collectDescendants(parsed, modelByStepIdx, 0);
   finalizeBucket(withChildren);
 
-  const byModel = [...byModelMap.values()]
-    .map((entry) => ({
-      ...entry,
-      totalTokens: entry.inputUncachedTokens + entry.cacheReadTokens + entry.outputTokens,
-    }))
-    .sort((a, b) => b.costActual - a.costActual || b.totalTokens - a.totalTokens);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Format both byModel and mainOnlyByModel with identical sorting,
+// detect isChildSession/childKind/parentConversationId across all 3 sources,
+// and expose them on analyzeConversation().
+// ============================================================================
+  const formatByModelList = (modelMap) =>
+    [...modelMap.values()]
+      .map((entry) => ({
+        ...entry,
+        totalTokens: entry.inputUncachedTokens + entry.cacheReadTokens + entry.outputTokens,
+      }))
+      .sort((a, b) => b.costActual - a.costActual || b.totalTokens - a.totalTokens);
+  const byModel = formatByModelList(byModelMap);
+  const mainOnlyByModel = formatByModelList(mainOnlyByModelMap);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 20:29:19
@@ -3419,8 +3558,12 @@ export function analyzeConversation(convId, options = {}) {
       subInfo.monthlyFee > 0 ? (withChildren.costActual / subInfo.monthlyFee) * 100 : null,
   };
 
-  const summaries = readConversationSummariesMap(appDataDirs);
-  const sumMeta = summaries.get(convId);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Reuse early summaries/sumMeta, complete subagent parent discovery
+// across all 3 read-only sources, and expose isChildSession/childKind/
+// parentConversationId and totals.mainOnlyByModel.
+// ============================================================================
   const storeMeta = options.metadataStore?.get?.(convId, { appDataDirs }) || {
     title: '',
     workspace: '',
@@ -3428,9 +3571,17 @@ export function analyzeConversation(convId, options = {}) {
   const metaTitle = storeMeta.title || sumMeta?.title || '';
   const metaWorkspace = storeMeta.workspace || sumMeta?.workspace || '';
 
-  if (!subagentHint && !swarmInfo && !metaTitle && !parsed.firstUserPrompt) {
+  if (!isSwarmWorker && !summaryParentId && !subagentHint) {
+    subagentHint = findSubagentParentHint(convId, appDataDirs);
+  } else if (!subagentHint && !swarmInfo && !metaTitle && !parsed.firstUserPrompt) {
     subagentHint = findSubagentParentHint(convId, appDataDirs);
   }
+
+  const isChildSession = Boolean(isSwarmWorker || summaryParentId || subagentHint);
+  const childKind = isSwarmWorker ? 'swarm' : isChildSession ? 'subagent' : null;
+  const parentConversationId = isSwarmWorker
+    ? swarmInfo.coordinatorId || ''
+    : summaryParentId || subagentHint?.parentConversationId || '';
 
   const title = buildConversationTitle({
     convId,
@@ -3449,6 +3600,9 @@ export function analyzeConversation(convId, options = {}) {
     title,
     workspace: metaWorkspace,
     activeModel,
+    isChildSession,
+    childKind,
+    parentConversationId,
     status: live.status,
     generatingSinceMs: live.generatingSinceMs,
     toolProgress: live.toolProgress,
@@ -3460,11 +3614,15 @@ export function analyzeConversation(convId, options = {}) {
       mainOnly,
       withChildren,
       byModel,
+      mainOnlyByModel,
     },
     children,
-    _etagPart: `${parsed.cacheKey}|${childEtagParts.join(',')}`,
+    _etagPart: `${parsed.cacheKey}|${childEtagParts.join(',')}|${isChildSession ? `${childKind}:${parentConversationId}` : ''}`,
     _activeWatchIds: activeWatchIds,
   };
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
 }
 
 function parseLocalDateParts(dateStr) {

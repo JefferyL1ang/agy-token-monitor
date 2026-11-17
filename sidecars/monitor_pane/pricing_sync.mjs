@@ -123,12 +123,24 @@ function formatModelDisplayName(slug) {
     .join(' ');
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Add normalizeModelGroupName helper and update inferModelGroup
+// from 其他在役模型 to 其他现役模型.
+// ============================================================================
+function normalizeModelGroupName(group) {
+  return group === '其他在役模型' ? '其他现役模型' : group;
+}
+
 function inferModelGroup(slug) {
   const s = String(slug || '').toLowerCase();
   if (s.startsWith('gemini')) return 'Gemini 系列';
   if (s.startsWith('claude')) return 'Claude 系列';
-  return '其他在役模型';
+  return '其他现役模型';
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
 
 function cleanUpstreamSlug(rawId) {
   return String(rawId || '')
@@ -1131,9 +1143,13 @@ function deriveFamilyBaseline(slug) {
       longOutputMultiplier: 1.0,
     };
   }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Update fallback baseline group labels from 其他在役模型 to 其他现役模型.
+// ============================================================================
   if (/gpt[\s-]*oss/i.test(s)) {
     return {
-      group: '其他在役模型',
+      group: '其他现役模型',
       inputPer1M: 0.15,
       cachedPer1M: 0.075,
       outputPer1M: 0.6,
@@ -1143,7 +1159,7 @@ function deriveFamilyBaseline(slug) {
     };
   }
   return {
-    group: '其他在役模型',
+    group: '其他现役模型',
     inputPer1M: 2.0,
     cachedPer1M: 0.2,
     outputPer1M: 10.0,
@@ -1151,6 +1167,9 @@ function deriveFamilyBaseline(slug) {
     longInputMultiplier: 1.0,
     longOutputMultiplier: 1.0,
   };
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
 }
 
 // ============================================================================
@@ -1206,6 +1225,29 @@ function loadPricingCache(cachePath) {
     }
     const rawFx = Number(raw.usdToCnyRate);
     const validFx = Number.isFinite(rawFx) && rawFx >= 1.0 && rawFx <= 50.0 ? Number(rawFx.toFixed(4)) : null;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Normalize cached upstreamPool entry group labels from legacy
+// 其他在役模型 to 其他现役模型 when loading pricing_cache.json.
+// ============================================================================
+    const rawUpstreamPool =
+      raw.upstreamPool && typeof raw.upstreamPool === 'object' && !Array.isArray(raw.upstreamPool)
+        ? raw.upstreamPool
+        : {};
+    const upstreamPool = {};
+    for (const [key, item] of Object.entries(rawUpstreamPool)) {
+      if (item && typeof item === 'object' && !Array.isArray(item)) {
+        upstreamPool[key] =
+          typeof item.group === 'string'
+            ? { ...item, group: normalizeModelGroupName(item.group) }
+            : item;
+      } else {
+        upstreamPool[key] = item;
+      }
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
     return {
       schemaVersion: CACHE_SCHEMA_VERSION,
       lastSyncLocalDate: typeof raw.lastSyncLocalDate === 'string' ? raw.lastSyncLocalDate : '',
@@ -1229,10 +1271,14 @@ function loadPricingCache(cachePath) {
         raw.syncedRates && typeof raw.syncedRates === 'object' && !Array.isArray(raw.syncedRates)
           ? raw.syncedRates
           : {},
-      upstreamPool:
-        raw.upstreamPool && typeof raw.upstreamPool === 'object' && !Array.isArray(raw.upstreamPool)
-          ? raw.upstreamPool
-          : {},
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Persist normalized upstreamPool map from loadPricingCache().
+// ============================================================================
+      upstreamPool,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
       discoveredModels: Array.isArray(raw.discoveredModels) ? raw.discoveredModels : [],
     };
   } catch {
@@ -1313,7 +1359,14 @@ export function createPricingSyncManager({
       const synced = cache.syncedRates?.[p.id];
       const entry = {
         id: p.id,
-        group: p.group,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Normalize base entry group via normalizeModelGroupName().
+// ============================================================================
+        group: normalizeModelGroupName(p.group),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
         label: p.label,
         hint: p.hint,
         inputPer1M:
@@ -1424,7 +1477,14 @@ export function createPricingSyncManager({
       const upstream = cache.upstreamPool?.[lower] || null;
       const baseline = upstream
         ? {
-            group: upstream.group || inferModelGroup(lower),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:27
+// Description: Normalize upstream group via normalizeModelGroupName() in getRuntimeCatalog().
+// ============================================================================
+            group: normalizeModelGroupName(upstream.group || inferModelGroup(lower)),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:27
+// ============================================================================
             inputPer1M: Number(upstream.inputPer1M),
             cachedPer1M: Number(upstream.cachedPer1M),
             outputPer1M: Number(upstream.outputPer1M),

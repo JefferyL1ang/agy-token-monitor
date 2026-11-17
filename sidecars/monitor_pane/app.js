@@ -45,6 +45,16 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:29:41
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Add bounded metric/bar motion memory maps for v0.2.6 slot-roll & smooth bar transitions.
+// ============================================================================
+  const MAX_MOTION_MEMORY = 256;
+  const rollingMetricMemory = new Map();
+  const barMetricMemory = new Map();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
 
   const state = {
     homeConvId: boundConvId,
@@ -121,6 +131,16 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:29:41
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Track inspected child conversation IDs, last rendered conversation ID, and motion suppression flag.
+// ============================================================================
+    lastRenderedConvId: '',
+    suppressMotionOnce: false,
+    inspectedChildIds: new Set(),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
   };
 
   const I18N = {
@@ -170,6 +190,14 @@
       'cost.withChildren': '含子代理',
       'cost.withChildrenCount': '含子代理 ({count})',
       'cost.mainOnly': '仅主对话',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Add isolated subagent/swarm worker cost badge label (zh).
+// ============================================================================
+      'cost.childIsolatedBadge': '子代理独立计费',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
       'cost.steps': '步数 ',
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:35:00
@@ -310,7 +338,14 @@
 // [MODIFIED END] 2026-11-17 11:35:00
 // ============================================================================
       'settings.title': '计价与上下文设置',
-      'settings.subtitle': '按在役模型自动细分计价 · 订阅对比实时重算',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Standardize Chinese terminology to 现役模型 in settings subtitle.
+// ============================================================================
+      'settings.subtitle': '按现役模型自动细分计价 · 订阅对比实时重算',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
       'settings.sec1Title': '上下文与币种',
       'settings.softLimitLabel': '提醒线 (tokens)',
       'settings.hardLimitLabel': '最大窗口 (tokens)',
@@ -351,7 +386,11 @@
       'settings.subCustom': '自定义月费',
       'settings.subCustomLabel': '自定义月费 (USD / 月)',
       'settings.subDetectedHint': '当前自动识别结果: {plan} (${usd}/月)',
-      'settings.sec3Title': '在役模型单价配置 (USD / 1M Tokens)',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Standardize Chinese terminology to 现役模型 in section 3 title and catalog summary.
+// ============================================================================
+      'settings.sec3Title': '现役模型单价配置 (USD / 1M Tokens)',
       'settings.resetModel': '恢复此模型默认',
       'settings.resetAllModels': '全部恢复默认',
       'settings.modelSelectLabel': '选择模型档位 (保存前可连续切换修改多个模型)',
@@ -360,7 +399,10 @@
       'settings.outputPriceLabel': 'Output / 1M ($)',
       'settings.longTierPrefix': '>200k 长上下文阶梯倍乘',
       'settings.longTierHint': '(超过 200k 时输入 ×2、输出 ×1.5)',
-      'settings.catalogSummary': '查看全部在役模型当前生效单价',
+      'settings.catalogSummary': '查看全部现役模型当前生效单价',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
       'settings.catalogModelCol': '模型档位',
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:35:00
@@ -486,6 +528,14 @@
       'cost.withChildren': 'With Subagents',
       'cost.withChildrenCount': 'With Subagents ({count})',
       'cost.mainOnly': 'Main Only',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Add isolated subagent/swarm worker cost badge label (en).
+// ============================================================================
+      'cost.childIsolatedBadge': 'Subagent Only',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
       'cost.steps': 'Steps ',
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:35:00
@@ -796,7 +846,15 @@
   const MODEL_GROUP_EN = {
     'Gemini 系列': 'Gemini Series',
     'Claude 系列': 'Claude Series',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Map 其他现役模型 (and legacy 其他在役模型 alias) in MODEL_GROUP_EN.
+// ============================================================================
+    '其他现役模型': 'Other Active Models',
     '其他在役模型': 'Other Active Models',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
     '默认回退': 'Default Fallback',
   };
 
@@ -925,8 +983,21 @@
               node.dataset[dKey] = String(dVal);
             }
           }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Support CSS custom properties (--*) in el() style objects and add
+// v0.2.6 motion helpers (splitRollingAffixes, renderRollingText, applySmoothBarSize,
+// clearCurrentSessionMotionMemory, shouldAnimateMetrics) plus isChildSessionView().
+// ============================================================================
         } else if (key === 'style' && typeof val === 'object') {
-          Object.assign(node.style, val);
+          for (const [sKey, sVal] of Object.entries(val)) {
+            if (sVal === undefined || sVal === null) continue;
+            if (sKey.startsWith('--')) {
+              node.style.setProperty(sKey, String(sVal));
+            } else {
+              node.style[sKey] = sVal;
+            }
+          }
         } else if (key.startsWith('on') && typeof val === 'function') {
           node.addEventListener(key.slice(2).toLowerCase(), val);
         } else {
@@ -952,6 +1023,200 @@
       parent.appendChild(document.createTextNode(String(child)));
     }
   }
+
+  function setBoundedMotionMemory(map, key, value) {
+    if (map.has(key)) {
+      map.delete(key);
+    } else if (map.size >= MAX_MOTION_MEMORY) {
+      const oldestKey = map.keys().next().value;
+      if (oldestKey !== undefined) map.delete(oldestKey);
+    }
+    map.set(key, value);
+  }
+
+  function clearCurrentSessionMotionMemory() {
+    for (const key of rollingMetricMemory.keys()) {
+      if (key.startsWith('cur:')) rollingMetricMemory.delete(key);
+    }
+    for (const key of barMetricMemory.keys()) {
+      if (key.startsWith('cur:')) barMetricMemory.delete(key);
+    }
+  }
+
+  function shouldAnimateMetrics() {
+    return (
+      !document.hidden &&
+      !state.suppressMotionOnce &&
+      !Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    );
+  }
+
+  function splitRollingAffixes(prevStr, nextStr) {
+    const prevChars = Array.from(String(prevStr ?? ''));
+    const nextChars = Array.from(String(nextStr ?? ''));
+    const minLen = Math.min(prevChars.length, nextChars.length);
+
+    let prefixLen = 0;
+    while (prefixLen < minLen && prevChars[prefixLen] === nextChars[prefixLen]) {
+      prefixLen += 1;
+    }
+
+    if (prefixLen === prevChars.length && prefixLen === nextChars.length) {
+      return {
+        prefix: prevChars.join(''),
+        prevMid: [],
+        nextMid: [],
+        suffix: '',
+      };
+    }
+
+    let suffixLen = 0;
+    while (
+      suffixLen < prevChars.length - prefixLen &&
+      suffixLen < nextChars.length - prefixLen &&
+      prevChars[prevChars.length - 1 - suffixLen] === nextChars[nextChars.length - 1 - suffixLen]
+    ) {
+      suffixLen += 1;
+    }
+
+    return {
+      prefix: prevChars.slice(0, prefixLen).join(''),
+      prevMid: prevChars.slice(prefixLen, prevChars.length - suffixLen),
+      nextMid: nextChars.slice(prefixLen, nextChars.length - suffixLen),
+      suffix: suffixLen > 0 ? nextChars.slice(nextChars.length - suffixLen).join('') : '',
+    };
+  }
+
+  function parseLeadingMetricNumber(str) {
+    const cleaned = String(str || '').replace(/,/g, '');
+    const m = cleaned.match(/[-+]?\d+(?:\.\d+)?/);
+    if (!m) return null;
+    const n = Number(m[0]);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function renderRollingText(metricKey, nextText, rawNumVal = null, props = null) {
+    const str = String(nextText ?? '');
+    const prev = rollingMetricMemory.get(metricKey);
+    const numVal =
+      rawNumVal !== null && rawNumVal !== undefined && Number.isFinite(Number(rawNumVal))
+        ? Number(rawNumVal)
+        : parseLeadingMetricNumber(str);
+    setBoundedMotionMemory(rollingMetricMemory, metricKey, { text: str, numVal });
+
+    const baseProps = {};
+    if (props && typeof props === 'object') {
+      for (const [k, v] of Object.entries(props)) {
+        if (k === 'textContent') continue;
+        baseProps[k] = v;
+      }
+    }
+
+    if (!prev || prev.text === str || !shouldAnimateMetrics()) {
+      return el('span', Object.keys(baseProps).length > 0 ? baseProps : null, str);
+    }
+
+    const isDown =
+      numVal !== null &&
+      prev.numVal !== null &&
+      Number.isFinite(numVal) &&
+      Number.isFinite(prev.numVal) &&
+      numVal < prev.numVal;
+    const dir = isDown ? 'down' : 'up';
+    const { prefix, prevMid, nextMid, suffix } = splitRollingAffixes(prev.text, str);
+
+    const animProps = {};
+    for (const [k, v] of Object.entries(baseProps)) {
+      if (k === 'className') continue;
+      animProps[k] = v;
+    }
+    const existingClass = baseProps.className ? String(baseProps.className).trim() : '';
+    animProps.className = existingClass ? `${existingClass} roll-val is-${dir}` : `roll-val is-${dir}`;
+    animProps['aria-label'] = str;
+
+    const children = [];
+    if (prefix) {
+      children.push(el('span', { className: 'roll-static', 'aria-hidden': 'true' }, prefix));
+    }
+
+    if (prevMid.length === nextMid.length && nextMid.length > 0 && nextMid.length <= 14) {
+      for (let i = 0; i < nextMid.length; i += 1) {
+        if (prevMid[i] === nextMid[i]) {
+          children.push(el('span', { className: 'roll-static', 'aria-hidden': 'true' }, nextMid[i]));
+        } else {
+          children.push(
+            el('span', {
+              className: 'roll-col',
+              'aria-hidden': 'true',
+              style: { '--roll-delay': `${Math.min(i * 14, 70)}ms` },
+            },
+              el('span', { className: 'roll-old' }, prevMid[i]),
+              el('span', { className: 'roll-new' }, nextMid[i]),
+            ),
+          );
+        }
+      }
+    } else {
+      children.push(
+        el('span', { className: 'roll-col is-chunk', 'aria-hidden': 'true' },
+          el('span', { className: 'roll-old' }, prevMid.join('')),
+          el('span', { className: 'roll-new' }, nextMid.join('')),
+        ),
+      );
+    }
+
+    if (suffix) {
+      children.push(el('span', { className: 'roll-static', 'aria-hidden': 'true' }, suffix));
+    }
+
+    const wrapper = el('span', animProps, children);
+    const hadAriaLabel = Object.prototype.hasOwnProperty.call(baseProps, 'aria-label');
+    setTimeout(() => {
+      if (wrapper.isConnected) {
+        wrapper.classList.remove('roll-val', 'is-up', 'is-down');
+        if (!hadAriaLabel) {
+          wrapper.removeAttribute('aria-label');
+        }
+        wrapper.textContent = str;
+      }
+    }, 410);
+    return wrapper;
+  }
+
+  function applySmoothBarSize(node, barKey, cssProp, nextPct) {
+    if (!node) return node;
+    const raw = Number(nextPct);
+    const pct = Number.isFinite(raw) ? Math.min(100, Math.max(0, raw)) : 0;
+    const prevPct = barMetricMemory.get(barKey);
+    setBoundedMotionMemory(barMetricMemory, barKey, pct);
+
+    if (
+      prevPct !== undefined &&
+      Math.abs(pct - prevPct) >= 0.05 &&
+      shouldAnimateMetrics() &&
+      typeof requestAnimationFrame === 'function'
+    ) {
+      node.style[cssProp] = `${prevPct.toFixed(2)}%`;
+      requestAnimationFrame(() => {
+        if (!node.isConnected) return;
+        requestAnimationFrame(() => {
+          if (!node.isConnected) return;
+          node.style[cssProp] = `${pct.toFixed(2)}%`;
+        });
+      });
+    } else {
+      node.style[cssProp] = `${pct.toFixed(2)}%`;
+    }
+    return node;
+  }
+
+  function isChildSessionView(current) {
+    const cid = String(current?.conversationId || '').toLowerCase();
+    return Boolean(current?.isChildSession || (cid && state.inspectedChildIds.has(cid)));
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
 
   function num(val, fallback = 0) {
     const n = Number(val);
@@ -1226,6 +1491,14 @@
   function selectConversation(convId) {
     if (!convId) return;
     if (convId !== selectedConv) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Clear current-session motion memory when switching to another conversation.
+// ============================================================================
+      clearCurrentSessionMotionMemory();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
       state.convEpoch += 1;
       if (state.pollTimer) {
         clearTimeout(state.pollTimer);
@@ -1257,7 +1530,15 @@
   const GROUP_SORT_ORDER = {
     'Gemini 系列': 0,
     'Claude 系列': 1,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Sort 其他现役模型 at group rank 2 (retaining legacy 其他在役模型 alias).
+// ============================================================================
+    '其他现役模型': 2,
     '其他在役模型': 2,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
     '默认回退': 3,
   };
 
@@ -1491,19 +1772,27 @@
   }
 
   function getLocalizedProfileMeta(item) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Normalize legacy 其他在役模型 group label to 其他现役模型 in UI display.
+// ============================================================================
+    const group = item.group === '其他在役模型' ? '其他现役模型' : item.group;
     if (state.lang === 'en') {
       const enMeta = MODEL_PROFILE_EN[item.id];
       return {
-        group: MODEL_GROUP_EN[item.group] || item.group,
+        group: MODEL_GROUP_EN[group] || group,
         label: enMeta?.label || item.label,
         hint: enMeta?.hint || localizeProfileHint(item.hint),
       };
     }
     return {
-      group: item.group,
+      group,
       label: item.label,
       hint: item.hint,
     };
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:35:00
@@ -2743,6 +3032,12 @@
       ? `${fmtInt(outTok)} tok / ${durSec.toFixed(1)}s`
       : '—';
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Wire slot-roll text animations and smooth spark-bar height gliding
+// in renderSpeedCard, and isolate Subagent/Swarm Worker Equivalent Cost view +
+// rolling metrics in renderCostCard.
+// ============================================================================
     const maxRate = recent.reduce((m, s) => Math.max(m, num(s.tokPerSec, 0)), 0);
     const sparkBars = recent.length > 0
       ? recent.map((s, idx) => {
@@ -2750,11 +3045,15 @@
           const pct = maxRate > 0 ? Math.max(10, Math.round((r / maxRate) * 100)) : 12;
           const isLast = idx === recent.length - 1;
           const tip = `#${num(s.stepIndex, idx)}: ${fmtRate(r)} tok/s (${fmtInt(s.outputTokens)} tok / ${num(s.durationSec, 0).toFixed(1)}s)${s.model ? ' · ' + s.model : ''}`;
-          return el('span', {
-            className: `spark-bar${isLast ? ' latest' : ''}`,
-            style: { height: `${pct}%` },
-            title: tip,
-          });
+          return applySmoothBarSize(
+            el('span', {
+              className: `spark-bar${isLast ? ' latest' : ''}`,
+              title: tip,
+            }),
+            `cur:spark:${idx}`,
+            'height',
+            pct,
+          );
         })
       : [el('span', { className: 'empty-inline', textContent: t('speed.empty') })];
 
@@ -2764,19 +3063,53 @@
           el('span', { className: 'card-title-dot' }),
           t('speed.title'),
         ),
-        el('span', {
-          className: 'muted-hint tabular-nums',
-          textContent: t('speed.measuredSteps', { count: fmtInt(speed.measuredStepsCount) }),
-        }),
+        renderRollingText(
+          'cur:speed:steps',
+          t('speed.measuredSteps', { count: fmtInt(speed.measuredStepsCount) }),
+          num(speed.measuredStepsCount, 0),
+          { className: 'muted-hint tabular-nums' },
+        ),
       ),
       el('div', { className: 'hero-value-row tabular-nums' },
-        el('span', { className: 'hero-value', textContent: latestRate }),
+        renderRollingText(
+          'cur:speed:latest',
+          latestRate,
+          Number(speed.latestStepTokPerSec) > 0 ? Number(speed.latestStepTokPerSec) : null,
+          { className: 'hero-value' },
+        ),
         el('span', { className: 'hero-unit', textContent: 'tok/s' }),
       ),
       el('div', { className: 'sub-stats tabular-nums' },
-        el('span', { className: 'sub-stat' }, t('speed.weightedAvg'), el('strong', null, `${avgRate} tok/s`)),
-        el('span', { className: 'sub-stat' }, t('speed.peak'), el('strong', null, `${peakRate} tok/s`)),
-        el('span', { className: 'sub-stat' }, t('speed.latest'), el('strong', null, latestStepDetail)),
+        el('span', { className: 'sub-stat' },
+          t('speed.weightedAvg'),
+          el('strong', null,
+            renderRollingText(
+              'cur:speed:avg',
+              `${avgRate} tok/s`,
+              Number(speed.weightedAvgTokPerSec) > 0 ? Number(speed.weightedAvgTokPerSec) : null,
+            ),
+          ),
+        ),
+        el('span', { className: 'sub-stat' },
+          t('speed.peak'),
+          el('strong', null,
+            renderRollingText(
+              'cur:speed:peak',
+              `${peakRate} tok/s`,
+              Number(speed.peakTokPerSec) > 0 ? Number(speed.peakTokPerSec) : null,
+            ),
+          ),
+        ),
+        el('span', { className: 'sub-stat' },
+          t('speed.latest'),
+          el('strong', null,
+            renderRollingText(
+              'cur:speed:detail',
+              latestStepDetail,
+              outTok > 0 ? outTok : null,
+            ),
+          ),
+        ),
       ),
       el('div', { className: 'sparkline-wrap' },
         el('div', { className: 'sparkline', 'aria-label': t('speed.sparkAria') }, sparkBars),
@@ -2795,49 +3128,48 @@
     const totals = current.totals || {};
     const currency = prefs?.currency || 'USD';
     const hasChildren = Array.isArray(current.children) && current.children.length > 0;
-    const scopeKey = state.costScope === 'mainOnly' ? 'mainOnly' : 'withChildren';
-    const scopeData = totals[scopeKey] || totals.mainOnly || totals.withChildren || {};
+    const isChildView = isChildSessionView(current);
+    const scopeKey = isChildView
+      ? 'mainOnly'
+      : (state.costScope === 'mainOnly' ? 'mainOnly' : 'withChildren');
+    const scopeData = isChildView
+      ? (totals.mainOnly || {})
+      : (totals[scopeKey] || totals.mainOnly || totals.withChildren || {});
 
     const costActual = num(scopeData.costActual, 0);
-// ============================================================================
-// [MODIFIED BEGIN] 2026-11-17 11:35:00
-// Description: Remove monthly subscription share line from Tab 1 Equivalent Cost card
-// and show scoped session Total Tokens alongside Steps respecting tokenUnit.
-// ============================================================================
     const totalTokens = num(
       scopeData.totalTokens,
       num(scopeData.inputUncachedTokens, 0) + num(scopeData.cacheReadTokens, 0) + num(scopeData.outputTokens, 0),
     );
-// ============================================================================
-// [MODIFIED END] 2026-11-17 11:35:00
-// ============================================================================
 
-    const togglePill = el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('cost.scopeAria') },
-      el('button', {
-        type: 'button',
-        className: `seg-btn${scopeKey === 'withChildren' ? ' active' : ''}`,
-        textContent: hasChildren
-          ? t('cost.withChildrenCount', { count: current.children.length })
-          : t('cost.withChildren'),
-        onClick: () => {
-          if (state.costScope !== 'withChildren') {
-            state.costScope = 'withChildren';
-            if (state.snapshot?.current) renderCostCard(state.snapshot.current, state.snapshot.prefs);
-          }
-        },
-      }),
-      el('button', {
-        type: 'button',
-        className: `seg-btn${scopeKey === 'mainOnly' ? ' active' : ''}`,
-        textContent: t('cost.mainOnly'),
-        onClick: () => {
-          if (state.costScope !== 'mainOnly') {
-            state.costScope = 'mainOnly';
-            if (state.snapshot?.current) renderCostCard(state.snapshot.current, state.snapshot.prefs);
-          }
-        },
-      }),
-    );
+    const headRight = isChildView
+      ? el('span', { className: 'child-cost-badge', textContent: t('cost.childIsolatedBadge') })
+      : el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('cost.scopeAria') },
+          el('button', {
+            type: 'button',
+            className: `seg-btn${scopeKey === 'withChildren' ? ' active' : ''}`,
+            textContent: hasChildren
+              ? t('cost.withChildrenCount', { count: current.children.length })
+              : t('cost.withChildren'),
+            onClick: () => {
+              if (state.costScope !== 'withChildren') {
+                state.costScope = 'withChildren';
+                if (state.snapshot?.current) renderCostCard(state.snapshot.current, state.snapshot.prefs);
+              }
+            },
+          }),
+          el('button', {
+            type: 'button',
+            className: `seg-btn${scopeKey === 'mainOnly' ? ' active' : ''}`,
+            textContent: t('cost.mainOnly'),
+            onClick: () => {
+              if (state.costScope !== 'mainOnly') {
+                state.costScope = 'mainOnly';
+                if (state.snapshot?.current) renderCostCard(state.snapshot.current, state.snapshot.prefs);
+              }
+            },
+          }),
+        );
 
     card.replaceChildren(
       el('div', { className: 'card-head' },
@@ -2845,42 +3177,53 @@
           el('span', { className: 'card-title-dot' }),
           t('cost.title'),
         ),
-        togglePill,
+        headRight,
       ),
       el('div', { className: 'hero-value-row tabular-nums' },
-        el('span', { className: 'hero-value', textContent: fmtCost(costActual, currency) }),
+        renderRollingText('cur:cost:hero', fmtCost(costActual, currency), costActual, { className: 'hero-value' }),
       ),
-// ============================================================================
-// [MODIFIED BEGIN] 2026-11-17 11:35:00
-// Description: Display session Total Tokens next to Steps and remove subAnchorNode.
-// ============================================================================
       el('div', { className: 'sub-stats tabular-nums' },
-        el('span', { className: 'sub-stat' }, t('cost.steps'), el('strong', null, fmtInt(scopeData.stepsCount))),
-        el('span', { className: 'sub-stat', title: fmtInt(totalTokens) }, t('cost.totalTokens'), el('strong', null, fmtTokens(totalTokens))),
+        el('span', { className: 'sub-stat' },
+          t('cost.steps'),
+          el('strong', null, renderRollingText('cur:cost:steps', fmtInt(scopeData.stepsCount), num(scopeData.stepsCount, 0))),
+        ),
+        el('span', { className: 'sub-stat', title: fmtInt(totalTokens) },
+          t('cost.totalTokens'),
+          el('strong', null, renderRollingText('cur:cost:totalTok', fmtTokens(totalTokens), totalTokens)),
+        ),
       ),
-// ============================================================================
-// [MODIFIED END] 2026-11-17 11:35:00
-// ============================================================================
       el('div', { className: 'mini-chips tabular-nums' },
         el('div', { className: 'mini-chip' },
           el('span', { className: 'mini-chip-label', textContent: t('cost.chipHitRate') }),
-          el('span', { className: 'mini-chip-val', textContent: fmtPct(scopeData.cacheHitRatePct) }),
+          renderRollingText('cur:cost:hitRate', fmtPct(scopeData.cacheHitRatePct), num(scopeData.cacheHitRatePct, 0), { className: 'mini-chip-val' }),
         ),
         el('div', { className: 'mini-chip' },
           el('span', { className: 'mini-chip-label', textContent: t('cost.chipOutput') }),
-          el('span', { className: 'mini-chip-val', title: fmtInt(scopeData.outputTokens), textContent: fmtTokens(scopeData.outputTokens) }),
+          renderRollingText('cur:cost:out', fmtTokens(scopeData.outputTokens), num(scopeData.outputTokens, 0), {
+            className: 'mini-chip-val',
+            title: fmtInt(scopeData.outputTokens),
+          }),
         ),
         el('div', { className: 'mini-chip' },
           el('span', { className: 'mini-chip-label', textContent: t('cost.chipCacheRead') }),
-          el('span', { className: 'mini-chip-val', title: fmtInt(scopeData.cacheReadTokens), textContent: fmtTokens(scopeData.cacheReadTokens) }),
+          renderRollingText('cur:cost:cache', fmtTokens(scopeData.cacheReadTokens), num(scopeData.cacheReadTokens, 0), {
+            className: 'mini-chip-val',
+            title: fmtInt(scopeData.cacheReadTokens),
+          }),
         ),
         el('div', { className: 'mini-chip' },
           el('span', { className: 'mini-chip-label', textContent: t('cost.chipUncached') }),
-          el('span', { className: 'mini-chip-val', title: fmtInt(scopeData.inputUncachedTokens), textContent: fmtTokens(scopeData.inputUncachedTokens) }),
+          renderRollingText('cur:cost:uncached', fmtTokens(scopeData.inputUncachedTokens), num(scopeData.inputUncachedTokens, 0), {
+            className: 'mini-chip-val',
+            title: fmtInt(scopeData.inputUncachedTokens),
+          }),
         ),
       ),
     );
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
 
   function renderContextCard(current) {
     const card = $('card-context');
@@ -2941,6 +3284,24 @@
       },
     });
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Wire slot-roll text animations and smooth bar width gliding in renderContextCard.
+// ============================================================================
+    let overflowSegNode = null;
+    if (overflowPct > 0) {
+      overflowSegNode = applySmoothBarSize(
+        el('div', {
+          className: `ctx-seg-overflow ${level === 'CRITICAL' ? 'is-critical' : 'is-warning'}`,
+        }),
+        'cur:ctx:barOverflow',
+        'width',
+        overflowPct,
+      );
+    } else {
+      setBoundedMotionMemory(barMetricMemory, 'cur:ctx:barOverflow', 0);
+    }
+
     card.replaceChildren(
       el('div', { className: 'card-head' },
         el('div', { className: 'card-title' },
@@ -2948,26 +3309,27 @@
           t('context.title'),
         ),
         el('div', { className: 'ctx-head-right' },
-          el('span', {
-            className: 'ctx-summary-num tabular-nums',
-            title: `${fmtInt(currentTotal)} / ${fmtInt(hardLimit)} tokens`,
-            textContent: `${fmtTokens(currentTotal)} / ${fmtTokens(hardLimit)} (${hardPct.toFixed(1)}%)`,
-          }),
+          renderRollingText(
+            'cur:ctx:summary',
+            `${fmtTokens(currentTotal)} / ${fmtTokens(hardLimit)} (${hardPct.toFixed(1)}%)`,
+            currentTotal,
+            {
+              className: 'ctx-summary-num tabular-nums',
+              title: `${fmtInt(currentTotal)} / ${fmtInt(hardLimit)} tokens`,
+            },
+          ),
           compactBtn,
         ),
       ),
       el('div', { className: 'ctx-bar-wrap' },
         el('div', { className: 'ctx-bar-track', role: 'progressbar', 'aria-valuenow': Math.round(hardPct), 'aria-valuemin': 0, 'aria-valuemax': 100 },
-          el('div', {
-            className: 'ctx-seg-healthy',
-            style: { width: `${healthyPct.toFixed(2)}%` },
-          }),
-          overflowPct > 0
-            ? el('div', {
-                className: `ctx-seg-overflow ${level === 'CRITICAL' ? 'is-critical' : 'is-warning'}`,
-                style: { width: `${overflowPct.toFixed(2)}%` },
-              })
-            : null,
+          applySmoothBarSize(
+            el('div', { className: 'ctx-seg-healthy' }),
+            'cur:ctx:barHealthy',
+            'width',
+            healthyPct,
+          ),
+          overflowSegNode,
         ),
         el('div', {
           className: 'ctx-soft-tick',
@@ -2976,9 +3338,12 @@
         }),
       ),
       el('div', { className: 'ctx-scale-row tabular-nums' },
-        el('span', { textContent: t('context.currentTok', { tokens: fmtInt(currentTotal) }) }),
+        renderRollingText('cur:ctx:currentTok', t('context.currentTok', { tokens: fmtInt(currentTotal) }), currentTotal),
         el('span', { textContent: t('context.limitsRow', { soft: fmtTokens(softLimit), hard: fmtTokens(hardLimit) }) }),
       ),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 16:08:00
 // Description: Render post-compaction banner inside .level-banner when ctx.compactedPendingTurn is true.
@@ -3057,37 +3422,52 @@
         : el('div', { className: 'empty-inline', textContent: t('cache.spikesEmpty') }),
     );
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Wire slot-roll text animations and smooth hit/miss bar gliding in renderCacheCard.
+// ============================================================================
     card.replaceChildren(
       el('div', { className: 'card-head' },
         el('div', { className: 'card-title' },
           el('span', { className: 'card-title-dot' }),
           t('cache.title'),
         ),
-        el('span', {
+        renderRollingText('cur:cache:headRate', t('cache.hitRate', { pct: hitPct.toFixed(1) }), hitPct, {
           className: 'muted-hint tabular-nums',
-          textContent: t('cache.hitRate', { pct: hitPct.toFixed(1) }),
         }),
       ),
       el('div', { className: 'cache-seg-track', title: `Cache Read ${fmtInt(cacheRead)} / Uncached ${fmtInt(uncached)}` },
-        el('div', { className: 'cache-seg-hit', style: { width: `${hitBarPct.toFixed(2)}%` } }),
-        el('div', { className: 'cache-seg-miss', style: { width: `${missBarPct.toFixed(2)}%` } }),
+        applySmoothBarSize(el('div', { className: 'cache-seg-hit' }), 'cur:cache:barHit', 'width', hitBarPct),
+        applySmoothBarSize(el('div', { className: 'cache-seg-miss' }), 'cur:cache:barMiss', 'width', missBarPct),
       ),
       el('div', { className: 'cache-metrics-row tabular-nums' },
         el('div', { className: 'mini-chip' },
           el('span', { className: 'mini-chip-label', textContent: t('cache.chipHit') }),
-          el('span', { className: 'mini-chip-val', title: fmtInt(cacheRead), textContent: `${fmtTokens(cacheRead)} (${hitPct.toFixed(1)}%)` }),
+          renderRollingText('cur:cache:chipHit', `${fmtTokens(cacheRead)} (${hitPct.toFixed(1)}%)`, cacheRead, {
+            className: 'mini-chip-val',
+            title: fmtInt(cacheRead),
+          }),
         ),
         el('div', { className: 'mini-chip' },
           el('span', { className: 'mini-chip-label', textContent: t('cache.chipUncached') }),
-          el('span', { className: 'mini-chip-val', title: fmtInt(uncached), textContent: fmtTokens(uncached) }),
+          renderRollingText('cur:cache:chipUncached', fmtTokens(uncached), uncached, {
+            className: 'mini-chip-val',
+            title: fmtInt(uncached),
+          }),
         ),
         el('div', { className: 'mini-chip' },
           el('span', { className: 'mini-chip-label', textContent: t('cache.chipNetDelta') }),
-          el('span', { className: 'mini-chip-val', title: fmtInt(netDelta), textContent: fmtDeltaTokens(netDelta) }),
+          renderRollingText('cur:cache:chipDelta', fmtDeltaTokens(netDelta), netDelta, {
+            className: 'mini-chip-val',
+            title: fmtInt(netDelta),
+          }),
         ),
       ),
       spikesSection,
     );
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
   }
 
 // ============================================================================
@@ -3198,7 +3578,18 @@
     const card = $('card-children-models');
     const currency = prefs?.currency || 'USD';
     const children = Array.isArray(current.children) ? current.children : [];
-    const byModel = Array.isArray(current.totals?.byModel) ? current.totals.byModel : [];
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Prefer isolated totals.mainOnlyByModel when inspecting a child session with no children.
+// ============================================================================
+    const isChildView = isChildSessionView(current);
+    const byModel =
+      isChildView && children.length === 0 && Array.isArray(current.totals?.mainOnlyByModel)
+        ? current.totals.mainOnlyByModel
+        : (Array.isArray(current.totals?.byModel) ? current.totals.byModel : []);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
 
     const nodes = [
       el('div', { className: 'card-head' },
@@ -3261,7 +3652,18 @@
                       type: 'button',
                       className: 'mini-btn accent',
                       textContent: t('childrenModels.inspectBtn'),
-                      onClick: () => selectConversation(ch.conversationId),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Record inspected child conversation ID in state.inspectedChildIds before switching view.
+// ============================================================================
+                      onClick: () => {
+                        const cid = String(ch.conversationId || '').toLowerCase();
+                        if (cid) state.inspectedChildIds.add(cid);
+                        selectConversation(ch.conversationId);
+                      },
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
                     }),
                     el('button', {
                       type: 'button',
@@ -3372,6 +3774,18 @@
     const emptyEl = $('current-empty');
     const contentEl = $('current-content');
     const current = snap?.current || null;
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Clear current-session motion memory whenever rendered conversation ID changes.
+// ============================================================================
+    if (current?.conversationId && current.conversationId !== state.lastRenderedConvId) {
+      clearCurrentSessionMotionMemory();
+      state.lastRenderedConvId = current.conversationId;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
 
     if (!current) {
       emptyEl.classList.remove('hidden');
@@ -3611,11 +4025,20 @@
       let barClass = 'roi-fill';
       let captionText = '';
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Wire slot-roll animations and smooth ROI/KPI/trend bar transitions in renderGlobalTab.
+// ============================================================================
       if (sub.monthlyFee <= 0) {
         barPct = 100;
         barClass = 'roi-fill is-paid';
+        rollingMetricMemory.delete('glb:roi:sub');
         heroNode = el('div', { className: 'roi-hero is-paid tabular-nums' },
-          t('roi.freeHero', { cost: fmtCostCompact(sub.tokenCost, currency) }),
+          renderRollingText(
+            'glb:roi:hero',
+            t('roi.freeHero', { cost: fmtCostCompact(sub.tokenCost, currency) }),
+            num(sub.tokenCost, 0),
+          ),
         );
         captionText = t('roi.freeCaption', {
           period: periodTitle,
@@ -3628,9 +4051,17 @@
         const multText = Number.isFinite(sub.roiMultiplier)
           ? t('roi.multBadge', { mult: sub.roiMultiplier.toFixed(2) })
           : '';
+        if (!multText) rollingMetricMemory.delete('glb:roi:sub');
         heroNode = el('div', { className: 'roi-hero-row tabular-nums' },
-          el('span', { className: 'roi-hero is-paid', textContent: t('roi.netSaved', { cost: fmtCostCompact(sub.netSavings, currency) }) }),
-          multText ? el('span', { className: 'roi-mult-badge', textContent: multText }) : null,
+          renderRollingText(
+            'glb:roi:hero',
+            t('roi.netSaved', { cost: fmtCostCompact(sub.netSavings, currency) }),
+            num(sub.netSavings, 0),
+            { className: 'roi-hero is-paid' },
+          ),
+          multText
+            ? renderRollingText('glb:roi:sub', multText, Number(sub.roiMultiplier), { className: 'roi-mult-badge' })
+            : null,
         );
         captionText = t('roi.paidCaption', {
           period: periodTitle,
@@ -3641,8 +4072,18 @@
       } else {
         barPct = Math.min(100, Math.max(0, num(sub.paybackPct, 0)));
         heroNode = el('div', { className: 'roi-hero-row tabular-nums' },
-          el('span', { className: 'roi-hero', textContent: t('roi.paybackPct', { pct: barPct.toFixed(1) }) }),
-          el('span', { className: 'muted-hint', textContent: t('roi.toBreakEven', { cost: fmtCostCompact(-sub.netSavings, currency) }) }),
+          renderRollingText(
+            'glb:roi:hero',
+            t('roi.paybackPct', { pct: barPct.toFixed(1) }),
+            barPct,
+            { className: 'roi-hero' },
+          ),
+          renderRollingText(
+            'glb:roi:sub',
+            t('roi.toBreakEven', { cost: fmtCostCompact(-sub.netSavings, currency) }),
+            -num(sub.netSavings, 0),
+            { className: 'muted-hint' },
+          ),
         );
         captionText = t('roi.paidCaption', {
           period: periodTitle,
@@ -3678,7 +4119,7 @@
         ),
         heroNode,
         el('div', { className: 'roi-track' },
-          el('div', { className: barClass, style: { width: `${barPct.toFixed(1)}%` } }),
+          applySmoothBarSize(el('div', { className: barClass }), 'glb:roi:bar', 'width', barPct),
         ),
         el('div', { className: 'roi-caption tabular-nums', textContent: captionText }),
       );
@@ -3730,47 +4171,74 @@
           t('global.summaryTitle', { period: periodTitle }),
         ),
         el('div', { className: 'summary-head-right' },
-          el('span', { className: 'muted-hint tabular-nums', textContent: t('global.stepsCount', { count: fmtInt(period.stepsCount) }) }),
+          renderRollingText(
+            'glb:sum:steps',
+            t('global.stepsCount', { count: fmtInt(period.stepsCount) }),
+            num(period.stepsCount, 0),
+            { className: 'muted-hint tabular-nums' },
+          ),
           unitToggle,
         ),
       ),
       el('div', { className: 'kpi-strip tabular-nums' },
         el('div', { className: 'kpi-tile' },
           el('span', { className: 'kpi-label', textContent: t('global.kpiSessions') }),
-          el('span', { className: 'kpi-val', textContent: fmtInt(period.conversationsCount) }),
+          renderRollingText('glb:kpi:sessions', fmtInt(period.conversationsCount), num(period.conversationsCount, 0), {
+            className: 'kpi-val',
+          }),
           el('span', { className: 'muted-hint', textContent: convSubHint }),
         ),
         el('div', { className: 'kpi-tile' },
           el('span', { className: 'kpi-label', textContent: t('global.kpiTotalTokens') }),
-          el('span', { className: 'kpi-val', title: fmtInt(period.totalTokens), textContent: fmtTokens(period.totalTokens) }),
-          el('span', {
-            className: 'muted-hint',
-            title: `${fmtInt(period.avgDailyTokens)} / ${fmtInt(period.outputTokens)}`,
-            textContent: t('global.avgOutSub', {
+          renderRollingText('glb:kpi:tokens', fmtTokens(period.totalTokens), num(period.totalTokens, 0), {
+            className: 'kpi-val',
+            title: fmtInt(period.totalTokens),
+          }),
+          renderRollingText(
+            'glb:kpi:tokensSub',
+            t('global.avgOutSub', {
               avg: fmtTokens(period.avgDailyTokens),
               out: fmtTokens(period.outputTokens),
             }),
-          }),
+            num(period.avgDailyTokens, 0),
+            {
+              className: 'muted-hint',
+              title: `${fmtInt(period.avgDailyTokens)} / ${fmtInt(period.outputTokens)}`,
+            },
+          ),
         ),
         el('div', { className: 'kpi-tile' },
           el('span', { className: 'kpi-label', textContent: t('global.kpiCacheHit') }),
-          el('span', { className: 'kpi-val', textContent: fmtPct(period.cacheHitRatePct) }),
-          el('span', {
-            className: 'muted-hint',
-            title: fmtInt(period.inputTokens),
-            textContent: t('global.uncachedSub', { input: fmtTokens(period.inputTokens) }),
+          renderRollingText('glb:kpi:cacheHit', fmtPct(period.cacheHitRatePct), num(period.cacheHitRatePct, 0), {
+            className: 'kpi-val',
           }),
+          renderRollingText(
+            'glb:kpi:cacheSub',
+            t('global.uncachedSub', { input: fmtTokens(period.inputTokens) }),
+            num(period.inputTokens, 0),
+            {
+              className: 'muted-hint',
+              title: fmtInt(period.inputTokens),
+            },
+          ),
         ),
         el('div', { className: 'kpi-tile' },
           el('span', { className: 'kpi-label', textContent: t('global.kpiEstCost') }),
-          el('span', { className: 'kpi-val', textContent: fmtCostCompact(period.costActual, currency) }),
-          el('span', {
-            className: 'muted-hint',
-            textContent: t('global.avgDailyCost', { cost: fmtCostCompact(period.avgDailyCost, currency) }),
+          renderRollingText('glb:kpi:cost', fmtCostCompact(period.costActual, currency), num(period.costActual, 0), {
+            className: 'kpi-val',
           }),
+          renderRollingText(
+            'glb:kpi:costSub',
+            t('global.avgDailyCost', { cost: fmtCostCompact(period.avgDailyCost, currency) }),
+            num(period.avgDailyCost, 0),
+            { className: 'muted-hint' },
+          ),
         ),
       ),
     );
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
 
     // 4. Adaptive Horizontally Scrollable & Mouse-Draggable Trend Bar Chart Card
     const series = Array.isArray(period.series) ? period.series : [];
@@ -3885,9 +4353,21 @@
                 });
               },
             },
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Apply smooth bar height gliding to Tab 2 trend bars via applySmoothBarSize.
+// ============================================================================
               el('div', { className: 'trend-bar-track' },
-                el('div', { className: 'trend-bar-fill', style: { height: `${hPct}%` } }),
+                applySmoothBarSize(
+                  el('div', { className: 'trend-bar-fill' }),
+                  `glb:trend:${periodKey}:${bucket.key || bucket.label || idx}`,
+                  'height',
+                  hPct,
+                ),
               ),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
               el('span', { className: 'trend-col-label tabular-nums', textContent: bucket.label }),
             );
             return barBtn;
@@ -4441,9 +4921,21 @@
         $('error-banner').textContent = t('common.fetchErrorPrefix', { msg: state.lastError });
       }
       if (state.snapshot) {
-        renderHeader(state.snapshot);
-        renderCurrentTab(state.snapshot);
-        renderGlobalTab(state.snapshot);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Suppress slot-roll/bar animation during language toggle while updating stored memory.
+// ============================================================================
+        state.suppressMotionOnce = true;
+        try {
+          renderHeader(state.snapshot);
+          renderCurrentTab(state.snapshot);
+          renderGlobalTab(state.snapshot);
+        } finally {
+          state.suppressMotionOnce = false;
+        }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
       }
       if (state.drawerOpen) {
         renderModelSelectOptions();
@@ -4484,6 +4976,16 @@
 
     $('btn-back-bound').addEventListener('click', () => {
       if (state.homeConvId) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:28:45
+// Description: Clear current-session motion memory when returning to home conversation.
+// ============================================================================
+        if (state.homeConvId !== selectedConv) {
+          clearCurrentSessionMotionMemory();
+        }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
         selectConversation(state.homeConvId);
       }
     });

@@ -13,7 +13,7 @@ description: >-
   the Token Monitor panel.
 ---
 
-# Token Monitor (v0.2.5 Beta)
+# Token Monitor (v0.2.6 Beta)
 
 The `agy-token-monitor` plugin provides a real-time, pure read-only Auxiliary Pane (`Token Monitor`) backed by the `monitor_pane` sidecar.
 
@@ -21,10 +21,10 @@ The `agy-token-monitor` plugin provides a real-time, pure read-only Auxiliary Pa
 
 - **Live Speed & Status (`tok/s`)**: Current generation state (`GENERATING` 100ms stopwatch, `RUNNING_TOOLS` progress, or `IDLE`), active model timeline, latest `tok/s`, weighted average, peak speed, and recent 20-step sparkline — computed using SQLite `completedAtMs` timestamps (avoiding streaming timestamp spikes) and scoped to the active model.
 - **Context Usage Monitor (`400k / 500k`) & One-Click `/compact`**: Active conversation context (`input_tokens + cache_read_tokens`) compared against configurable defaults: **`400k` (80% `WARNING`) alert threshold** and **`500k` max window** (`460k` / 92% `CRITICAL`). Includes a one-click **`/compact`** helper button in the context header that copies `/compact` to the clipboard (and focuses a non-bound session chat if inspected) so the user can compress context immediately.
-- **Bilingual UI (`EN / 中`) & Selectable Token Units**: Header `EN / 中` toggle next to Settings switches the full interface immediately between English and Simplified Chinese; 4 selectable token display units (`K/M/B` auto-scale, `万/亿`, exact integer `1,234,567`, and fixed `M`) are available in both the Analytics header and Settings drawer.
+- **Bilingual UI (`EN / 中`) & Selectable Token Units**: Header `EN / 中` toggle next to Settings switches the full interface immediately between English and Simplified Chinese; 4 selectable token display units (`K/M/B` auto-scale, `万/亿`, exact integer `1,234,567`, and fixed `M`) are available in both the Analytics header and Settings drawer, with smooth per-digit slot-roll transitions on live metric updates (respecting `prefers-reduced-motion`).
 - **Session Total Tokens, Equivalent Cost & Sortable Breakdowns**: Tab 1's Equivalent Cost card displays session `Total Tokens` (`总 Token 消耗`, computed from uncached input + cache read + output tokens, scoped dynamically to `With Subagents` / `Main Only` and formatted with the selected `tokenUnit`) alongside step count, and Tab 2 conversation rows also display per-session `Total` tokens. All model breakdown tables support clickable `Total` and `Cost` ascending/descending column sorting.
 - **Prompt Cache & Spike Diagnostics**: Latest cache hit rate (`%`), uncached input, net token delta, and top 5 positive context jumps (`topSpikes`) with triggering tool summaries.
-- **Subagent & Swarm Aggregation**: Aggregates token usage and cost across child subagents and swarm workers (`With Subagents` vs `Main Only`) while keeping the main conversation's context size strictly isolated.
+- **Subagent & Swarm Aggregation**: Aggregates token usage and cost across child subagents and swarm workers (`With Subagents` vs `Main Only`) on main conversations while keeping context size isolated; when inspecting an individual subagent or swarm worker directly, Equivalent Cost automatically isolates to that worker's own steps (`Subagent Only`) with no sibling or parent leakage.
 - **Daily Official Pricing Sync, Per-Model Rates & Subscription ROI**:
   - Automatically syncs official model lists & Paid Tier pricing once per day on open via dual channels (`ai.google.dev/gemini-api/docs/pricing` + `models.dev/api.json` with `litellm` fallback and effective-date awareness) into `pricing_cache.json` inside `sidecar_data`, auto-discovers newly released flagship Gemini chat models and locally observed slugs, keeps user-customized `*` overrides highest priority, offers a **`↻ Sync Now` / `↻ 立即同步`** button, and falls back gracefully offline (`4.5s` timeout).
   - Separates `Gemini 3.1 Pro` (`$2.00` / `$0.20` / `$12.00` per 1M tokens, `>200k` `×2` / `×1.5`) into its own model tier alongside Gemini 4 `Carbon`/`Argon`/`Hydrogen`, `Gemini 3.8 Flash`, `Claude Opus 5.5`/`4.6`, `Claude Sonnet 5.5`, `GPT-OSS 120B`, and `Auto`, with an interactive clickable effective rates table for direct rate editing.

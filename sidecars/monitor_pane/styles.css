@@ -800,13 +800,17 @@ Description: Style read-only auto-synced FX rate input cleanly.
   border: 1px solid var(--tm-border);
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 21:28:45
+Description: Upgrade sparkline bar height transition to 320ms cubic-bezier easing for smooth gliding and add .child-cost-badge style for isolated subagent/worker views.
+============================================================================ */
 .spark-bar {
   flex: 1 1 0;
   min-width: 4px;
   max-width: 16px;
   border-radius: 2px 2px 1px 1px;
   background: color-mix(in srgb, var(--tm-cyan) 55%, transparent);
-  transition: height 0.2s ease, background-color 0.2s ease;
+  transition: height 320ms cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease;
 }
 
 .spark-bar.latest {
@@ -849,6 +853,22 @@ Description: Style read-only auto-synced FX rate input cleanly.
   color: var(--tm-fg);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
+
+.child-cost-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--tm-subtle);
+  border: 1px solid var(--tm-border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tm-muted-fg);
+  white-space: nowrap;
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-17 21:28:45
+============================================================================ */
 
 .saved-badge {
   display: inline-flex;
@@ -1005,16 +1025,23 @@ states, compact header actions (.ctx-head-right, .summary-head-right, .unit-togg
   display: flex;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 21:28:45
+Description: Upgrade context usage bar transitions to 320ms cubic-bezier easing.
+============================================================================ */
 .ctx-seg-healthy {
   height: 100%;
   background: linear-gradient(90deg, var(--tm-emerald), var(--tm-cyan));
-  transition: width 0.25s ease;
+  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .ctx-seg-overflow {
   height: 100%;
-  transition: width 0.25s ease, background-color 0.25s ease;
+  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1), background-color 0.25s ease;
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-17 21:28:45
+============================================================================ */
 
 .ctx-seg-overflow.is-warning {
   background: var(--tm-amber);
@@ -1084,17 +1111,24 @@ states, compact header actions (.ctx-head-right, .summary-head-right, .unit-togg
   margin-bottom: 8px;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 21:28:45
+Description: Upgrade cache hit/miss segment transitions to 320ms cubic-bezier easing.
+============================================================================ */
 .cache-seg-hit {
   height: 100%;
   background: var(--tm-emerald);
-  transition: width 0.25s ease;
+  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .cache-seg-miss {
   height: 100%;
   background: var(--tm-amber);
-  transition: width 0.25s ease;
+  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-17 21:28:45
+============================================================================ */
 
 .cache-metrics-row {
   display: grid;
@@ -1917,12 +1951,19 @@ Description: Add styles for official pricing sync status bar (.pricing-sync-bar,
   margin-bottom: 7px;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 21:28:45
+Description: Upgrade ROI progress bar width transition to 320ms cubic-bezier easing.
+============================================================================ */
 .roi-fill {
   height: 100%;
   border-radius: var(--r-pill);
   background: linear-gradient(90deg, var(--tm-cyan), var(--tm-amber));
-  transition: width 0.25s ease;
+  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-17 21:28:45
+============================================================================ */
 
 .roi-fill.is-paid {
   background: linear-gradient(90deg, var(--tm-cyan), var(--tm-emerald));
@@ -2051,14 +2092,21 @@ and 72px .trend-bar-track with aligned 0%/50%/100% subtle reference lines.
   border-top: 1px dashed color-mix(in srgb, var(--tm-border) 64%, transparent);
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 21:28:45
+Description: Upgrade trend bar height transition to 320ms cubic-bezier easing.
+============================================================================ */
 .trend-bar-fill {
   position: relative;
   z-index: 1;
   width: 100%;
   border-radius: 3px 3px 1px 1px;
   background: color-mix(in srgb, var(--tm-cyan) 62%, transparent);
-  transition: height 0.2s ease, background-color 0.15s ease;
+  transition: height 320ms cubic-bezier(0.22, 1, 0.36, 1), background-color 0.15s ease;
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-17 21:28:45
+============================================================================ */
 
 .trend-col.is-zero .trend-bar-fill {
   background: color-mix(in srgb, var(--tm-fg) 10%, transparent);
@@ -2457,6 +2505,149 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 18:55:45
+============================================================================ */
+
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 21:28:45
+Description: Add v0.2.6 per-digit slot-roll ticker styles with edge fade and reduced-motion support.
+============================================================================ */
+.roll-val {
+  display: inline;
+  line-height: inherit;
+}
+
+.roll-static {
+  display: inline;
+  color: inherit;
+  line-height: inherit;
+}
+
+.roll-col {
+  position: relative;
+  display: inline-block;
+  vertical-align: baseline;
+  overflow: hidden;
+  overflow: clip;
+  line-height: inherit;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
+}
+
+.roll-old,
+.roll-new {
+  display: block;
+  color: inherit;
+  line-height: inherit;
+  will-change: transform, opacity;
+}
+
+.roll-old {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.roll-new:empty::before {
+  content: '\200b';
+}
+
+.roll-col.is-chunk .roll-old {
+  position: absolute;
+  left: auto;
+  right: 0;
+  top: 0;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.roll-col.is-chunk .roll-new {
+  white-space: nowrap;
+}
+
+.roll-val.is-up .roll-old {
+  animation: tm-roll-out-up 320ms cubic-bezier(0.22, 1, 0.36, 1) var(--roll-delay, 0ms) both;
+}
+
+.roll-val.is-up .roll-new {
+  animation: tm-roll-in-up 320ms cubic-bezier(0.22, 1, 0.36, 1) var(--roll-delay, 0ms) both;
+}
+
+.roll-val.is-down .roll-old {
+  animation: tm-roll-out-down 320ms cubic-bezier(0.22, 1, 0.36, 1) var(--roll-delay, 0ms) both;
+}
+
+.roll-val.is-down .roll-new {
+  animation: tm-roll-in-down 320ms cubic-bezier(0.22, 1, 0.36, 1) var(--roll-delay, 0ms) both;
+}
+
+@keyframes tm-roll-out-up {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-105%);
+    opacity: 0;
+  }
+}
+
+@keyframes tm-roll-in-up {
+  0% {
+    transform: translateY(105%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes tm-roll-out-down {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(105%);
+    opacity: 0;
+  }
+}
+
+@keyframes tm-roll-in-down {
+  0% {
+    transform: translateY(-105%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roll-old,
+  .roll-new {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .roll-old {
+    display: none;
+  }
+
+  .ctx-seg-healthy,
+  .ctx-seg-overflow,
+  .cache-seg-hit,
+  .cache-seg-miss,
+  .roi-fill,
+  .spark-bar,
+  .trend-bar-fill {
+    transition: none !important;
+  }
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-17 21:28:45
 ============================================================================ */
 
 /* ============================================================================

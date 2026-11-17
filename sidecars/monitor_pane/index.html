@@ -119,7 +119,14 @@ Description: Remove unused conversation count badge inside Usage Statistics tab 
       <div class="drawer-inner">
         <div class="drawer-header">
           <span class="drawer-title" data-i18n="settings.title">计价与上下文设置</span>
-          <span class="drawer-subtitle" data-i18n="settings.subtitle">按在役模型自动细分计价 · 订阅对比实时重算</span>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-17 21:28:45
+Description: Standardize Chinese terminology to 现役模型 in settings subtitle.
+============================================================================ -->
+          <span class="drawer-subtitle" data-i18n="settings.subtitle">按现役模型自动细分计价 · 订阅对比实时重算</span>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-17 21:28:45
+============================================================================ -->
         </div>
 
         <form id="settings-form" class="settings-form" novalidate>
@@ -207,7 +214,14 @@ Description: Add Jio AI Pro ($0 / mo carrier plan) option to #pref-sub-plan.
           <!-- Section 3: Active Per-Model Pricing -->
           <div class="drawer-section">
             <div class="drawer-section-head">
-              <span class="drawer-section-title" data-i18n="settings.sec3Title">在役模型单价配置 (USD / 1M Tokens)</span>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-17 21:28:45
+Description: Standardize Chinese terminology to 现役模型 in section 3 pricing title.
+============================================================================ -->
+              <span class="drawer-section-title" data-i18n="settings.sec3Title">现役模型单价配置 (USD / 1M Tokens)</span>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-17 21:28:45
+============================================================================ -->
               <div class="drawer-inline-actions">
                 <button id="btn-reset-model" type="button" class="mini-btn" data-i18n="settings.resetModel">恢复此模型默认</button>
                 <button id="btn-reset-all-models" type="button" class="mini-btn" data-i18n="settings.resetAllModels">全部恢复默认</button>
@@ -251,7 +265,14 @@ Description: Add official model/pricing sync status bar and manual sync trigger 
             </label>
 
             <details class="catalog-preview">
-              <summary class="catalog-summary" data-i18n="settings.catalogSummary">查看全部在役模型当前生效单价</summary>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-17 21:28:45
+Description: Standardize Chinese terminology to 现役模型 in catalog summary toggle.
+============================================================================ -->
+              <summary class="catalog-summary" data-i18n="settings.catalogSummary">查看全部现役模型当前生效单价</summary>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-17 21:28:45
+============================================================================ -->
               <div id="catalog-preview-table" class="table-scroll"></div>
             </details>
           </div>

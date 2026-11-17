@@ -17,7 +17,7 @@
   - Shows current context usage (`input + cache read`) with configurable alert and max window thresholds.
   - Includes a **`⚡ Compact`** button in the Context card header that copies `/compact` to the clipboard so you can compress long conversations at the right time.
 - **Session Cost, Total Tokens & Subscription ROI**:
-  - Breaks down uncached input, cache read, output tokens, and total token consumption per session, with a toggle between **With Subagents** and **Main Only**, plus clickable **Total** and **Cost** column sorting in model breakdown tables.
+  - Breaks down uncached input, cache read, output tokens, and total token consumption per session. Main conversations let you toggle between **With Subagents** and **Main Only**; when inspecting an individual subagent or swarm worker directly, Equivalent Cost stays isolated to that worker's own steps (**Subagent Only**) without pulling in parent or sibling usage, and model breakdown tables support clickable **Total** and **Cost** column sorting.
   - Automatically detects your monthly plan from models used over the past 14 days (`Jio AI Pro`, `Google AI Pro`, `Ultra 5x`, `Ultra 20x`, or manual `Free` / custom fee) and compares API equivalent cost across `USD` and `CNY`.
 - **Daily Official Model & Pricing Sync**:
   - Syncs model lists, token pricing, and `USD / CNY` exchange rates once per day when opened (`ai.google.dev`, `models.dev`, and ECB reference FX rates), caching results locally with a `↻ Sync Now` button and offline fallback.
@@ -28,6 +28,7 @@
 - **Bilingual UI & Flexible Token Units**:
   - Switch between **English** and **Chinese** (`EN / 中`) in one click from the top bar.
   - Choose between `K / M / B`, `万 / 亿`, exact integers (`1,234,567`), or fixed `M` token units.
+  - Live metric numbers and progress/trend bars update with smooth per-digit slot-roll transitions (respecting `prefers-reduced-motion` and snapping immediately when switching language or conversations).
 - **In-Panel Release Update Check & Hot Update**:
   - Checks GitHub Releases automatically on startup and every 4 hours (with manual check in Settings), and lets you preview release notes directly in the panel.
   - Supports one-click hot update with SHA-256 verification while keeping local settings and usage history intact, or skipping the current version until the next release.
@@ -36,7 +37,7 @@
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.2.5.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.2.6.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -114,10 +115,10 @@ node --test tests/parser.test.mjs
   - 直观显示当前对话上下文占用、缓存命中率及上下文增长最快的 Top 5 步骤。
   - 卡片右上角提供 **`⚡ 压缩 /compact`** 按钮，点击即可复制 `/compact` 命令，方便在上下文接近上限时快速压缩。
 - **会话费用、总 Token 消耗与订阅对比**：
-  - 统计单次会话的未缓存输入、缓存读取、累计输出与**总 Token 消耗**，支持在「含子代理」与「仅主对话」之间切换；模型用量明细表支持点击 **总计** 和 **费用** 列头升降序排列。
+  - 统计单次会话的未缓存输入、缓存读取、累计输出与**总 Token 消耗**：主对话可在「含子代理」与「仅主对话」间切换，直接查看单个子代理或 Swarm Worker 时会自动切换为「子代理独立计费」，仅统计该节点自身用量而不混入主对话或兄弟节点；模型用量明细表支持点击 **总计** 和 **费用** 列头升降序排列。
   - 支持 `USD` / `CNY` 折算，基于近 14 天实际使用的模型自动识别订阅方案（`Jio AI Pro`、`Google AI Pro`、`Ultra 5x`、`Ultra 20x`），也支持手动选择 `Free` 或自定义月费进行回本对比。
 - **每日同步官方模型、价格与汇率**：
-  - 每天首次打开面板时自动同步在役模型单价与实时 `USD / CNY` 汇率（`ai.google.dev`、`models.dev` 及欧洲央行参考汇率），支持离线缓存回退与 **`↻ 立即同步`** 按钮。
+  - 每天首次打开面板时自动同步现役模型单价与实时 `USD / CNY` 汇率（`ai.google.dev`、`models.dev` 及欧洲央行参考汇率），支持离线缓存回退与 **`↻ 立即同步`** 按钮。
   - 手动修改过的模型单价（带 `*` 标记）与手动固定汇率始终优先于自动同步值；展开下方费率表后可直接点击任意模型行切换编辑。
 - **多周期历史统计与分支去重**：
   - 支持查看 **今日**（24 小时分时）、**近 7 天**、**近 30 天** 与 **全部历史** 用量趋势，柱状图左侧固定显示紧凑 Y 轴刻度并支持鼠标按住横向拖动与滚轮横滑；周期模型明细表同样支持点击 **总计 / 费用** 列头排序。
@@ -125,6 +126,7 @@ node --test tests/parser.test.mjs
 - **中英双语切换与多种 Token 单位**：
   - 顶部栏设置按钮旁支持一键切换 **中文 / 英文**（`EN / 中`）。
   - 支持 `K / M / B`、`万 / 亿`、精确整数（`1,234,567`）和固定 `M` 四种 Token 显示单位。
+  - 指标数值与进度条、柱状图更新时采用平滑逐位滚动过渡（遵循系统 `prefers-reduced-motion` 设置，切换语言或会话时直接刷新）。
 - **内置版本检测与一键热更新**：
   - 启动时及每 4 小时自动检测 GitHub Releases 新版本（也可在设置中手动检查），支持在面板内直接预览更新说明。
   - 支持经 SHA-256 校验的一键热更新，更新过程完整保留本地配置与历史用量记录；也可选择跳过当前版本，直到下个新版本发布再提醒。
@@ -133,7 +135,7 @@ node --test tests/parser.test.mjs
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.5.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.6.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 

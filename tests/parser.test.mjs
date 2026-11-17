@@ -9,7 +9,14 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:37:27
+// Description: Import spawnSync alongside spawn for optional git check-ignore portability checks.
+// ============================================================================
+import { spawn, spawnSync } from 'node:child_process';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:37:27
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 18:54:00
 // Description: Import createHash, cpSync, and readdirSync for v0.2.4 release
@@ -166,6 +173,50 @@ import {
 } from '../sidecars/monitor_pane/release_updater.mjs';
 // ============================================================================
 // [MODIFIED END] 2026-11-17 18:54:00
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:42:45
+// Description: Add WHATWG-fetch-safe loopback port helpers to avoid flaky Error: bad port
+// when Windows dynamic ports (1024-15000) allocate Fetch-blocked ports such as 10080 or 6000.
+// ============================================================================
+const WHATWG_FETCH_BAD_PORTS = new Set([
+  1719, 1720, 1723, 2049, 3659, 4045, 5060, 5061,
+  6000, 6566, 6665, 6666, 6667, 6668, 6669, 6697, 10080,
+]);
+
+async function listenOnFetchSafePort(server) {
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    await new Promise((r) => server.listen(0, '127.0.0.1', r));
+    const port = server.address()?.port;
+    if (port > 1024 && !WHATWG_FETCH_BAD_PORTS.has(port)) {
+      return port;
+    }
+    await new Promise((r) => server.close(() => r()));
+  }
+  throw new Error('Unable to allocate a WHATWG-fetch-safe loopback port');
+}
+
+async function pickFetchSafeFreePort() {
+  const heldBadProbes = [];
+  try {
+    for (let attempt = 0; attempt < 32; attempt += 1) {
+      const probe = createServer();
+      await new Promise((r) => probe.listen(0, '127.0.0.1', r));
+      const port = probe.address()?.port;
+      if (port > 1024 && !WHATWG_FETCH_BAD_PORTS.has(port)) {
+        await new Promise((r) => probe.close(() => r()));
+        return port;
+      }
+      heldBadProbes.push(probe);
+    }
+    throw new Error('Unable to allocate a WHATWG-fetch-safe ephemeral port');
+  } finally {
+    await Promise.all(heldBadProbes.map((p) => new Promise((r) => p.close(() => r()))));
+  }
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:42:45
 // ============================================================================
 
 function makeTempEnv() {
@@ -3029,9 +3080,15 @@ test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro over
     res.end('not found');
   });
 
-  await new Promise((resolveListen) => mockServer.listen(0, '127.0.0.1', resolveListen));
-  const mockAddr = mockServer.address();
-  const mockBase = `http://127.0.0.1:${mockAddr.port}`;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:42:45
+// Description: Ensure mock pricing server avoids WHATWG Fetch blocked ports on Windows.
+// ============================================================================
+  const mockPort = await listenOnFetchSafePort(mockServer);
+  const mockBase = `http://127.0.0.1:${mockPort}`;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:42:45
+// ============================================================================
 
   const __dirname = dirname(fileURLToPath(import.meta.url));
   const mainPath = join(__dirname, '..', 'sidecars', 'monitor_pane', 'main.mjs');
@@ -3362,7 +3419,14 @@ test('scoreModelPerformance & compareModelsByPerformance rank versions, tiers, p
 
   const shuffled = [
     { id: 'auto', group: '默认回退', label: 'Auto (默认)', outputPer1M: 10, inputPer1M: 2 },
-    { id: 'gpt-oss-120b', group: '其他在役模型', label: 'GPT-OSS 120B', outputPer1M: 0.6, inputPer1M: 0.15 },
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:37:27
+// Description: Update group label expectation from 其他在役模型 to 其他现役模型 for v0.2.6.
+// ============================================================================
+    { id: 'gpt-oss-120b', group: '其他现役模型', label: 'GPT-OSS 120B', outputPer1M: 0.6, inputPer1M: 0.15 },
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:37:27
+// ============================================================================
     { id: 'claude-sonnet-5-5', group: 'Claude 系列', label: 'Claude Sonnet 5.5', outputPer1M: 10, inputPer1M: 2 },
     { id: 'claude-opus-5-5', group: 'Claude 系列', label: 'Claude Opus 5.5', outputPer1M: 20, inputPer1M: 4 },
     { id: 'gemini-3.5-flash-lite', group: 'Gemini 系列', label: 'Gemini 3.5 Flash Lite', outputPer1M: 0.4, inputPer1M: 0.1 },
@@ -4563,14 +4627,17 @@ test('standalone HTTP E2E hot-update lifecycle: check-update, skip-version, next
     res.end('not found');
   });
 
-  await new Promise((resolveListen) => mockServer.listen(0, '127.0.0.1', resolveListen));
-  mockPort = mockServer.address().port;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:42:45
+// Description: Ensure mock update server and standalone sidecar avoid WHATWG Fetch blocked ports.
+// ============================================================================
+  mockPort = await listenOnFetchSafePort(mockServer);
 
-  // Pick an ephemeral free port for standalone sidecar
-  const portProbe = createServer();
-  await new Promise((r) => portProbe.listen(0, '127.0.0.1', r));
-  const sidecarPort = portProbe.address().port;
-  await new Promise((r) => portProbe.close(() => r()));
+  // Pick an ephemeral fetch-safe free port for standalone sidecar
+  const sidecarPort = await pickFetchSafeFreePort();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:42:45
+// ============================================================================
 
   const sdkCandidates = [
     join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
@@ -4900,13 +4967,16 @@ test('v0.2.5 preferences & standalone /api/prefs validation for jio_pro, modelSo
     join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
   ].filter((p) => existsSync(p));
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:42:45
+// Description: Use pickFetchSafeFreePort to avoid flaky WHATWG bad port rejections in fetch().
+// ============================================================================
   async function pickFreePort() {
-    const probe = createServer();
-    await new Promise((r) => probe.listen(0, '127.0.0.1', r));
-    const port = probe.address().port;
-    await new Promise((r) => probe.close(() => r()));
-    return port;
+    return pickFetchSafeFreePort();
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:42:45
+// ============================================================================
 
   async function spawnStandalone(port) {
     const env = { ...process.env };
@@ -5120,4 +5190,601 @@ test('v0.2.5 frontend static contracts, I18N key/placeholder parity, and DOM saf
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:28:05
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 21:37:27
+// Description: Add v0.2.6 unit and static contract tests for isChildSession /
+// childKind / parentConversationId isolation across Swarm and subagents,
+// 现役模型 catalog & pricing_cache.json migration, slot-roll / child-badge UI
+// safety, and git-ignored private maintainer script isolation.
+// ============================================================================
+test('v0.2.6 isChildSession, childKind, parentConversationId, and isolated swarm worker / subagent costs', () => {
+  clearParserCache();
+  const { root, appData } = makeTempEnv();
+  try {
+    const convsDir = join(appData, 'conversations');
+    mkdirSync(convsDir, { recursive: true });
+
+    function writeSingleStepPlannerDb(dbPath, spec) {
+      const db = new DatabaseSync(dbPath);
+      db.exec(`
+        CREATE TABLE gen_metadata (idx INTEGER PRIMARY KEY, data BLOB, size INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INTEGER NOT NULL DEFAULT 0, status INTEGER NOT NULL DEFAULT 0, metadata BLOB);
+      `);
+      const usageBuf = encodeTokenUsage({
+        enumId: spec.enumId ?? 1419,
+        input: spec.input,
+        cacheRead: spec.cacheRead,
+        output: spec.output,
+        botId: spec.botId || '',
+      });
+      const genInner = Buffer.concat([
+        encodeBytesField(4, usageBuf),
+        encodeBytesField(19, spec.rawModel || 'gemini-3.8-flash'),
+        encodeBytesField(20, encodeGenKv('cascade_id', spec.originCascadeId)),
+        encodeBytesField(21, spec.displayModel || 'Gemini 3.8 Flash'),
+      ]);
+      const genTop = Buffer.concat([
+        encodeBytesField(1, genInner),
+        encodeBytesField(2, encodeVarint(spec.stepIdx)),
+      ]);
+      db.prepare('INSERT INTO gen_metadata (idx, data, size) VALUES (?, ?, ?)').run(
+        0,
+        genTop,
+        genTop.length,
+      );
+      const metaBuf = Buffer.concat([
+        encodeBytesField(1, encodeTimestampMs(spec.createdMs)),
+        encodeBytesField(7, encodeTimestampMs(spec.createdMs + (spec.durationMs || 2000))),
+        encodeBytesField(9, usageBuf),
+        encodeBytesField(
+          20,
+          encodeStepField20({
+            stepIdx: spec.stepIdx,
+            genIdx: 0,
+            originCascadeId: spec.originCascadeId,
+          }),
+        ),
+      ]);
+      db.prepare('INSERT INTO steps (idx, step_type, status, metadata) VALUES (?, ?, ?, ?)').run(
+        spec.stepIdx,
+        15,
+        3,
+        metaBuf,
+      );
+      db.close();
+    }
+
+    // 1. Swarm coordinator with two workers (workerA, workerB)
+    const coordinatorId = 'd1111111-1111-4111-8111-111111111111';
+    const workerAId = 'd2222222-2222-4222-8222-222222222222';
+    const workerBId = 'd3333333-3333-4333-8333-333333333333';
+
+    writeConversation(appData, coordinatorId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: '2026-11-17T08:00:00Z',
+          content:
+            '<USER_SETTINGS_CHANGE>The user changed setting `Model Selection` from None to Gemini 3.1 Pro.</USER_SETTINGS_CHANGE>',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: '2026-11-17T08:00:05Z',
+          input_tokens: 10000,
+          cache_read_tokens: 20000,
+          output_tokens: 500,
+          tool_calls: [],
+        },
+      ],
+      members: {
+        title: 'v0.2.6 Swarm Isolation Test',
+        members: {
+          coordinator: { conversation_id: coordinatorId, role: 'coordinator', model: 'Gemini 3.1 Pro' },
+          workerA: { conversation_id: workerAId, role: 'worker', model: 'Claude Opus 5.5' },
+          workerB: { conversation_id: workerBId, role: 'worker', model: 'Claude Sonnet 5.5' },
+        },
+      },
+      mtimeMs: Date.parse('2026-11-17T08:00:20Z'),
+    });
+
+    writeConversation(appData, workerAId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: '2026-11-17T08:00:10Z',
+          input_tokens: 15000,
+          cache_read_tokens: 30000,
+          output_tokens: 800,
+          tool_calls: [],
+        },
+      ],
+      mtimeMs: Date.parse('2026-11-17T08:00:21Z'),
+    });
+
+    writeConversation(appData, workerBId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: '2026-11-17T08:00:12Z',
+          input_tokens: 50000,
+          cache_read_tokens: 100000,
+          output_tokens: 2000,
+          tool_calls: [],
+        },
+      ],
+      mtimeMs: Date.parse('2026-11-17T08:00:22Z'),
+    });
+
+    // Cold inspection of workerA first: must stay strictly isolated from workerB and coordinator
+    const coldWorkerA = analyzeConversation(workerAId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.equal(coldWorkerA.isChildSession, true);
+    assert.equal(coldWorkerA.childKind, 'swarm');
+    assert.equal(coldWorkerA.parentConversationId, coordinatorId);
+    assert.equal(coldWorkerA.children.length, 0);
+    assert.equal(coldWorkerA.totals.withChildren.costActual, coldWorkerA.totals.mainOnly.costActual);
+    assert.equal(coldWorkerA.totals.mainOnly.outputTokens, 800);
+    assert.equal(coldWorkerA.totals.withChildren.outputTokens, 800);
+    assert.equal(coldWorkerA.totals.mainOnlyByModel.length, 1);
+    assert.equal(coldWorkerA.totals.mainOnlyByModel[0].model, 'claude-opus-5-5');
+    assert.deepEqual(coldWorkerA.totals.mainOnlyByModel, coldWorkerA.totals.byModel);
+
+    // Coordinator inspection: not a child, aggregates both workers
+    const coordRes = analyzeConversation(coordinatorId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.equal(coordRes.isChildSession, false);
+    assert.equal(coordRes.childKind, null);
+    assert.equal(coordRes.parentConversationId, '');
+    assert.ok(coordRes.children.length >= 2);
+    assert.ok(coordRes.totals.withChildren.costActual > coordRes.totals.mainOnly.costActual);
+    assert.equal(coordRes.totals.mainOnlyByModel.length, 1);
+    assert.equal(coordRes.totals.byModel.length, 3);
+
+    // Warm re-inspection of workerA after coordinator warmed caches
+    const warmWorkerA = analyzeConversation(workerAId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.equal(warmWorkerA.isChildSession, true);
+    assert.equal(warmWorkerA.childKind, 'swarm');
+    assert.equal(warmWorkerA.parentConversationId, coordinatorId);
+    assert.equal(warmWorkerA.children.length, 0);
+    assert.equal(warmWorkerA.totals.withChildren.costActual, warmWorkerA.totals.mainOnly.costActual);
+    assert.deepEqual(warmWorkerA.totals.mainOnlyByModel, warmWorkerA.totals.byModel);
+
+    // 2. Regular parent spawning subagents WITHOUT conversation_summaries.db (transcript parent discovery)
+    const parentNoDbId = 'e1111111-1111-4111-8111-111111111111';
+    const subNoDbId = 'e2222222-2222-4222-8222-222222222222';
+    const subNoDbSqlId = 'e3333333-3333-4333-8333-333333333333';
+
+    writeConversation(appData, parentNoDbId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: '2026-11-17T08:10:00Z',
+          content:
+            '<USER_SETTINGS_CHANGE>The user changed setting `Model Selection` from None to Gemini 3.1 Pro.</USER_SETTINGS_CHANGE>',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: '2026-11-17T08:10:02Z',
+          input_tokens: 12000,
+          cache_read_tokens: 24000,
+          output_tokens: 600,
+          tool_calls: [
+            {
+              name: 'invoke_subagent',
+              args: {
+                Subagents: JSON.stringify([{ Model: 'Gemini 3.8 Flash', Name: 'TranscriptSub' }]),
+                toolSummary: '"Spawn TranscriptSub"',
+              },
+            },
+            {
+              name: 'invoke_subagent',
+              args: {
+                Subagents: JSON.stringify([{ Model: 'Gemini 3.8 Flash', Name: 'SqliteSub' }]),
+                toolSummary: '"Spawn SqliteSub"',
+              },
+            },
+          ],
+        },
+        {
+          step_index: 2,
+          type: 'GENERIC',
+          status: 'DONE',
+          created_at: '2026-11-17T08:10:03Z',
+          content: `{"conversationId":"${subNoDbId}"}`,
+        },
+        {
+          step_index: 3,
+          type: 'GENERIC',
+          status: 'DONE',
+          created_at: '2026-11-17T08:10:04Z',
+          content: `{"conversationId":"${subNoDbSqlId}"}`,
+        },
+      ],
+      mtimeMs: Date.parse('2026-11-17T08:10:30Z'),
+    });
+
+    writeConversation(appData, subNoDbId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: '2026-11-17T08:10:06Z',
+          input_tokens: 8000,
+          cache_read_tokens: 16000,
+          output_tokens: 400,
+          tool_calls: [],
+        },
+      ],
+      mtimeMs: Date.parse('2026-11-17T08:10:31Z'),
+    });
+
+    writeConversation(appData, subNoDbSqlId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: '2026-11-17T08:10:07Z',
+          content: '<USER_REQUEST>Run isolated task</USER_REQUEST>',
+        },
+      ],
+      mtimeMs: Date.parse('2026-11-17T08:10:32Z'),
+    });
+    writeSingleStepPlannerDb(join(convsDir, `${subNoDbSqlId}.db`), {
+      stepIdx: 1,
+      originCascadeId: subNoDbSqlId,
+      botId: 'bot-sub-nodb-sql',
+      rawModel: 'gemini-3.8-flash',
+      displayModel: 'Gemini 3.8 Flash',
+      input: 6000,
+      cacheRead: 14000,
+      output: 350,
+      createdMs: Date.parse('2026-11-17T08:10:08Z'),
+    });
+
+    clearParserCache();
+    // Cold discovery without conversation_summaries.db (transcript-only & SQLite-backed subagents)
+    const coldSubNoDb = analyzeConversation(subNoDbId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.equal(coldSubNoDb.isChildSession, true);
+    assert.equal(coldSubNoDb.childKind, 'subagent');
+    assert.equal(coldSubNoDb.parentConversationId, parentNoDbId);
+    assert.equal(coldSubNoDb.children.length, 0);
+    assert.equal(coldSubNoDb.totals.withChildren.costActual, coldSubNoDb.totals.mainOnly.costActual);
+    assert.deepEqual(coldSubNoDb.totals.mainOnlyByModel, coldSubNoDb.totals.byModel);
+
+    const coldSubNoDbSql = analyzeConversation(subNoDbSqlId, {
+      appDataDirs: [appData],
+      disableAgentApi: true,
+    });
+    assert.equal(coldSubNoDbSql.isChildSession, true);
+    assert.equal(coldSubNoDbSql.childKind, 'subagent');
+    assert.equal(coldSubNoDbSql.parentConversationId, parentNoDbId);
+    assert.equal(coldSubNoDbSql.children.length, 0);
+    assert.equal(
+      coldSubNoDbSql.totals.withChildren.costActual,
+      coldSubNoDbSql.totals.mainOnly.costActual,
+    );
+    assert.deepEqual(coldSubNoDbSql.totals.mainOnlyByModel, coldSubNoDbSql.totals.byModel);
+
+    const parentNoDbRes = analyzeConversation(parentNoDbId, {
+      appDataDirs: [appData],
+      disableAgentApi: true,
+    });
+    assert.equal(parentNoDbRes.isChildSession, false);
+    assert.equal(parentNoDbRes.childKind, null);
+    assert.equal(parentNoDbRes.children.length, 2);
+    assert.ok(parentNoDbRes.totals.withChildren.costActual > parentNoDbRes.totals.mainOnly.costActual);
+
+    // Warm re-check hits subagentDescCache O(1) lookup path
+    const warmSubNoDb = analyzeConversation(subNoDbId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.equal(warmSubNoDb.isChildSession, true);
+    assert.equal(warmSubNoDb.childKind, 'subagent');
+    assert.equal(warmSubNoDb.parentConversationId, parentNoDbId);
+    assert.equal(warmSubNoDb.children.length, 0);
+
+    // 3. Regular parent + subagent WITH conversation_summaries.db parent_conversation_id
+    const parentWithDbId = 'f1111111-1111-4111-8111-111111111111';
+    const subWithDbId = 'f2222222-2222-4222-8222-222222222222';
+
+    const sumDb = new DatabaseSync(join(appData, 'conversation_summaries.db'));
+    sumDb.exec(`
+      CREATE TABLE conversation_summaries (
+        conversation_id TEXT PRIMARY KEY,
+        title TEXT NOT NULL DEFAULT "",
+        workspace_uris TEXT NOT NULL DEFAULT "",
+        agent_name TEXT NOT NULL DEFAULT "",
+        parent_conversation_id TEXT NOT NULL DEFAULT ""
+      );
+    `);
+    const insSum = sumDb.prepare(
+      'INSERT INTO conversation_summaries (conversation_id, title, workspace_uris, agent_name, parent_conversation_id) VALUES (?, ?, ?, ?, ?)',
+    );
+    insSum.run(parentWithDbId, 'Parent With DB', '[]', '', '');
+    insSum.run(subWithDbId, 'Subagent With DB', '[]', 'DbWorker', parentWithDbId);
+    sumDb.close();
+
+    writeConversation(appData, parentWithDbId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: '2026-11-17T08:20:00Z',
+          content:
+            '<USER_SETTINGS_CHANGE>The user changed setting `Model Selection` from None to Gemini 3.1 Pro.</USER_SETTINGS_CHANGE>',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: '2026-11-17T08:20:02Z',
+          input_tokens: 9000,
+          cache_read_tokens: 18000,
+          output_tokens: 450,
+          tool_calls: [
+            {
+              name: 'invoke_subagent',
+              args: {
+                Subagents: JSON.stringify([{ Model: 'Claude Sonnet 5.5', Name: 'DbWorker' }]),
+                toolSummary: '"Spawn DbWorker"',
+              },
+            },
+          ],
+        },
+        {
+          step_index: 2,
+          type: 'GENERIC',
+          status: 'DONE',
+          created_at: '2026-11-17T08:20:03Z',
+          content: `{"conversationId":"${subWithDbId}"}`,
+        },
+      ],
+      mtimeMs: Date.parse('2026-11-17T08:20:20Z'),
+    });
+
+    writeConversation(appData, subWithDbId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: '2026-11-17T08:20:04Z',
+          content: '<USER_REQUEST>Execute child task</USER_REQUEST>',
+        },
+      ],
+      mtimeMs: Date.parse('2026-11-17T08:20:21Z'),
+    });
+    writeSingleStepPlannerDb(join(convsDir, `${subWithDbId}.db`), {
+      stepIdx: 1,
+      originCascadeId: subWithDbId,
+      botId: 'bot-sub-with-db',
+      rawModel: 'claude-sonnet-5-5',
+      displayModel: 'Claude Sonnet 5.5',
+      input: 11000,
+      cacheRead: 22000,
+      output: 700,
+      createdMs: Date.parse('2026-11-17T08:20:06Z'),
+    });
+
+    clearParserCache();
+    const dbSubRes = analyzeConversation(subWithDbId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.equal(dbSubRes.isChildSession, true);
+    assert.equal(dbSubRes.childKind, 'subagent');
+    assert.equal(dbSubRes.parentConversationId, parentWithDbId);
+    assert.equal(dbSubRes.children.length, 0);
+    assert.equal(dbSubRes.totals.withChildren.costActual, dbSubRes.totals.mainOnly.costActual);
+    assert.equal(dbSubRes.totals.mainOnly.outputTokens, 700);
+    assert.equal(dbSubRes.totals.mainOnlyByModel.length, 1);
+    assert.equal(dbSubRes.totals.mainOnlyByModel[0].model, 'claude-sonnet-5-5');
+    assert.deepEqual(dbSubRes.totals.mainOnlyByModel, dbSubRes.totals.byModel);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.2.6 现役模型 terminology, pricing_cache.json migration, and static wording scan', () => {
+  const gptOss = MODEL_PRICING_CATALOG.find((p) => p.id === 'gpt-oss-120b');
+  assert.ok(gptOss, 'gpt-oss-120b should exist in MODEL_PRICING_CATALOG');
+  assert.equal(gptOss.group, '其他现役模型');
+
+  const legacyTerm = '\u5728\u5f79\u6a21\u578b';
+  const legacyGroup = `\u5176\u4ed6${legacyTerm}`;
+  const stateDir = mkdtempSync(join(tmpdir(), 'tm-v026-cache-migrate-'));
+  try {
+    writeFileSync(
+      join(stateDir, 'pricing_cache.json'),
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          lastSyncLocalDate: '2026-11-17',
+          status: 'ok',
+          sources: ['models.dev'],
+          syncedRates: {},
+          upstreamPool: {
+            'custom-model-1': {
+              group: legacyGroup,
+              inputPer1M: 1.0,
+              cachedPer1M: 0.25,
+              outputPer1M: 4.0,
+              longContextTier: false,
+              longInputMultiplier: 1.0,
+              longOutputMultiplier: 1.0,
+            },
+          },
+          discoveredModels: [],
+        },
+        null,
+        2,
+      ),
+      'utf-8',
+    );
+
+    const mgr = createPricingSyncManager({ stateDir, autoSyncDisabled: true });
+    const runtimeCatalog = mgr.getRuntimeCatalog(['custom-model-1']);
+    const customEntry = runtimeCatalog.find((p) => p.id === 'custom-model-1');
+    assert.ok(customEntry, 'custom-model-1 should be promoted from upstreamPool');
+    assert.equal(customEntry.group, '其他现役模型');
+
+    const runtimeGptOss = runtimeCatalog.find((p) => p.id === 'gpt-oss-120b');
+    assert.equal(runtimeGptOss?.group, '其他现役模型');
+  } finally {
+    rmSync(stateDir, { recursive: true, force: true });
+  }
+
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = join(testDir, '..');
+  const paneDir = join(repoRoot, 'sidecars', 'monitor_pane');
+  const indexHtml = readFileSync(join(paneDir, 'index.html'), 'utf-8');
+  const readmeMd = readFileSync(join(repoRoot, 'README.md'), 'utf-8');
+  const skillMd = readFileSync(join(repoRoot, 'skills', 'token-monitor', 'SKILL.md'), 'utf-8');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+
+  assert.equal(indexHtml.includes(legacyTerm), false, 'index.html must not contain legacy wording');
+  assert.equal(readmeMd.includes(legacyTerm), false, 'README.md must not contain legacy wording');
+  assert.equal(skillMd.includes(legacyTerm), false, 'SKILL.md must not contain legacy wording');
+
+  const i18nStart = appSource.indexOf('const I18N = {');
+  assert.ok(i18nStart >= 0, 'I18N object should exist in app.js');
+  const zhMatch = appSource
+    .slice(i18nStart)
+    .match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{/);
+  assert.ok(zhMatch, 'I18N.zh block should be extractable');
+  assert.equal(zhMatch[1].includes(legacyTerm), false, 'I18N.zh must not contain legacy wording');
+});
+
+test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintainer script isolation', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = join(testDir, '..');
+  const paneDir = join(repoRoot, 'sidecars', 'monitor_pane');
+
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+  const stylesCss = readFileSync(join(paneDir, 'styles.css'), 'utf-8');
+  const indexHtml = readFileSync(join(paneDir, 'index.html'), 'utf-8');
+  const parserSource = readFileSync(join(paneDir, 'parser.mjs'), 'utf-8');
+  const pricingSyncSource = readFileSync(join(paneDir, 'pricing_sync.mjs'), 'utf-8');
+  const mainSource = readFileSync(join(paneDir, 'main.mjs'), 'utf-8');
+  const readmeMd = readFileSync(join(repoRoot, 'README.md'), 'utf-8');
+  const skillMd = readFileSync(join(repoRoot, 'skills', 'token-monitor', 'SKILL.md'), 'utf-8');
+  const selfSource = readFileSync(fileURLToPath(import.meta.url), 'utf-8');
+
+  const bannedTerm = '\u6c34\u4f4d';
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['app.js', appSource],
+    ['parser.mjs', parserSource],
+    ['pricing_sync.mjs', pricingSyncSource],
+    ['main.mjs', mainSource],
+    ['README.md', readmeMd],
+    ['SKILL.md', skillMd],
+    ['tests/parser.test.mjs', selfSource],
+  ]) {
+    assert.equal(src.includes(bannedTerm), false, `${label} must not contain banned term`);
+  }
+
+  for (const fnName of [
+    'splitRollingAffixes',
+    'renderRollingText',
+    'applySmoothBarSize',
+    'clearCurrentSessionMotionMemory',
+    'isChildSessionView',
+  ]) {
+    assert.equal(
+      new RegExp(`function\\s+${fnName}\\s*\\(`).test(appSource),
+      true,
+      `app.js must define function ${fnName}()`,
+    );
+  }
+  assert.equal(/\b(?:innerHTML|outerHTML|insertAdjacentHTML|document\.write)\b/.test(appSource), false);
+
+  const i18nStart = appSource.indexOf('const I18N = {');
+  assert.ok(i18nStart >= 0, 'I18N object should exist in app.js');
+  const i18nMatch = appSource
+    .slice(i18nStart)
+    .match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(i18nMatch, 'Both zh and en blocks should be extractable from I18N');
+
+  const extractEntries = (block) => {
+    const map = new Map();
+    for (const match of block.matchAll(/^\s*'([^']+)'\s*:\s*'((?:\\.|[^'\\])*)'/gm)) {
+      map.set(match[1], match[2]);
+    }
+    return map;
+  };
+  const zhEntries = extractEntries(i18nMatch[1]);
+  const enEntries = extractEntries(i18nMatch[2]);
+  assert.deepEqual([...zhEntries.keys()].sort(), [...enEntries.keys()].sort());
+  assert.equal(zhEntries.get('cost.childIsolatedBadge'), '子代理独立计费');
+  assert.equal(enEntries.get('cost.childIsolatedBadge'), 'Subagent Only');
+
+  const extractPlaceholders = (str) => [...str.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
+  for (const [key, zhVal] of zhEntries.entries()) {
+    assert.deepEqual(
+      extractPlaceholders(zhVal),
+      extractPlaceholders(enEntries.get(key)),
+      `Placeholder mismatch for I18N key "${key}"`,
+    );
+  }
+
+  // styles.css slot-roll & child badge contracts
+  for (const selector of [
+    '.roll-col',
+    '.roll-col.is-chunk',
+    '.child-cost-badge',
+    '@media (prefers-reduced-motion: reduce)',
+  ]) {
+    assert.equal(stylesCss.includes(selector), true, `styles.css must define ${selector}`);
+  }
+
+  // Manifests bumped to 0.2.6 without comment corruption
+  const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
+  const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
+  assert.equal(pluginJson.version, '0.2.6');
+  assert.equal(packageJson.version, '0.2.6');
+
+  // Private maintainer script isolation in .gitignore (portable without requiring git.exe on PATH)
+  const gitignorePath = join(repoRoot, '.gitignore');
+  assert.equal(existsSync(gitignorePath), true, '.gitignore must exist');
+  const gitignoreLines = readFileSync(gitignorePath, 'utf-8')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'));
+  assert.equal(gitignoreLines.includes('maintainer/'), true, '.gitignore must include maintainer/');
+  assert.equal(
+    gitignoreLines.some((line) => /^!maintainer(?:\/|$)/i.test(line)),
+    false,
+    '.gitignore must not un-ignore maintainer/',
+  );
+
+  const maintainerScriptPath = join(repoRoot, 'maintainer', 'sync-github-about.ps1');
+  if (existsSync(maintainerScriptPath)) {
+    const scriptText = readFileSync(maintainerScriptPath, 'utf-8');
+    assert.equal(scriptText.includes(bannedTerm), false);
+    assert.equal(scriptText.includes('DryRun'), true);
+    if (existsSync(join(repoRoot, '.git'))) {
+      const gitCheck = spawnSync('git', ['check-ignore', '-q', 'maintainer/sync-github-about.ps1'], {
+        cwd: repoRoot,
+        stdio: 'ignore',
+      });
+      if (!gitCheck.error) {
+        assert.equal(gitCheck.status, 0, 'git check-ignore must confirm maintainer/sync-github-about.ps1 is ignored');
+      }
+    }
+  }
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-17 21:37:27
 // ============================================================================

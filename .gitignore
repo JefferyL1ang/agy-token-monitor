@@ -9,3 +9,4 @@ usage_ledger.json
 pricing_cache.json
 update_cache.json
 *.zip
+maintainer/
