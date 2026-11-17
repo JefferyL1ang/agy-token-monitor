@@ -50,6 +50,15 @@ import {
 // [MODIFIED END] 2026-11-17 15:45:00
 // ============================================================================
   VALID_LANGUAGES,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:30:10
+// Description: Import VALID_MODEL_SORT_DIRS and VALID_MODEL_SORT_KEYS from parser.mjs.
+// ============================================================================
+  VALID_MODEL_SORT_DIRS,
+  VALID_MODEL_SORT_KEYS,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:30:10
+// ============================================================================
   VALID_TOKEN_UNITS,
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:14:00
@@ -89,7 +98,14 @@ function readPluginVersion(rootDir) {
   } catch {
     // Fallback to default version below.
   }
-  return '0.2.4';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:30:10
+// Description: Update fallback plugin version string to 0.2.5.
+// ============================================================================
+  return '0.2.5';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:30:10
+// ============================================================================
 }
 
 const APP_VERSION = readPluginVersion(pluginRoot);
@@ -116,6 +132,15 @@ const VALID_LANGUAGE_SET = new Set(VALID_LANGUAGES);
 const VALID_CNY_RATE_MODE_SET = new Set(VALID_CNY_RATE_MODES);
 // ============================================================================
 // [MODIFIED END] 2026-11-17 15:45:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:30:10
+// Description: Create validation sets for modelSortBy and modelSortDir preferences.
+// ============================================================================
+const VALID_MODEL_SORT_KEY_SET = new Set(VALID_MODEL_SORT_KEYS);
+const VALID_MODEL_SORT_DIR_SET = new Set(VALID_MODEL_SORT_DIRS);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:30:10
 // ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:26:00
@@ -336,6 +361,15 @@ function sanitizeLoadedPrefs(rawPrefs) {
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:30
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:30:10
+// Description: Include modelSortBy and modelSortDir defaults in sanitizeLoadedPrefs.
+// ============================================================================
+    modelSortBy: DEFAULT_PREFS.modelSortBy,
+    modelSortDir: DEFAULT_PREFS.modelSortDir,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:30:10
+// ============================================================================
     modelOverrides: {},
   };
   if (!rawPrefs || typeof rawPrefs !== 'object') return merged;
@@ -396,6 +430,25 @@ function sanitizeLoadedPrefs(rawPrefs) {
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:30:10
+// Description: Restore persisted modelSortBy and modelSortDir when valid.
+// ============================================================================
+  if (
+    typeof rawPrefs.modelSortBy === 'string' &&
+    VALID_MODEL_SORT_KEY_SET.has(rawPrefs.modelSortBy)
+  ) {
+    merged.modelSortBy = rawPrefs.modelSortBy;
+  }
+  if (
+    typeof rawPrefs.modelSortDir === 'string' &&
+    VALID_MODEL_SORT_DIR_SET.has(rawPrefs.modelSortDir)
+  ) {
+    merged.modelSortDir = rawPrefs.modelSortDir;
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:30:10
 // ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:42:00
@@ -666,6 +719,31 @@ function validateAndMergePrefs(currentPrefs, input) {
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:30:10
+// Description: Validate optional modelSortBy and modelSortDir fields in /api/prefs.
+// ============================================================================
+  if (input.modelSortBy !== undefined) {
+    if (
+      typeof input.modelSortBy !== 'string' ||
+      !VALID_MODEL_SORT_KEY_SET.has(input.modelSortBy)
+    ) {
+      return { error: 'modelSortBy must be cost or total.' };
+    }
+    next.modelSortBy = input.modelSortBy;
+  }
+  if (input.modelSortDir !== undefined) {
+    if (
+      typeof input.modelSortDir !== 'string' ||
+      !VALID_MODEL_SORT_DIR_SET.has(input.modelSortDir)
+    ) {
+      return { error: 'modelSortDir must be desc or asc.' };
+    }
+    next.modelSortDir = input.modelSortDir;
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:30:10
 // ============================================================================
 
   if (input.resetAllModels === true) {
@@ -986,6 +1064,14 @@ app.api(
             timingStore,
             metadataStore,
             observedProfiles: globalRaw._observedProfiles,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:30:10
+// Description: Pass 14-day recent subscription raw models into first analyzeConversation call.
+// ============================================================================
+            observedSubscriptionModels: globalRaw._recentSubscriptionModels,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:30:10
+// ============================================================================
             runtimeCatalog,
           });
         } catch (err) {
@@ -1039,6 +1125,14 @@ app.api(
                 timingStore,
                 metadataStore,
                 observedProfiles: globalRaw._observedProfiles,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:30:10
+// Description: Pass 14-day recent subscription raw models into refreshed analyzeConversation call.
+// ============================================================================
+                observedSubscriptionModels: globalRaw._recentSubscriptionModels,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:30:10
+// ============================================================================
                 runtimeCatalog,
               });
             } catch (err) {
@@ -1104,6 +1198,14 @@ app.api(
         _etagPart: _gEtag,
         _observedProfiles: _obs,
         _observedRawModels: _obsRaw,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:30:10
+// Description: Strip internal _recentSubscriptionModels Set from /api/snapshot JSON payload.
+// ============================================================================
+        _recentSubscriptionModels: _recentSubModels,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:30:10
+// ============================================================================
         ...global
       } = globalRaw;
 

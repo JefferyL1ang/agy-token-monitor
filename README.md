@@ -17,13 +17,13 @@
   - Shows current context usage (`input + cache read`) with configurable alert and max window thresholds.
   - Includes a **`⚡ Compact`** button in the Context card header that copies `/compact` to the clipboard so you can compress long conversations at the right time.
 - **Session Cost, Total Tokens & Subscription ROI**:
-  - Breaks down uncached input, cache read, output tokens, and total token consumption per session, with a toggle between **With Subagents** and **Main Only**.
-  - Compares API equivalent cost against your monthly subscription (`Free`, `Google AI Pro`, `Ultra 5x`, `Ultra 20x`, or custom fee) across `USD` and `CNY`.
+  - Breaks down uncached input, cache read, output tokens, and total token consumption per session, with a toggle between **With Subagents** and **Main Only**, plus clickable **Total** and **Cost** column sorting in model breakdown tables.
+  - Automatically detects your monthly plan from models used over the past 14 days (`Jio AI Pro`, `Google AI Pro`, `Ultra 5x`, `Ultra 20x`, or manual `Free` / custom fee) and compares API equivalent cost across `USD` and `CNY`.
 - **Daily Official Model & Pricing Sync**:
   - Syncs model lists, token pricing, and `USD / CNY` exchange rates once per day when opened (`ai.google.dev`, `models.dev`, and ECB reference FX rates), caching results locally with a `↻ Sync Now` button and offline fallback.
   - Custom per-model price edits (`*`) and manual FX rate locks always take priority over auto-synced defaults, and clicking any row in the rate table loads that model for quick editing.
 - **Multi-Period Usage Analytics**:
-  - Aggregates usage across **Today** (24-hour bars), **7 Days**, **30 Days**, and **All Time** with horizontally scrollable, mouse-draggable trend charts.
+  - Aggregates usage across **Today** (24-hour bars), **7 Days**, **30 Days**, and **All Time** in horizontally scrollable, mouse-draggable trend charts with a compact left Y-axis and clickable **Total** / **Cost** sorting in the model breakdown table.
   - Deduplicates forked, branched, and rewound conversations so inherited history is never double-counted.
 - **Bilingual UI & Flexible Token Units**:
   - Switch between **English** and **Chinese** (`EN / 中`) in one click from the top bar.
@@ -36,7 +36,7 @@
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.2.4.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.2.5.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -114,13 +114,13 @@ node --test tests/parser.test.mjs
   - 直观显示当前对话上下文占用、缓存命中率及上下文增长最快的 Top 5 步骤。
   - 卡片右上角提供 **`⚡ 压缩 /compact`** 按钮，点击即可复制 `/compact` 命令，方便在上下文接近上限时快速压缩。
 - **会话费用、总 Token 消耗与订阅对比**：
-  - 统计单次会话的未缓存输入、缓存读取、累计输出与**总 Token 消耗**，支持在「含子代理」与「仅主对话」之间切换。
-  - 支持 `USD` / `CNY` 折算，并将等效 API 费用与订阅月费（`Free`、`Google AI Pro`、`Ultra 5x`、`Ultra 20x` 或自定义月费）进行回本对比。
+  - 统计单次会话的未缓存输入、缓存读取、累计输出与**总 Token 消耗**，支持在「含子代理」与「仅主对话」之间切换；模型用量明细表支持点击 **总计** 和 **费用** 列头升降序排列。
+  - 支持 `USD` / `CNY` 折算，基于近 14 天实际使用的模型自动识别订阅方案（`Jio AI Pro`、`Google AI Pro`、`Ultra 5x`、`Ultra 20x`），也支持手动选择 `Free` 或自定义月费进行回本对比。
 - **每日同步官方模型、价格与汇率**：
   - 每天首次打开面板时自动同步在役模型单价与实时 `USD / CNY` 汇率（`ai.google.dev`、`models.dev` 及欧洲央行参考汇率），支持离线缓存回退与 **`↻ 立即同步`** 按钮。
   - 手动修改过的模型单价（带 `*` 标记）与手动固定汇率始终优先于自动同步值；展开下方费率表后可直接点击任意模型行切换编辑。
 - **多周期历史统计与分支去重**：
-  - 支持查看 **今日**（24 小时分时）、**近 7 天**、**近 30 天** 与 **全部历史** 用量趋势，柱状图支持鼠标按住横向拖动与滚轮横滑。
+  - 支持查看 **今日**（24 小时分时）、**近 7 天**、**近 30 天** 与 **全部历史** 用量趋势，柱状图左侧固定显示紧凑 Y 轴刻度并支持鼠标按住横向拖动与滚轮横滑；周期模型明细表同样支持点击 **总计 / 费用** 列头排序。
   - 自动识别分支（Fork）、并行对比及回退重生的会话，避免继承的历史步骤被重复计费。
 - **中英双语切换与多种 Token 单位**：
   - 顶部栏设置按钮旁支持一键切换 **中文 / 英文**（`EN / 中`）。
@@ -133,7 +133,7 @@ node --test tests/parser.test.mjs
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.4.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.5.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 

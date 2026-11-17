@@ -1,8 +1,8 @@
 {
   "name": "agy-token-monitor",
   "displayName": "Token Monitor",
-  "version": "0.2.4",
-  "description": "Lightweight Token & Context Monitor for Antigravity (v0.2.4 beta): live tok/s speed, context usage monitor & one-click /compact helper, session total tokens, daily official model/pricing sync, one-click GitHub Release update check & hot update, bilingual EN/ZH UI, and multi-period usage analytics. | 面向 Antigravity 的轻量级实时 Token 测速、上下文监控与一键 /compact、会话总 Token 消耗、每日官方模型价格同步、GitHub Release 版本检测与一键热更新、中英双语切换及多周期统计插件。",
+  "version": "0.2.5",
+  "description": "Lightweight Token & Context Monitor for Antigravity (v0.2.5 beta): live tok/s speed, context usage monitor & one-click /compact helper, session total tokens, daily official model/pricing sync, one-click GitHub Release update check & hot update, bilingual EN/ZH UI, and multi-period usage analytics. | 面向 Antigravity 的轻量级实时 Token 测速、上下文监控与一键 /compact、会话总 Token 消耗、每日官方模型价格同步、GitHub Release 版本检测与一键热更新、中英双语切换及多周期统计插件。",
   "logo": "assets/logo.svg",
   "suggestedPrompts": [
     "Open the Token Monitor panel to track live tok/s, context usage, and session total tokens",

@@ -35,6 +35,16 @@
 // ============================================================================
   const VALID_TOKEN_UNITS = ['auto', 'wan_yi', 'exact', 'm'];
   const VALID_LANGUAGES = ['zh', 'en'];
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Add model sort option constants and SVG namespace constant for v0.2.5.
+// ============================================================================
+  const VALID_MODEL_SORT_KEYS = ['cost', 'total'];
+  const VALID_MODEL_SORT_DIRS = ['desc', 'asc'];
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
 
   const state = {
     homeConvId: boundConvId,
@@ -101,6 +111,15 @@
     lastUpdatePillSig: '',
 // ============================================================================
 // [MODIFIED END] 2026-11-17 18:57:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Add model breakdown sort state fields (modelSortBy, modelSortDir).
+// ============================================================================
+    modelSortBy: 'cost',
+    modelSortDir: 'desc',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
 // ============================================================================
   };
 
@@ -210,6 +229,16 @@
       'childrenModels.colTotal': '总计',
       'childrenModels.colTotalTip': '输入 + 缓存 + 输出总吞吐量',
       'childrenModels.colCost': '费用',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Add model table sort direction tooltip keys (zh).
+// ============================================================================
+      'childrenModels.sortDescTip': '当前按{col}从高到低排序（点击切换为从低到高）',
+      'childrenModels.sortAscTip': '当前按{col}从低到高排序（点击切换为从高到低）',
+      'childrenModels.sortIdleTip': '点击按{col}从高到低排序',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
       'childrenModels.rateTip': '{model}\n计价档: {profile} ({rate})',
       'childrenModels.modelsEmpty': '暂无模型步骤分布',
       'periods.today': '今日',
@@ -221,7 +250,14 @@
       'roi.autoBadge': '自动识别 · {plan} ({fee}/月)',
       'roi.manualBadge': '{plan} ({fee}/月)',
       'roi.badgeTitle': '点击调整订阅档位或单价',
-      'roi.freeHero': '🎉 免费档已零费用抵扣 {cost}',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Refine zero-cost plan ROI headline wording for Free / Jio AI Pro (zh).
+// ============================================================================
+      'roi.freeHero': '🎉 零月费已抵扣 {cost}',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
       'roi.freeCaption': '{period}按量等效 {cost} · 订阅成本 {zero}',
       'roi.netSaved': '🎉 已净省 {cost}',
       'roi.multBadge': '{mult}x 回本',
@@ -300,6 +336,14 @@
       'settings.sec2Title': '当前订阅方案',
       'settings.subPlanLabel': '订阅档位',
       'settings.subAuto': '自动识别 (推荐)',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Add Jio AI Pro subscription plan option i18n key (zh).
+// ============================================================================
+      'settings.subJioPro': 'Jio AI Pro ($0 / 月 · 运营商赠礼)',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
       'settings.subFree': 'Free ($0 / 月)',
       'settings.subPro': 'Google AI Pro ($19.99 / 月)',
       'settings.subUltra5x': 'Google AI Ultra 5x ($99.99 / 月)',
@@ -501,6 +545,16 @@
       'childrenModels.colTotal': 'Total',
       'childrenModels.colTotalTip': 'Input + Cache + Output total throughput',
       'childrenModels.colCost': 'Cost',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Add model table sort direction tooltip keys (en).
+// ============================================================================
+      'childrenModels.sortDescTip': 'Sorted by {col}: High → Low (click for Low → High)',
+      'childrenModels.sortAscTip': 'Sorted by {col}: Low → High (click for High → Low)',
+      'childrenModels.sortIdleTip': 'Click to sort by {col} (High → Low)',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
       'childrenModels.rateTip': '{model}\nTier: {profile} ({rate})',
       'childrenModels.modelsEmpty': 'No model breakdown yet',
       'periods.today': 'Today',
@@ -512,7 +566,14 @@
       'roi.autoBadge': 'Auto · {plan} ({fee}/mo)',
       'roi.manualBadge': '{plan} ({fee}/mo)',
       'roi.badgeTitle': 'Click to configure plan or pricing',
-      'roi.freeHero': '🎉 Free tier covered {cost} at $0',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Refine zero-cost plan ROI headline wording for Free / Jio AI Pro (en).
+// ============================================================================
+      'roi.freeHero': '🎉 $0 plan covered {cost}',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
       'roi.freeCaption': '{period} est. API {cost} · Plan cost {zero}',
       'roi.netSaved': '🎉 Net Saved {cost}',
       'roi.multBadge': '{mult}x ROI',
@@ -591,6 +652,14 @@
       'settings.sec2Title': 'Subscription Plan',
       'settings.subPlanLabel': 'Plan Tier',
       'settings.subAuto': 'Auto-Detect (Recommended)',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Add Jio AI Pro subscription plan option i18n key (en).
+// ============================================================================
+      'settings.subJioPro': 'Jio AI Pro ($0 / mo · Carrier Plan)',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
       'settings.subFree': 'Free ($0 / mo)',
       'settings.subPro': 'Google AI Pro ($19.99 / mo)',
       'settings.subUltra5x': 'Google AI Ultra 5x ($99.99 / mo)',
@@ -692,6 +761,14 @@
   const PLAN_LABELS = {
     zh: {
       auto: '自动识别',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Add Jio AI Pro label to zh and en PLAN_LABELS maps.
+// ============================================================================
+      jio_pro: 'Jio AI Pro',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
       free: 'Free',
       pro: 'Google AI Pro',
       ultra_5x: 'Google AI Ultra 5x',
@@ -700,6 +777,14 @@
     },
     en: {
       auto: 'Auto',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Add Jio AI Pro label to en PLAN_LABELS map.
+// ============================================================================
+      jio_pro: 'Jio AI Pro',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
       free: 'Free',
       pro: 'Google AI Pro',
       ultra_5x: 'Google AI Ultra 5x',
@@ -936,6 +1021,74 @@
     const code = currency || 'USD';
     return Math.abs(n) >= 1 ? `${code} ${n.toFixed(2)}` : `${code} ${n.toFixed(4)}`;
   }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Add nice ceiling scale helper (computeTrendAxisScale) and ultra-compact
+// trend Y-axis tick formatters (fmtAxisCost, unified pure-English SI fmtAxisTokens).
+// ============================================================================
+  const TREND_AXIS_BASES = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+
+  function computeTrendAxisScale(maxVal, metricKey) {
+    const rawMax = num(maxVal, 0);
+    if (rawMax <= 0) {
+      const axisMax = metricKey === 'tokens' ? 1000 : 1;
+      return { axisMax, midVal: axisMax / 2, zeroVal: 0 };
+    }
+    const effectiveMax = metricKey === 'tokens' ? Math.max(2, rawMax) : rawMax;
+    const exp = Math.floor(Math.log10(effectiveMax));
+    const pow = Math.pow(10, exp);
+    let axisMax = Number((10 * pow).toPrecision(10));
+    for (const base of TREND_AXIS_BASES) {
+      const candidate = Number((base * pow).toPrecision(10));
+      if (candidate >= effectiveMax) {
+        axisMax = candidate;
+        break;
+      }
+    }
+    if (axisMax < effectiveMax) {
+      axisMax = Number((10 * pow).toPrecision(10));
+    }
+    return {
+      axisMax,
+      midVal: Number((axisMax / 2).toPrecision(10)),
+      zeroVal: 0,
+    };
+  }
+
+  function trimAxisDecimals(val, decimals) {
+    return val.toFixed(decimals).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
+  }
+
+  function fmtAxisCost(val, currency = 'USD') {
+    const sym = currency === 'CNY' ? '¥' : '$';
+    const n = num(val, 0);
+    const abs = Math.abs(n);
+    if (abs < 1e-9) return `${sym}0`;
+    const sign = n < 0 ? '-' : '';
+    if (abs >= 1e9) return `${sign}${sym}${trimAxisDecimals(abs / 1e9, 2)}B`;
+    if (abs >= 1e6) return `${sign}${sym}${trimAxisDecimals(abs / 1e6, 2)}M`;
+    if (abs >= 1e3) return `${sign}${sym}${trimAxisDecimals(abs / 1e3, 2)}k`;
+    if (abs >= 100) return `${sign}${sym}${Math.round(abs)}`;
+    if (abs >= 0.1) return `${sign}${sym}${trimAxisDecimals(abs, 2)}`;
+    if (abs >= 0.01) return `${sign}${sym}${trimAxisDecimals(abs, 3)}`;
+    if (abs >= 0.001) return `${sign}${sym}${trimAxisDecimals(abs, 4)}`;
+    return `${sign}${sym}${trimAxisDecimals(abs, 5)}`;
+  }
+
+  function fmtAxisTokens(val) {
+    const n = num(val, 0);
+    const abs = Math.abs(n);
+    if (abs === 0) return '0';
+    const sign = n < 0 ? '-' : '';
+    if (abs >= 1e9) return `${sign}${trimAxisDecimals(abs / 1e9, 2)}B`;
+    if (abs >= 5e5) return `${sign}${trimAxisDecimals(abs / 1e6, 2)}M`;
+    if (abs >= 1e3) return `${sign}${trimAxisDecimals(abs / 1e3, 2)}k`;
+    return `${sign}${trimAxisDecimals(abs, 1)}`;
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
 
   function fmtUnitPrice(val) {
     const n = num(val, 0);
@@ -1731,6 +1884,15 @@
         cnyRate,
         subscriptionPlan,
         customSubscriptionMonthlyUsd,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Include active model breakdown sort preferences in POST /api/prefs payload.
+// ============================================================================
+        modelSortBy: VALID_MODEL_SORT_KEYS.includes(state.modelSortBy) ? state.modelSortBy : 'cost',
+        modelSortDir: VALID_MODEL_SORT_DIRS.includes(state.modelSortDir) ? state.modelSortDir : 'desc',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
         resetAllModels: Object.keys(state.draftModelOverrides).length === 0,
         modelOverrides: {},
       };
@@ -2519,12 +2681,10 @@
       $('nonbound-label').title = `${label} (${viewingId})`;
     }
 
-    // Today conversation count badge
-    const badge = $('tab-today-badge');
-    const todayCount = num(snap?.global?.todayConversationsCount, 0);
-    badge.textContent = String(todayCount);
-    badge.classList.toggle('hidden', todayCount <= 0);
-
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Remove obsolete tab conversation count badge DOM update from renderHeader.
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 19:00:00
 // Description: Sync header release update pill visibility and version label in renderHeader.
@@ -2532,6 +2692,9 @@
     renderUpdatePill(snap);
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
 // ============================================================================
   }
 // ============================================================================
@@ -2927,6 +3090,110 @@
     );
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Add safe SVG dual-chevron builder, model breakdown sorter, sort toggle,
+// and sortable table header builder for both Tab 1 and Tab 2 model tables.
+// ============================================================================
+  function createDualChevronSvg(isActive, dir) {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 10 14');
+    svg.setAttribute('width', '9');
+    svg.setAttribute('height', '12');
+    svg.setAttribute('class', 'sort-chevron-svg');
+    svg.setAttribute('aria-hidden', 'true');
+
+    const up = document.createElementNS(SVG_NS, 'path');
+    up.setAttribute('d', 'M2 5.2L5 2L8 5.2');
+    up.setAttribute(
+      'class',
+      `sort-chevron-up${isActive ? (dir === 'asc' ? ' is-lit' : ' is-dim') : ''}`,
+    );
+
+    const down = document.createElementNS(SVG_NS, 'path');
+    down.setAttribute('d', 'M2 8.8L5 12L8 8.8');
+    down.setAttribute(
+      'class',
+      `sort-chevron-down${isActive ? (dir === 'desc' ? ' is-lit' : ' is-dim') : ''}`,
+    );
+
+    svg.appendChild(up);
+    svg.appendChild(down);
+    return svg;
+  }
+
+  function toggleModelSort(colKey) {
+    if (!VALID_MODEL_SORT_KEYS.includes(colKey)) return;
+    if (state.modelSortBy === colKey) {
+      state.modelSortDir = state.modelSortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      state.modelSortBy = colKey;
+      state.modelSortDir = 'desc';
+    }
+    if (state.snapshot?.prefs) {
+      state.snapshot.prefs.modelSortBy = state.modelSortBy;
+      state.snapshot.prefs.modelSortDir = state.modelSortDir;
+    }
+    if (state.snapshot) {
+      renderCurrentTab(state.snapshot);
+      renderGlobalTab(state.snapshot);
+    }
+    patchPrefs({
+      modelSortBy: state.modelSortBy,
+      modelSortDir: state.modelSortDir,
+    });
+  }
+
+  function sortModelBreakdownRows(rows, getTotalTokens) {
+    const list = Array.isArray(rows) ? [...rows] : [];
+    const sortBy = state.modelSortBy === 'total' ? 'total' : 'cost';
+    const dirSign = state.modelSortDir === 'asc' ? 1 : -1;
+    const getTotal = typeof getTotalTokens === 'function'
+      ? getTotalTokens
+      : (r) => num(r?.totalTokens, 0);
+
+    list.sort((a, b) => {
+      const aCost = num(a?.costActual, 0);
+      const bCost = num(b?.costActual, 0);
+      const aTotal = getTotal(a);
+      const bTotal = getTotal(b);
+      const primary = sortBy === 'total' ? (aTotal - bTotal) : (aCost - bCost);
+      if (primary !== 0) return primary * dirSign;
+      const secondary = sortBy === 'total' ? (bCost - aCost) : (bTotal - aTotal);
+      if (secondary !== 0) return secondary;
+      return String(a?.model || '').localeCompare(String(b?.model || ''));
+    });
+    return list;
+  }
+
+  function createSortableHeaderCell({ colKey, label, baseTitle = '', extraClass = '' }) {
+    const isActive = state.modelSortBy === colKey;
+    const dir = state.modelSortDir === 'asc' ? 'asc' : 'desc';
+    const ariaSort = isActive ? (dir === 'asc' ? 'ascending' : 'descending') : 'none';
+    const tipKey = isActive
+      ? (dir === 'asc' ? 'childrenModels.sortAscTip' : 'childrenModels.sortDescTip')
+      : 'childrenModels.sortIdleTip';
+    const sortTip = t(tipKey, { col: label });
+    const fullTitle = baseTitle ? `${baseTitle} · ${sortTip}` : sortTip;
+    const thClass = ['num', extraClass].filter(Boolean).join(' ');
+
+    const btn = el('button', {
+      type: 'button',
+      className: `th-sort-btn${isActive ? ' is-active' : ''}`,
+      title: fullTitle,
+      'aria-label': `${label} — ${sortTip}`,
+      onClick: () => toggleModelSort(colKey),
+    },
+      el('span', { textContent: label }),
+      createDualChevronSvg(isActive, dir),
+    );
+
+    return el('th', { className: thClass, 'aria-sort': ariaSort }, btn);
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
+
   function renderChildrenAndModelsCard(current, prefs) {
     const card = $('card-children-models');
     const currency = prefs?.currency || 'USD';
@@ -3022,9 +3289,19 @@
     // [MODIFIED BEGIN] 2026-11-17 10:15:00
     // Description: Localize Tab 1 per-model table headers, tooltips, and empty label.
     // ============================================================================
+    // ============================================================================
+    // [MODIFIED BEGIN] 2026-11-17 20:29:41
+    // Description: Wire sortable Total and Cost column headers and row sorting in Tab 1 model table.
+    // ============================================================================
+    const getTab1TotalTokens = (row) => num(
+      row?.totalTokens ?? (num(row?.inputUncachedTokens, 0) + num(row?.cacheReadTokens, 0) + num(row?.outputTokens, 0)),
+      0,
+    );
+    const sortedByModel = sortModelBreakdownRows(byModel, getTab1TotalTokens);
+
     nodes.push(
       el('div', { className: 'section-subhead', textContent: t('childrenModels.modelsSubhead') }),
-      byModel.length > 0
+      sortedByModel.length > 0
         ? el('div', { className: 'table-scroll' },
             el('table', { className: 'data-table tabular-nums' },
               el('thead', null,
@@ -3034,12 +3311,20 @@
                   el('th', { className: 'num' }, t('childrenModels.colInput')),
                   el('th', { className: 'num' }, t('childrenModels.colCache')),
                   el('th', { className: 'num' }, t('childrenModels.colOutput')),
-                  el('th', { className: 'num total-col', title: t('childrenModels.colTotalTip') }, t('childrenModels.colTotal')),
-                  el('th', { className: 'num' }, t('childrenModels.colCost')),
+                  createSortableHeaderCell({
+                    colKey: 'total',
+                    label: t('childrenModels.colTotal'),
+                    baseTitle: t('childrenModels.colTotalTip'),
+                    extraClass: 'total-col',
+                  }),
+                  createSortableHeaderCell({
+                    colKey: 'cost',
+                    label: t('childrenModels.colCost'),
+                  }),
                 ),
               ),
               el('tbody', null,
-                byModel.map((row) => {
+                sortedByModel.map((row) => {
                   const profLabel = state.lang === 'en' && row.profileId && MODEL_PROFILE_EN[row.profileId]
                     ? MODEL_PROFILE_EN[row.profileId].label
                     : row.profileLabel;
@@ -3050,7 +3335,7 @@
                         rate: row.rateDisplay || '',
                       })
                     : row.model || 'Auto';
-                  const totalTok = num(row.totalTokens, num(row.inputUncachedTokens, 0) + num(row.cacheReadTokens, 0) + num(row.outputTokens, 0));
+                  const totalTok = getTab1TotalTokens(row);
                   return el('tr', null,
                     el('td', { className: 'model-cell', title: rateTip, textContent: row.model || 'Auto' }),
                     el('td', { className: 'num', textContent: fmtInt(row.stepsCount) }),
@@ -3066,6 +3351,9 @@
           )
         : el('div', { className: 'empty-inline', textContent: t('childrenModels.modelsEmpty') }),
     );
+    // ============================================================================
+    // [MODIFIED END] 2026-11-17 20:29:41
+    // ============================================================================
     // ============================================================================
     // [MODIFIED END] 2026-11-17 10:15:00
     // ============================================================================
@@ -3375,7 +3663,17 @@
             className: 'mini-btn accent tabular-nums',
             textContent: planBadgeText,
             title: t('roi.badgeTitle'),
-            onClick: () => setDrawerOpen(true),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Focus #pref-sub-plan selector when opening drawer from ROI badge click.
+// ============================================================================
+            onClick: () => {
+              setDrawerOpen(true);
+              $('pref-sub-plan')?.focus();
+            },
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
           }),
         ),
         heroNode,
@@ -3520,6 +3818,15 @@
       metricKey === 'tokens' ? num(s.totalTokens, 0) : num(s.costActual, 0),
     );
     const maxSeriesVal = seriesValues.reduce((m, v) => Math.max(m, v), 0);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Compute trend chart nice ceiling scale and render pinned left Y-axis
+// alongside horizontally scrollable bar viewport (.trend-chart-box).
+// ============================================================================
+    const { axisMax, midVal, zeroVal } = computeTrendAxisScale(maxSeriesVal, metricKey);
+    const fmtAxisTick = metricKey === 'tokens'
+      ? (val) => fmtAxisTokens(val)
+      : (val) => fmtAxisCost(val, currency);
 
     let defaultActiveIdx = series.length > 0 ? series.length - 1 : -1;
     if (defaultActiveIdx >= 0 && seriesValues[defaultActiveIdx] === 0) {
@@ -3552,13 +3859,13 @@
       textContent: activeIdx >= 0 ? formatBucketDetail(series[activeIdx]) : t('global.trendEmptyDetail'),
     });
 
-    let trendScrollEl = null;
+    let trendChartEl = null;
     if (series.length > 0) {
-      trendScrollEl = el('div', { className: 'trend-scroll' },
+      const trendScrollEl = el('div', { className: 'trend-scroll' },
         el('div', { className: 'trend-track' },
           series.map((bucket, idx) => {
             const v = seriesValues[idx];
-            const hPct = maxSeriesVal > 0 && v > 0 ? Math.max(8, Math.round((v / maxSeriesVal) * 100)) : 3;
+            const hPct = v > 0 ? Math.min(100, Math.max(5, Math.round((v / axisMax) * 100))) : 3;
             const isZero = v <= 0;
             const isSelected = idx === activeIdx;
             const barBtn = el('button', {
@@ -3588,6 +3895,19 @@
         ),
       );
       attachTrendChartInteractions(trendScrollEl);
+
+      const yAxisEl = el('div', { className: 'trend-yaxis tabular-nums', 'aria-hidden': 'true' },
+        el('div', { className: 'trend-yaxis-plot' },
+          el('span', { className: 'trend-yaxis-tick', textContent: fmtAxisTick(axisMax) }),
+          el('span', { className: 'trend-yaxis-tick', textContent: fmtAxisTick(midVal) }),
+          el('span', { className: 'trend-yaxis-tick', textContent: fmtAxisTick(zeroVal) }),
+        ),
+      );
+
+      trendChartEl = el('div', { className: 'trend-chart-box' },
+        yAxisEl,
+        trendScrollEl,
+      );
     }
 
     const trendCard = el('article', { className: 'card' },
@@ -3598,10 +3918,13 @@
         ),
         metricToggle,
       ),
-      trendScrollEl
-        ? [trendScrollEl, detailStrip]
+      trendChartEl
+        ? [trendChartEl, detailStrip]
         : el('div', { className: 'empty-inline', textContent: t('global.trendEmpty') }),
     );
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:15:00
 // ============================================================================
@@ -3614,8 +3937,18 @@
     // [MODIFIED BEGIN] 2026-11-17 10:15:00
     // Description: Localize Tab 2 per-model breakdown card title, column headers, tooltips, and empty label.
     // ============================================================================
+    // ============================================================================
+    // [MODIFIED BEGIN] 2026-11-17 20:29:41
+    // Description: Wire sortable Total and Cost column headers and row sorting in Tab 2 model table.
+    // ============================================================================
     // 5. Period By-Model Breakdown Card
     const periodByModel = Array.isArray(period.byModel) ? period.byModel : [];
+    const getTab2TotalTokens = (row) => num(
+      row?.totalTokens ?? (num(row?.inputTokens, 0) + num(row?.cacheReadTokens, 0) + num(row?.outputTokens, 0)),
+      0,
+    );
+    const sortedPeriodByModel = sortModelBreakdownRows(periodByModel, getTab2TotalTokens);
+
     const modelCard = el('article', { className: 'card' },
       el('div', { className: 'card-head' },
         el('div', { className: 'card-title' },
@@ -3623,7 +3956,7 @@
           t('global.modelsTitle', { period: periodTitle }),
         ),
       ),
-      periodByModel.length > 0
+      sortedPeriodByModel.length > 0
         ? el('div', { className: 'table-scroll' },
             el('table', { className: 'data-table tabular-nums' },
               el('thead', null,
@@ -3633,12 +3966,20 @@
                   el('th', { className: 'num' }, t('childrenModels.colInput')),
                   el('th', { className: 'num' }, t('childrenModels.colCache')),
                   el('th', { className: 'num' }, t('childrenModels.colOutput')),
-                  el('th', { className: 'num total-col', title: t('childrenModels.colTotalTip') }, t('childrenModels.colTotal')),
-                  el('th', { className: 'num' }, t('childrenModels.colCost')),
+                  createSortableHeaderCell({
+                    colKey: 'total',
+                    label: t('childrenModels.colTotal'),
+                    baseTitle: t('childrenModels.colTotalTip'),
+                    extraClass: 'total-col',
+                  }),
+                  createSortableHeaderCell({
+                    colKey: 'cost',
+                    label: t('childrenModels.colCost'),
+                  }),
                 ),
               ),
               el('tbody', null,
-                periodByModel.map((row) => {
+                sortedPeriodByModel.map((row) => {
                   const profLabel = state.lang === 'en' && row.profileId && MODEL_PROFILE_EN[row.profileId]
                     ? MODEL_PROFILE_EN[row.profileId].label
                     : row.profileLabel;
@@ -3649,7 +3990,7 @@
                         rate: row.rateDisplay || '',
                       })
                     : row.model || 'Auto';
-                  const totalTok = num(row.totalTokens, num(row.inputTokens, 0) + num(row.cacheReadTokens, 0) + num(row.outputTokens, 0));
+                  const totalTok = getTab2TotalTokens(row);
                   return el('tr', null,
                     el('td', { className: 'model-cell', title: rateTip, textContent: row.model || 'Auto' }),
                     el('td', { className: 'num', textContent: fmtInt(row.conversationsCount) }),
@@ -3665,6 +4006,9 @@
           )
         : el('div', { className: 'empty-inline', textContent: t('global.modelsEmpty') }),
     );
+    // ============================================================================
+    // [MODIFIED END] 2026-11-17 20:29:41
+    // ============================================================================
     // ============================================================================
     // [MODIFIED END] 2026-11-17 10:15:00
     // ============================================================================
@@ -3947,6 +4291,19 @@
           applyStaticTranslations();
         }
         state.tokenUnit = nextUnit;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:41
+// Description: Sync modelSortBy and modelSortDir preferences from snapshot in pollSnapshot.
+// ============================================================================
+        state.modelSortBy = VALID_MODEL_SORT_KEYS.includes(data.prefs.modelSortBy)
+          ? data.prefs.modelSortBy
+          : 'cost';
+        state.modelSortDir = VALID_MODEL_SORT_DIRS.includes(data.prefs.modelSortDir)
+          ? data.prefs.modelSortDir
+          : 'desc';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
       }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 17:18:17

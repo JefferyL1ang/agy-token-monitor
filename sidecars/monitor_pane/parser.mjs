@@ -203,6 +203,14 @@ const PROFILE_BY_ID = new Map(MODEL_PRICING_CATALOG.map((p) => [p.id, p]));
 
 export const SUBSCRIPTION_CATALOG = Object.freeze({
   auto: Object.freeze({ id: 'auto', label: '自动识别', monthlyUsd: null }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:19
+// Description: Add Jio AI Pro ($0/mo carrier plan) alongside Free for v0.2.5.
+// ============================================================================
+  jio_pro: Object.freeze({ id: 'jio_pro', label: 'Jio AI Pro', monthlyUsd: 0 }),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:19
+// ============================================================================
   free: Object.freeze({ id: 'free', label: 'Free', monthlyUsd: 0 }),
   pro: Object.freeze({ id: 'pro', label: 'Google AI Pro', monthlyUsd: 19.99 }),
   ultra_5x: Object.freeze({ id: 'ultra_5x', label: 'Google AI Ultra 5x', monthlyUsd: 99.99 }),
@@ -224,6 +232,16 @@ export const VALID_LANGUAGES = Object.freeze(['zh', 'en']);
 // daily automatic USD-to-CNY exchange rate synchronization.
 // ============================================================================
 export const VALID_CNY_RATE_MODES = Object.freeze(['auto', 'manual']);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:19
+// Description: Export VALID_MODEL_SORT_KEYS and VALID_MODEL_SORT_DIRS for v0.2.5
+// model breakdown sorting preferences.
+// ============================================================================
+export const VALID_MODEL_SORT_KEYS = Object.freeze(['cost', 'total']);
+export const VALID_MODEL_SORT_DIRS = Object.freeze(['desc', 'asc']);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:19
+// ============================================================================
 
 export const DEFAULT_PREFS = Object.freeze({
   softContextLimit: 400000,
@@ -243,6 +261,15 @@ export const DEFAULT_PREFS = Object.freeze({
   skippedReleaseTag: '',
 // ============================================================================
 // [MODIFIED END] 2026-11-17 18:55:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:19
+// Description: Add modelSortBy and modelSortDir defaults to DEFAULT_PREFS.
+// ============================================================================
+  modelSortBy: 'cost',
+  modelSortDir: 'desc',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:19
 // ============================================================================
   modelOverrides: Object.freeze({}),
 });
@@ -321,7 +348,16 @@ export function normalizeModelId(rawModel, fallbackDisplay = '') {
   if (/gemini[\s-]*3\.?8[\s-]*flash|^gemini\s+flash$|^flash(?:_lite)?$/i.test(candidate)) {
     return 'gemini-3.8-flash';
   }
-  if (/^pro$/i.test(candidate)) return 'gemini-4-carbon';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:19
+// Description: Map generic subagent 'Pro' label to 'gemini-pro' instead of
+// 'gemini-4-carbon' so pricing keeps $2/$0.20/$10 via fallbackPattern without
+// falsely triggering Ultra 5x subscription detection.
+// ============================================================================
+  if (/^pro$/i.test(candidate)) return 'gemini-pro';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:19
+// ============================================================================
   if (/claude[\s-]*opus[\s-]*4[\s.-]*6/i.test(candidate)) return 'claude-opus-4-6';
   if (/claude[\s-]*opus/i.test(candidate)) return 'claude-opus-5-5';
   if (/claude[\s-]*sonnet[\s-]*5[\s.-]*5|claude[\s-]*sonnet|claude[\s-]*haiku/i.test(candidate)) {
@@ -2203,27 +2239,60 @@ export function buildEffectivePricingCatalog(prefs = DEFAULT_PREFS, runtimeCatal
   });
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:19
+// Description: Implement raw-model-gated detectSubscriptionPlanFromModels() with
+// Jio AI Pro ($0/mo) default tier and keep detectSubscriptionPlanFromProfiles()
+// delegating for backward compatibility.
+// ============================================================================
+const ULTRA_RAW_MODEL_RE = /^(?:gemini-4-carbon(?:-|$)|gemini-pro-orchestrator$)/i;
+const PAID_PRO_RAW_MODEL_RE =
+  /^(?:gemini-4-argon(?:-|$)|gemini-pro-orchestrator-argon$|gemini-4-hydrogen(?:-|$)|gemini-3\.1-pro(?:-|$)|claude-(?:opus|sonnet)-5[-.]5(?:-|$))/i;
+
 /**
- * Infers subscription plan ID from observed active model profile IDs.
+ * Infers subscription plan ID from observed normalized/raw model slugs.
+ */
+export function detectSubscriptionPlanFromModels(rawModels) {
+  const items =
+    rawModels?.[Symbol.iterator] && typeof rawModels !== 'string' ? rawModels : [];
+  let hasPaidPro = false;
+  for (const item of items) {
+    if (typeof item !== 'string') continue;
+    const trimmed = item.trim();
+    if (!trimmed || AUTO_UNKNOWN_RE.test(trimmed)) continue;
+    const normalized = normalizeModelId(trimmed);
+    if (ULTRA_RAW_MODEL_RE.test(trimmed) || ULTRA_RAW_MODEL_RE.test(normalized)) {
+      return 'ultra_5x';
+    }
+    if (PAID_PRO_RAW_MODEL_RE.test(trimmed) || PAID_PRO_RAW_MODEL_RE.test(normalized)) {
+      hasPaidPro = true;
+    }
+  }
+  return hasPaidPro ? 'pro' : 'jio_pro';
+}
+
+/**
+ * Infers subscription plan ID from observed active model identifiers (compat wrapper).
  */
 export function detectSubscriptionPlanFromProfiles(profileIds) {
-  const set = profileIds instanceof Set ? profileIds : new Set(profileIds || []);
-  if (set.has('gemini-4-carbon') || set.has('claude-opus-5-5')) {
-    return 'ultra_5x';
-  }
-  if (set.has('gemini-4-argon') || set.has('gemini-3.1-pro') || set.has('claude-sonnet-5-5')) {
-    return 'pro';
-  }
-  return 'free';
+  return detectSubscriptionPlanFromModels(profileIds);
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:19
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:40:00
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:19
+// Description: Update resolveSubscriptionInfo to infer tier from raw model slugs
+// via detectSubscriptionPlanFromModels and fall back to SUBSCRIPTION_CATALOG.jio_pro.
+// ============================================================================
 /**
  * Resolves the active subscription plan details and monthly fee in display currency.
  */
-export function resolveSubscriptionInfo(prefs = DEFAULT_PREFS, observedProfileIds = new Set()) {
+export function resolveSubscriptionInfo(prefs = DEFAULT_PREFS, observedModels = new Set()) {
   const mode =
     typeof prefs?.subscriptionPlan === 'string' && SUBSCRIPTION_CATALOG[prefs.subscriptionPlan]
       ? prefs.subscriptionPlan
@@ -2232,9 +2301,9 @@ export function resolveSubscriptionInfo(prefs = DEFAULT_PREFS, observedProfileId
   const fx =
     currency === 'CNY' ? Math.max(0.01, Number(prefs?.cnyRate) || DEFAULT_PREFS.cnyRate) : 1;
 
-  const detectedPlanId = detectSubscriptionPlanFromProfiles(observedProfileIds);
+  const detectedPlanId = detectSubscriptionPlanFromModels(observedModels);
   const effectivePlanId = mode === 'auto' ? detectedPlanId : mode;
-  const planMeta = SUBSCRIPTION_CATALOG[effectivePlanId] || SUBSCRIPTION_CATALOG.free;
+  const planMeta = SUBSCRIPTION_CATALOG[effectivePlanId] || SUBSCRIPTION_CATALOG.jio_pro;
 
   let monthlyUsd = 0;
   if (effectivePlanId === 'custom') {
@@ -2244,7 +2313,7 @@ export function resolveSubscriptionInfo(prefs = DEFAULT_PREFS, observedProfileId
     monthlyUsd = planMeta.monthlyUsd;
   }
 
-  const detectedMeta = SUBSCRIPTION_CATALOG[detectedPlanId] || SUBSCRIPTION_CATALOG.free;
+  const detectedMeta = SUBSCRIPTION_CATALOG[detectedPlanId] || SUBSCRIPTION_CATALOG.jio_pro;
   return {
     mode,
     planId: effectivePlanId,
@@ -2258,6 +2327,9 @@ export function resolveSubscriptionInfo(prefs = DEFAULT_PREFS, observedProfileId
     monthlyFee: monthlyUsd * fx,
   };
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:19
+// ============================================================================
 
 /**
  * Compares period token cost against prorated subscription fee to measure net savings and ROI.
@@ -3311,11 +3383,31 @@ export function analyzeConversation(convId, options = {}) {
     }))
     .sort((a, b) => b.costActual - a.costActual || b.totalTokens - a.totalTokens);
 
-  const subProfiles =
-    options.observedProfiles instanceof Set && options.observedProfiles.size > 0
-      ? options.observedProfiles
-      : localObservedProfiles;
-  const subInfo = resolveSubscriptionInfo(effectivePrefs, subProfiles);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:19
+// Description: Collect localRawModels from activeModel, byModelMap keys, and
+// children models and prioritize observedSubscriptionModels over observedProfiles.
+// ============================================================================
+  const localRawModels = new Set();
+  const addLocalSubscriptionModel = (rawModel) => {
+    const nm = normalizeModelId(rawModel || '');
+    if (nm && !AUTO_UNKNOWN_RE.test(nm)) localRawModels.add(nm);
+  };
+  addLocalSubscriptionModel(activeModel);
+  for (const modelKey of byModelMap.keys()) addLocalSubscriptionModel(modelKey);
+  for (const child of children) addLocalSubscriptionModel(child?.model);
+
+  const subModels =
+    options.observedSubscriptionModels instanceof Set &&
+    options.observedSubscriptionModels.size > 0
+      ? options.observedSubscriptionModels
+      : options.observedProfiles instanceof Set && options.observedProfiles.size > 0
+        ? options.observedProfiles
+        : localRawModels;
+  const subInfo = resolveSubscriptionInfo(effectivePrefs, subModels);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:19
+// ============================================================================
   const subscription = {
     planId: subInfo.planId,
     planLabel: subInfo.planLabel,
@@ -4537,6 +4629,13 @@ export function summarizeGlobalAndRecent(options = {}) {
   const conversations = ledger.getData().conversations;
   const observedProfiles = new Set();
   const observedRawModels = new Set();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:19
+// Description: Collect normalized non-Auto models per valid date up to todayDate
+// for 14-day window subscription detection without historical tier pollution.
+// ============================================================================
+  const cutoff14d = shiftLocalDate(todayDate, -13);
+  const modelsByDate = new Map();
   let earliestDate = todayDate;
   const onDiskEntries = [];
 
@@ -4550,12 +4649,23 @@ export function summarizeGlobalAndRecent(options = {}) {
       if (nm && !AUTO_UNKNOWN_RE.test(nm)) observedRawModels.add(nm);
     }
     for (const [dk, dayObj] of Object.entries(conv.days || {})) {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dk) && dk >= '2000-01-01' && dk < earliestDate) {
+      const validDk = /^\d{4}-\d{2}-\d{2}$/.test(dk) && dk >= '2000-01-01';
+      if (validDk && dk < earliestDate) {
         earliestDate = dk;
       }
+      const inHistoryWindow = validDk && dk <= todayDate;
+      let dateModels = inHistoryWindow ? modelsByDate.get(dk) : null;
       for (const rawModelName of Object.keys(dayObj?.byModel || {})) {
         const nm = normalizeModelId(rawModelName);
-        if (nm && !AUTO_UNKNOWN_RE.test(nm)) observedRawModels.add(nm);
+        if (!nm || AUTO_UNKNOWN_RE.test(nm)) continue;
+        observedRawModels.add(nm);
+        if (inHistoryWindow) {
+          if (!dateModels) {
+            dateModels = new Set();
+            modelsByDate.set(dk, dateModels);
+          }
+          dateModels.add(nm);
+        }
       }
     }
     if (conv.onDisk !== false) {
@@ -4563,10 +4673,47 @@ export function summarizeGlobalAndRecent(options = {}) {
     }
   }
 // ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:19
+// ============================================================================
+// ============================================================================
 // [MODIFIED END] 2026-11-17 17:19:56
 // ============================================================================
 
-  const subInfo = resolveSubscriptionInfo(effectivePrefs, observedProfiles);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:19
+// Description: Resolve subscription info from 14-day window models with fallback
+// to latest 14 active dates and recent on-disk activeModel entries.
+// ============================================================================
+  const recentSubscriptionModels = new Set();
+  for (const [dk, modelSet] of modelsByDate.entries()) {
+    if (dk >= cutoff14d) {
+      for (const m of modelSet) recentSubscriptionModels.add(m);
+    }
+  }
+  if (recentSubscriptionModels.size === 0 && modelsByDate.size > 0) {
+    const latestActiveDates = [...modelsByDate.keys()].sort().reverse().slice(0, 14);
+    for (const dk of latestActiveDates) {
+      for (const m of modelsByDate.get(dk)) recentSubscriptionModels.add(m);
+    }
+  }
+  if (recentSubscriptionModels.size === 0 && onDiskEntries.length > 0) {
+    const recentOnDisk = onDiskEntries.filter(([, conv]) => {
+      const updMs = Number(conv.updatedAtMs) || 0;
+      if (updMs <= 0) return false;
+      const updDate = formatLocalDate(updMs);
+      return updDate >= cutoff14d && updDate <= todayDate;
+    });
+    const fallbackEntries = recentOnDisk.length > 0 ? recentOnDisk : onDiskEntries;
+    for (const [, conv] of fallbackEntries) {
+      const nm = normalizeModelId(conv.activeModel || '');
+      if (nm && !AUTO_UNKNOWN_RE.test(nm)) recentSubscriptionModels.add(nm);
+    }
+  }
+
+  const subInfo = resolveSubscriptionInfo(effectivePrefs, recentSubscriptionModels);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:19
+// ============================================================================
   const start7d = shiftLocalDate(todayDate, -6);
   const start30d = shiftLocalDate(todayDate, -29);
   const allSpanDays = Math.max(1, daysBetweenLocalDates(earliestDate, todayDate) + 1);
@@ -4727,6 +4874,14 @@ export function summarizeGlobalAndRecent(options = {}) {
     },
     _observedProfiles: observedProfiles,
     _observedRawModels: [...observedRawModels],
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:29:19
+// Description: Expose _recentSubscriptionModels for /api/snapshot conversation sync.
+// ============================================================================
+    _recentSubscriptionModels: recentSubscriptionModels,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:29:19
+// ============================================================================
     _etagPart: `${todayDate}|${onDiskCount}|${Object.keys(conversations).length}|p${pendingRebuildCount}|${etagParts.join(',')}`,
 // ============================================================================
 // [MODIFIED END] 2026-11-17 17:19:56

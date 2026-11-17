@@ -61,6 +61,15 @@ import {
   MODEL_PRICING_CATALOG,
   SUBSCRIPTION_CATALOG,
   VALID_LANGUAGES,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:27:23
+// Description: Import VALID_MODEL_SORT_DIRS and VALID_MODEL_SORT_KEYS for v0.2.5 sort preference validation tests.
+// ============================================================================
+  VALID_MODEL_SORT_DIRS,
+  VALID_MODEL_SORT_KEYS,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:27:23
+// ============================================================================
   VALID_TOKEN_UNITS,
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:15:00
@@ -96,6 +105,14 @@ import {
   computeSubscriptionComparison,
   createMetadataStore,
   createUsageLedger,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:27:23
+// Description: Import detectSubscriptionPlanFromModels for v0.2.5 raw-model subscription tier tests.
+// ============================================================================
+  detectSubscriptionPlanFromModels,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:27:23
+// ============================================================================
   detectSubscriptionPlanFromProfiles,
   discoverAppDataDirs,
   formatLocalDate,
@@ -727,17 +744,59 @@ test('active per-model pricing (incl. Claude Opus/Sonnet 5.5), overrides, CNY co
   assert.ok(Math.abs(opusCny.costActual - 0.43 * 7.25) < 1e-9);
 });
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:27:23
+// Description: Update subscription tier detection assertions for v0.2.5 model rules
+// (ultra_5x, pro, jio_pro) and verify jio_pro ($0/mo), pro ($19.99/mo), and ultra_5x ($99.99/mo) ROI math.
+// ============================================================================
 test('subscription auto-detection and prorated netSavings / ROI comparison', () => {
+  // Ultra 5x ($99.99/mo): Gemini 4 Carbon / Orchestrator (Carbon)
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['gemini-4-carbon'])), 'ultra_5x');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['gemini-pro-orchestrator'])), 'ultra_5x');
   assert.equal(detectSubscriptionPlanFromProfiles(new Set(['gemini-4-carbon'])), 'ultra_5x');
-  assert.equal(detectSubscriptionPlanFromProfiles(new Set(['claude-opus-5-5'])), 'ultra_5x');
+
+  // Google AI Pro ($19.99/mo): Claude 5.5 Opus/Sonnet, Argon, Hydrogen, Gemini 3.1 Pro
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['claude-opus-5-5'])), 'pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['claude-sonnet-5-5'])), 'pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['gemini-4-argon'])), 'pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['gemini-pro-orchestrator-argon'])), 'pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['gemini-4-hydrogen'])), 'pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['gemini-3.1-pro'])), 'pro');
   assert.equal(detectSubscriptionPlanFromProfiles(new Set(['gemini-4-argon'])), 'pro');
   assert.equal(detectSubscriptionPlanFromProfiles(new Set(['claude-sonnet-5-5'])), 'pro');
-  assert.equal(detectSubscriptionPlanFromProfiles(new Set(['gemini-3-8-flash'])), 'free');
 
-  const subUltra = resolveSubscriptionInfo(DEFAULT_PREFS, new Set(['claude-opus-5-5', 'gemini-4-hydrogen']));
+  // Jio AI Pro ($0/mo): Flash variants, GPT-OSS, legacy 4.6/2.5/generic pro, Auto, empty
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['gemini-3.8-flash'])), 'jio_pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['gemini-3-8-flash'])), 'jio_pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['gemini-3.8-flash-control'])), 'jio_pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['gpt-oss-120b'])), 'jio_pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['claude-opus-4-6'])), 'jio_pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['gemini-2.5-pro'])), 'jio_pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['gemini-pro'])), 'jio_pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set(['Auto'])), 'jio_pro');
+  assert.equal(detectSubscriptionPlanFromModels(new Set()), 'jio_pro');
+  assert.equal(detectSubscriptionPlanFromProfiles(new Set(['gemini-3-8-flash'])), 'jio_pro');
+
+  const subUltra = resolveSubscriptionInfo(DEFAULT_PREFS, new Set(['gemini-4-carbon', 'gemini-4-hydrogen']));
   assert.equal(subUltra.planId, 'ultra_5x');
   assert.equal(subUltra.monthlyUsd, 99.99);
   assert.equal(subUltra.isAutoDetected, true);
+
+  const subPro = resolveSubscriptionInfo(DEFAULT_PREFS, new Set(['claude-opus-5-5']));
+  assert.equal(subPro.planId, 'pro');
+  assert.equal(subPro.monthlyUsd, 19.99);
+  assert.equal(subPro.isAutoDetected, true);
+
+  const subJio = resolveSubscriptionInfo(DEFAULT_PREFS, new Set(['gemini-3.8-flash-control', 'gpt-oss-120b']));
+  assert.equal(subJio.planId, 'jio_pro');
+  assert.equal(subJio.monthlyUsd, 0);
+  assert.equal(subJio.monthlyFee, 0);
+  assert.equal(subJio.isAutoDetected, true);
+
+  const explicitFree = resolveSubscriptionInfo({ ...DEFAULT_PREFS, subscriptionPlan: 'free' }, new Set(['gemini-4-carbon']));
+  assert.equal(explicitFree.planId, 'free');
+  assert.equal(explicitFree.monthlyUsd, 0);
+  assert.equal(explicitFree.isAutoDetected, false);
 
   // 30d comparison uses full monthly fee
   const roi30d = computeSubscriptionComparison(299.97, 30, subUltra);
@@ -761,7 +820,12 @@ test('subscription auto-detection and prorated netSavings / ROI comparison', () 
   assert.equal(customSub.planId, 'custom');
   assert.equal(customSub.monthlyFee, 350);
   assert.equal(SUBSCRIPTION_CATALOG.pro.monthlyUsd, 19.99);
+  assert.equal(SUBSCRIPTION_CATALOG.jio_pro.monthlyUsd, 0);
+  assert.equal(SUBSCRIPTION_CATALOG.jio_pro.label, 'Jio AI Pro');
 });
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:27:23
+// ============================================================================
 
 test('subagent & swarm aggregation isolates main contextTotal and avoids cycles', () => {
   clearParserCache();
@@ -1391,7 +1455,14 @@ test('normalizeModelId strips thinking/effort tiers while preserving variant & w
   assert.equal(normalizeModelId('Gemini 4 Hydrogen (XHigh)'), 'gemini-4-hydrogen');
   assert.equal(normalizeModelId('Gemini 3.8 Flash (High)'), 'gemini-3.8-flash');
   assert.equal(normalizeModelId('Gemini Flash'), 'gemini-3.8-flash');
-  assert.equal(normalizeModelId('Pro'), 'gemini-4-carbon');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:27:23
+// Description: Assert generic 'Pro' normalizes to 'gemini-pro' instead of faking 'gemini-4-carbon'.
+// ============================================================================
+  assert.equal(normalizeModelId('Pro'), 'gemini-pro');
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:27:23
+// ============================================================================
   assert.equal(normalizeModelId('Claude Opus 4.6 (Thinking)'), 'claude-opus-4-6');
   assert.equal(normalizeModelId('Claude Opus 5.5 (High)'), 'claude-opus-5-5');
   assert.equal(normalizeModelId('Claude Sonnet 5.5 (Medium)'), 'claude-sonnet-5-5');
@@ -1405,6 +1476,14 @@ test('normalizeModelId strips thinking/effort tiers while preserving variant & w
   assert.equal(resolveModelProfile('claude-opus-5-5').id, 'claude-opus-5-5');
   assert.equal(resolveModelProfile('gemini-pro-orchestrator-argon').id, 'gemini-4-argon');
   assert.equal(resolveModelProfile('gemini-pro-orchestrator').id, 'gemini-4-carbon');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:27:23
+// Description: Assert generic 'gemini-pro' still maps to 'gemini-4-carbon' pricing profile via fallbackPattern.
+// ============================================================================
+  assert.equal(resolveModelProfile('gemini-pro').id, 'gemini-4-carbon');
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:27:23
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:50:00
 // Description: Verify gemini-3.1-pro and gemini-pro-default resolve to dedicated gemini-3.1-pro tier.
@@ -4641,4 +4720,404 @@ test('standalone HTTP E2E hot-update lifecycle: check-update, skip-version, next
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-17 18:54:00
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 20:28:05
+// Description: Add v0.2.5 regression tests for 14-day subscription window
+// isolation and active-date fallback, modelSortBy/modelSortDir/jio_pro prefs
+// validation & persistence in standalone main.mjs, and frontend static/DOM/I18N parity.
+// ============================================================================
+test('v0.2.5 14-day subscription window isolates historical models and falls back to latest 14 active dates', () => {
+  clearParserCache();
+  const nowMs = Date.parse('2026-11-17T12:00:00Z');
+  const writeModelSession = (appData, convId, isoTs, modelSlug, tokens = 1000) => {
+    writeConversation(appData, convId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: isoTs,
+          content: `<USER_REQUEST>Session ${convId}</USER_REQUEST>\n<USER_SETTINGS_CHANGE>The user changed setting \`Model Selection\` from None to ${modelSlug}.</USER_SETTINGS_CHANGE>`,
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: isoTs,
+          input_tokens: tokens,
+          cache_read_tokens: 0,
+          output_tokens: 100,
+          tool_calls: [],
+        },
+      ],
+      mtimeMs: Date.parse(isoTs) + 1000,
+    });
+  };
+
+  // Part A: 30-day-old Carbon/Opus-4.6 must NOT pollute recent 14-day Jio AI Pro sessions
+  const { root, appData } = makeTempEnv();
+  try {
+    writeModelSession(appData, '14d00001-0000-4000-8000-000000000001', '2026-10-05T12:00:00Z', 'gemini-4-carbon');
+    writeModelSession(appData, '14d00002-0000-4000-8000-000000000002', '2026-10-05T14:00:00Z', 'claude-opus-4-6');
+    writeModelSession(appData, '14d00003-0000-4000-8000-000000000003', '2026-11-16T12:00:00Z', 'gemini-3.8-flash-control');
+    writeModelSession(appData, '14d00004-0000-4000-8000-000000000004', '2026-11-17T08:00:00Z', 'gpt-oss-120b');
+
+    const gJio = summarizeGlobalAndRecent({ appDataDirs: [appData], nowMs, disableAgentApi: true });
+    assert.equal(gJio.subscription.planId, 'jio_pro');
+    assert.equal(gJio.subscription.monthlyUsd, 0);
+    assert.equal(gJio.subscription.isAutoDetected, true);
+
+    // Adding a recent session using Argon -> 'pro' ($19.99/mo)
+    writeModelSession(appData, '14d00005-0000-4000-8000-000000000005', '2026-11-17T09:00:00Z', 'gemini-4-argon');
+    const gProArgon = summarizeGlobalAndRecent({ appDataDirs: [appData], nowMs, disableAgentApi: true });
+    assert.equal(gProArgon.subscription.planId, 'pro');
+    assert.equal(gProArgon.subscription.monthlyUsd, 19.99);
+
+    // Adding a recent session using Claude Opus 5.5 (without Carbon) -> still 'pro' ($19.99/mo)
+    writeModelSession(appData, '14d00006-0000-4000-8000-000000000006', '2026-11-17T09:30:00Z', 'claude-opus-5-5');
+    const gProOpus = summarizeGlobalAndRecent({ appDataDirs: [appData], nowMs, disableAgentApi: true });
+    assert.equal(gProOpus.subscription.planId, 'pro');
+    assert.equal(gProOpus.subscription.monthlyUsd, 19.99);
+
+    // Adding a recent session using Carbon -> 'ultra_5x' ($99.99/mo)
+    writeModelSession(appData, '14d00007-0000-4000-8000-000000000007', '2026-11-17T10:00:00Z', 'gemini-4-carbon');
+    const gUltra = summarizeGlobalAndRecent({ appDataDirs: [appData], nowMs, disableAgentApi: true });
+    assert.equal(gUltra.subscription.planId, 'ultra_5x');
+    assert.equal(gUltra.subscription.monthlyUsd, 99.99);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+
+  // Part B: All conversations older than 14 days -> falls back to latest 14 active dates only
+  const { root: rootOld, appData: appDataOld } = makeTempEnv();
+  try {
+    // 15th oldest active date used Carbon, while latest 14 active dates (Oct 10..23) only used Flash/Argon
+    writeModelSession(appDataOld, '14d10000-0000-4000-8000-000000000000', '2026-09-10T12:00:00Z', 'gemini-4-carbon');
+    for (let day = 10; day <= 23; day++) {
+      const hex = day.toString(16).padStart(2, '0');
+      const model = day === 23 ? 'gemini-4-argon' : 'gemini-3.8-flash-control';
+      writeModelSession(
+        appDataOld,
+        `14d100${hex}-0000-4000-8000-0000000000${hex}`,
+        `2026-10-${String(day).padStart(2, '0')}T12:00:00Z`,
+        model,
+      );
+    }
+    const gFallback14 = summarizeGlobalAndRecent({ appDataDirs: [appDataOld], nowMs, disableAgentApi: true });
+    assert.equal(gFallback14.subscription.planId, 'pro');
+    assert.equal(gFallback14.subscription.monthlyUsd, 19.99);
+  } finally {
+    rmSync(rootOld, { recursive: true, force: true });
+  }
+
+  // Part C: Only 1 old conversation (>14 days) using Carbon -> fallback uses that active date -> 'ultra_5x'
+  const { root: rootSingleOld, appData: appDataSingleOld } = makeTempEnv();
+  try {
+    writeModelSession(
+      appDataSingleOld,
+      '14d20001-0000-4000-8000-000000000001',
+      '2026-10-05T12:00:00Z',
+      'gemini-4-carbon',
+    );
+    const gFallbackSingle = summarizeGlobalAndRecent({ appDataDirs: [appDataSingleOld], nowMs, disableAgentApi: true });
+    assert.equal(gFallbackSingle.subscription.planId, 'ultra_5x');
+    assert.equal(gFallbackSingle.subscription.monthlyUsd, 99.99);
+  } finally {
+    rmSync(rootSingleOld, { recursive: true, force: true });
+  }
+});
+
+test('v0.2.5 preferences & standalone /api/prefs validation for jio_pro, modelSortBy, and modelSortDir', async () => {
+  assert.equal(DEFAULT_PREFS.modelSortBy, 'cost');
+  assert.equal(DEFAULT_PREFS.modelSortDir, 'desc');
+  assert.deepEqual([...VALID_MODEL_SORT_KEYS], ['cost', 'total']);
+  assert.deepEqual([...VALID_MODEL_SORT_DIRS], ['desc', 'asc']);
+
+  const { root, appData } = makeTempEnv();
+  const dataDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'data');
+  mkdirSync(dataDir, { recursive: true });
+  const fakeHome = join(root, 'home');
+  mkdirSync(fakeHome, { recursive: true });
+
+  const nowMs = Date.now();
+  const oldIso = new Date(nowMs - 30 * 86400 * 1000).toISOString();
+  const recentIso = new Date(nowMs - 60 * 1000).toISOString();
+
+  writeConversation(appData, 'f0250001-0000-4000-8000-000000000001', {
+    compactLines: [
+      {
+        step_index: 0,
+        type: 'USER_INPUT',
+        status: 'DONE',
+        created_at: oldIso,
+        content:
+          '<USER_REQUEST>Old Carbon session</USER_REQUEST>\n<USER_SETTINGS_CHANGE>Model Selection from None to gemini-4-carbon.</USER_SETTINGS_CHANGE>',
+      },
+      {
+        step_index: 1,
+        type: 'PLANNER_RESPONSE',
+        status: 'DONE',
+        created_at: oldIso,
+        input_tokens: 1000,
+        cache_read_tokens: 0,
+        output_tokens: 100,
+        tool_calls: [],
+      },
+    ],
+    mtimeMs: Date.parse(oldIso) + 500,
+  });
+
+  writeConversation(appData, 'f0250002-0000-4000-8000-000000000002', {
+    compactLines: [
+      {
+        step_index: 0,
+        type: 'USER_INPUT',
+        status: 'DONE',
+        created_at: recentIso,
+        content:
+          '<USER_REQUEST>Recent Flash Control session</USER_REQUEST>\n<USER_SETTINGS_CHANGE>Model Selection from None to gemini-3.8-flash-control.</USER_SETTINGS_CHANGE>',
+      },
+      {
+        step_index: 1,
+        type: 'PLANNER_RESPONSE',
+        status: 'DONE',
+        created_at: recentIso,
+        input_tokens: 2000,
+        cache_read_tokens: 1000,
+        output_tokens: 200,
+        tool_calls: [],
+      },
+    ],
+    mtimeMs: Date.parse(recentIso) + 500,
+  });
+
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const mainPath = join(__dirname, '..', 'sidecars', 'monitor_pane', 'main.mjs');
+  const sdkCandidates = [
+    join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+    join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+  ].filter((p) => existsSync(p));
+
+  async function pickFreePort() {
+    const probe = createServer();
+    await new Promise((r) => probe.listen(0, '127.0.0.1', r));
+    const port = probe.address().port;
+    await new Promise((r) => probe.close(() => r()));
+    return port;
+  }
+
+  async function spawnStandalone(port) {
+    const env = { ...process.env };
+    delete env.ANTIGRAVITY_LS_ADDRESS;
+    delete env.ANTIGRAVITY_CSRF_TOKEN;
+    delete env.ANTIGRAVITY_SIDECAR_WEB_PORT;
+    delete env.ANTIGRAVITY_CONVERSATION_ID;
+    delete env.ANTIGRAVITY_SIDECAR_UI_TOKEN;
+    delete env.ANTIGRAVITY_AGENTAPI_EXE;
+    if (sdkCandidates[0]) env.SIDECAR_SDK_PATH = sdkCandidates[0];
+    env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
+    env.PRICING_SYNC_DISABLE_AUTO = '1';
+    env.USERPROFILE = fakeHome;
+    env.HOME = fakeHome;
+
+    const child = spawn(process.execPath, [mainPath, '--standalone', String(port)], {
+      env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    await new Promise((resolveReady, rejectReady) => {
+      if (child.exitCode !== null) {
+        rejectReady(new Error(`Sidecar exited prematurely (${child.exitCode})`));
+        return;
+      }
+      const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 5000);
+      let out = '';
+      child.stdout.on('data', (chunk) => {
+        out += chunk.toString();
+        if (out.includes(`[sidecar] listening on 127.0.0.1:${port}`)) {
+          clearTimeout(timer);
+          resolveReady();
+        }
+      });
+      child.stderr.on('data', (chunk) => {
+        out += chunk.toString();
+      });
+      child.once('exit', (code) => {
+        clearTimeout(timer);
+        rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+      });
+    });
+    return child;
+  }
+
+  async function stopStandalone(child) {
+    if (!child) return;
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill();
+      await new Promise((r) => {
+        if (child.exitCode !== null || child.signalCode !== null) return r();
+        const t = setTimeout(r, 3000);
+        child.once('exit', () => {
+          clearTimeout(t);
+          r();
+        });
+      });
+    }
+  }
+
+  let child1 = null;
+  let child2 = null;
+  try {
+    const port1 = await pickFreePort();
+    child1 = await spawnStandalone(port1);
+    const base1 = `http://127.0.0.1:${port1}`;
+
+    const initialSnap = await (await fetch(`${base1}/api/snapshot`)).json();
+    assert.equal(initialSnap.prefs.modelSortBy, 'cost');
+    assert.equal(initialSnap.prefs.modelSortDir, 'desc');
+    assert.equal(initialSnap.global.subscription.planId, 'jio_pro');
+    assert.equal(initialSnap.global.subscription.monthlyUsd, 0);
+    assert.equal(initialSnap.current.subscription.planId, 'jio_pro');
+
+    const badSortKey = await fetch(`${base1}/api/prefs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ modelSortBy: 'tokens' }),
+    });
+    assert.equal(badSortKey.status, 400);
+
+    const badSortDir = await fetch(`${base1}/api/prefs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ modelSortDir: 'sideways' }),
+    });
+    assert.equal(badSortDir.status, 400);
+
+    const validPrefsRes = await fetch(`${base1}/api/prefs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subscriptionPlan: 'jio_pro',
+        modelSortBy: 'total',
+        modelSortDir: 'asc',
+      }),
+    });
+    assert.equal(validPrefsRes.status, 200);
+    const validPrefsBody = await validPrefsRes.json();
+    assert.equal(validPrefsBody.ok, true);
+    assert.equal(validPrefsBody.prefs.subscriptionPlan, 'jio_pro');
+    assert.equal(validPrefsBody.prefs.modelSortBy, 'total');
+    assert.equal(validPrefsBody.prefs.modelSortDir, 'asc');
+
+    const stateJson = JSON.parse(readFileSync(join(dataDir, 'monitor_state.json'), 'utf-8'));
+    assert.equal(stateJson.prefs.subscriptionPlan, 'jio_pro');
+    assert.equal(stateJson.prefs.modelSortBy, 'total');
+    assert.equal(stateJson.prefs.modelSortDir, 'asc');
+
+    await stopStandalone(child1);
+    child1 = null;
+
+    const port2 = await pickFreePort();
+    child2 = await spawnStandalone(port2);
+    const base2 = `http://127.0.0.1:${port2}`;
+    const restartedSnap = await (await fetch(`${base2}/api/snapshot`)).json();
+    assert.equal(restartedSnap.prefs.subscriptionPlan, 'jio_pro');
+    assert.equal(restartedSnap.prefs.modelSortBy, 'total');
+    assert.equal(restartedSnap.prefs.modelSortDir, 'asc');
+    assert.equal(restartedSnap.global.subscription.planId, 'jio_pro');
+    assert.equal(restartedSnap.global.subscription.isAutoDetected, false);
+  } finally {
+    await stopStandalone(child1);
+    await stopStandalone(child2);
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.2.5 frontend static contracts, I18N key/placeholder parity, and DOM safety', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const paneDir = join(testDir, '..', 'sidecars', 'monitor_pane');
+  const indexHtml = readFileSync(join(paneDir, 'index.html'), 'utf-8');
+  const stylesCss = readFileSync(join(paneDir, 'styles.css'), 'utf-8');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+
+  const bannedTerm = '\u6c34\u4f4d';
+
+  // index.html contracts
+  assert.equal(indexHtml.includes('tab-today-badge'), false);
+  assert.equal(indexHtml.includes('<option value="jio_pro"'), true);
+  assert.equal(indexHtml.includes(bannedTerm), false);
+
+  // styles.css contracts
+  assert.equal(/\.tab-badge\b/.test(stylesCss), false);
+  assert.equal(stylesCss.includes('.th-sort-btn'), true);
+  assert.equal(stylesCss.includes('.trend-yaxis'), true);
+  assert.equal(stylesCss.includes(bannedTerm), false);
+
+  // app.js symbol & DOM safety contracts
+  for (const sym of [
+    'createDualChevronSvg',
+    'sortModelBreakdownRows',
+    'computeTrendAxisScale',
+    'fmtAxisCost',
+    'fmtAxisTokens',
+  ]) {
+    assert.equal(appSource.includes(sym), true, `Expected ${sym} in app.js`);
+  }
+  assert.equal(appSource.includes('tab-today-badge'), false);
+  assert.equal(/\b(?:innerHTML|outerHTML|insertAdjacentHTML|document\.write)\b/.test(appSource), false);
+  assert.equal(appSource.includes(bannedTerm), false);
+
+  // I18N zh/en key and {placeholder} parity
+  const i18nStart = appSource.indexOf('const I18N = {');
+  assert.ok(i18nStart >= 0, 'I18N object should exist in app.js');
+  const i18nMatch = appSource
+    .slice(i18nStart)
+    .match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(i18nMatch, 'Both zh and en blocks should be extractable from I18N');
+
+  const extractEntries = (block) => {
+    const map = new Map();
+    for (const match of block.matchAll(/^\s*'([^']+)'\s*:\s*'((?:\\.|[^'\\])*)'/gm)) {
+      map.set(match[1], match[2]);
+    }
+    return map;
+  };
+
+  const zhEntries = extractEntries(i18nMatch[1]);
+  const enEntries = extractEntries(i18nMatch[2]);
+  assert.deepEqual([...zhEntries.keys()].sort(), [...enEntries.keys()].sort());
+
+  for (const expectedKey of [
+    'roi.freeHero',
+    'settings.subJioPro',
+    'childrenModels.sortDescTip',
+    'childrenModels.sortAscTip',
+    'childrenModels.sortIdleTip',
+  ]) {
+    assert.equal(zhEntries.has(expectedKey), true, `Missing zh key ${expectedKey}`);
+    assert.equal(enEntries.has(expectedKey), true, `Missing en key ${expectedKey}`);
+  }
+
+  const extractPlaceholders = (str) => [...str.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
+  for (const [key, zhVal] of zhEntries.entries()) {
+    const enVal = enEntries.get(key);
+    assert.deepEqual(
+      extractPlaceholders(zhVal),
+      extractPlaceholders(enVal),
+      `Placeholder mismatch for I18N key "${key}"`,
+    );
+  }
+
+  const planStart = appSource.indexOf('const PLAN_LABELS = {');
+  assert.ok(planStart >= 0, 'PLAN_LABELS object should exist in app.js');
+  const planMatch = appSource
+    .slice(planStart)
+    .match(/zh:\s*\{([\s\S]*?)\},\s*\n\s*en:\s*\{([\s\S]*?)\}/);
+  assert.ok(planMatch, 'PLAN_LABELS zh/en blocks should exist');
+  assert.equal(planMatch[1].includes('jio_pro'), true);
+  assert.equal(planMatch[2].includes('jio_pro'), true);
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-17 20:28:05
 // ============================================================================

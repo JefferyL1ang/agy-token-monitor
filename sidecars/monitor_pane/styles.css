@@ -418,23 +418,17 @@ Description: Style header EN/ZH language toggle button (.lang-btn).
   color: var(--tm-fg);
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 20:29:15
+Description: Keep active tab style and remove obsolete navigation tab counter badge rule.
+============================================================================ */
 .tab.active {
   color: var(--tm-fg);
   border-bottom-color: var(--tm-cyan);
 }
-
-.tab-badge {
-  padding: 0 5px;
-  min-width: 18px;
-  height: 16px;
-  line-height: 16px;
-  text-align: center;
-  border-radius: var(--r-pill);
-  background: var(--tm-muted);
-  color: var(--tm-muted-fg);
-  font-size: 10.5px;
-  font-weight: 600;
-}
+/* ============================================================================
+[MODIFIED END] 2026-11-17 20:29:15
+============================================================================ */
 
 /* ---------------- Settings Drawer ---------------- */
 .settings-drawer {
@@ -1363,6 +1357,80 @@ Description: Style 7-column model breakdown tables with crisp .total-col emphasi
 [MODIFIED END] 2026-11-16 21:11:00
 ============================================================================ */
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 20:29:15
+Description: Style sortable numeric model breakdown header buttons (.th-sort-btn)
+and stacked dual-chevron SVG indicators (.sort-chevron-svg / .is-lit / .is-dim).
+============================================================================ */
+.th-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  padding: 1px 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.14s ease;
+}
+
+.th-sort-btn:hover {
+  color: var(--tm-fg);
+}
+
+.th-sort-btn:focus-visible {
+  outline: 1.5px solid var(--tm-cyan);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.th-sort-btn.is-active {
+  color: var(--tm-fg);
+  font-weight: 700;
+}
+
+.sort-chevron-svg {
+  width: 9px;
+  height: 12px;
+  flex: none;
+  display: block;
+}
+
+.sort-chevron-up,
+.sort-chevron-down {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  opacity: 0.45;
+  transition: opacity 0.14s ease, color 0.14s ease;
+}
+
+.th-sort-btn:hover .sort-chevron-up:not(.is-dim):not(.is-lit),
+.th-sort-btn:hover .sort-chevron-down:not(.is-dim):not(.is-lit) {
+  opacity: 0.78;
+}
+
+.sort-chevron-up.is-lit,
+.sort-chevron-down.is-lit {
+  opacity: 1;
+  color: var(--tm-cyan);
+}
+
+.sort-chevron-up.is-dim,
+.sort-chevron-down.is-dim {
+  opacity: 0.22;
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-17 20:29:15
+============================================================================ */
+
 /* ---------------- Tab 2: Today & Recent ---------------- */
 .kpi-strip {
   display: grid;
@@ -1870,14 +1938,55 @@ Description: Add styles for official pricing sync status bar (.pricing-sync-bar,
 Description: Replace squeezed trend bar chart with horizontally scrollable and
 mouse-draggable .trend-scroll / .trend-track viewport and per-bar unclipped labels.
 ============================================================================ */
-/* Adaptive horizontally scrollable trend bar chart */
-.trend-scroll {
-  overflow-x: auto;
-  overflow-y: hidden;
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 20:29:15
+Description: Add pinned left Y-axis container (.trend-chart-box, .trend-yaxis,
+.trend-yaxis-plot, .trend-yaxis-tick), borderless flex .trend-scroll viewport,
+and 72px .trend-bar-track with aligned 0%/50%/100% subtle reference lines.
+============================================================================ */
+/* Adaptive horizontally scrollable trend bar chart with pinned left Y-axis */
+.trend-chart-box {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
   border-radius: var(--r-md);
   background: var(--tm-subtle);
   border: 1px solid var(--tm-border);
-  padding: 8px 6px 6px;
+  overflow: hidden;
+}
+
+.trend-yaxis {
+  flex: none;
+  padding: 8px 5px 6px 7px;
+  user-select: none;
+}
+
+.trend-yaxis-plot {
+  height: 72px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-right: 4px;
+  border-right: 1px solid color-mix(in srgb, var(--tm-border) 68%, transparent);
+}
+
+.trend-yaxis-tick {
+  font-size: 9.5px;
+  line-height: 1;
+  color: var(--tm-muted-fg);
+  white-space: nowrap;
+}
+
+.trend-scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 8px 6px 6px 2px;
   cursor: grab;
   scrollbar-width: thin;
 }
@@ -1891,13 +2000,13 @@ mouse-draggable .trend-scroll / .trend-track viewport and per-bar unclipped labe
 .trend-track {
   display: flex;
   min-width: 100%;
-  gap: 4px;
+  gap: 0;
   align-items: flex-end;
 }
 
 .trend-col {
-  flex: 1 0 44px;
-  min-width: 44px;
+  flex: 1 0 48px;
+  min-width: 48px;
   padding: 0;
   border: none;
   background: transparent;
@@ -1909,19 +2018,42 @@ mouse-draggable .trend-scroll / .trend-track viewport and per-bar unclipped labe
 }
 
 .trend-col.is-weekly {
-  flex: 1 0 58px;
-  min-width: 58px;
+  flex: 1 0 62px;
+  min-width: 62px;
 }
 
 .trend-bar-track {
+  position: relative;
   width: 100%;
-  height: 68px;
-  padding: 0 4px;
+  height: 72px;
+  padding: 0 6px;
   display: flex;
   align-items: flex-end;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--tm-border) 82%, transparent);
+}
+
+.trend-bar-track::before,
+.trend-bar-track::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.trend-bar-track::before {
+  top: 0;
+  border-top: 1px dashed color-mix(in srgb, var(--tm-border) 38%, transparent);
+}
+
+.trend-bar-track::after {
+  top: 50%;
+  border-top: 1px dashed color-mix(in srgb, var(--tm-border) 64%, transparent);
 }
 
 .trend-bar-fill {
+  position: relative;
+  z-index: 1;
   width: 100%;
   border-radius: 3px 3px 1px 1px;
   background: color-mix(in srgb, var(--tm-cyan) 62%, transparent);
@@ -1949,6 +2081,9 @@ mouse-draggable .trend-scroll / .trend-track viewport and per-bar unclipped labe
   color: var(--tm-fg);
   font-weight: 700;
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-17 20:29:15
+============================================================================ */
 /* ============================================================================
 [MODIFIED END] 2026-11-17 10:14:00
 ============================================================================ */

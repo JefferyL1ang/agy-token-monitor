@@ -93,6 +93,10 @@ Description: Add header new-release notification pill button (#btn-update-pill).
         >
           <span data-i18n="tabs.current">当前会话</span>
         </button>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-17 20:28:50
+Description: Remove unused conversation count badge inside Usage Statistics tab button.
+============================================================================ -->
         <button
           id="tabbtn-global"
           type="button"
@@ -103,8 +107,10 @@ Description: Add header new-release notification pill button (#btn-update-pill).
           aria-controls="tab-global"
         >
           <span data-i18n="tabs.global">用量统计</span>
-          <span id="tab-today-badge" class="tab-badge tabular-nums hidden">0</span>
         </button>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-17 20:28:50
+============================================================================ -->
       </nav>
     </header>
 
@@ -175,6 +181,14 @@ support 4-decimal FX input step for synced USD-to-CNY rates.
                 <span class="field-label" data-i18n="settings.subPlanLabel">订阅档位</span>
                 <select id="pref-sub-plan" class="field-input">
                   <option value="auto" data-i18n="settings.subAuto">自动识别 (推荐)</option>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-17 20:28:50
+Description: Add Jio AI Pro ($0 / mo carrier plan) option to #pref-sub-plan.
+============================================================================ -->
+                  <option value="jio_pro" data-i18n="settings.subJioPro">Jio AI Pro ($0 / 月 · 运营商赠礼)</option>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-17 20:28:50
+============================================================================ -->
                   <option value="free" data-i18n="settings.subFree">Free ($0 / 月)</option>
                   <option value="pro" data-i18n="settings.subPro">Google AI Pro ($19.99 / 月)</option>
                   <option value="ultra_5x" data-i18n="settings.subUltra5x">Google AI Ultra 5x ($99.99 / 月)</option>
