@@ -56,6 +56,14 @@ import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:14:47
+// Description: Import node:vm for v0.2.7 headless Node VM behavioral tests of renderRollingText and card memoization.
+// ============================================================================
+import vm from 'node:vm';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:14:47
+// ============================================================================
 import {
   DEFAULT_PREFS,
   LEDGER_SCHEMA_VERSION,
@@ -5749,11 +5757,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
     assert.equal(stylesCss.includes(selector), true, `styles.css must define ${selector}`);
   }
 
-  // Manifests bumped to 0.2.6 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:14:47
+// Description: Update manifest version assertion from 0.2.6 to 0.2.7 and add v0.2.7 Zero-Layout-Shift (CLS=0), anti-clipping, I18N, and headless VM behavioral tests.
+// ============================================================================
+  // Manifests bumped to 0.2.7 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.2.6');
-  assert.equal(packageJson.version, '0.2.6');
+  assert.equal(pluginJson.version, '0.2.7');
+  assert.equal(packageJson.version, '0.2.7');
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:14:47
+// ============================================================================
 
   // Private maintainer script isolation in .gitignore (portable without requiring git.exe on PATH)
   const gitignorePath = join(repoRoot, '.gitignore');
@@ -5787,4 +5802,769 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-17 21:37:27
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:14:47
+// Description: Add v0.2.7 Zero-Layout-Shift (CLS=0) static CSS/JS/I18N/version
+// contract tests and headless Node VM behavioral tests for renderRollingText
+// and per-card dirty-signature memoization.
+// ============================================================================
+test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key, two-line KPI, I18N, and version contracts', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = join(testDir, '..');
+  const paneDir = join(repoRoot, 'sidecars', 'monitor_pane');
+
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+  const stylesCss = readFileSync(join(paneDir, 'styles.css'), 'utf-8');
+  const indexHtml = readFileSync(join(paneDir, 'index.html'), 'utf-8');
+  const mainSource = readFileSync(join(paneDir, 'main.mjs'), 'utf-8');
+  const parserSource = readFileSync(join(paneDir, 'parser.mjs'), 'utf-8');
+  const pricingSyncSource = readFileSync(join(paneDir, 'pricing_sync.mjs'), 'utf-8');
+  const releaseUpdaterSource = readFileSync(join(paneDir, 'release_updater.mjs'), 'utf-8');
+  const readmeMd = readFileSync(join(repoRoot, 'README.md'), 'utf-8');
+  const skillMd = readFileSync(join(repoRoot, 'skills', 'token-monitor', 'SKILL.md'), 'utf-8');
+  const selfSource = readFileSync(fileURLToPath(import.meta.url), 'utf-8');
+
+  const bannedTerm = '\u6c34\u4f4d';
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['app.js', appSource],
+    ['main.mjs', mainSource],
+    ['parser.mjs', parserSource],
+    ['pricing_sync.mjs', pricingSyncSource],
+    ['release_updater.mjs', releaseUpdaterSource],
+    ['README.md', readmeMd],
+    ['SKILL.md', skillMd],
+    ['tests/parser.test.mjs', selfSource],
+  ]) {
+    assert.equal(src.includes(bannedTerm), false, `${label} must not contain banned term`);
+  }
+
+  // Strip CSS comments so regexes assert actual rules rather than comments
+  const stylesNoComments = stylesCss.replace(/\/\*[\s\S]*?\*\//g, '');
+  const getRuleBody = (selectorRegex) => {
+    const match = stylesNoComments.match(selectorRegex);
+    assert.ok(match, `styles.css must define rule matching ${selectorRegex}`);
+    return match[1];
+  };
+
+  // .roll-val, .roll-static, .roll-col, .roll-old/.roll-new Zero-CLS geometry
+  const rollValBody = getRuleBody(/(?:^|\n)\s*\.roll-val\s*\{([^}]*)\}/);
+  assert.match(rollValBody, /display\s*:\s*inline-flex\b/);
+  assert.match(rollValBody, /align-items\s*:\s*baseline\b/);
+  assert.match(rollValBody, /vertical-align\s*:\s*baseline\b/);
+
+  const rollStaticBody = getRuleBody(/(?:^|\n)\s*\.roll-static\s*\{([^}]*)\}/);
+  assert.match(rollStaticBody, /display\s*:\s*inline-block\b/);
+  assert.doesNotMatch(rollStaticBody, /overflow\s*:\s*hidden\b/);
+
+  const rollColBody = getRuleBody(/(?:^|\n)\s*\.roll-col\s*\{([^}]*)\}/);
+  assert.match(rollColBody, /display\s*:\s*inline-grid\b/);
+  assert.doesNotMatch(rollColBody, /display\s*:\s*inline-block\b/);
+  assert.match(rollColBody, /align-items\s*:\s*baseline\b/);
+  assert.match(rollColBody, /overflow\s*:\s*clip\b/);
+
+  const rollOldNewBody = getRuleBody(/(?:^|\n)\s*\.roll-old\s*,\s*\r?\n?\s*\.roll-new\s*\{([^}]*)\}/);
+  assert.match(rollOldNewBody, /grid-area\s*:\s*1\s*\/\s*1\b/);
+  assert.doesNotMatch(rollOldNewBody, /position\s*:\s*absolute\b/);
+  assert.doesNotMatch(stylesNoComments, /\.roll-old\b[^}]*position\s*:\s*absolute\b/);
+
+  assert.equal(stylesNoComments.includes('.roll-col.is-whole'), true, 'styles.css must define .roll-col.is-whole');
+  assert.equal(stylesNoComments.includes('.roll-col.is-whole.is-end'), true, 'styles.css must define .roll-col.is-whole.is-end');
+
+  // Header, Tab 1, and Tab 2 anti-wrapping / anti-clipping locks
+  const headerPillsBody = getRuleBody(/(?:^|\n)\s*\.header-pills\s*\{([^}]*)\}/);
+  assert.match(headerPillsBody, /flex-wrap\s*:\s*nowrap\b/);
+  assert.doesNotMatch(headerPillsBody, /flex-wrap\s*:\s*wrap\b/);
+  assert.match(headerPillsBody, /overflow\s*:\s*hidden\b/);
+
+  const modelPillBody = getRuleBody(/(?:^|\n)\s*\.model-pill\s*\{([^}]*)\}/);
+  assert.match(modelPillBody, /max-width\s*:\s*48%/);
+
+  const convStripBody = getRuleBody(/(?:^|\n)\s*\.conv-strip\s*\{([^}]*)\}/);
+  assert.match(convStripBody, /flex-wrap\s*:\s*nowrap\b/);
+  assert.doesNotMatch(convStripBody, /flex-wrap\s*:\s*wrap\b/);
+  assert.match(convStripBody, /overflow\s*:\s*hidden\b/);
+
+  const heroValueRowBody = getRuleBody(/(?:^|\n)\s*\.hero-value-row\s*\{([^}]*)\}/);
+  assert.match(heroValueRowBody, /flex-wrap\s*:\s*nowrap\b/);
+  assert.match(heroValueRowBody, /min-height\s*:\s*29px\b/);
+
+  const ctxScaleRowBody = getRuleBody(/(?:^|\n)\s*\.ctx-scale-row\s*\{([^}]*)\}/);
+  assert.match(ctxScaleRowBody, /flex-wrap\s*:\s*nowrap\b/);
+
+  assert.match(stylesNoComments, /@media\s*\(min-width:\s*350px\)\s*\{[\s\S]*?\.card-head\s*\{[^}]*flex-wrap\s*:\s*nowrap/);
+  assert.match(stylesNoComments, /\.sub-stats\.is-single-line\s*\{[^}]*flex-wrap\s*:\s*nowrap/);
+  assert.equal(stylesNoComments.includes('.sub-stats-speed'), true, 'styles.css must define .sub-stats-speed');
+  assert.equal(stylesNoComments.includes('.sub-stats-line'), true, 'styles.css must define .sub-stats-line');
+  assert.equal(stylesNoComments.includes('.kpi-sub-stack'), true, 'styles.css must define .kpi-sub-stack');
+  assert.equal(stylesNoComments.includes('.kpi-sub-line'), true, 'styles.css must define .kpi-sub-line');
+
+  const kpiStripBody = getRuleBody(/(?:^|\n)\s*\.kpi-strip\s*\{([^}]*)\}/);
+  assert.match(kpiStripBody, /minmax\(\s*136px\s*,\s*1fr\s*\)/);
+  assert.doesNotMatch(kpiStripBody, /minmax\(\s*112px\s*,\s*1fr\s*\)/);
+
+  // app.js static memoization, sparkline key, two-line KPI, alignEnd, and DOM safety contracts
+  assert.match(appSource, /function\s+resetCardRenderSigs\s*\(/);
+  const sigInitMatch = appSource.match(/cardRenderSigs\s*:\s*\{([\s\S]*?)\}/);
+  assert.ok(sigInitMatch, 'app.js must define state.cardRenderSigs');
+  for (const cardKey of ['speed', 'cost', 'context', 'cache', 'childrenModels']) {
+    assert.equal(
+      new RegExp(`\\b${cardKey}\\s*:`).test(sigInitMatch[1]),
+      true,
+      `state.cardRenderSigs must include "${cardKey}"`,
+    );
+    assert.equal(
+      new RegExp(`card\\.childElementCount\\s*>\\s*0\\s*&&\\s*state\\.cardRenderSigs\\.${cardKey}\\s*===\\s*sig`).test(appSource),
+      true,
+      `Tab 1 renderer for "${cardKey}" must short-circuit on matching cardRenderSigs.${cardKey}`,
+    );
+  }
+
+  assert.equal(appSource.includes('cur:spark:step:'), true, 'Sparkline bars must use cur:spark:step: key');
+  assert.equal(appSource.includes('cur:spark:${idx}'), false, 'Sparkline bars must not use index-based cur:spark:${idx}');
+  assert.equal(appSource.includes('glb:kpi:tokensAvg'), true, 'app.js must define glb:kpi:tokensAvg');
+  assert.equal(appSource.includes('glb:kpi:tokensOut'), true, 'app.js must define glb:kpi:tokensOut');
+  assert.equal(appSource.includes('kpi-sub-stack'), true, 'app.js must use .kpi-sub-stack');
+  assert.equal(appSource.includes('kpi-sub-line'), true, 'app.js must use .kpi-sub-line');
+  assert.equal(/\b(?:innerHTML|outerHTML|insertAdjacentHTML|document\.write)\b/.test(appSource), false);
+
+  for (const rightMetricKey of ['cur:speed:steps', 'cur:ctx:summary', 'cur:cache:headRate', 'glb:roi:sub', 'glb:sum:steps']) {
+    assert.equal(
+      appSource.includes(rightMetricKey),
+      true,
+      `app.js must retain right-aligned rolling metric "${rightMetricKey}"`,
+    );
+  }
+
+  // I18N zh/en key & {placeholder} parity including v0.2.7 two-line KPI keys
+  const i18nStart = appSource.indexOf('const I18N = {');
+  assert.ok(i18nStart >= 0, 'I18N object should exist in app.js');
+  const i18nMatch = appSource
+    .slice(i18nStart)
+    .match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(i18nMatch, 'Both zh and en blocks should be extractable from I18N');
+
+  const extractEntries = (block) => {
+    const map = new Map();
+    for (const match of block.matchAll(/^\s*'([^']+)'\s*:\s*'((?:\\.|[^'\\])*)'/gm)) {
+      map.set(match[1], match[2]);
+    }
+    return map;
+  };
+  const zhEntries = extractEntries(i18nMatch[1]);
+  const enEntries = extractEntries(i18nMatch[2]);
+  assert.deepEqual([...zhEntries.keys()].sort(), [...enEntries.keys()].sort());
+
+  for (const [key, expectedZh, expectedEn] of [
+    ['global.avgSubLine', '日均 {avg}', 'Avg/d {avg}'],
+    ['global.outSubLine', 'Out {out}', 'Out {out}'],
+    ['global.activeDaysLine', '活跃 {active} 天', 'Active {active}d'],
+    ['global.archivedLine', '含 {archived} 已归档', '{archived} archived'],
+  ]) {
+    assert.equal(zhEntries.get(key), expectedZh, `I18N.zh["${key}"] mismatch`);
+    assert.equal(enEntries.get(key), expectedEn, `I18N.en["${key}"] mismatch`);
+  }
+
+  const extractPlaceholders = (str) => [...str.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
+  for (const [key, zhVal] of zhEntries.entries()) {
+    assert.deepEqual(
+      extractPlaceholders(zhVal),
+      extractPlaceholders(enEntries.get(key)),
+      `Placeholder mismatch for I18N key "${key}"`,
+    );
+  }
+
+  // Version & docs consistency for v0.2.7
+  const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
+  const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
+  assert.equal(pluginJson.version, '0.2.7');
+  assert.equal(packageJson.version, '0.2.7');
+  assert.equal(pluginJson.description.includes('v0.2.7 beta'), true);
+  assert.equal(packageJson.description.includes('v0.2.7 beta'), true);
+  assert.equal(mainSource.includes("return '0.2.7'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.2.7 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.2.7.zip'), true);
+});
+
+test('v0.2.7 headless Node VM behavioral tests: renderRollingText CLS=0 transitions and per-card memoization', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const appPath = join(testDir, '..', 'sidecars', 'monitor_pane', 'app.js');
+  const appSource = readFileSync(appPath, 'utf-8');
+
+  const iifeCloseIdx = appSource.lastIndexOf('})();');
+  assert.ok(iifeCloseIdx > 0, 'app.js must end with IIFE closing })();');
+
+  const instrumentedSource =
+    appSource.slice(0, iifeCloseIdx) +
+    `\n  globalThis.__tmExports = {\n` +
+    `    state,\n` +
+    `    rollingMetricMemory,\n` +
+    `    barMetricMemory,\n` +
+    `    resetCardRenderSigs,\n` +
+    `    renderRollingText,\n` +
+    `    renderSpeedCard,\n` +
+    `    renderCostCard,\n` +
+    `    renderContextCard,\n` +
+    `    renderCacheCard,\n` +
+    `    renderChildrenAndModelsCard,\n` +
+    `    renderGlobalTab,\n` +
+    `  };\n` +
+    appSource.slice(iifeCloseIdx);
+
+  // Minimal fake DOM supporting parent/child tracking, className/classList sync, and isConnected
+  class FakeNode {
+    constructor() {
+      this.parentNode = null;
+      this.childNodes = [];
+    }
+  }
+
+  class FakeTextNode extends FakeNode {
+    constructor(text) {
+      super();
+      this.nodeType = 3;
+      this._text = String(text ?? '');
+    }
+    get textContent() {
+      return this._text;
+    }
+    set textContent(v) {
+      this._text = String(v ?? '');
+    }
+  }
+
+  let fakeDocument = null;
+
+  class FakeElement extends FakeNode {
+    constructor(tagName, namespaceURI = 'http://www.w3.org/1999/xhtml') {
+      super();
+      this.nodeType = 1;
+      this.tagName = String(tagName || 'div').toUpperCase();
+      this.namespaceURI = namespaceURI;
+      this._classSet = new Set();
+      this.attributes = new Map();
+      this.listeners = new Map();
+      this.dataset = {};
+      this.title = '';
+      this.type = '';
+      this.role = '';
+      this.value = '';
+      this.tabIndex = 0;
+      this.lang = '';
+      this.scrollLeft = 0;
+      this.scrollWidth = 0;
+      this.clientWidth = 0;
+      this.style = {
+        cssText: '',
+        setProperty(name, val) {
+          this[name] = String(val);
+        },
+        getPropertyValue(name) {
+          return this[name] ?? '';
+        },
+      };
+      this.classList = {
+        add: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.add(part);
+            }
+          }
+        },
+        remove: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.delete(part);
+            }
+          }
+        },
+        contains: (tok) => this._classSet.has(String(tok || '')),
+        toggle: (tok, force) => {
+          const key = String(tok || '');
+          const shouldAdd = force === undefined ? !this._classSet.has(key) : Boolean(force);
+          if (shouldAdd) this._classSet.add(key);
+          else this._classSet.delete(key);
+          return shouldAdd;
+        },
+      };
+    }
+
+    get className() {
+      return [...this._classSet].join(' ');
+    }
+    set className(val) {
+      this._classSet.clear();
+      for (const part of String(val || '').trim().split(/\s+/)) {
+        if (part) this._classSet.add(part);
+      }
+    }
+
+    get children() {
+      return this.childNodes.filter((n) => n instanceof FakeElement);
+    }
+    get childElementCount() {
+      return this.children.length;
+    }
+    get parentElement() {
+      return this.parentNode instanceof FakeElement ? this.parentNode : null;
+    }
+    get isConnected() {
+      let cur = this;
+      while (cur) {
+        if (cur === fakeDocument || cur === fakeDocument?.documentElement || cur === fakeDocument?.body) {
+          return true;
+        }
+        cur = cur.parentNode;
+      }
+      return false;
+    }
+
+    get textContent() {
+      return this.childNodes.map((n) => n.textContent).join('');
+    }
+    set textContent(val) {
+      for (const c of this.childNodes) c.parentNode = null;
+      this.childNodes = [];
+      const str = val === null || val === undefined ? '' : String(val);
+      if (str !== '') {
+        this.appendChild(new FakeTextNode(str));
+      }
+    }
+
+    setAttribute(name, val) {
+      const k = String(name);
+      const v = String(val);
+      if (k === 'class') {
+        this.className = v;
+        return;
+      }
+      if (k === 'title') this.title = v;
+      this.attributes.set(k, v);
+    }
+    getAttribute(name) {
+      const k = String(name);
+      if (k === 'class') return this.className;
+      return this.attributes.has(k) ? this.attributes.get(k) : null;
+    }
+    hasAttribute(name) {
+      const k = String(name);
+      if (k === 'class') return this._classSet.size > 0;
+      return this.attributes.has(k);
+    }
+    removeAttribute(name) {
+      const k = String(name);
+      if (k === 'class') {
+        this.className = '';
+        return;
+      }
+      this.attributes.delete(k);
+    }
+
+    appendChild(child) {
+      if (child.parentNode && child.parentNode !== this) {
+        const idx = child.parentNode.childNodes.indexOf(child);
+        if (idx >= 0) child.parentNode.childNodes.splice(idx, 1);
+      } else if (child.parentNode === this) {
+        const idx = this.childNodes.indexOf(child);
+        if (idx >= 0) this.childNodes.splice(idx, 1);
+      }
+      child.parentNode = this;
+      this.childNodes.push(child);
+      return child;
+    }
+
+    remove() {
+      if (this.parentNode) {
+        const idx = this.parentNode.childNodes.indexOf(this);
+        if (idx >= 0) this.parentNode.childNodes.splice(idx, 1);
+        this.parentNode = null;
+      }
+    }
+
+    replaceChildren(...nodes) {
+      for (const oldChild of this.childNodes) {
+        oldChild.parentNode = null;
+      }
+      this.childNodes = [];
+      for (const n of nodes) {
+        if (n === null || n === undefined) continue;
+        this.appendChild(typeof n === 'string' ? new FakeTextNode(n) : n);
+      }
+    }
+
+    addEventListener(type, fn) {
+      if (!this.listeners.has(type)) this.listeners.set(type, []);
+      this.listeners.get(type).push(fn);
+    }
+
+    querySelectorAll(selector) {
+      const results = [];
+      const visit = (node) => {
+        for (const child of node.children) {
+          if (selector.startsWith('.')) {
+            const required = selector.slice(1).split('.').filter(Boolean);
+            if (required.every((cls) => child.classList.contains(cls))) {
+              results.push(child);
+            }
+          } else if (selector.startsWith('#')) {
+            if (child.getAttribute('id') === selector.slice(1)) {
+              results.push(child);
+            }
+          }
+          visit(child);
+        }
+      };
+      visit(this);
+      return results;
+    }
+
+    querySelector(selector) {
+      return this.querySelectorAll(selector)[0] || null;
+    }
+  }
+
+  const elementsById = new Map();
+  const rootHtml = new FakeElement('html');
+  const rootBody = new FakeElement('body');
+  rootHtml.appendChild(rootBody);
+
+  fakeDocument = {
+    readyState: 'loading',
+    hidden: false,
+    documentElement: rootHtml,
+    body: rootBody,
+    createElement: (tag) => new FakeElement(tag),
+    createElementNS: (ns, tag) => new FakeElement(tag, ns),
+    createTextNode: (text) => new FakeTextNode(text),
+    getElementById(id) {
+      const key = String(id);
+      if (!elementsById.has(key)) {
+        const elem = new FakeElement('div');
+        elem.setAttribute('id', key);
+        rootBody.appendChild(elem);
+        elementsById.set(key, elem);
+      }
+      return elementsById.get(key);
+    },
+    querySelectorAll: () => [],
+    addEventListener: () => {},
+  };
+
+  let nextTimerId = 1;
+  const pendingTimeouts = new Map();
+  const fakeSetTimeout = (fn, ms = 0) => {
+    const id = nextTimerId++;
+    pendingTimeouts.set(id, { id, fn, ms: Number(ms) || 0 });
+    return id;
+  };
+  const fakeClearTimeout = (id) => {
+    pendingTimeouts.delete(id);
+  };
+  const flushTimeouts = (maxDelayMs = Infinity) => {
+    for (const [id, entry] of [...pendingTimeouts.entries()]) {
+      if (entry.ms <= maxDelayMs) {
+        pendingTimeouts.delete(id);
+        entry.fn();
+      }
+    }
+  };
+
+  const sandbox = {
+    Node: FakeNode,
+    document: fakeDocument,
+    window: {
+      addEventListener: () => {},
+      matchMedia: () => ({ matches: false }),
+      sidecar: { conversationId: 'conv-vm-root' },
+      location: { reload: () => {} },
+    },
+    navigator: { clipboard: { writeText: async () => {} } },
+    MutationObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+    getComputedStyle: () => ({ color: 'rgb(246, 247, 249)' }),
+    AbortController,
+    fetch: async () => ({ ok: true, status: 200, json: async () => ({ ok: true }) }),
+    requestAnimationFrame: (cb) => fakeSetTimeout(cb, 16),
+    setTimeout: fakeSetTimeout,
+    clearTimeout: fakeClearTimeout,
+    setInterval: () => nextTimerId++,
+    clearInterval: () => {},
+    console,
+    URLSearchParams,
+    Intl,
+  };
+  sandbox.globalThis = sandbox;
+
+  vm.runInNewContext(instrumentedSource, sandbox);
+  const exports = sandbox.__tmExports;
+  assert.ok(exports, 'VM execution must expose __tmExports');
+
+  // 1. Equal-length update ('USD 133.4947' -> 'USD 133.5120')
+  const rollHost = fakeDocument.getElementById('vm-roll-host');
+  const firstCostRoll = exports.renderRollingText('cur:cost:hero', 'USD 133.4947', 133.4947, {
+    className: 'hero-value',
+  });
+  assert.equal(firstCostRoll.classList.contains('roll-val'), true);
+  assert.equal(firstCostRoll.textContent, 'USD 133.4947');
+
+  const secondCostRoll = exports.renderRollingText('cur:cost:hero', 'USD 133.5120', 133.512, {
+    className: 'hero-value',
+  });
+  rollHost.replaceChildren(secondCostRoll);
+  assert.equal(secondCostRoll.isConnected, true);
+  assert.equal(secondCostRoll.classList.contains('hero-value'), true);
+  assert.equal(secondCostRoll.classList.contains('roll-val'), true);
+  assert.equal(secondCostRoll.classList.contains('is-up'), true);
+  assert.equal(secondCostRoll.children.length, 12);
+
+  const staticChildren = secondCostRoll.children.filter((c) => c.classList.contains('roll-static'));
+  const colChildren = secondCostRoll.children.filter((c) => c.classList.contains('roll-col'));
+  assert.deepEqual(
+    staticChildren.map((c) => c.textContent),
+    ['U', 'S', 'D', ' ', '1', '3', '3', '.'],
+  );
+  assert.equal(colChildren.length, 4);
+  assert.equal(colChildren.some((c) => c.classList.contains('is-whole')), false);
+  assert.deepEqual(
+    colChildren.map((c) => [c.querySelector('.roll-old')?.textContent, c.querySelector('.roll-new')?.textContent]),
+    [
+      ['4', '5'],
+      ['9', '1'],
+      ['4', '2'],
+      ['7', '0'],
+    ],
+  );
+  assert.deepEqual(
+    colChildren.map((c) => c.style['--roll-delay']),
+    ['0ms', '14ms', '28ms', '42ms'],
+  );
+
+  // After cleanup timer fires (~410ms), roll-val MUST remain (0 display-mode flip!)
+  flushTimeouts(410);
+  assert.equal(secondCostRoll.classList.contains('roll-val'), true);
+  assert.equal(secondCostRoll.classList.contains('is-up'), false);
+  assert.equal(secondCostRoll.classList.contains('is-down'), false);
+  assert.equal(secondCostRoll.getAttribute('aria-label'), null);
+  assert.equal(secondCostRoll.textContent, 'USD 133.5120');
+  assert.equal(secondCostRoll.children.length, 0);
+
+  // 2. Different-length unit switch ('2.69B' -> '2,688,473,661')
+  const firstTokRoll = exports.renderRollingText('glb:kpi:tokens', '2.69B', 2688473661, {
+    className: 'kpi-val',
+  });
+  assert.equal(firstTokRoll.classList.contains('roll-val'), true);
+
+  const secondTokRoll = exports.renderRollingText('glb:kpi:tokens', '2,688,473,661', 2688473661, {
+    className: 'kpi-val',
+  });
+  rollHost.replaceChildren(secondTokRoll);
+  assert.equal(secondTokRoll.classList.contains('roll-val'), true);
+  assert.equal(secondTokRoll.querySelectorAll('.roll-static').length, 0, 'Must NOT slice partial "2" prefix');
+  assert.equal(secondTokRoll.children.length, 1);
+  const wholeCol = secondTokRoll.children[0];
+  assert.equal(wholeCol.classList.contains('roll-col'), true);
+  assert.equal(wholeCol.classList.contains('is-whole'), true);
+  assert.equal(wholeCol.querySelector('.roll-old')?.textContent, '2.69B');
+  assert.equal(wholeCol.querySelector('.roll-new')?.textContent, '2,688,473,661');
+
+  flushTimeouts(410);
+  assert.equal(secondTokRoll.classList.contains('roll-val'), true);
+  assert.equal(secondTokRoll.textContent, '2,688,473,661');
+
+  // Verify alignEnd adds .is-end without leaking an alignEnd HTML attribute
+  exports.renderRollingText('cur:speed:steps', '10 steps', 10, { className: 'muted-hint', alignEnd: true });
+  const endStepRoll = exports.renderRollingText('cur:speed:steps', '100 steps', 100, {
+    className: 'muted-hint',
+    alignEnd: true,
+  });
+  rollHost.replaceChildren(endStepRoll);
+  assert.equal(endStepRoll.hasAttribute('alignEnd'), false);
+  assert.equal(endStepRoll.hasAttribute('alignend'), false);
+  assert.equal(endStepRoll.children.length, 1);
+  assert.equal(endStepRoll.children[0].classList.contains('is-whole'), true);
+  assert.equal(endStepRoll.children[0].classList.contains('is-end'), true);
+  flushTimeouts(410);
+
+  // 3. Per-card memoization: calling renderSpeedCard & renderCostCard (plus remaining Tab 1 cards)
+  // twice with identical data preserves exact child DOM node object references
+  const baseCurrent = {
+    conversationId: 'conv-vm-1',
+    title: 'Zero CLS Demo',
+    workspace: 'f:/Other Items/agy-token-monitor',
+    isChildSession: false,
+    speed: {
+      measuredStepsCount: 2,
+      latestStepTokPerSec: 88.4,
+      weightedAvgTokPerSec: 79.2,
+      peakTokPerSec: 94.1,
+      latestStepOutputTokens: 420,
+      latestStepDurationSec: 4.75,
+      recentSteps: [
+        { stepIndex: 6, tokPerSec: 70.0, outputTokens: 350, durationSec: 5.0, model: 'gemini-3-8-flash' },
+        { stepIndex: 7, tokPerSec: 88.4, outputTokens: 420, durationSec: 4.75, model: 'gemini-3-8-flash' },
+      ],
+    },
+    totals: {
+      withChildren: {
+        costActual: 1.2345,
+        totalTokens: 150000,
+        stepsCount: 12,
+        cacheHitRatePct: 68.5,
+        outputTokens: 4500,
+        cacheReadTokens: 100000,
+        inputUncachedTokens: 45500,
+      },
+      mainOnly: {
+        costActual: 1.2345,
+        totalTokens: 150000,
+        stepsCount: 12,
+        cacheHitRatePct: 68.5,
+        outputTokens: 4500,
+        cacheReadTokens: 100000,
+        inputUncachedTokens: 45500,
+      },
+      byModel: [
+        {
+          model: 'gemini-3-8-flash',
+          profileId: 'gemini-3-8-flash',
+          profileLabel: 'Gemini 3.8 Flash',
+          rateDisplay: '$0.1/$1',
+          stepsCount: 12,
+          inputUncachedTokens: 45500,
+          cacheReadTokens: 100000,
+          outputTokens: 4500,
+          totalTokens: 150000,
+          costActual: 1.2345,
+        },
+      ],
+    },
+    context: {
+      currentTotal: 120000,
+      softLimit: 400000,
+      hardLimit: 500000,
+      hardUsagePct: 24.0,
+      softUsagePct: 30.0,
+      usageLevel: 'HEALTHY',
+      compactedPendingTurn: false,
+      latestCacheRead: 100000,
+      latestInputUncached: 45500,
+      latestCacheHitRatePct: 68.7,
+      latestNetDelta: 1500,
+      topSpikes: [{ stepIndex: 7, deltaTokens: 1500, totalAfter: 120000, triggerSummary: 'Read logs' }],
+    },
+    children: [],
+  };
+  const basePrefs = { currency: 'USD', cnyRate: 7.2 };
+
+  exports.resetCardRenderSigs();
+  exports.renderSpeedCard(baseCurrent);
+  exports.renderCostCard(baseCurrent, basePrefs);
+  exports.renderContextCard(baseCurrent);
+  exports.renderCacheCard(baseCurrent);
+  exports.renderChildrenAndModelsCard(baseCurrent, basePrefs);
+
+  const speedCard = fakeDocument.getElementById('card-speed');
+  const costCard = fakeDocument.getElementById('card-cost');
+  const contextCard = fakeDocument.getElementById('card-context');
+  const cacheCard = fakeDocument.getElementById('card-cache');
+  const modelsCard = fakeDocument.getElementById('card-children-models');
+
+  assert.equal(speedCard.querySelectorAll('.sub-stats-speed').length, 1);
+  assert.equal(speedCard.querySelectorAll('.sub-stats-line').length, 2);
+  assert.equal(costCard.querySelectorAll('.sub-stats.is-single-line').length, 1);
+  assert.equal(exports.barMetricMemory.has('cur:spark:step:7'), true);
+  assert.equal(exports.barMetricMemory.has('cur:spark:0'), false);
+
+  const speedChildrenBefore = [...speedCard.children];
+  const costChildrenBefore = [...costCard.children];
+  const contextChildrenBefore = [...contextCard.children];
+  const cacheChildrenBefore = [...cacheCard.children];
+  const modelsChildrenBefore = [...modelsCard.children];
+  assert.ok(speedChildrenBefore.length > 0 && costChildrenBefore.length > 0);
+
+  // Re-render with deep-cloned identical data -> exact child DOM node identity must be preserved
+  const clonedCurrent = JSON.parse(JSON.stringify(baseCurrent));
+  const clonedPrefs = JSON.parse(JSON.stringify(basePrefs));
+  exports.renderSpeedCard(clonedCurrent);
+  exports.renderCostCard(clonedCurrent, clonedPrefs);
+  exports.renderContextCard(clonedCurrent);
+  exports.renderCacheCard(clonedCurrent);
+  exports.renderChildrenAndModelsCard(clonedCurrent, clonedPrefs);
+
+  assert.equal(speedCard.children.length, speedChildrenBefore.length);
+  for (let i = 0; i < speedChildrenBefore.length; i += 1) {
+    assert.strictEqual(speedCard.children[i], speedChildrenBefore[i], `speedCard child[${i}] rebuilt unnecessarily`);
+  }
+  assert.equal(costCard.children.length, costChildrenBefore.length);
+  for (let i = 0; i < costChildrenBefore.length; i += 1) {
+    assert.strictEqual(costCard.children[i], costChildrenBefore[i], `costCard child[${i}] rebuilt unnecessarily`);
+  }
+  for (let i = 0; i < contextChildrenBefore.length; i += 1) {
+    assert.strictEqual(contextCard.children[i], contextChildrenBefore[i]);
+  }
+  for (let i = 0; i < cacheChildrenBefore.length; i += 1) {
+    assert.strictEqual(cacheCard.children[i], cacheChildrenBefore[i]);
+  }
+  for (let i = 0; i < modelsChildrenBefore.length; i += 1) {
+    assert.strictEqual(modelsCard.children[i], modelsChildrenBefore[i]);
+  }
+
+  // Invalidating signatures forces fresh DOM rebuild on next render
+  exports.resetCardRenderSigs();
+  exports.renderSpeedCard(clonedCurrent);
+  exports.renderCostCard(clonedCurrent, clonedPrefs);
+  assert.notStrictEqual(speedCard.children[0], speedChildrenBefore[0]);
+  assert.notStrictEqual(costCard.children[0], costChildrenBefore[0]);
+
+  // Verify Tab 2 two-line KPI sub-stats (.kpi-sub-stack / .kpi-sub-line)
+  exports.renderGlobalTab({
+    prefs: basePrefs,
+    current: baseCurrent,
+    global: {
+      todayDate: '2026-11-17',
+      periods: {
+        today: {
+          rangeKey: 'today',
+          startDate: '2026-11-17',
+          endDate: '2026-11-17',
+          spanDaysCount: 1,
+          activeDaysCount: 1,
+          conversationsCount: 5,
+          archivedConversationsCount: 2,
+          stepsCount: 30,
+          inputTokens: 45500,
+          cacheReadTokens: 100000,
+          outputTokens: 4500,
+          totalTokens: 150000,
+          cacheHitRatePct: 68.7,
+          costActual: 1.2345,
+          avgDailyCost: 1.2345,
+          avgDailyTokens: 150000,
+          trendGranularity: 'hour',
+          series: [],
+          byModel: [],
+          topConversations: [],
+          subscription: null,
+        },
+      },
+      recentConversations: [],
+    },
+  });
+  const globalContent = fakeDocument.getElementById('global-content');
+  assert.ok(globalContent.querySelectorAll('.kpi-sub-stack').length >= 4);
+  const subLineTexts = globalContent.querySelectorAll('.kpi-sub-line').map((n) => n.textContent);
+  assert.equal(subLineTexts.includes('活跃 1 天'), true);
+  assert.equal(subLineTexts.includes('含 2 已归档'), true);
+  assert.equal(subLineTexts.includes('日均 150.0k'), true);
+  assert.equal(subLineTexts.includes('Out 4.5k'), true);
+
+  pendingTimeouts.clear();
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:14:47
 // ============================================================================

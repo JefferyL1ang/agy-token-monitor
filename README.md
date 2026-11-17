@@ -23,12 +23,12 @@
   - Syncs model lists, token pricing, and `USD / CNY` exchange rates once per day when opened (`ai.google.dev`, `models.dev`, and ECB reference FX rates), caching results locally with a `↻ Sync Now` button and offline fallback.
   - Custom per-model price edits (`*`) and manual FX rate locks always take priority over auto-synced defaults, and clicking any row in the rate table loads that model for quick editing.
 - **Multi-Period Usage Analytics**:
-  - Aggregates usage across **Today** (24-hour bars), **7 Days**, **30 Days**, and **All Time** in horizontally scrollable, mouse-draggable trend charts with a compact left Y-axis and clickable **Total** / **Cost** sorting in the model breakdown table.
+  - Aggregates usage across **Today** (24-hour bars), **7 Days**, **30 Days**, and **All Time** with two-line KPI summaries (active days / archived sessions and daily average / output tokens) in horizontally scrollable, mouse-draggable trend charts with a compact left Y-axis and clickable **Total** / **Cost** sorting in the model breakdown table.
   - Deduplicates forked, branched, and rewound conversations so inherited history is never double-counted.
 - **Bilingual UI & Flexible Token Units**:
   - Switch between **English** and **Chinese** (`EN / 中`) in one click from the top bar.
   - Choose between `K / M / B`, `万 / 亿`, exact integers (`1,234,567`), or fixed `M` token units.
-  - Live metric numbers and progress/trend bars update with smooth per-digit slot-roll transitions (respecting `prefers-reduced-motion` and snapping immediately when switching language or conversations).
+  - Live metric numbers and progress/trend bars update with zero-layout-shift transitions (inline-grid per-digit slot rolling for matching lengths, whole-value swaps on unit or digit-count changes, fixed-row cards with per-card memoization, respecting `prefers-reduced-motion` and snapping immediately when switching language or conversations).
 - **In-Panel Release Update Check & Hot Update**:
   - Checks GitHub Releases automatically on startup and every 4 hours (with manual check in Settings), and lets you preview release notes directly in the panel.
   - Supports one-click hot update with SHA-256 verification while keeping local settings and usage history intact, or skipping the current version until the next release.
@@ -37,7 +37,7 @@
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.2.6.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.2.7.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -121,12 +121,12 @@ node --test tests/parser.test.mjs
   - 每天首次打开面板时自动同步现役模型单价与实时 `USD / CNY` 汇率（`ai.google.dev`、`models.dev` 及欧洲央行参考汇率），支持离线缓存回退与 **`↻ 立即同步`** 按钮。
   - 手动修改过的模型单价（带 `*` 标记）与手动固定汇率始终优先于自动同步值；展开下方费率表后可直接点击任意模型行切换编辑。
 - **多周期历史统计与分支去重**：
-  - 支持查看 **今日**（24 小时分时）、**近 7 天**、**近 30 天** 与 **全部历史** 用量趋势，柱状图左侧固定显示紧凑 Y 轴刻度并支持鼠标按住横向拖动与滚轮横滑；周期模型明细表同样支持点击 **总计 / 费用** 列头排序。
+  - 支持查看 **今日**（24 小时分时）、**近 7 天**、**近 30 天** 与 **全部历史** 用量趋势，概览 KPI 采用双行摘要展示（含已归档会话数与日均/输出用量），柱状图左侧固定显示紧凑 Y 轴刻度并支持鼠标按住横向拖动与滚轮横滑；周期模型明细表同样支持点击 **总计 / 费用** 列头排序。
   - 自动识别分支（Fork）、并行对比及回退重生的会话，避免继承的历史步骤被重复计费。
 - **中英双语切换与多种 Token 单位**：
   - 顶部栏设置按钮旁支持一键切换 **中文 / 英文**（`EN / 中`）。
   - 支持 `K / M / B`、`万 / 亿`、精确整数（`1,234,567`）和固定 `M` 四种 Token 显示单位。
-  - 指标数值与进度条、柱状图更新时采用平滑逐位滚动过渡（遵循系统 `prefers-reduced-motion` 设置，切换语言或会话时直接刷新）。
+  - 指标数值与进度条、柱状图更新时采用零布局抖动平滑过渡（同位数采用内联网格逐位滚动，跨单位或位数变化时整值平滑替换，固定行高卡片配合按卡缓存避免无变化重绘；遵循系统 `prefers-reduced-motion` 设置，切换语言或会话时直接刷新）。
 - **内置版本检测与一键热更新**：
   - 启动时及每 4 小时自动检测 GitHub Releases 新版本（也可在设置中手动检查），支持在面板内直接预览更新说明。
   - 支持经 SHA-256 校验的一键热更新，更新过程完整保留本地配置与历史用量记录；也可选择跳过当前版本，直到下个新版本发布再提醒。
@@ -135,7 +135,7 @@ node --test tests/parser.test.mjs
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.6.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.7.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 

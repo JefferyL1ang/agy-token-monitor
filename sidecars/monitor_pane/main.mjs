@@ -99,12 +99,12 @@ function readPluginVersion(rootDir) {
     // Fallback to default version below.
   }
 // ============================================================================
-// [MODIFIED BEGIN] 2026-11-17 21:28:27
-// Description: Update fallback plugin version string to 0.2.6.
+// [MODIFIED BEGIN] 2026-11-17 22:04:31
+// Description: Update fallback plugin version string to 0.2.7.
 // ============================================================================
-  return '0.2.6';
+  return '0.2.7';
 // ============================================================================
-// [MODIFIED END] 2026-11-17 21:28:27
+// [MODIFIED END] 2026-11-17 22:04:31
 // ============================================================================
 }
 

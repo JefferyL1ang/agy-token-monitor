@@ -180,10 +180,15 @@ button {
   gap: 8px;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 22:06:37
+Description: Lock header pills to a single non-wrapping line and bound model pill width to prevent header height jumps (CLS = 0).
+============================================================================ */
 .header-pills {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
   gap: 6px;
   min-width: 0;
   flex: 1 1 auto;
@@ -192,6 +197,7 @@ button {
 .status-pill {
   display: inline-flex;
   align-items: center;
+  flex: 0 1 auto;
   gap: 6px;
   max-width: 100%;
   min-width: 0;
@@ -203,6 +209,9 @@ button {
   white-space: nowrap;
   overflow: hidden;
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-17 22:06:37
+============================================================================ */
 
 .status-text {
   overflow: hidden;
@@ -260,11 +269,16 @@ button {
   }
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 22:06:37
+Description: Constrain .model-pill to max-width 48% with flex shrink and hidden overflow so .header-pills never wraps.
+============================================================================ */
 .model-pill {
   display: inline-flex;
   align-items: center;
+  flex: 0 1 auto;
   gap: 5px;
-  max-width: 100%;
+  max-width: 48%;
   min-width: 0;
   padding: 4px 8px;
   border-radius: var(--r-pill);
@@ -273,7 +287,11 @@ button {
   font-size: 11.5px;
   font-weight: 500;
   color: var(--tm-fg);
+  overflow: hidden;
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-17 22:06:37
+============================================================================ */
 
 .model-dot {
   width: 6px;
@@ -711,17 +729,36 @@ Description: Style read-only auto-synced FX rate input cleanly.
   flex: none;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 22:06:37
+Description: Lock Tab 1 card headers, conversation strip, hero value row, and sub-stats rows to fixed single-line heights for CLS = 0.
+============================================================================ */
+@media (min-width: 350px) {
+  .card-head {
+    flex-wrap: nowrap;
+  }
+  .card-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
 .conv-strip {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
   padding: 2px 2px 0;
   font-size: 11.5px;
 }
 
 .conv-title {
+  flex: 1 1 auto;
+  min-width: 0;
   font-weight: 600;
   color: var(--tm-fg);
   overflow: hidden;
@@ -731,13 +768,14 @@ Description: Style read-only auto-synced FX rate input cleanly.
 }
 
 .conv-workspace {
+  flex: 0 0 auto;
   color: var(--tm-muted-fg);
   font-family: var(--tm-mono);
   font-size: 11px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;
+  max-width: 42%;
 }
 
 .hero-grid {
@@ -750,7 +788,10 @@ Description: Style read-only auto-synced FX rate input cleanly.
 .hero-value-row {
   display: flex;
   align-items: baseline;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  white-space: nowrap;
+  min-height: 29px;
   gap: 6px;
   margin-bottom: 8px;
 }
@@ -777,10 +818,44 @@ Description: Style read-only auto-synced FX rate input cleanly.
   margin-bottom: 10px;
 }
 
-.sub-stat strong {
+.sub-stats.is-single-line {
+  flex-wrap: nowrap;
+  align-items: baseline;
+  height: 18px;
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sub-stats-speed {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--tm-muted-fg);
+  margin-bottom: 10px;
+}
+
+.sub-stats-line {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  height: 18px;
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sub-stat strong,
+.sub-stats strong,
+.sub-stats-speed strong {
   color: var(--tm-fg);
   font-weight: 600;
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-17 22:06:37
+============================================================================ */
 
 /* CSS Sparkline */
 .sparkline-wrap {
@@ -891,6 +966,10 @@ Description: Upgrade sparkline bar height transition to 320ms cubic-bezier easin
   gap: 6px;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 22:06:37
+Description: Lock mini-chip and mini-chip-val to single-line clipped geometry to eliminate height jumps.
+============================================================================ */
 .mini-chip {
   padding: 6px 8px;
   border-radius: var(--r-md);
@@ -900,6 +979,7 @@ Description: Upgrade sparkline bar height transition to 320ms cubic-bezier easin
   flex-direction: column;
   gap: 1px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .mini-chip-label {
@@ -913,7 +993,15 @@ Description: Upgrade sparkline bar height transition to 320ms cubic-bezier easin
 .mini-chip-val {
   font-size: 12.5px;
   font-weight: 700;
+  line-height: 18px;
+  min-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-17 22:06:37
+============================================================================ */
 
 /* ---------------- Context Usage Monitor Bar ---------------- */
 /* ============================================================================
@@ -1062,15 +1150,24 @@ Description: Upgrade context usage bar transitions to 320ms cubic-bezier easing.
   pointer-events: none;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 22:06:37
+Description: Prevent .ctx-scale-row from wrapping across lines on live token updates.
+============================================================================ */
 .ctx-scale-row {
   display: flex;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow: hidden;
   gap: 6px;
   font-size: 11px;
   color: var(--tm-muted-fg);
   margin-bottom: 9px;
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-17 22:06:37
+============================================================================ */
 
 .level-banner {
   padding: 7px 10px;
@@ -1466,9 +1563,13 @@ and stacked dual-chevron SVG indicators (.sort-chevron-svg / .is-lit / .is-dim).
 ============================================================================ */
 
 /* ---------------- Tab 2: Today & Recent ---------------- */
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 22:06:37
+Description: Widen Tab 2 KPI grid columns to 136px min, lock KPI tile/val clipping, and add two-line .kpi-sub-stack / .kpi-sub-line layout.
+============================================================================ */
 .kpi-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
   gap: 8px;
 }
 
@@ -1481,6 +1582,7 @@ and stacked dual-chevron SVG indicators (.sort-chevron-svg / .is-lit / .is-dim).
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .kpi-label {
@@ -1491,6 +1593,11 @@ and stacked dual-chevron SVG indicators (.sort-chevron-svg / .is-lit / .is-dim).
 .kpi-val {
   font-size: 15px;
   font-weight: 700;
+  line-height: 20px;
+  min-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kpi-sub {
@@ -1498,6 +1605,27 @@ and stacked dual-chevron SVG indicators (.sort-chevron-svg / .is-lit / .is-dim).
   color: var(--tm-emerald);
   font-weight: 600;
 }
+
+.kpi-sub-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.kpi-sub-line {
+  display: block;
+  font-size: 11px;
+  line-height: 15px;
+  min-height: 15px;
+  color: var(--tm-muted-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-17 22:06:37
+============================================================================ */
 
 .recent-list {
   display: flex;
@@ -2511,58 +2639,64 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
 [MODIFIED BEGIN] 2026-11-17 21:28:45
 Description: Add v0.2.6 per-digit slot-roll ticker styles with edge fade and reduced-motion support.
 ============================================================================ */
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 22:06:37
+Description: Replace position:absolute / inline-block slot-roll geometry with inline-flex .roll-val, true-baseline .roll-static, inline-grid .roll-col sharing grid-area 1/1, .is-whole/.is-end alignment, and exact 100% keyframe travel.
+============================================================================ */
 .roll-val {
-  display: inline;
+  display: inline-flex;
+  align-items: baseline;
+  vertical-align: baseline;
   line-height: inherit;
+  max-width: 100%;
 }
 
 .roll-static {
-  display: inline;
+  display: inline-block;
   color: inherit;
   line-height: inherit;
+  white-space: pre;
 }
 
 .roll-col {
-  position: relative;
-  display: inline-block;
+  display: inline-grid;
+  align-items: baseline;
+  justify-items: center;
   vertical-align: baseline;
+  line-height: inherit;
   overflow: hidden;
   overflow: clip;
-  line-height: inherit;
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
 }
 
+.roll-col.is-whole,
+.roll-col.is-chunk {
+  justify-items: start;
+  max-width: 100%;
+}
+
+.roll-col.is-whole.is-end,
+.roll-col.is-chunk.is-end {
+  justify-items: end;
+}
+
 .roll-old,
 .roll-new {
+  grid-area: 1 / 1;
   display: block;
   color: inherit;
   line-height: inherit;
+  white-space: nowrap;
   will-change: transform, opacity;
 }
 
 .roll-old {
-  position: absolute;
-  left: 0;
-  top: 0;
   pointer-events: none;
 }
 
 .roll-new:empty::before {
   content: '\200b';
-}
-
-.roll-col.is-chunk .roll-old {
-  position: absolute;
-  left: auto;
-  right: 0;
-  top: 0;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.roll-col.is-chunk .roll-new {
-  white-space: nowrap;
 }
 
 .roll-val.is-up .roll-old {
@@ -2587,14 +2721,14 @@ Description: Add v0.2.6 per-digit slot-roll ticker styles with edge fade and red
     opacity: 1;
   }
   100% {
-    transform: translateY(-105%);
+    transform: translateY(-100%);
     opacity: 0;
   }
 }
 
 @keyframes tm-roll-in-up {
   0% {
-    transform: translateY(105%);
+    transform: translateY(100%);
     opacity: 0;
   }
   100% {
@@ -2609,14 +2743,14 @@ Description: Add v0.2.6 per-digit slot-roll ticker styles with edge fade and red
     opacity: 1;
   }
   100% {
-    transform: translateY(105%);
+    transform: translateY(100%);
     opacity: 0;
   }
 }
 
 @keyframes tm-roll-in-down {
   0% {
-    transform: translateY(-105%);
+    transform: translateY(-100%);
     opacity: 0;
   }
   100% {
@@ -2624,6 +2758,9 @@ Description: Add v0.2.6 per-digit slot-roll ticker styles with edge fade and red
     opacity: 1;
   }
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-17 22:06:37
+============================================================================ */
 
 @media (prefers-reduced-motion: reduce) {
   .roll-old,

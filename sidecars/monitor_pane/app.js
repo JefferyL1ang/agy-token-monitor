@@ -141,6 +141,20 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 21:28:45
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Track per-card dirty signatures for Tab 1 DOM memoization (CLS = 0).
+// ============================================================================
+    cardRenderSigs: {
+      speed: '',
+      cost: '',
+      context: '',
+      cache: '',
+      childrenModels: '',
+    },
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
   };
 
   const I18N = {
@@ -298,8 +312,19 @@
       'global.kpiSessions': '涉及会话',
       'global.activeWithArchived': '活跃 {active} 天 · 含 {archived} 已归档',
       'global.activeDays': '活跃 {active} / {span} 天',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Add symmetric two-line Tab 2 KPI sub-stat I18N keys (zh).
+// ============================================================================
+      'global.activeDaysLine': '活跃 {active} 天',
+      'global.archivedLine': '含 {archived} 已归档',
       'global.kpiTotalTokens': '总吞吐 Tokens',
       'global.avgOutSub': '日均 {avg} · Out {out}',
+      'global.avgSubLine': '日均 {avg}',
+      'global.outSubLine': 'Out {out}',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
       'global.kpiCacheHit': '缓存命中率',
       'global.uncachedSub': '新输入 {input}',
       'global.kpiEstCost': 'API 等效总计',
@@ -636,8 +661,19 @@
       'global.kpiSessions': 'Sessions',
       'global.activeWithArchived': 'Active {active}d · {archived} archived',
       'global.activeDays': 'Active {active} / {span} d',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Add symmetric two-line Tab 2 KPI sub-stat I18N keys (en).
+// ============================================================================
+      'global.activeDaysLine': 'Active {active}d',
+      'global.archivedLine': '{archived} archived',
       'global.kpiTotalTokens': 'Total Tokens',
       'global.avgOutSub': 'Avg/d {avg} · Out {out}',
+      'global.avgSubLine': 'Avg/d {avg}',
+      'global.outSubLine': 'Out {out}',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
       'global.kpiCacheHit': 'Cache Hit',
       'global.uncachedSub': 'Uncached {input}',
       'global.kpiEstCost': 'Est. API Cost',
@@ -1034,6 +1070,18 @@
     map.set(key, value);
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Add resetCardRenderSigs() helper and reset card render signatures inside clearCurrentSessionMotionMemory().
+// ============================================================================
+  function resetCardRenderSigs() {
+    state.cardRenderSigs.speed = '';
+    state.cardRenderSigs.cost = '';
+    state.cardRenderSigs.context = '';
+    state.cardRenderSigs.cache = '';
+    state.cardRenderSigs.childrenModels = '';
+  }
+
   function clearCurrentSessionMotionMemory() {
     for (const key of rollingMetricMemory.keys()) {
       if (key.startsWith('cur:')) rollingMetricMemory.delete(key);
@@ -1041,7 +1089,11 @@
     for (const key of barMetricMemory.keys()) {
       if (key.startsWith('cur:')) barMetricMemory.delete(key);
     }
+    resetCardRenderSigs();
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
 
   function shouldAnimateMetrics() {
     return (
@@ -1095,6 +1147,10 @@
     return Number.isFinite(n) ? n : null;
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Keep .roll-val class constant at rest/animation/cleanup, roll per-character only on equal-length <=18 transitions, and use whole-value .roll-col.is-whole (with optional .is-end) on length changes without partial prefix slicing.
+// ============================================================================
   function renderRollingText(metricKey, nextText, rawNumVal = null, props = null) {
     const str = String(nextText ?? '');
     const prev = rollingMetricMemory.get(metricKey);
@@ -1104,16 +1160,27 @@
         : parseLeadingMetricNumber(str);
     setBoundedMotionMemory(rollingMetricMemory, metricKey, { text: str, numVal });
 
+    const alignEnd = Boolean(props?.alignEnd);
     const baseProps = {};
     if (props && typeof props === 'object') {
       for (const [k, v] of Object.entries(props)) {
-        if (k === 'textContent') continue;
+        if (k === 'textContent' || k === 'alignEnd') continue;
         baseProps[k] = v;
       }
     }
+    const existingClass = baseProps.className ? String(baseProps.className).trim() : '';
+    const restClass = existingClass
+      ? (existingClass.split(/\s+/).includes('roll-val') ? existingClass : `${existingClass} roll-val`)
+      : 'roll-val';
 
     if (!prev || prev.text === str || !shouldAnimateMetrics()) {
-      return el('span', Object.keys(baseProps).length > 0 ? baseProps : null, str);
+      const restProps = {};
+      for (const [k, v] of Object.entries(baseProps)) {
+        if (k === 'className') continue;
+        restProps[k] = v;
+      }
+      restProps.className = restClass;
+      return el('span', restProps, str);
     }
 
     const isDown =
@@ -1123,57 +1190,58 @@
       Number.isFinite(prev.numVal) &&
       numVal < prev.numVal;
     const dir = isDown ? 'down' : 'up';
-    const { prefix, prevMid, nextMid, suffix } = splitRollingAffixes(prev.text, str);
 
     const animProps = {};
     for (const [k, v] of Object.entries(baseProps)) {
       if (k === 'className') continue;
       animProps[k] = v;
     }
-    const existingClass = baseProps.className ? String(baseProps.className).trim() : '';
-    animProps.className = existingClass ? `${existingClass} roll-val is-${dir}` : `roll-val is-${dir}`;
+    animProps.className = `${restClass} is-${dir}`;
     animProps['aria-label'] = str;
 
+    const prevChars = Array.from(prev.text);
+    const nextChars = Array.from(str);
     const children = [];
-    if (prefix) {
-      children.push(el('span', { className: 'roll-static', 'aria-hidden': 'true' }, prefix));
-    }
 
-    if (prevMid.length === nextMid.length && nextMid.length > 0 && nextMid.length <= 14) {
-      for (let i = 0; i < nextMid.length; i += 1) {
-        if (prevMid[i] === nextMid[i]) {
-          children.push(el('span', { className: 'roll-static', 'aria-hidden': 'true' }, nextMid[i]));
+    if (prevChars.length === nextChars.length && nextChars.length > 0 && nextChars.length <= 18) {
+      let changedIdx = 0;
+      for (let i = 0; i < nextChars.length; i += 1) {
+        if (prevChars[i] === nextChars[i]) {
+          children.push(el('span', { className: 'roll-static', 'aria-hidden': 'true' }, nextChars[i]));
         } else {
           children.push(
             el('span', {
               className: 'roll-col',
               'aria-hidden': 'true',
-              style: { '--roll-delay': `${Math.min(i * 14, 70)}ms` },
+              style: { '--roll-delay': `${Math.min(changedIdx * 14, 70)}ms` },
             },
-              el('span', { className: 'roll-old' }, prevMid[i]),
-              el('span', { className: 'roll-new' }, nextMid[i]),
+              el('span', { className: 'roll-old' }, prevChars[i]),
+              el('span', { className: 'roll-new' }, nextChars[i]),
             ),
           );
+          changedIdx += 1;
         }
       }
     } else {
       children.push(
-        el('span', { className: 'roll-col is-chunk', 'aria-hidden': 'true' },
-          el('span', { className: 'roll-old' }, prevMid.join('')),
-          el('span', { className: 'roll-new' }, nextMid.join('')),
+        el('span', {
+          className: `roll-col is-whole${alignEnd ? ' is-end' : ''}`,
+          'aria-hidden': 'true',
+        },
+          el('span', { className: 'roll-old' }, prev.text),
+          el('span', { className: 'roll-new' }, str),
         ),
       );
-    }
-
-    if (suffix) {
-      children.push(el('span', { className: 'roll-static', 'aria-hidden': 'true' }, suffix));
     }
 
     const wrapper = el('span', animProps, children);
     const hadAriaLabel = Object.prototype.hasOwnProperty.call(baseProps, 'aria-label');
     setTimeout(() => {
       if (wrapper.isConnected) {
-        wrapper.classList.remove('roll-val', 'is-up', 'is-down');
+        wrapper.classList.remove('is-up', 'is-down');
+        if (!String(wrapper.className || '').split(/\s+/).includes('roll-val')) {
+          wrapper.className = wrapper.className ? `${wrapper.className} roll-val` : 'roll-val';
+        }
         if (!hadAriaLabel) {
           wrapper.removeAttribute('aria-label');
         }
@@ -1182,6 +1250,9 @@
     }, 410);
     return wrapper;
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
 
   function applySmoothBarSize(node, barKey, cssProp, nextPct) {
     if (!node) return node;
@@ -2202,6 +2273,14 @@
         throw new Error(data?.error || t('settings.saveFailedDefault'));
       }
       state.tokenUnit = tokenUnit;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Reset Tab 1 card memoization signatures after saving settings.
+// ============================================================================
+      resetCardRenderSigs();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
       lastEtag = '';
       setDrawerOpen(false);
       showToast(t('settings.savedToast'));
@@ -3033,10 +3112,41 @@
       : '—';
 
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Add dirty-signature memoization in renderSpeedCard to skip unchanged DOM rebuilds.
+// ============================================================================
+    const sig = JSON.stringify([
+      state.lang,
+      current.conversationId || '',
+      num(speed.measuredStepsCount, 0),
+      num(speed.latestStepTokPerSec, 0),
+      num(speed.weightedAvgTokPerSec, 0),
+      num(speed.peakTokPerSec, 0),
+      outTok,
+      Number.isFinite(durSec) ? durSec : null,
+      recent.map((s, idx) => [
+        num(s?.stepIndex, idx),
+        num(s?.tokPerSec, 0),
+        num(s?.outputTokens, 0),
+        num(s?.durationSec, 0),
+        s?.model || '',
+      ]),
+    ]);
+    if (card.childElementCount > 0 && state.cardRenderSigs.speed === sig) return;
+    state.cardRenderSigs.speed = sig;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
+
+// ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 21:28:45
 // Description: Wire slot-roll text animations and smooth spark-bar height gliding
 // in renderSpeedCard, and isolate Subagent/Swarm Worker Equivalent Cost view +
 // rolling metrics in renderCostCard.
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Key sparkline bars by stable stepIndex, align header steps badge right, and lock Speed sub-stats to 2 fixed .sub-stats-line rows inside .sub-stats-speed.
 // ============================================================================
     const maxRate = recent.reduce((m, s) => Math.max(m, num(s.tokPerSec, 0)), 0);
     const sparkBars = recent.length > 0
@@ -3044,13 +3154,14 @@
           const r = num(s.tokPerSec, 0);
           const pct = maxRate > 0 ? Math.max(10, Math.round((r / maxRate) * 100)) : 12;
           const isLast = idx === recent.length - 1;
-          const tip = `#${num(s.stepIndex, idx)}: ${fmtRate(r)} tok/s (${fmtInt(s.outputTokens)} tok / ${num(s.durationSec, 0).toFixed(1)}s)${s.model ? ' · ' + s.model : ''}`;
+          const stepKey = num(s.stepIndex, idx);
+          const tip = `#${stepKey}: ${fmtRate(r)} tok/s (${fmtInt(s.outputTokens)} tok / ${num(s.durationSec, 0).toFixed(1)}s)${s.model ? ' · ' + s.model : ''}`;
           return applySmoothBarSize(
             el('span', {
               className: `spark-bar${isLast ? ' latest' : ''}`,
               title: tip,
             }),
-            `cur:spark:${idx}`,
+            `cur:spark:step:${stepKey}`,
             'height',
             pct,
           );
@@ -3067,7 +3178,7 @@
           'cur:speed:steps',
           t('speed.measuredSteps', { count: fmtInt(speed.measuredStepsCount) }),
           num(speed.measuredStepsCount, 0),
-          { className: 'muted-hint tabular-nums' },
+          { className: 'muted-hint tabular-nums', alignEnd: true },
         ),
       ),
       el('div', { className: 'hero-value-row tabular-nums' },
@@ -3079,34 +3190,38 @@
         ),
         el('span', { className: 'hero-unit', textContent: 'tok/s' }),
       ),
-      el('div', { className: 'sub-stats tabular-nums' },
-        el('span', { className: 'sub-stat' },
-          t('speed.weightedAvg'),
-          el('strong', null,
-            renderRollingText(
-              'cur:speed:avg',
-              `${avgRate} tok/s`,
-              Number(speed.weightedAvgTokPerSec) > 0 ? Number(speed.weightedAvgTokPerSec) : null,
+      el('div', { className: 'sub-stats-speed tabular-nums' },
+        el('div', { className: 'sub-stats-line' },
+          el('span', { className: 'sub-stat' },
+            t('speed.weightedAvg'),
+            el('strong', null,
+              renderRollingText(
+                'cur:speed:avg',
+                `${avgRate} tok/s`,
+                Number(speed.weightedAvgTokPerSec) > 0 ? Number(speed.weightedAvgTokPerSec) : null,
+              ),
+            ),
+          ),
+          el('span', { className: 'sub-stat' },
+            t('speed.peak'),
+            el('strong', null,
+              renderRollingText(
+                'cur:speed:peak',
+                `${peakRate} tok/s`,
+                Number(speed.peakTokPerSec) > 0 ? Number(speed.peakTokPerSec) : null,
+              ),
             ),
           ),
         ),
-        el('span', { className: 'sub-stat' },
-          t('speed.peak'),
-          el('strong', null,
-            renderRollingText(
-              'cur:speed:peak',
-              `${peakRate} tok/s`,
-              Number(speed.peakTokPerSec) > 0 ? Number(speed.peakTokPerSec) : null,
-            ),
-          ),
-        ),
-        el('span', { className: 'sub-stat' },
-          t('speed.latest'),
-          el('strong', null,
-            renderRollingText(
-              'cur:speed:detail',
-              latestStepDetail,
-              outTok > 0 ? outTok : null,
+        el('div', { className: 'sub-stats-line' },
+          el('span', { className: 'sub-stat' },
+            t('speed.latest'),
+            el('strong', null,
+              renderRollingText(
+                'cur:speed:detail',
+                latestStepDetail,
+                outTok > 0 ? outTok : null,
+              ),
             ),
           ),
         ),
@@ -3121,6 +3236,9 @@
           : null,
       ),
     );
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
   }
 
   function renderCostCard(current, prefs) {
@@ -3141,6 +3259,30 @@
       scopeData.totalTokens,
       num(scopeData.inputUncachedTokens, 0) + num(scopeData.cacheReadTokens, 0) + num(scopeData.outputTokens, 0),
     );
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Add dirty-signature memoization and single-line sub-stats lock in renderCostCard.
+// ============================================================================
+    const sig = JSON.stringify([
+      state.lang,
+      state.tokenUnit,
+      currency,
+      num(prefs?.cnyRate, 0),
+      current.conversationId || '',
+      isChildView,
+      hasChildren ? current.children.length : 0,
+      scopeKey,
+      costActual,
+      totalTokens,
+      num(scopeData.stepsCount, 0),
+      num(scopeData.cacheHitRatePct, 0),
+      num(scopeData.outputTokens, 0),
+      num(scopeData.cacheReadTokens, 0),
+      num(scopeData.inputUncachedTokens, 0),
+    ]);
+    if (card.childElementCount > 0 && state.cardRenderSigs.cost === sig) return;
+    state.cardRenderSigs.cost = sig;
 
     const headRight = isChildView
       ? el('span', { className: 'child-cost-badge', textContent: t('cost.childIsolatedBadge') })
@@ -3182,7 +3324,10 @@
       el('div', { className: 'hero-value-row tabular-nums' },
         renderRollingText('cur:cost:hero', fmtCost(costActual, currency), costActual, { className: 'hero-value' }),
       ),
-      el('div', { className: 'sub-stats tabular-nums' },
+      el('div', { className: 'sub-stats tabular-nums is-single-line' },
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
         el('span', { className: 'sub-stat' },
           t('cost.steps'),
           el('strong', null, renderRollingText('cur:cost:steps', fmtInt(scopeData.stepsCount), num(scopeData.stepsCount, 0))),
@@ -3238,6 +3383,32 @@
       ? rawLevel
       : 'HEALTHY';
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Add dirty-signature memoization in renderContextCard (including tokenUnit and compactCopied state).
+// ============================================================================
+    const isCopied = state.compactCopiedUntil > Date.now();
+    const sig = JSON.stringify([
+      state.lang,
+      state.tokenUnit,
+      current.conversationId || '',
+      isCopied,
+      currentTotal,
+      softLimit,
+      hardLimit,
+      hardPct,
+      softPct,
+      level,
+      Boolean(ctx.compactedPendingTurn),
+      num(ctx.compactedPreTotal, 0),
+      num(ctx.compactionSummaryTokens, currentTotal),
+    ]);
+    if (card.childElementCount > 0 && state.cardRenderSigs.context === sig) return;
+    state.cardRenderSigs.context = sig;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
+
     const softMarkerPct = Math.min(100, Math.max(0, (softLimit / hardLimit) * 100));
     const totalBarPct = Math.min(100, Math.max(0, (currentTotal / hardLimit) * 100));
     const healthyPct = level === 'HEALTHY'
@@ -3251,7 +3422,6 @@
       CRITICAL: t('context.critical', { hard: fmtTokens(hardLimit) }),
     };
 
-    const isCopied = state.compactCopiedUntil > Date.now();
     const compactClasses = [
       'compact-btn',
       level === 'WARNING' ? 'is-warning' : level === 'CRITICAL' ? 'is-critical' : '',
@@ -3316,6 +3486,14 @@
             {
               className: 'ctx-summary-num tabular-nums',
               title: `${fmtInt(currentTotal)} / ${fmtInt(hardLimit)} tokens`,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Set alignEnd: true on right-aligned cur:ctx:summary rolling header value.
+// ============================================================================
+              alignEnd: true,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
             },
           ),
           compactBtn,
@@ -3372,6 +3550,32 @@
     const hitPct = num(ctx.latestCacheHitRatePct, 0);
     const netDelta = num(ctx.latestNetDelta, 0);
     const spikes = Array.isArray(ctx.topSpikes) ? ctx.topSpikes : [];
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Add dirty-signature memoization in renderCacheCard.
+// ============================================================================
+    const sig = JSON.stringify([
+      state.lang,
+      state.tokenUnit,
+      state.spikesExpanded,
+      current.conversationId || '',
+      cacheRead,
+      uncached,
+      hitPct,
+      netDelta,
+      spikes.map((sp) => [
+        num(sp?.stepIndex, 0),
+        num(sp?.deltaTokens, 0),
+        num(sp?.totalAfter, 0),
+        sp?.triggerSummary || '',
+      ]),
+    ]);
+    if (card.childElementCount > 0 && state.cardRenderSigs.cache === sig) return;
+    state.cardRenderSigs.cache = sig;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
 
     const totalLatest = cacheRead + uncached;
     const hitBarPct = totalLatest > 0 ? (cacheRead / totalLatest) * 100 : 0;
@@ -3434,6 +3638,14 @@
         ),
         renderRollingText('cur:cache:headRate', t('cache.hitRate', { pct: hitPct.toFixed(1) }), hitPct, {
           className: 'muted-hint tabular-nums',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Set alignEnd: true on right-aligned cur:cache:headRate rolling header value.
+// ============================================================================
+          alignEnd: true,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
         }),
       ),
       el('div', { className: 'cache-seg-track', title: `Cache Read ${fmtInt(cacheRead)} / Uncached ${fmtInt(uncached)}` },
@@ -3589,6 +3801,51 @@
         : (Array.isArray(current.totals?.byModel) ? current.totals.byModel : []);
 // ============================================================================
 // [MODIFIED END] 2026-11-17 21:28:45
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Add dirty-signature memoization in renderChildrenAndModelsCard covering sort order, currency/FX, tokenUnit, children, and model breakdown rows.
+// ============================================================================
+    const sig = JSON.stringify([
+      state.lang,
+      state.tokenUnit,
+      currency,
+      num(prefs?.cnyRate, 0),
+      state.modelSortBy,
+      state.modelSortDir,
+      current.conversationId || '',
+      isChildView,
+      children.map((ch) => [
+        ch?.conversationId || '',
+        ch?.kind || '',
+        ch?.status || '',
+        num(ch?.generatingSinceMs, 0),
+        ch?.name || '',
+        ch?.role || '',
+        ch?.model || '',
+        num(ch?.contextTotal, 0),
+        num(ch?.latestTokPerSec, 0),
+        num(ch?.outputTokens, 0),
+        num(ch?.costActual, 0),
+      ]),
+      byModel.map((row) => [
+        row?.model || '',
+        row?.profileId || '',
+        row?.profileLabel || '',
+        row?.rateDisplay || '',
+        num(row?.stepsCount, 0),
+        num(row?.inputUncachedTokens, 0),
+        num(row?.cacheReadTokens, 0),
+        num(row?.outputTokens, 0),
+        num(row?.totalTokens, 0),
+        num(row?.costActual, 0),
+      ]),
+    ]);
+    if (card.childElementCount > 0 && state.cardRenderSigs.childrenModels === sig) return;
+    state.cardRenderSigs.childrenModels = sig;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
 // ============================================================================
 
     const nodes = [
@@ -3788,6 +4045,14 @@
 // ============================================================================
 
     if (!current) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Reset Tab 1 card memoization signatures when active session becomes null.
+// ============================================================================
+      resetCardRenderSigs();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
       emptyEl.classList.remove('hidden');
       contentEl.classList.add('hidden');
       return;
@@ -4060,7 +4325,11 @@
             { className: 'roi-hero is-paid' },
           ),
           multText
-            ? renderRollingText('glb:roi:sub', multText, Number(sub.roiMultiplier), { className: 'roi-mult-badge' })
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Set alignEnd: true on right-aligned Tab 2 ROI badges, steps count, reset card render sigs on unit toggle, and render two-line .kpi-sub-stack / .kpi-sub-line KPI sub-stats.
+// ============================================================================
+            ? renderRollingText('glb:roi:sub', multText, Number(sub.roiMultiplier), { className: 'roi-mult-badge', alignEnd: true })
             : null,
         );
         captionText = t('roi.paidCaption', {
@@ -4082,7 +4351,7 @@
             'glb:roi:sub',
             t('roi.toBreakEven', { cost: fmtCostCompact(-sub.netSavings, currency) }),
             -num(sub.netSavings, 0),
-            { className: 'muted-hint' },
+            { className: 'muted-hint', alignEnd: true },
           ),
         );
         captionText = t('roi.paidCaption', {
@@ -4140,6 +4409,7 @@
         onClick: () => {
           if (state.tokenUnit !== u.key) {
             state.tokenUnit = u.key;
+            resetCardRenderSigs();
             const unitSelect = $('pref-token-unit');
             if (unitSelect) unitSelect.value = u.key;
             if (state.snapshot?.prefs) state.snapshot.prefs.tokenUnit = u.key;
@@ -4153,16 +4423,26 @@
       })),
     );
 
-    const convSubHint =
-      period.archivedConversationsCount > 0
-        ? t('global.activeWithArchived', {
-            active: fmtInt(period.activeDaysCount),
-            archived: fmtInt(period.archivedConversationsCount),
-          })
-        : t('global.activeDays', {
-            active: fmtInt(period.activeDaysCount),
-            span: fmtInt(period.spanDaysCount),
-          });
+    const convSubLines = period.archivedConversationsCount > 0
+      ? [
+          el('span', {
+            className: 'kpi-sub-line',
+            textContent: t('global.activeDaysLine', { active: fmtInt(period.activeDaysCount) }),
+          }),
+          el('span', {
+            className: 'kpi-sub-line',
+            textContent: t('global.archivedLine', { archived: fmtInt(period.archivedConversationsCount) }),
+          }),
+        ]
+      : [
+          el('span', {
+            className: 'kpi-sub-line',
+            textContent: t('global.activeDays', {
+              active: fmtInt(period.activeDaysCount),
+              span: fmtInt(period.spanDaysCount),
+            }),
+          }),
+        ];
 
     const summaryCard = el('article', { className: 'card' },
       el('div', { className: 'card-head' },
@@ -4175,7 +4455,7 @@
             'glb:sum:steps',
             t('global.stepsCount', { count: fmtInt(period.stepsCount) }),
             num(period.stepsCount, 0),
-            { className: 'muted-hint tabular-nums' },
+            { className: 'muted-hint tabular-nums', alignEnd: true },
           ),
           unitToggle,
         ),
@@ -4186,7 +4466,7 @@
           renderRollingText('glb:kpi:sessions', fmtInt(period.conversationsCount), num(period.conversationsCount, 0), {
             className: 'kpi-val',
           }),
-          el('span', { className: 'muted-hint', textContent: convSubHint }),
+          el('div', { className: 'kpi-sub-stack' }, convSubLines),
         ),
         el('div', { className: 'kpi-tile' },
           el('span', { className: 'kpi-label', textContent: t('global.kpiTotalTokens') }),
@@ -4194,17 +4474,25 @@
             className: 'kpi-val',
             title: fmtInt(period.totalTokens),
           }),
-          renderRollingText(
-            'glb:kpi:tokensSub',
-            t('global.avgOutSub', {
-              avg: fmtTokens(period.avgDailyTokens),
-              out: fmtTokens(period.outputTokens),
-            }),
-            num(period.avgDailyTokens, 0),
-            {
-              className: 'muted-hint',
-              title: `${fmtInt(period.avgDailyTokens)} / ${fmtInt(period.outputTokens)}`,
-            },
+          el('div', { className: 'kpi-sub-stack' },
+            renderRollingText(
+              'glb:kpi:tokensAvg',
+              t('global.avgSubLine', { avg: fmtTokens(period.avgDailyTokens) }),
+              num(period.avgDailyTokens, 0),
+              {
+                className: 'kpi-sub-line',
+                title: fmtInt(period.avgDailyTokens),
+              },
+            ),
+            renderRollingText(
+              'glb:kpi:tokensOut',
+              t('global.outSubLine', { out: fmtTokens(period.outputTokens) }),
+              num(period.outputTokens, 0),
+              {
+                className: 'kpi-sub-line',
+                title: fmtInt(period.outputTokens),
+              },
+            ),
           ),
         ),
         el('div', { className: 'kpi-tile' },
@@ -4212,14 +4500,16 @@
           renderRollingText('glb:kpi:cacheHit', fmtPct(period.cacheHitRatePct), num(period.cacheHitRatePct, 0), {
             className: 'kpi-val',
           }),
-          renderRollingText(
-            'glb:kpi:cacheSub',
-            t('global.uncachedSub', { input: fmtTokens(period.inputTokens) }),
-            num(period.inputTokens, 0),
-            {
-              className: 'muted-hint',
-              title: fmtInt(period.inputTokens),
-            },
+          el('div', { className: 'kpi-sub-stack' },
+            renderRollingText(
+              'glb:kpi:cacheSub',
+              t('global.uncachedSub', { input: fmtTokens(period.inputTokens) }),
+              num(period.inputTokens, 0),
+              {
+                className: 'kpi-sub-line',
+                title: fmtInt(period.inputTokens),
+              },
+            ),
           ),
         ),
         el('div', { className: 'kpi-tile' },
@@ -4227,15 +4517,20 @@
           renderRollingText('glb:kpi:cost', fmtCostCompact(period.costActual, currency), num(period.costActual, 0), {
             className: 'kpi-val',
           }),
-          renderRollingText(
-            'glb:kpi:costSub',
-            t('global.avgDailyCost', { cost: fmtCostCompact(period.avgDailyCost, currency) }),
-            num(period.avgDailyCost, 0),
-            { className: 'muted-hint' },
+          el('div', { className: 'kpi-sub-stack' },
+            renderRollingText(
+              'glb:kpi:costSub',
+              t('global.avgDailyCost', { cost: fmtCostCompact(period.avgDailyCost, currency) }),
+              num(period.avgDailyCost, 0),
+              { className: 'kpi-sub-line' },
+            ),
           ),
         ),
       ),
     );
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 21:28:45
 // ============================================================================
@@ -4926,6 +5221,14 @@
 // Description: Suppress slot-roll/bar animation during language toggle while updating stored memory.
 // ============================================================================
         state.suppressMotionOnce = true;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 22:07:46
+// Description: Invalidate Tab 1 card render signatures on language switch so labels re-translate immediately.
+// ============================================================================
+        resetCardRenderSigs();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
         try {
           renderHeader(state.snapshot);
           renderCurrentTab(state.snapshot);
