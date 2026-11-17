@@ -12,6 +12,14 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:50:00
+// Description: Import node:http for local mock HTTP E2E tests of pricing sync.
+// ============================================================================
+import { createServer } from 'node:http';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:50:00
+// ============================================================================
+// ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:06:00
 // Description: Import homedir to locate sidecar_sdk cleanly in isolated child tests.
 // ============================================================================
@@ -39,6 +47,12 @@ import {
 // [MODIFIED END] 2026-11-17 10:15:00
 // ============================================================================
   analyzeConversation,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:50:00
+// Description: Import buildEffectivePricingCatalog, resolveModelPricing, and
+// pricing_sync exports for v0.2.3 pricing sync unit & E2E tests.
+// ============================================================================
+  buildEffectivePricingCatalog,
   clearParserCache,
   computeContext,
   computeSpeed,
@@ -53,10 +67,21 @@ import {
   normalizeModelId,
   parseTranscript,
   resolveConversationPaths,
+  resolveModelPricing,
   resolveModelProfile,
   resolveSubscriptionInfo,
   summarizeGlobalAndRecent,
 } from '../sidecars/monitor_pane/parser.mjs';
+import {
+  createPricingSyncManager,
+  isChatModelCandidate,
+  parseGoogleOfficialPricingHtml,
+  parseLiteLlmCatalog,
+  parseModelsDevCatalog,
+} from '../sidecars/monitor_pane/pricing_sync.mjs';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:50:00
+// ============================================================================
 
 function makeTempEnv() {
   const root = mkdtempSync(join(tmpdir(), 'agy-token-monitor-test-'));
@@ -569,7 +594,15 @@ test('context threshold levels (usageLevel & watermarkLevel alias) and top 5 spi
 });
 
 test('active per-model pricing (incl. Claude Opus/Sonnet 5.5), overrides, CNY conversion, and >200k tier', () => {
-  assert.equal(MODEL_PRICING_CATALOG.length, 8);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:50:00
+// Description: Update expected catalog length to 9 with dedicated gemini-3.1-pro.
+// ============================================================================
+  assert.equal(MODEL_PRICING_CATALOG.length, 9);
+  assert.equal(resolveModelProfile('Gemini 3.1 Pro (High)').id, 'gemini-3.1-pro');
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:50:00
+// ============================================================================
   assert.equal(resolveModelProfile('Gemini 4 Carbon (High)').id, 'gemini-4-carbon');
   assert.equal(resolveModelProfile('Orchestrator (Carbon)').id, 'gemini-4-carbon');
   assert.equal(resolveModelProfile('Gemini 4 Argon (Low)').id, 'gemini-4-argon');
@@ -905,6 +938,14 @@ test('main.mjs --standalone serves /api/snapshot, etag caching, and /api/prefs p
   env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
   env.USERPROFILE = fakeHome;
   env.HOME = fakeHome;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:50:00
+// Description: Disable background live pricing sync in deterministic child test.
+// ============================================================================
+  env.PRICING_SYNC_DISABLE_AUTO = '1';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:50:00
+// ============================================================================
 
   const child = spawn(process.execPath, [mainPath, '--standalone', String(port)], {
     env,
@@ -1041,7 +1082,14 @@ test('main.mjs --standalone serves /api/snapshot, etag caching, and /api/prefs p
     const snap3 = await snap3Res.json();
     assert.equal(snap3.current.context.usageLevel, 'WARNING');
     assert.equal(snap3.current.context.watermarkLevel, 'WARNING');
-    assert.equal(snap3.pricingCatalog.length, 8);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:50:00
+// Description: Update expected runtime pricingCatalog length to 9 (with gemini-3.1-pro).
+// ============================================================================
+    assert.equal(snap3.pricingCatalog.length, 9);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:50:00
+// ============================================================================
     assert.ok(snap3.global.periods['7d']);
     assert.ok(snap3.global.periods['30d']);
     assert.ok(snap3.global.periods.all);
@@ -1290,14 +1338,14 @@ test('normalizeModelId strips thinking/effort tiers while preserving variant & w
   assert.equal(resolveModelProfile('gemini-pro-orchestrator-argon').id, 'gemini-4-argon');
   assert.equal(resolveModelProfile('gemini-pro-orchestrator').id, 'gemini-4-carbon');
 // ============================================================================
-// [MODIFIED BEGIN] 2026-11-17 10:15:00
-// Description: Verify gemini-3.1-pro resolves to gemini-4-carbon pricing tier.
+// [MODIFIED BEGIN] 2026-11-17 11:50:00
+// Description: Verify gemini-3.1-pro and gemini-pro-default resolve to dedicated gemini-3.1-pro tier.
 // ============================================================================
-  assert.equal(resolveModelProfile('gemini-3.1-pro').id, 'gemini-4-carbon');
+  assert.equal(resolveModelProfile('gemini-3.1-pro').id, 'gemini-3.1-pro');
+  assert.equal(resolveModelProfile('gemini-pro-default').id, 'gemini-3.1-pro');
 // ============================================================================
-// [MODIFIED END] 2026-11-17 10:15:00
+// [MODIFIED END] 2026-11-17 11:50:00
 // ============================================================================
-  assert.equal(resolveModelProfile('gemini-pro-default').id, 'gemini-4-carbon');
   assert.equal(resolveModelProfile('gemini-3.8-flash-n').id, 'gemini-3-8-flash');
   assert.equal(resolveModelProfile('gemini-flash-worker-agy').id, 'gemini-3-8-flash');
   const opusCatalogEntry = MODEL_PRICING_CATALOG.find((p) => p.id === 'claude-opus-5-5');
@@ -1912,6 +1960,14 @@ test('main.mjs PREFS_SCHEMA_VERSION = 3 auto-migrates 250k/(1M|500k) while prese
     env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
     env.USERPROFILE = fakeHome;
     env.HOME = fakeHome;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:50:00
+// Description: Disable background live pricing sync in deterministic schema migration child test.
+// ============================================================================
+    env.PRICING_SYNC_DISABLE_AUTO = '1';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:50:00
+// ============================================================================
 
     const child = spawn(process.execPath, [mainPath, '--standalone', String(port)], {
       env,
@@ -2296,4 +2352,701 @@ test('forked conversations deduplicate cloned parent steps in Tab 1 & Tab 2 whil
 
 // ============================================================================
 // [MODIFIED END] 2026-11-16 21:27:00
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:51:00
+// Description: Add v0.2.3 unit & standalone HTTP E2E tests covering dedicated
+// gemini-3.1-pro pricing, session totalTokens, dual-channel official pricing sync
+// (effective dates, non-chat filtering, model discovery, observed slug promotion,
+// daily dedupe, offline fallback), and /api/sync-pricing + /api/prefs overrides.
+// ============================================================================
+test('dedicated gemini-3.1-pro pricing, pro detection, and session totalTokens in Tab 1 & Tab 2', () => {
+  clearParserCache();
+  const { root, appData } = makeTempEnv();
+  try {
+    const step200k = { input_tokens: 100000, cache_read_tokens: 50000, output_tokens: 10000 };
+    // gemini-3.1-pro <=200k: (100k*2.0 + 50k*0.20 + 10k*12.0)/1M = 0.20 + 0.01 + 0.12 = 0.33
+    const proStd = computeStepCost(step200k, DEFAULT_PREFS, 'gemini-3.1-pro');
+    assert.equal(proStd.profileId, 'gemini-3.1-pro');
+    assert.ok(Math.abs(proStd.costActual - 0.33) < 1e-9);
+    const proDefaultStd = computeStepCost(step200k, DEFAULT_PREFS, 'gemini-pro-default');
+    assert.equal(proDefaultStd.profileId, 'gemini-3.1-pro');
+    assert.ok(Math.abs(proDefaultStd.costActual - 0.33) < 1e-9);
+
+    const stepOver200k = { input_tokens: 100000, cache_read_tokens: 200000, output_tokens: 10000 };
+    // gemini-3.1-pro >200k: (100k*4.0 + 200k*0.40 + 10k*18.0)/1M = 0.40 + 0.08 + 0.18 = 0.66
+    const proLong = computeStepCost(stepOver200k, DEFAULT_PREFS, 'gemini-3.1-pro');
+    assert.equal(proLong.profileId, 'gemini-3.1-pro');
+    assert.ok(Math.abs(proLong.costActual - 0.66) < 1e-9);
+
+    assert.equal(detectSubscriptionPlanFromProfiles(new Set(['gemini-3.1-pro'])), 'pro');
+
+    const parentId = 'e1111111-1111-4111-8111-111111111111';
+    const childId = 'e2222222-2222-4222-8222-222222222222';
+    const baseMs = Date.parse('2026-11-17T08:00:00Z');
+
+    writeConversation(appData, parentId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs).toISOString(),
+          content:
+            '<USER_REQUEST>Analyze Gemini 3.1 Pro totals</USER_REQUEST>\n<USER_SETTINGS_CHANGE>The user changed setting `Model Selection` from Auto to Gemini 3.1 Pro (High).</USER_SETTINGS_CHANGE>',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: new Date(baseMs + 1000).toISOString(),
+          input_tokens: 100000,
+          cache_read_tokens: 50000,
+          output_tokens: 10000,
+          tool_calls: [{ name: 'invoke_subagent', args: { Subagents: JSON.stringify([{ Model: 'Gemini 3.8 Flash', Name: 'Worker' }]) } }],
+        },
+        {
+          step_index: 2,
+          type: 'GENERIC',
+          status: 'DONE',
+          created_at: new Date(baseMs + 2000).toISOString(),
+          content: `Created At: ${new Date(baseMs + 2000).toISOString()}\nCompleted At: ${new Date(baseMs + 4000).toISOString()}\n{"conversationId":"${childId}"}`,
+        },
+      ],
+      mtimeMs: baseMs + 5000,
+    });
+
+    writeConversation(appData, childId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs + 2500).toISOString(),
+          content:
+            'Child task\n<USER_SETTINGS_CHANGE>The user changed setting `Model Selection` from Auto to Gemini 3.8 Flash (High).</USER_SETTINGS_CHANGE>',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: new Date(baseMs + 3000).toISOString(),
+          input_tokens: 20000,
+          cache_read_tokens: 10000,
+          output_tokens: 5000,
+          tool_calls: [],
+        },
+      ],
+      mtimeMs: baseMs + 4000,
+    });
+
+    const analysis = analyzeConversation(parentId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.equal(analysis.activeModel, 'gemini-3.1-pro');
+    assert.equal(analysis.totals.mainOnly.totalTokens, 160000);
+    assert.equal(analysis.totals.withChildren.totalTokens, 195000);
+    assert.ok(Math.abs(analysis.totals.mainOnly.costActual - 0.33) < 1e-9);
+
+    const ledger = createUsageLedger();
+    const global = summarizeGlobalAndRecent({
+      appDataDirs: [appData],
+      nowMs: baseMs + 10000,
+      ledger,
+      disableAgentApi: true,
+    });
+    const parentRecent = global.recentConversations.find((c) => c.conversationId === parentId);
+    const childRecent = global.recentConversations.find((c) => c.conversationId === childId);
+    assert.ok(parentRecent);
+    assert.ok(childRecent);
+    assert.equal(parentRecent.totalTokens, 160000);
+    assert.equal(childRecent.totalTokens, 35000);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('pricing_sync unit tests: dual-channel merge, effective dates, non-chat filter, discovery, daily dedupe, offline cache, and override priority', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'tm-sync-unit-'));
+  const stateDir = join(root, 'state');
+  mkdirSync(stateDir, { recursive: true });
+
+  try {
+    // Non-chat modality filtering
+    assert.equal(isChatModelCandidate('gemini-3.8-flash'), true);
+    assert.equal(isChatModelCandidate('gemini-3.8-flash-tts'), false);
+    assert.equal(isChatModelCandidate('text-embedding-004'), false);
+    assert.equal(isChatModelCandidate('imagen-3'), false);
+    assert.equal(isChatModelCandidate('gemini-next-audio', { mode: 'audio' }), false);
+    assert.equal(
+      isChatModelCandidate('gemini-next-img', { mode: 'chat', modalities: { output: ['image'] } }),
+      false,
+    );
+
+    const mockGoogleHtml = `
+      <html><body>
+        <h3>Gemini 3.1 Pro Preview</h3>
+        <table>
+          <tr><td>Input price</td><td>Not available</td><td>$2.00, prompts &lt;= 200k tokens<br>$4.00, prompts &gt; 200k tokens</td></tr>
+          <tr><td>Output price</td><td>Not available</td><td>$12.00, prompts &lt;= 200k tokens<br>$18.00, prompts &gt; 200k tokens</td></tr>
+          <tr><td>Context caching</td><td>Not available</td><td>$0.20, prompts &lt;= 200k tokens<br>$4.50 / 1,000,000 tokens per hour (storage)</td></tr>
+        </table>
+        <h3>Gemini 4 Carbon</h3>
+        <table>
+          <tr><td>Input price</td><td>Free of charge</td><td>$2.00 (through Nov 30, 2026)<br>$4.00 starting December 1, 2026</td></tr>
+          <tr><td>Output price</td><td>Free of charge</td><td>$10.00 (through Nov 30, 2026)<br>$20.00 starting December 1, 2026</td></tr>
+        </table>
+        <h3>Gemini 4 Argon</h3>
+        <table>
+          <tr><td>Input price</td><td>Free</td><td>$2.00 (introductory), $4.00 starting December 1, 2026</td></tr>
+          <tr><td>Output price</td><td>Free</td><td>$10.00 (introductory), $20.00 starting December 1, 2026</td></tr>
+        </table>
+        <h3>Gemini 3.8 Flash</h3>
+        <table>
+          <tr><td>Input price</td><td>Free</td><td>$0.70</td></tr>
+          <tr><td>Output price</td><td>Free</td><td>$3.50</td></tr>
+        </table>
+        <h3>Gemini 3.8 Flash TTS</h3>
+        <table>
+          <tr><td>Input price</td><td>Free</td><td>$1.00</td></tr>
+          <tr><td>Output price</td><td>Free</td><td>$20.00</td></tr>
+        </table>
+      </body></html>
+    `;
+
+    const mockModelsDev = {
+      google: {
+        models: {
+          'gemini-3.1-pro': {
+            id: 'gemini-3.1-pro',
+            name: 'Gemini 3.1 Pro',
+            cost: {
+              input: 2.0,
+              cache_read: 0.2,
+              output: 12.0,
+              context_over_200k: { input: 4.0, output: 18.0 },
+            },
+          },
+          'gemini-4-carbon': {
+            id: 'gemini-4-carbon',
+            name: 'Gemini 4 Carbon',
+            // Intentionally different from Google HTML so Channel 2 override precedence is verifiable
+            cost: { input: 1.5, cache_read: 0.15, output: 8.5 },
+          },
+          'gemini-4.5-pro': {
+            id: 'gemini-4.5-pro',
+            name: 'Gemini 4.5 Pro',
+            cost: { input: 3.0, cache_read: 0.3, output: 15.0 },
+          },
+          'gemini-3.2-pro': {
+            id: 'gemini-3.2-pro',
+            name: 'Gemini 3.2 Pro',
+            cost: { input: 2.5, cache_read: 0.25, output: 14.0 },
+          },
+          'gemini-4-flash': {
+            id: 'gemini-4-flash',
+            name: 'Gemini 4 Flash',
+            cost: { input: 0.5, cache_read: 0.05, output: 2.5 },
+          },
+          'gemini-3.8-flash-tts': {
+            id: 'gemini-3.8-flash-tts',
+            name: 'Gemini 3.8 Flash TTS',
+            cost: { input: 1.0, output: 20.0 },
+          },
+          'text-embedding-004': {
+            id: 'text-embedding-004',
+            name: 'Text Embedding 004',
+            cost: { input: 0.01, output: 0.01 },
+          },
+          'imagen-3': {
+            id: 'imagen-3',
+            name: 'Imagen 3',
+            cost: { input: 0.04, output: 0.04 },
+          },
+        },
+      },
+      anthropic: {
+        models: {
+          'claude-opus-5-5': {
+            id: 'claude-opus-5-5',
+            name: 'Claude Opus 5.5',
+            cost: { input: 5.0, cache_read: 0.25, output: 25.0 },
+          },
+        },
+      },
+      openai: {
+        models: {
+          'gpt-oss-120b': {
+            id: 'gpt-oss-120b',
+            name: 'GPT-OSS 120B',
+            cost: { input: 0.2, cache_read: 0.1, output: 0.8 },
+          },
+        },
+      },
+    };
+
+    const mockLiteLlm = {
+      'anthropic/claude-opus-5-5': {
+        litellm_provider: 'anthropic',
+        mode: 'chat',
+        input_cost_per_token: 4.5e-6,
+        cache_read_input_cost_per_token: 0.22e-6,
+        output_cost_per_token: 22.5e-6,
+      },
+      'gemini/gemini-4.5-pro': {
+        litellm_provider: 'gemini',
+        mode: 'chat',
+        input_cost_per_token: 3.1e-6,
+        cache_read_input_cost_per_token: 0.31e-6,
+        output_cost_per_token: 15.5e-6,
+      },
+    };
+
+    // Verify effective-date guard directly on Google HTML before vs on/after 2026-12-01
+    const preDecGoogle = parseGoogleOfficialPricingHtml(mockGoogleHtml, Date.UTC(2026, 10, 17, 12, 0, 0));
+    assert.equal(preDecGoogle.profileRates['gemini-3.1-pro'].inputPer1M, 2.0);
+    assert.equal(preDecGoogle.profileRates['gemini-3.1-pro'].cachedPer1M, 0.2);
+    assert.equal(preDecGoogle.profileRates['gemini-3.1-pro'].outputPer1M, 12.0);
+    assert.equal(preDecGoogle.profileRates['gemini-3.1-pro'].longInputMultiplier, 2.0);
+    assert.equal(preDecGoogle.profileRates['gemini-3.1-pro'].longOutputMultiplier, 1.5);
+    assert.equal(preDecGoogle.profileRates['gemini-4-carbon'].inputPer1M, 2.0);
+    assert.equal(preDecGoogle.profileRates['gemini-4-carbon'].outputPer1M, 10.0);
+    assert.equal(preDecGoogle.profileRates['gemini-4-argon'].inputPer1M, 2.0);
+    assert.equal(preDecGoogle.profileRates['gemini-4-argon'].outputPer1M, 10.0);
+    assert.equal(preDecGoogle.profileRates['gemini-3-8-flash'].inputPer1M, 0.7);
+    assert.equal(preDecGoogle.profileRates['gemini-3-8-flash'].outputPer1M, 3.5);
+    assert.equal(preDecGoogle.profileRates['gemini-3.8-flash-tts'], undefined);
+
+    const postDecGoogle = parseGoogleOfficialPricingHtml(mockGoogleHtml, Date.UTC(2026, 11, 1, 0, 0, 0));
+    assert.equal(postDecGoogle.profileRates['gemini-4-carbon'].inputPer1M, 4.0);
+    assert.equal(postDecGoogle.profileRates['gemini-4-carbon'].outputPer1M, 20.0);
+    assert.equal(postDecGoogle.profileRates['gemini-4-argon'].inputPer1M, 4.0);
+    assert.equal(postDecGoogle.profileRates['gemini-4-argon'].outputPer1M, 20.0);
+
+    // Verify parseModelsDevCatalog & parseLiteLlmCatalog standalone
+    const parsedDev = parseModelsDevCatalog(mockModelsDev);
+    assert.equal(parsedDev.profileRates['claude-opus-5-5'].inputPer1M, 5.0);
+    assert.equal(parsedDev.profileRates['gpt-oss-120b'].outputPer1M, 0.8);
+    assert.equal(parsedDev.upstreamPool['text-embedding-004'], undefined);
+    assert.equal(parsedDev.upstreamPool['imagen-3'], undefined);
+
+    const parsedLite = parseLiteLlmCatalog(mockLiteLlm);
+    assert.equal(parsedLite.profileRates['claude-opus-5-5'].inputPer1M, 4.5);
+    assert.equal(parsedLite.upstreamPool['gemini-4.5-pro'].outputPer1M, 15.5);
+
+    // Manager test: offline start -> cooldown -> recovery -> same-day dedupe -> date rollover -> offline cache retention
+    let nowMs = Date.UTC(2026, 10, 17, 10, 0, 0);
+    let mode = 'offline';
+    let fetchCalls = 0;
+
+    const mgr = createPricingSyncManager({
+      stateDir,
+      baseCatalog: MODEL_PRICING_CATALOG,
+      nowFn: () => nowMs,
+      autoSyncDisabled: false,
+      fetchImpl: async (url) => {
+        fetchCalls += 1;
+        if (mode === 'offline') {
+          throw new Error('simulated offline');
+        }
+        if (url.includes('models.dev')) {
+          if (mode === 'litellm-fallback') {
+            return { ok: false, status: 503, json: async () => ({}) };
+          }
+          return { ok: true, status: 200, json: async () => mockModelsDev };
+        }
+        if (url.includes('litellm')) {
+          return { ok: true, status: 200, json: async () => mockLiteLlm };
+        }
+        return { ok: true, status: 200, text: async () => mockGoogleHtml };
+      },
+    });
+
+    // Initial offline auto-sync must invoke onUpdated so UI never sticks in syncing=true
+    let updatedCalls = 0;
+    let settledResolve;
+    const settledPromise = new Promise((r) => {
+      settledResolve = r;
+    });
+    const triggeredOffline = mgr.maybeTriggerDailySync([], () => {
+      updatedCalls += 1;
+      settledResolve();
+    });
+    assert.equal(triggeredOffline, true);
+    await settledPromise;
+    assert.equal(updatedCalls, 1);
+    assert.equal(mgr.getPublicStatus().syncing, false);
+    assert.equal(mgr.getPublicStatus().status, 'offline');
+
+    // Within 15-minute cooldown, maybeTriggerDailySync skips fetching
+    const callsAfterOffline = fetchCalls;
+    assert.equal(mgr.maybeTriggerDailySync([], () => {}), false);
+    assert.equal(fetchCalls, callsAfterOffline);
+
+    // Advance past 15-minute cooldown, switch online, and sync
+    nowMs += 16 * 60 * 1000;
+    mode = 'online';
+    let onlineSettled;
+    const onlinePromise = new Promise((r) => {
+      onlineSettled = r;
+    });
+    assert.equal(
+      mgr.maybeTriggerDailySync(['custom-local-coder-70b', 'Auto'], () => {
+        updatedCalls += 1;
+        onlineSettled();
+      }),
+      true,
+    );
+    await onlinePromise;
+
+    const statusOk = mgr.getPublicStatus();
+    assert.equal(statusOk.status, 'ok');
+    assert.equal(statusOk.lastSyncLocalDate, formatLocalDate(nowMs));
+    assert.deepEqual(statusOk.sources.sort(), ['google-official', 'models.dev']);
+
+    const runtimeCat = mgr.getRuntimeCatalog(['custom-local-coder-70b', 'Auto']);
+    const byId = new Map(runtimeCat.map((m) => [m.id, m]));
+    assert.equal(runtimeCat[runtimeCat.length - 1].id, 'auto');
+
+    // Channel 2 (Google Official) overrides Channel 1 on Gemini models before Dec 1
+    assert.equal(byId.get('gemini-4-carbon').inputPer1M, 2.0);
+    assert.equal(byId.get('gemini-4-carbon').outputPer1M, 10.0);
+    assert.equal(byId.get('auto').outputPer1M, 10.0);
+    // Channel 1 updates Anthropic & OpenAI models
+    assert.equal(byId.get('claude-opus-5-5').inputPer1M, 5.0);
+    assert.equal(byId.get('gpt-oss-120b').outputPer1M, 0.8);
+    // New flagship Gemini chat discovery + non-chat exclusion + observed local slug promotion
+    assert.equal(byId.get('gemini-4.5-pro').inputPer1M, 3.0);
+    assert.equal(byId.get('gemini-3.2-pro').inputPer1M, 2.5);
+    assert.equal(byId.get('gemini-4-flash').inputPer1M, 0.5);
+    assert.equal(byId.get('gemini-3.8-flash-tts'), undefined);
+    assert.equal(byId.get('text-embedding-004'), undefined);
+    assert.equal(byId.get('imagen-3'), undefined);
+    assert.equal(byId.get('custom-local-coder-70b').hint, '本地观测模型');
+
+    // Same-day deduplication: second maybeTriggerDailySync on same local day makes 0 requests
+    const callsAfterSuccess = fetchCalls;
+    assert.equal(mgr.maybeTriggerDailySync([], () => {}), false);
+    assert.equal(fetchCalls, callsAfterSuccess);
+
+    // Manual prefs.modelOverrides takes highest priority over synced official rates until reset
+    const effectivePrefs = {
+      ...DEFAULT_PREFS,
+      _runtimeCatalog: runtimeCat,
+      modelOverrides: {
+        'gemini-3.1-pro': { inputPer1M: 9.9, cachedPer1M: 0.9, outputPer1M: 29.9, longContextTier: true },
+        'gemini-4.5-pro': { inputPer1M: 8.8, cachedPer1M: 0.8, outputPer1M: 28.8, longContextTier: false },
+      },
+    };
+    const over31 = resolveModelPricing('gemini-3.1-pro', effectivePrefs);
+    assert.equal(over31.isOverridden, true);
+    assert.equal(over31.usdInputPer1M, 9.9);
+    const over45 = resolveModelPricing('gemini-4.5-pro', effectivePrefs);
+    assert.equal(over45.isOverridden, true);
+    assert.equal(over45.usdOutputPer1M, 28.8);
+
+    const effCatWithOv = buildEffectivePricingCatalog(effectivePrefs, runtimeCat);
+    assert.equal(effCatWithOv.find((m) => m.id === 'gemini-4.5-pro').isOverridden, true);
+    delete effectivePrefs.modelOverrides['gemini-3.1-pro'];
+    const reverted31 = resolveModelPricing('gemini-3.1-pro', effectivePrefs);
+    assert.equal(reverted31.isOverridden, false);
+    assert.equal(reverted31.usdOutputPer1M, 12.0);
+
+    // LiteLLM fallback works when models.dev fails
+    mode = 'litellm-fallback';
+    const liteRes = await mgr.syncNow([]);
+    assert.equal(liteRes.ok, true);
+    assert.equal(liteRes.status.sources.includes('litellm'), true);
+    assert.equal(liteRes.runtimeCatalog.find((m) => m.id === 'claude-opus-5-5').inputPer1M, 4.5);
+
+    // Next day offline preserves cached synced rates & transitions status to 'cached'
+    nowMs = Date.UTC(2026, 10, 18, 10, 0, 0);
+    mode = 'offline';
+    const offlineCachedRes = await mgr.syncNow([]);
+    assert.equal(offlineCachedRes.ok, false);
+    assert.equal(offlineCachedRes.status.status, 'cached');
+    assert.equal(offlineCachedRes.runtimeCatalog.find((m) => m.id === 'gemini-4.5-pro').inputPer1M, 3.1);
+
+    // On/after 2026-12-01 online sync switches Carbon & Argon to $4 / $20
+    nowMs = Date.UTC(2026, 11, 1, 10, 0, 0);
+    mode = 'online';
+    const decRes = await mgr.syncNow([]);
+    assert.equal(decRes.ok, true);
+    assert.equal(decRes.runtimeCatalog.find((m) => m.id === 'gemini-4-carbon').inputPer1M, 4.0);
+    assert.equal(decRes.runtimeCatalog.find((m) => m.id === 'gemini-4-carbon').outputPer1M, 20.0);
+    assert.equal(decRes.runtimeCatalog.find((m) => m.id === 'gemini-4-argon').inputPer1M, 4.0);
+    assert.equal(decRes.runtimeCatalog.find((m) => m.id === 'gemini-4-argon').outputPer1M, 20.0);
+    assert.equal(decRes.runtimeCatalog.find((m) => m.id === 'auto').outputPer1M, 20.0);
+
+    // Reload manager from disk cache verifies pricing_cache.json persistence
+    assert.equal(existsSync(join(stateDir, 'pricing_cache.json')), true);
+    const mgrReloaded = createPricingSyncManager({
+      stateDir,
+      baseCatalog: MODEL_PRICING_CATALOG,
+      nowFn: () => nowMs,
+      autoSyncDisabled: true,
+    });
+    assert.equal(mgrReloaded.getPublicStatus().status, 'ok');
+    assert.equal(mgrReloaded.getRuntimeCatalog().find((m) => m.id === 'gemini-4-carbon').outputPer1M, 20.0);
+    assert.equal(mgrReloaded.getRuntimeCatalog().find((m) => m.id === 'gemini-4.5-pro').inputPer1M, 3.0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro overrides via POST /api/prefs, and restart persistence', async () => {
+  const { root, appData } = makeTempEnv();
+  const dataDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'data');
+  mkdirSync(dataDir, { recursive: true });
+  const fakeHome = join(root, 'home');
+  mkdirSync(fakeHome, { recursive: true });
+
+  const convId = 'd4444444-4444-4444-8444-444444444444';
+  writeConversation(appData, convId, {
+    compactLines: [
+      {
+        step_index: 0,
+        type: 'USER_INPUT',
+        status: 'DONE',
+        created_at: '2026-11-17T09:00:00Z',
+        content: '<USER_REQUEST>Check E2E pricing sync</USER_REQUEST>',
+      },
+      {
+        step_index: 1,
+        type: 'PLANNER_RESPONSE',
+        status: 'DONE',
+        created_at: '2026-11-17T09:00:05Z',
+        model: 'gemini-3.1-pro',
+        input_tokens: 40000,
+        cache_read_tokens: 60000,
+        output_tokens: 5000,
+        tool_calls: [],
+      },
+    ],
+    mtimeMs: Date.parse('2026-11-17T09:00:06Z'),
+  });
+
+  const mockHtml = `
+    <h3>Gemini 3.1 Pro Preview</h3>
+    <table>
+      <tr><td>Input price</td><td>Not available</td><td>$2.00</td></tr>
+      <tr><td>Output price</td><td>Not available</td><td>$12.00</td></tr>
+      <tr><td>Context caching</td><td>Not available</td><td>$0.20</td></tr>
+    </table>
+  `;
+  const mockModelsDev = {
+    google: {
+      models: {
+        'gemini-3.1-pro': {
+          id: 'gemini-3.1-pro',
+          name: 'Gemini 3.1 Pro',
+          cost: { input: 2.0, cache_read: 0.2, output: 12.0 },
+        },
+        'gemini-4.5-pro': {
+          id: 'gemini-4.5-pro',
+          name: 'Gemini 4.5 Pro',
+          cost: { input: 3.5, cache_read: 0.35, output: 17.5 },
+        },
+        'gemini-3.8-flash-tts': {
+          id: 'gemini-3.8-flash-tts',
+          name: 'Gemini 3.8 Flash TTS',
+          cost: { input: 1.0, output: 20.0 },
+        },
+      },
+    },
+  };
+
+  const mockServer = createServer((req, res) => {
+    if (req.url === '/google-pricing') {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(mockHtml);
+      return;
+    }
+    if (req.url === '/models-dev.json') {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(mockModelsDev));
+      return;
+    }
+    res.writeHead(404);
+    res.end('not found');
+  });
+
+  await new Promise((resolveListen) => mockServer.listen(0, '127.0.0.1', resolveListen));
+  const mockAddr = mockServer.address();
+  const mockBase = `http://127.0.0.1:${mockAddr.port}`;
+
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const mainPath = join(__dirname, '..', 'sidecars', 'monitor_pane', 'main.mjs');
+  const sdkFallback = join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs');
+
+  async function spawnSidecar(port) {
+    const env = { ...process.env };
+    delete env.ANTIGRAVITY_LS_ADDRESS;
+    delete env.ANTIGRAVITY_CSRF_TOKEN;
+    delete env.ANTIGRAVITY_SIDECAR_WEB_PORT;
+    delete env.ANTIGRAVITY_CONVERSATION_ID;
+    delete env.ANTIGRAVITY_SIDECAR_UI_TOKEN;
+    if (existsSync(sdkFallback)) {
+      env.SIDECAR_SDK_PATH = sdkFallback;
+    }
+    env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
+    env.USERPROFILE = fakeHome;
+    env.HOME = fakeHome;
+    env.PRICING_SYNC_DISABLE_AUTO = '1';
+    env.PRICING_SYNC_GOOGLE_URL = `${mockBase}/google-pricing`;
+    env.PRICING_SYNC_MODELS_DEV_URL = `${mockBase}/models-dev.json`;
+    env.PRICING_SYNC_LITELLM_URL = `${mockBase}/missing-litellm.json`;
+
+    const child = spawn(process.execPath, [mainPath, '--standalone', String(port)], {
+      env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    await new Promise((resolveReady, rejectReady) => {
+      if (child.exitCode !== null) {
+        rejectReady(new Error(`Sidecar exited prematurely (${child.exitCode})`));
+        return;
+      }
+      const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 5000);
+      let out = '';
+      child.stdout.on('data', (chunk) => {
+        out += chunk.toString();
+        if (out.includes(`[sidecar] listening on 127.0.0.1:${port}`)) {
+          clearTimeout(timer);
+          resolveReady();
+        }
+      });
+      child.stderr.on('data', (chunk) => {
+        out += chunk.toString();
+      });
+      child.once('exit', (code) => {
+        clearTimeout(timer);
+        rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+      });
+    });
+    return child;
+  }
+
+  async function stopChild(child) {
+    if (!child) return;
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill();
+      await new Promise((r) => {
+        if (child.exitCode !== null || child.signalCode !== null) return r();
+        const t = setTimeout(r, 3000);
+        child.once('exit', () => {
+          clearTimeout(t);
+          r();
+        });
+      });
+    }
+  }
+
+  let child1 = null;
+  let child2 = null;
+  try {
+    const port1 = 19842;
+    child1 = await spawnSidecar(port1);
+    const base1 = `http://127.0.0.1:${port1}`;
+
+    const snap1 = await (await fetch(`${base1}/api/snapshot?conv=${encodeURIComponent(convId)}`)).json();
+    assert.equal(snap1.pricingSync.status, 'idle');
+    assert.equal(snap1.pricingCatalog.length, 9);
+    assert.equal(snap1.current.totals.mainOnly.totalTokens, 105000);
+    assert.equal(snap1.global.recentConversations[0].totalTokens, 105000);
+
+    // Trigger POST /api/sync-pricing against local mock server
+    const syncRes = await fetch(`${base1}/api/sync-pricing`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    assert.equal(syncRes.status, 200);
+    const syncBody = await syncRes.json();
+    assert.equal(syncBody.ok, true);
+    assert.equal(syncBody.pricingSync.status, 'ok');
+    assert.ok(syncBody.pricingSync.discoveredCount >= 1);
+    assert.ok(syncBody.pricingCatalog.some((m) => m.id === 'gemini-4.5-pro'));
+    assert.equal(syncBody.pricingCatalog.some((m) => m.id === 'gemini-3.8-flash-tts'), false);
+    assert.equal(existsSync(join(dataDir, 'pricing_cache.json')), true);
+
+    // Invalid profile ID rejected cleanly
+    const badOvRes = await fetch(`${base1}/api/prefs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        modelOverrides: { '../bad': { inputPer1M: 1, cachedPer1M: 0.1, outputPer1M: 2 } },
+      }),
+    });
+    assert.equal(badOvRes.status, 400);
+
+    // Save overrides on gemini-3.1-pro and synced dynamic model gemini-4.5-pro
+    const ovRes = await fetch(`${base1}/api/prefs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        modelOverrides: {
+          'gemini-3.1-pro': { inputPer1M: 7.5, cachedPer1M: 0.75, outputPer1M: 27.5, longContextTier: true },
+          'gemini-4.5-pro': { inputPer1M: 8.5, cachedPer1M: 0.85, outputPer1M: 35.0, longContextTier: false },
+        },
+      }),
+    });
+    assert.equal(ovRes.status, 200);
+    const ovBody = await ovRes.json();
+    assert.equal(ovBody.ok, true);
+    assert.equal(ovBody.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').isOverridden, true);
+    assert.equal(ovBody.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').usd.inputPer1M, 7.5);
+    assert.equal(ovBody.pricingCatalog.find((m) => m.id === 'gemini-4.5-pro').isOverridden, true);
+    assert.equal(ovBody.pricingCatalog.find((m) => m.id === 'gemini-4.5-pro').usd.outputPer1M, 35.0);
+
+    // Re-syncing upstream must preserve manual overrides
+    const syncAgain = await (
+      await fetch(`${base1}/api/sync-pricing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      })
+    ).json();
+    assert.equal(syncAgain.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').usd.inputPer1M, 7.5);
+    assert.equal(syncAgain.pricingCatalog.find((m) => m.id === 'gemini-4.5-pro').usd.outputPer1M, 35.0);
+
+    await stopChild(child1);
+    child1 = null;
+
+    // Restart sidecar against same dataDir and verify both synced cache & manual overrides persist
+    const port2 = 19843;
+    child2 = await spawnSidecar(port2);
+    const base2 = `http://127.0.0.1:${port2}`;
+    const snapRestart = await (await fetch(`${base2}/api/snapshot?conv=${encodeURIComponent(convId)}`)).json();
+    assert.equal(snapRestart.pricingSync.status, 'ok');
+    assert.equal(snapRestart.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').isOverridden, true);
+    assert.equal(snapRestart.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').usd.inputPer1M, 7.5);
+    assert.equal(snapRestart.pricingCatalog.find((m) => m.id === 'gemini-4.5-pro').isOverridden, true);
+    assert.equal(snapRestart.pricingCatalog.find((m) => m.id === 'gemini-4.5-pro').usd.outputPer1M, 35.0);
+
+    // Reset both overrides via null
+    const resetRes = await (
+      await fetch(`${base2}/api/prefs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          modelOverrides: {
+            'gemini-3.1-pro': null,
+            'gemini-4.5-pro': null,
+          },
+        }),
+      })
+    ).json();
+    assert.equal(resetRes.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').isOverridden, false);
+    assert.equal(resetRes.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').usd.inputPer1M, 2.0);
+    assert.equal(resetRes.pricingCatalog.find((m) => m.id === 'gemini-4.5-pro').isOverridden, false);
+    assert.equal(resetRes.pricingCatalog.find((m) => m.id === 'gemini-4.5-pro').usd.outputPer1M, 17.5);
+  } finally {
+    await stopChild(child1);
+    await stopChild(child2);
+    await new Promise((r) => mockServer.close(() => r()));
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:51:00
 // ============================================================================

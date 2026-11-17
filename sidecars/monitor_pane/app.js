@@ -57,6 +57,14 @@
     trendNeedsRightAlign: false,
     isDraggingTrend: false,
     pendingGlobalRerender: false,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Track manual/background official pricing sync state.
+// ============================================================================
+    pricingSyncing: false,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
   };
 
   const I18N = {
@@ -99,8 +107,14 @@
       'cost.withChildrenCount': '含子代理 ({count})',
       'cost.mainOnly': '仅主对话',
       'cost.steps': '步数 ',
-      'cost.subSharePaid': '占月订阅费 ({plan} · {fee}) 的 {pct}%',
-      'cost.subShareFree': '当前为 {plan} ($0/月) · 本会话省下 {cost}',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Replace monthly share note key with session total token consumption key (zh).
+// ============================================================================
+      'cost.totalTokens': '总 Token 消耗 ',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
       'cost.chipHitRate': '缓存命中率',
       'cost.chipOutput': '累计输出',
       'cost.chipCacheRead': '缓存读取',
@@ -198,6 +212,14 @@
       'global.itemTools': '🔧 工具中',
       'global.itemIdle': '● 空闲',
       'global.convsEmpty': '暂无匹配会话记录',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Add Tab 2 per-conversation total token prefix i18n key (zh).
+// ============================================================================
+      'global.itemTotalPrefix': '总计',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
       'settings.title': '计价与上下文设置',
       'settings.subtitle': '按在役模型自动细分计价 · 订阅对比实时重算',
       'settings.sec1Title': '上下文与币种',
@@ -231,6 +253,26 @@
       'settings.longTierHint': '(超过 200k 时输入 ×2、输出 ×1.5)',
       'settings.catalogSummary': '查看全部在役模型当前生效单价',
       'settings.catalogModelCol': '模型档位',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Add interactive catalog row tooltip and official pricing sync i18n keys (zh).
+// ============================================================================
+      'settings.catalogRowTip': '点击切换并编辑此模型单价',
+      'settings.syncPricingBtn': '↻ 立即同步',
+      'settings.syncPricingTitle': '立即从官方定价页与模型目录拉取最新模型与单价',
+      'settings.syncingBtn': '↻ 同步中…',
+      'settings.syncingOfficial': '正在同步官方模型与最新定价…',
+      'settings.syncDiscoveredPart': ' · +{count} 模型',
+      'settings.syncOk': '已同步官方定价 · {date} ({sources}){discovered}',
+      'settings.syncCachedBaseline': '使用缓存定价基线 (上次同步 {date})',
+      'settings.syncBuiltinBaseline': '使用内置定价基线（联网每日自动同步）',
+      'settings.syncSuccessToast': '已同步官方最新模型与定价',
+      'settings.syncSuccessDiscoveredToast': '已同步官方定价，并发现 {count} 个新模型',
+      'settings.syncOfflineHint': '无法连接官方数据源，保留当前基线',
+      'settings.syncFailedToast': '定价同步未完成: {msg}',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
       'settings.resyncIdle': '按磁盘重新同步账本',
       'settings.resyncTitle': '清除已删除会话归档并按磁盘现有日志重建历史账本',
       'settings.resyncArmed': '再次点击确认按磁盘重建',
@@ -288,8 +330,14 @@
       'cost.withChildrenCount': 'With Subagents ({count})',
       'cost.mainOnly': 'Main Only',
       'cost.steps': 'Steps ',
-      'cost.subSharePaid': '{pct}% of monthly {plan} ({fee})',
-      'cost.subShareFree': 'On {plan} ($0/mo) · covered {cost} this chat',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Replace monthly share note key with session total token consumption key (en).
+// ============================================================================
+      'cost.totalTokens': 'Total Tokens ',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
       'cost.chipHitRate': 'Cache Hit',
       'cost.chipOutput': 'Total Output',
       'cost.chipCacheRead': 'Cache Read',
@@ -387,6 +435,14 @@
       'global.itemTools': '🔧 Tools',
       'global.itemIdle': '● Idle',
       'global.convsEmpty': 'No matching conversations',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Add Tab 2 per-conversation total token prefix i18n key (en).
+// ============================================================================
+      'global.itemTotalPrefix': 'Total',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
       'settings.title': 'Pricing & Context Settings',
       'settings.subtitle': 'Per-model pricing tiers · Live subscription ROI',
       'settings.sec1Title': 'Context & Display',
@@ -420,6 +476,26 @@
       'settings.longTierHint': '(Input ×2, Output ×1.5 above 200k)',
       'settings.catalogSummary': 'View All Effective Model Rates',
       'settings.catalogModelCol': 'Model Tier',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Add interactive catalog row tooltip and official pricing sync i18n keys (en).
+// ============================================================================
+      'settings.catalogRowTip': 'Click to edit this model pricing',
+      'settings.syncPricingBtn': '↻ Sync Now',
+      'settings.syncPricingTitle': 'Sync latest official models & pricing now',
+      'settings.syncingBtn': '↻ Syncing…',
+      'settings.syncingOfficial': 'Syncing official models & pricing…',
+      'settings.syncDiscoveredPart': ' · +{count} new',
+      'settings.syncOk': 'Official pricing synced · {date} ({sources}){discovered}',
+      'settings.syncCachedBaseline': 'Using cached pricing baseline (synced {date})',
+      'settings.syncBuiltinBaseline': 'Using built-in pricing baseline (auto-syncs daily online)',
+      'settings.syncSuccessToast': 'Official models & pricing synced',
+      'settings.syncSuccessDiscoveredToast': 'Synced official pricing (+{count} discovered models)',
+      'settings.syncOfflineHint': 'Upstream unreachable; keeping current baseline',
+      'settings.syncFailedToast': 'Pricing sync incomplete: {msg}',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
       'settings.resyncIdle': 'Resync Ledger from Disk',
       'settings.resyncTitle': 'Clear archived entries and rebuild ledger from disk logs',
       'settings.resyncArmed': 'Click Again to Confirm',
@@ -468,6 +544,14 @@
 
   const MODEL_PROFILE_EN = {
     'gemini-4-argon': { label: 'Gemini 4 Argon', hint: 'High/Med/Low · Orchestrator (Argon)' },
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Add dedicated Gemini 3.1 Pro English profile label and hint.
+// ============================================================================
+    'gemini-3.1-pro': { label: 'Gemini 3.1 Pro', hint: 'Pro Preview / Default · <=200k standard tier' },
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
     'gemini-4-carbon': { label: 'Gemini 4 Carbon', hint: 'High/Med/Low · Orchestrator (Carbon)' },
     'gemini-4-hydrogen': { label: 'Gemini 4 Hydrogen', hint: 'XHigh/High/Med/Low' },
     'gemini-3-8-flash': { label: 'Gemini 3.8 Flash', hint: 'High/Med/Low · Subagent Flash' },
@@ -814,7 +898,19 @@
   // Description: Align raw model ID profile matching for v1.2 tier-free slugs (argon, carbon/orchestrator/gemini-pro, hydrogen, flash/worker, claude-opus-5-5/4-6).
   // ============================================================================
   function matchProfileIdForModel(modelName) {
-    const s = String(modelName || '').toLowerCase();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Match exact catalog ID first, then dedicated Gemini 3.1 Pro tier before fallback rules.
+// ============================================================================
+    const s = String(modelName || '').trim().toLowerCase();
+    if (s) {
+      const exact = getCatalogList().find((item) => String(item.id || '').toLowerCase() === s);
+      if (exact) return exact.id;
+    }
+    if (/gemini[\s_-]*3\.?1[\s_-]*pro|gemini-pro-default/i.test(s)) return 'gemini-3.1-pro';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
     if (/argon/.test(s)) return 'gemini-4-argon';
     if (/carbon|orchestrator|gemini[\s-]*(?:[23][\w.-]*[\s-]*)?pro|^pro$/.test(s)) return 'gemini-4-carbon';
     if (/hydrogen/.test(s)) return 'gemini-4-hydrogen';
@@ -885,8 +981,24 @@
           state.selectedProfileId = matchProfileIdForModel(activeModel);
         }
         populateSettingsForm(state.snapshot.prefs);
+      } else {
+        renderPricingSyncStatus();
       }
     }
+  }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Localize dynamic synced/observed profile hints, update #pref-model-select
+// badges in place without rebuilding DOM, make catalog preview rows clickable, and
+// render/trigger official pricing sync status.
+// ============================================================================
+  function localizeProfileHint(rawHint) {
+    const hint = String(rawHint || '');
+    if (state.lang !== 'en') return hint;
+    return hint
+      .replace(/官方自动同步模型/g, 'Auto-synced official model')
+      .replace(/本地观测模型/g, 'Observed local model');
   }
 
   function getLocalizedProfileMeta(item) {
@@ -895,7 +1007,7 @@
       return {
         group: MODEL_GROUP_EN[item.group] || item.group,
         label: enMeta?.label || item.label,
-        hint: enMeta?.hint || item.hint,
+        hint: enMeta?.hint || localizeProfileHint(item.hint),
       };
     }
     return {
@@ -904,6 +1016,9 @@
       hint: item.hint,
     };
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
 
   function getEffectiveDraftUsd(profileId) {
     const catalog = getCatalogList();
@@ -976,6 +1091,27 @@
     renderCatalogPreviewTable();
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Preserve #pref-model-select state via syncModelSelectOptionBadges(),
+// make catalog table rows interactive, and sync official pricing status UI.
+// ============================================================================
+  function syncModelSelectOptionBadges() {
+    const select = $('pref-model-select');
+    if (!select) return;
+    const catalogById = new Map(getCatalogList().map((item) => [item.id, item]));
+    for (const opt of select.querySelectorAll('option')) {
+      const item = catalogById.get(opt.value);
+      if (!item) continue;
+      const loc = getLocalizedProfileMeta(item);
+      const isModified = Boolean(state.draftModelOverrides[item.id]);
+      const expectedText = `${loc.label} (${loc.hint})${isModified ? ' *' : ''}`;
+      if (opt.textContent !== expectedText) {
+        opt.textContent = expectedText;
+      }
+    }
+  }
+
   function stageCurrentProfileFromInputs() {
     const catalog = getCatalogList();
     const item = catalog.find((p) => p.id === state.selectedProfileId);
@@ -1010,7 +1146,7 @@
         longContextTier,
       };
     }
-    renderModelSelectOptions();
+    syncModelSelectOptionBadges();
     renderCatalogPreviewTable();
   }
 
@@ -1038,11 +1174,32 @@
           catalog.map((item) => {
             const eff = getEffectiveDraftUsd(item.id);
             const loc = getLocalizedProfileMeta(item);
-            return el('tr', { className: eff.isOverridden ? 'is-overridden' : '' },
+            const isSelected = item.id === state.selectedProfileId;
+            const selectThisModel = () => {
+              if (state.selectedProfileId !== item.id) {
+                stageCurrentProfileFromInputs();
+                state.selectedProfileId = item.id;
+                if ($('pref-model-select')) $('pref-model-select').value = item.id;
+                loadSelectedProfileInputs();
+              }
+              $('pref-input-price')?.focus();
+            };
+            return el('tr', {
+              className: `catalog-row${eff.isOverridden ? ' is-overridden' : ''}${isSelected ? ' is-selected' : ''}`,
+              tabIndex: 0,
+              title: t('settings.catalogRowTip'),
+              onClick: selectThisModel,
+              onKeyDown: (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  selectThisModel();
+                }
+              },
+            },
               el('td', {
                 className: 'model-cell',
                 textContent: `${loc.label}${eff.isOverridden ? ' *' : ''}`,
-                title: loc.hint,
+                title: loc.hint ? `${loc.hint} · ${t('settings.catalogRowTip')}` : t('settings.catalogRowTip'),
               }),
               el('td', { className: 'num', textContent: fmtUnitPrice(eff.inputPer1M * fx) }),
               el('td', { className: 'num', textContent: fmtUnitPrice(eff.cachedPer1M * fx) }),
@@ -1054,6 +1211,9 @@
       ),
     );
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
 
   function updateConditionalSettingsFields() {
     const currency = $('pref-currency').value === 'CNY' ? 'CNY' : 'USD';
@@ -1101,6 +1261,14 @@
     renderModelSelectOptions();
     loadSelectedProfileInputs();
     updateConditionalSettingsFields();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Refresh official pricing sync status when populating settings form.
+// ============================================================================
+    renderPricingSyncStatus();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
   }
 
   async function saveSettings(event) {
@@ -1237,6 +1405,110 @@
       btn.disabled = false;
     }
   }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Render official pricing sync status bar and handle manual /api/sync-pricing requests.
+// ============================================================================
+  function renderPricingSyncStatus() {
+    const statusEl = $('pricing-sync-status');
+    const syncBtn = $('btn-sync-pricing');
+    if (!statusEl) return;
+
+    const ps = state.snapshot?.pricingSync || null;
+    const isSyncing = Boolean(state.pricingSyncing || ps?.syncing);
+    if (syncBtn) {
+      syncBtn.disabled = isSyncing;
+      syncBtn.textContent = isSyncing ? t('settings.syncingBtn') : t('settings.syncPricingBtn');
+    }
+
+    statusEl.className = 'pricing-sync-status muted-hint';
+    statusEl.title = ps?.error ? String(ps.error) : '';
+
+    if (isSyncing) {
+      statusEl.textContent = t('settings.syncingOfficial');
+      return;
+    }
+
+    const sourcesText = Array.isArray(ps?.sources) && ps.sources.length > 0
+      ? ps.sources.join(' + ')
+      : 'Official';
+    const discoveredCount = num(ps?.discoveredCount, 0);
+    const discoveredPart = discoveredCount > 0
+      ? t('settings.syncDiscoveredPart', { count: discoveredCount })
+      : '';
+
+    if (ps?.status === 'ok' && ps?.lastSyncLocalDate) {
+      statusEl.classList.add('is-ok');
+      statusEl.textContent = t('settings.syncOk', {
+        date: ps.lastSyncLocalDate,
+        sources: sourcesText,
+        discovered: discoveredPart,
+      });
+      return;
+    }
+
+    if (ps?.status === 'offline' || ps?.status === 'cached') {
+      statusEl.classList.add('is-offline');
+    }
+    if (ps?.lastSyncLocalDate) {
+      statusEl.textContent = t('settings.syncCachedBaseline', {
+        date: ps.lastSyncLocalDate,
+      });
+      return;
+    }
+    statusEl.textContent = t('settings.syncBuiltinBaseline');
+  }
+
+  async function handleSyncPricingClick() {
+    if (state.pricingSyncing) return;
+    state.pricingSyncing = true;
+    renderPricingSyncStatus();
+    try {
+      const res = await apiFetch('/api/sync-pricing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      stageCurrentProfileFromInputs();
+      if (!state.snapshot) state.snapshot = {};
+      if (data?.pricingSync) state.snapshot.pricingSync = data.pricingSync;
+      if (Array.isArray(data?.pricingCatalog)) state.snapshot.pricingCatalog = data.pricingCatalog;
+
+      state.pricingSyncing = false;
+      renderModelSelectOptions();
+      loadSelectedProfileInputs();
+      renderPricingSyncStatus();
+      lastEtag = '';
+      if (state.snapshot) {
+        renderCurrentTab(state.snapshot);
+        renderGlobalTab(state.snapshot);
+      }
+      if (data?.ok) {
+        const discoveredCount = num(data?.pricingSync?.discoveredCount, 0);
+        showToast(
+          discoveredCount > 0
+            ? t('settings.syncSuccessDiscoveredToast', { count: discoveredCount })
+            : t('settings.syncSuccessToast'),
+        );
+      } else {
+        const errMsg = data?.pricingSync?.error || t('settings.syncOfflineHint');
+        showToast(t('settings.syncFailedToast', { msg: errMsg }));
+      }
+      await pollSnapshot(true);
+    } catch (err) {
+      state.pricingSyncing = false;
+      renderPricingSyncStatus();
+      showToast(t('settings.syncFailedToast', { msg: err?.message || 'error' }));
+    }
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
 
   // ---------------- Render Header & Stopwatch ----------------
   function formatStatusText(current) {
@@ -1400,30 +1672,18 @@
     const scopeData = totals[scopeKey] || totals.mainOnly || totals.withChildren || {};
 
     const costActual = num(scopeData.costActual, 0);
-
-    const sub = current.subscription || null;
-    const sharePct =
-      scopeKey === 'mainOnly' ? sub?.mainOnlySharePct : sub?.withChildrenSharePct;
-    let subAnchorNode = null;
-    if (sub) {
-      const planLabel = getPlanLabel(sub.planId, sub.planLabel);
-      const subText =
-        sub.monthlyFee > 0 && Number.isFinite(Number(sharePct))
-          ? t('cost.subSharePaid', {
-              plan: planLabel,
-              fee: fmtCostCompact(sub.monthlyFee, currency),
-              pct: Number(sharePct).toFixed(1),
-            })
-          : sub.monthlyFee === 0
-            ? t('cost.subShareFree', {
-                plan: planLabel,
-                cost: fmtCostCompact(costActual, currency),
-              })
-            : null;
-      if (subText) {
-        subAnchorNode = el('div', { className: 'sub-anchor-note tabular-nums', textContent: subText });
-      }
-    }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Remove monthly subscription share line from Tab 1 Equivalent Cost card
+// and show scoped session Total Tokens alongside Steps respecting tokenUnit.
+// ============================================================================
+    const totalTokens = num(
+      scopeData.totalTokens,
+      num(scopeData.inputUncachedTokens, 0) + num(scopeData.cacheReadTokens, 0) + num(scopeData.outputTokens, 0),
+    );
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
 
     const togglePill = el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('cost.scopeAria') },
       el('button', {
@@ -1463,10 +1723,17 @@
       el('div', { className: 'hero-value-row tabular-nums' },
         el('span', { className: 'hero-value', textContent: fmtCost(costActual, currency) }),
       ),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Display session Total Tokens next to Steps and remove subAnchorNode.
+// ============================================================================
       el('div', { className: 'sub-stats tabular-nums' },
         el('span', { className: 'sub-stat' }, t('cost.steps'), el('strong', null, fmtInt(scopeData.stepsCount))),
+        el('span', { className: 'sub-stat', title: fmtInt(totalTokens) }, t('cost.totalTokens'), el('strong', null, fmtTokens(totalTokens))),
       ),
-      subAnchorNode,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
       el('div', { className: 'mini-chips tabular-nums' },
         el('div', { className: 'mini-chip' },
           el('span', { className: 'mini-chip-label', textContent: t('cost.chipHitRate') }),
@@ -2480,6 +2747,14 @@
               const title = localizeConvTitle(item.title) || t('common.sessionPrefix', { id: shortId(item.conversationId) });
               const ws = workspaceBase(item.workspace);
               const itemStatus = item.status || 'IDLE';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Compute per-conversation totalTokens for Tab 2 list items.
+// ============================================================================
+              const itemTotalTok = num(item.totalTokens, num(item.outputTokens, 0));
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
 
               const rowProps = {
                 className: `recent-item${isSelected ? ' is-selected' : ''}${onDisk ? '' : ' is-archived'}`,
@@ -2539,6 +2814,14 @@
                     onDisk ? el('span', { title: fmtInt(item.contextTotal), textContent: `Ctx ${fmtTokens(item.contextTotal)}` }) : null,
                     onDisk ? el('span', { textContent: `${fmtRate(item.latestTokPerSec)} tok/s` }) : null,
                     el('span', { title: fmtInt(item.outputTokens), textContent: `Out ${fmtTokens(item.outputTokens)}` }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Display per-conversation Total Tokens alongside Ctx / tok/s / Out in Tab 2 rows.
+// ============================================================================
+                    el('span', { title: fmtInt(itemTotalTok), textContent: `${t('global.itemTotalPrefix')} ${fmtTokens(itemTotalTok)}` }),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
                     el('span', { textContent: fmtCostCompact(item.costActual, currency) }),
                   ),
                 ),
@@ -2607,6 +2890,15 @@
       if (!state.drawerOpen && data?.prefs) {
         populateSettingsForm(data.prefs);
       }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Keep #pricing-sync-status live even when settings drawer is open,
+// without clobbering in-progress form edits.
+// ============================================================================
+      renderPricingSyncStatus();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
 
       renderHeader(data);
       renderCurrentTab(data);
@@ -2646,6 +2938,14 @@
       if (state.drawerOpen) {
         renderModelSelectOptions();
         updateConditionalSettingsFields();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Re-translate #pricing-sync-status when toggling language with drawer open.
+// ============================================================================
+        renderPricingSyncStatus();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
       }
       patchPrefs({ language: state.lang });
     });
@@ -2668,9 +2968,17 @@
     $('pref-cny-rate').addEventListener('input', renderCatalogPreviewTable);
     $('pref-sub-plan').addEventListener('change', updateConditionalSettingsFields);
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:35:00
+// Description: Fix #pref-model-select change handler bug, preserve select options on
+// model reset, and bind #btn-sync-pricing click handler.
+// ============================================================================
     $('pref-model-select').addEventListener('change', (e) => {
+      const nextProfileId = e.target.value;
+      if (!nextProfileId || nextProfileId === state.selectedProfileId) return;
       stageCurrentProfileFromInputs();
-      state.selectedProfileId = e.target.value;
+      state.selectedProfileId = nextProfileId;
+      $('pref-model-select').value = nextProfileId;
       loadSelectedProfileInputs();
     });
 
@@ -2681,15 +2989,21 @@
 
     $('btn-reset-model').addEventListener('click', () => {
       delete state.draftModelOverrides[state.selectedProfileId];
-      renderModelSelectOptions();
+      syncModelSelectOptionBadges();
       loadSelectedProfileInputs();
     });
 
     $('btn-reset-all-models').addEventListener('click', () => {
       state.draftModelOverrides = {};
-      renderModelSelectOptions();
+      syncModelSelectOptionBadges();
       loadSelectedProfileInputs();
     });
+
+    $('btn-sync-pricing')?.addEventListener('click', handleSyncPricingClick);
+    renderPricingSyncStatus();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:35:00
+// ============================================================================
 
     $('btn-resync-ledger').addEventListener('click', handleResyncLedgerClick);
 

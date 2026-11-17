@@ -82,6 +82,24 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     longOutputMultiplier: 1.5,
     pattern: /gemini[\s-]*4[\s-]*argon|orchestrator[\s(-]*argon|gemini-pro-orchestrator-argon/i,
   }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:40:00
+// Description: Add dedicated gemini-3.1-pro profile before gemini-4-carbon
+// and remove 3.1/pro-default matching from gemini-4-carbon's pattern.
+// ============================================================================
+  Object.freeze({
+    id: 'gemini-3.1-pro',
+    group: 'Gemini 系列',
+    label: 'Gemini 3.1 Pro',
+    hint: '含 Pro Preview / Default · ≤200k 标准档',
+    inputPer1M: 2.0,
+    cachedPer1M: 0.2,
+    outputPer1M: 12.0,
+    longContextTier: true,
+    longInputMultiplier: 2.0,
+    longOutputMultiplier: 1.5,
+    pattern: /gemini[\s_-]*3\.?1[\s_-]*pro|gemini-pro-default/i,
+  }),
   Object.freeze({
     id: 'gemini-4-carbon',
     group: 'Gemini 系列',
@@ -94,15 +112,11 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     longInputMultiplier: 2.0,
     longOutputMultiplier: 1.5,
     pattern:
-// ============================================================================
-// [MODIFIED BEGIN] 2026-11-17 10:13:00
-// Description: Explicitly match gemini-3.1-pro in Gemini 4 Carbon pricing tier.
-// ============================================================================
-      /gemini[\s-]*4[\s-]*carbon|orchestrator[\s(-]*carbon|gemini-pro-orchestrator(?!-argon)|gemini-pro-default|gemini[\s_-]*3\.?1[\s_-]*pro|^gemini[\s-]*pro$|gemini[\s-]*[23].*pro|^pro$/i,
-// ============================================================================
-// [MODIFIED END] 2026-11-17 10:13:00
-// ============================================================================
+      /gemini[\s-]*4[\s-]*carbon|orchestrator[\s(-]*carbon|gemini-pro-orchestrator(?!-argon)|^gemini[\s-]*pro$|gemini[\s-]*[23].*pro|^pro$/i,
   }),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:40:00
+// ============================================================================
   Object.freeze({
     id: 'gemini-4-hydrogen',
     group: 'Gemini 系列',
@@ -1751,26 +1765,56 @@ export function computeLiveStatus(parsed) {
   };
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:40:00
+// Description: Support dynamic runtimeCatalog in resolveModelProfile,
+// resolveModelPricing, and buildEffectivePricingCatalog, and classify
+// gemini-3.1-pro under Pro subscription auto-detection.
+// ============================================================================
 /**
  * Resolves the pricing catalog profile matching an Antigravity model display name or ID.
  */
-export function resolveModelProfile(modelName) {
+export function resolveModelProfile(modelName, runtimeCatalog = null) {
+  const list =
+    Array.isArray(runtimeCatalog) && runtimeCatalog.length > 0
+      ? runtimeCatalog
+      : MODEL_PRICING_CATALOG;
   const s = typeof modelName === 'string' ? modelName.trim() : '';
   if (s) {
-    for (const profile of MODEL_PRICING_CATALOG) {
-      if (profile.pattern && profile.pattern.test(s)) {
+    const lower = s.toLowerCase();
+    const exact = list.find((p) => typeof p?.id === 'string' && p.id.toLowerCase() === lower);
+    if (exact) {
+      return exact;
+    }
+    for (const profile of list) {
+      if (!profile) continue;
+      let re = null;
+      if (profile.pattern instanceof RegExp) {
+        re = profile.pattern;
+      } else if (typeof profile.patternStr === 'string' && profile.patternStr) {
+        try {
+          re = new RegExp(profile.patternStr, 'i');
+        } catch {
+          re = null;
+        }
+      }
+      if (re && re.test(s)) {
         return profile;
       }
     }
   }
-  return PROFILE_BY_ID.get('auto');
+  return list.find((p) => p?.id === 'auto') || PROFILE_BY_ID.get('auto');
 }
 
 /**
  * Resolves effective per-million token rates (and CNY conversion) for a model and prefs.
  */
 export function resolveModelPricing(modelName, prefs = DEFAULT_PREFS) {
-  const profile = resolveModelProfile(modelName);
+  const runtimeCatalog =
+    Array.isArray(prefs?._runtimeCatalog) && prefs._runtimeCatalog.length > 0
+      ? prefs._runtimeCatalog
+      : null;
+  const profile = resolveModelProfile(modelName, runtimeCatalog);
   const override =
     prefs?.modelOverrides && typeof prefs.modelOverrides === 'object'
       ? prefs.modelOverrides[profile.id]
@@ -1850,9 +1894,16 @@ export function resolveModelPricing(modelName, prefs = DEFAULT_PREFS) {
 /**
  * Returns effective pricing metadata for all active catalog models for UI rendering.
  */
-export function buildEffectivePricingCatalog(prefs = DEFAULT_PREFS) {
-  return MODEL_PRICING_CATALOG.map((p) => {
-    const resolved = resolveModelPricing(p.label, prefs);
+export function buildEffectivePricingCatalog(prefs = DEFAULT_PREFS, runtimeCatalog = null) {
+  const list =
+    Array.isArray(runtimeCatalog) && runtimeCatalog.length > 0
+      ? runtimeCatalog
+      : Array.isArray(prefs?._runtimeCatalog) && prefs._runtimeCatalog.length > 0
+        ? prefs._runtimeCatalog
+        : MODEL_PRICING_CATALOG;
+  const effectivePrefs = { ...(prefs || DEFAULT_PREFS), _runtimeCatalog: list };
+  return list.map((p) => {
+    const resolved = resolveModelPricing(p.id, effectivePrefs);
     return {
       id: p.id,
       group: p.group,
@@ -1889,11 +1940,14 @@ export function detectSubscriptionPlanFromProfiles(profileIds) {
   if (set.has('gemini-4-carbon') || set.has('claude-opus-5-5')) {
     return 'ultra_5x';
   }
-  if (set.has('gemini-4-argon') || set.has('claude-sonnet-5-5')) {
+  if (set.has('gemini-4-argon') || set.has('gemini-3.1-pro') || set.has('claude-sonnet-5-5')) {
     return 'pro';
   }
   return 'free';
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:40:00
+// ============================================================================
 
 /**
  * Resolves the active subscription plan details and monthly fee in display currency.
@@ -2262,12 +2316,17 @@ export function computeContext(parsed, prefs = DEFAULT_PREFS) {
   };
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:40:00
+// Description: Track session totalTokens in emptyBucket() and finalizeBucket().
+// ============================================================================
 function emptyBucket() {
   return {
     stepsCount: 0,
     inputUncachedTokens: 0,
     cacheReadTokens: 0,
     outputTokens: 0,
+    totalTokens: 0,
     cacheHitRatePct: 0,
     costActual: 0,
     costUncachedBaseline: 0,
@@ -2278,11 +2337,15 @@ function emptyBucket() {
 
 function finalizeBucket(b) {
   const totalIn = b.inputUncachedTokens + b.cacheReadTokens;
+  b.totalTokens = totalIn + b.outputTokens;
   b.cacheHitRatePct = totalIn > 0 ? (b.cacheReadTokens / totalIn) * 100 : 0;
   b.costSavedByCache = Math.max(0, b.costUncachedBaseline - b.costActual);
   b.costSavedPct = b.costUncachedBaseline > 0 ? (b.costSavedByCache / b.costUncachedBaseline) * 100 : 0;
   return b;
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:40:00
+// ============================================================================
 
 function formatRateSummary(pricing) {
   const f = (n) => {
@@ -2741,7 +2804,20 @@ function findSubagentParentHint(convId, appDataDirs, visited = new Set()) {
  */
 export function analyzeConversation(convId, options = {}) {
   if (!isValidConversationId(convId)) return null;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:40:00
+// Description: Attach optional runtimeCatalog via shallow effectivePrefs copy
+// in analyzeConversation without mutating caller's prefs.
+// ============================================================================
   const prefs = { ...DEFAULT_PREFS, ...(options.prefs || {}) };
+  const runtimeCatalog =
+    Array.isArray(options?.runtimeCatalog) && options.runtimeCatalog.length > 0
+      ? options.runtimeCatalog
+      : null;
+  const effectivePrefs = runtimeCatalog ? { ...prefs, _runtimeCatalog: runtimeCatalog } : prefs;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:40:00
+// ============================================================================
   const appDataDirs = discoverAppDataDirs(options);
   const paths = resolveConversationPaths(convId, appDataDirs);
   if (!paths) return null;
@@ -2777,7 +2853,7 @@ export function analyzeConversation(convId, options = {}) {
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:13:00
 // ============================================================================
-  const context = computeContext(parsed, prefs);
+  const context = computeContext(parsed, effectivePrefs);
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-16 22:04:00
@@ -2787,7 +2863,7 @@ export function analyzeConversation(convId, options = {}) {
   const mainOnly = emptyBucket();
   const withChildren = emptyBucket();
   const byModelMap = new Map();
-  const localObservedProfiles = new Set([resolveModelProfile(activeModel).id]);
+  const localObservedProfiles = new Set([resolveModelProfile(activeModel, runtimeCatalog).id]);
   const mainSeenBotIds = new Set();
   const withChildrenSeenBotIds = new Set();
 
@@ -2797,7 +2873,7 @@ export function analyzeConversation(convId, options = {}) {
     localObservedProfiles,
     parsed,
     modelByStepIdx,
-    prefs,
+    effectivePrefs,
     mainSeenBotIds,
   );
   accumulateStepsInto(
@@ -2806,7 +2882,7 @@ export function analyzeConversation(convId, options = {}) {
     localObservedProfiles,
     parsed,
     modelByStepIdx,
-    prefs,
+    effectivePrefs,
     withChildrenSeenBotIds,
   );
   finalizeBucket(mainOnly);
@@ -2849,7 +2925,7 @@ export function analyzeConversation(convId, options = {}) {
 
       childEtagParts.push(`${desc.conversationId}:${childParsed.cacheKey}`);
       const childTimeline = resolveModelTimeline(childParsed, desc.defaultModel || 'Auto');
-      localObservedProfiles.add(resolveModelProfile(childTimeline.activeModel).id);
+      localObservedProfiles.add(resolveModelProfile(childTimeline.activeModel, runtimeCatalog).id);
       const childLive = computeLiveStatus(childParsed);
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:13:00
@@ -2865,7 +2941,7 @@ export function analyzeConversation(convId, options = {}) {
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:13:00
 // ============================================================================
-      const childContext = computeContext(childParsed, prefs);
+      const childContext = computeContext(childParsed, effectivePrefs);
       const childBucket = emptyBucket();
       accumulateStepsInto(
         childBucket,
@@ -2873,7 +2949,7 @@ export function analyzeConversation(convId, options = {}) {
         localObservedProfiles,
         childParsed,
         childTimeline.modelByStepIdx,
-        prefs,
+        effectivePrefs,
         new Set(),
       );
       finalizeBucket(childBucket);
@@ -2883,7 +2959,7 @@ export function analyzeConversation(convId, options = {}) {
         localObservedProfiles,
         childParsed,
         childTimeline.modelByStepIdx,
-        prefs,
+        effectivePrefs,
         withChildrenSeenBotIds,
       );
 // ============================================================================
@@ -2922,7 +2998,7 @@ export function analyzeConversation(convId, options = {}) {
     options.observedProfiles instanceof Set && options.observedProfiles.size > 0
       ? options.observedProfiles
       : localObservedProfiles;
-  const subInfo = resolveSubscriptionInfo(prefs, subProfiles);
+  const subInfo = resolveSubscriptionInfo(effectivePrefs, subProfiles);
   const subscription = {
     planId: subInfo.planId,
     planLabel: subInfo.planLabel,
@@ -3895,7 +3971,17 @@ function buildPeriodSummary({
  * Scans conversations via incremental ledger and returns multi-period global stats + top 20 recent sessions.
  */
 export function summarizeGlobalAndRecent(options = {}) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:40:00
+// Description: Support optional runtimeCatalog in summarizeGlobalAndRecent,
+// add totalTokens to recentConversations, and return _observedRawModels.
+// ============================================================================
   const prefs = { ...DEFAULT_PREFS, ...(options.prefs || {}) };
+  const runtimeCatalog =
+    Array.isArray(options?.runtimeCatalog) && options.runtimeCatalog.length > 0
+      ? options.runtimeCatalog
+      : null;
+  const effectivePrefs = runtimeCatalog ? { ...prefs, _runtimeCatalog: runtimeCatalog } : prefs;
   const nowMs = Number.isFinite(options.nowMs) ? options.nowMs : Date.now();
   const todayDate = formatLocalDate(nowMs);
   const appDataDirs = discoverAppDataDirs(options);
@@ -3906,11 +3992,12 @@ export function summarizeGlobalAndRecent(options = {}) {
     env: options.env,
     homeDir: options.homeDir,
     timingStore: options.timingStore,
-    threshold: Number(prefs.longContextThreshold) || DEFAULT_PREFS.longContextThreshold,
+    threshold: Number(effectivePrefs.longContextThreshold) || DEFAULT_PREFS.longContextThreshold,
   });
 
   const conversations = ledger.getData().conversations;
   const observedProfiles = new Set();
+  const observedRawModels = new Set();
   let earliestDate = todayDate;
   const onDiskEntries = [];
 
@@ -3919,15 +4006,23 @@ export function summarizeGlobalAndRecent(options = {}) {
     for (const pid of conv.observedProfiles || []) {
       observedProfiles.add(pid);
     }
-    for (const dk of Object.keys(conv.days || {})) {
+    if (typeof conv.activeModel === 'string' && conv.activeModel.trim()) {
+      const nm = normalizeModelId(conv.activeModel);
+      if (nm && !AUTO_UNKNOWN_RE.test(nm)) observedRawModels.add(nm);
+    }
+    for (const [dk, dayObj] of Object.entries(conv.days || {})) {
       if (dk < earliestDate) earliestDate = dk;
+      for (const rawModelName of Object.keys(dayObj?.byModel || {})) {
+        const nm = normalizeModelId(rawModelName);
+        if (nm && !AUTO_UNKNOWN_RE.test(nm)) observedRawModels.add(nm);
+      }
     }
     if (conv.onDisk !== false) {
       onDiskEntries.push([convId, conv]);
     }
   }
 
-  const subInfo = resolveSubscriptionInfo(prefs, observedProfiles);
+  const subInfo = resolveSubscriptionInfo(effectivePrefs, observedProfiles);
   const start7d = shiftLocalDate(todayDate, -6);
   const start30d = shiftLocalDate(todayDate, -29);
   const allSpanDays = Math.max(1, daysBetweenLocalDates(earliestDate, todayDate) + 1);
@@ -3940,7 +4035,7 @@ export function summarizeGlobalAndRecent(options = {}) {
     proratedDays: 1,
     todayDate,
     conversations,
-    prefs,
+    prefs: effectivePrefs,
     subInfo,
     metadataStore: options.metadataStore,
     appDataDirs,
@@ -3955,7 +4050,7 @@ export function summarizeGlobalAndRecent(options = {}) {
     proratedDays: 7,
     todayDate,
     conversations,
-    prefs,
+    prefs: effectivePrefs,
     subInfo,
     metadataStore: options.metadataStore,
     appDataDirs,
@@ -3970,7 +4065,7 @@ export function summarizeGlobalAndRecent(options = {}) {
     proratedDays: 30,
     todayDate,
     conversations,
-    prefs,
+    prefs: effectivePrefs,
     subInfo,
     metadataStore: options.metadataStore,
     appDataDirs,
@@ -3985,7 +4080,7 @@ export function summarizeGlobalAndRecent(options = {}) {
     proratedDays: allSpanDays,
     todayDate,
     conversations,
-    prefs,
+    prefs: effectivePrefs,
     subInfo,
     metadataStore: options.metadataStore,
     appDataDirs,
@@ -3997,7 +4092,7 @@ export function summarizeGlobalAndRecent(options = {}) {
   const recentTop20 = onDiskEntries.slice(0, 20);
   const pricingByModel = new Map();
   const getPricing = (m) => {
-    if (!pricingByModel.has(m)) pricingByModel.set(m, resolveModelPricing(m, prefs));
+    if (!pricingByModel.has(m)) pricingByModel.set(m, resolveModelPricing(m, effectivePrefs));
     return pricingByModel.get(m);
   };
 
@@ -4014,11 +4109,15 @@ export function summarizeGlobalAndRecent(options = {}) {
       conv.workspace = meta.workspace;
       ledger.markDirty();
     }
+    let totalIn = 0;
+    let totalCache = 0;
     let totalOut = 0;
     let totalCost = 0;
     for (const dayObj of Object.values(conv.days || {})) {
       for (const [rawModelName, raw] of Object.entries(dayObj?.byModel || {})) {
         const modelName = normalizeModelId(rawModelName);
+        totalIn += (raw.stdIn || 0) + (raw.longIn || 0);
+        totalCache += (raw.stdCache || 0) + (raw.longCache || 0);
         totalOut += (raw.stdOut || 0) + (raw.longOut || 0);
         totalCost += priceBucketWithProfile(raw, getPricing(modelName)).costActual;
       }
@@ -4033,6 +4132,7 @@ export function summarizeGlobalAndRecent(options = {}) {
       contextTotal: conv.latestContextTotal || 0,
       latestTokPerSec: conv.latestTokPerSec ?? null,
       outputTokens: totalOut,
+      totalTokens: totalIn + totalCache + totalOut,
       costActual: totalCost,
       updatedAtMs: conv.updatedAtMs || 0,
       isToday: Boolean(conv.days?.[todayDate]),
@@ -4060,8 +4160,12 @@ export function summarizeGlobalAndRecent(options = {}) {
       all: periodAll,
     },
     _observedProfiles: observedProfiles,
+    _observedRawModels: [...observedRawModels],
     _etagPart: `${todayDate}|${onDiskCount}|${Object.keys(conversations).length}|${etagParts.join(',')}`,
   };
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:40:00
+// ============================================================================
 }
 
 // ============================================================================

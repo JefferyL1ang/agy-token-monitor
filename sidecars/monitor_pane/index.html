@@ -170,6 +170,17 @@ Description: Add bilingual EN/ZH toggle button, data-i18n attributes on static D
                 <button id="btn-reset-all-models" type="button" class="mini-btn" data-i18n="settings.resetAllModels">全部恢复默认</button>
               </div>
             </div>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-17 11:35:00
+Description: Add official model/pricing sync status bar and manual sync trigger button (#btn-sync-pricing).
+============================================================================ -->
+            <div id="pricing-sync-bar" class="pricing-sync-bar">
+              <span id="pricing-sync-status" class="pricing-sync-status muted-hint"></span>
+              <button id="btn-sync-pricing" type="button" class="mini-btn" data-i18n="settings.syncPricingBtn" data-i18n-title="settings.syncPricingTitle">↻ 立即同步</button>
+            </div>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-17 11:35:00
+============================================================================ -->
 
             <label class="field">
               <span class="field-label" data-i18n="settings.modelSelectLabel">选择模型档位 (保存前可连续切换修改多个模型)</span>

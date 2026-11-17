@@ -41,9 +41,18 @@ import {
   resolveConversationPaths,
   summarizeGlobalAndRecent,
 } from './parser.mjs';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:42:00
+// Description: Import createPricingSyncManager for dual-channel official
+// model & pricing auto-sync and dynamic profile ID validation.
+// ============================================================================
+import { createPricingSyncManager } from './pricing_sync.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const VALID_PROFILE_IDS = new Set(MODEL_PRICING_CATALOG.map((p) => p.id));
+const PROFILE_ID_RE = /^[a-z0-9][a-z0-9._-]{0,63}$/i;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:42:00
+// ============================================================================
 const VALID_SUBSCRIPTION_PLANS = new Set(Object.keys(SUBSCRIPTION_CATALOG));
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:14:00
@@ -131,20 +140,45 @@ const ledgerPath = join(stateDir, 'usage_ledger.json');
 
 const MAX_TIMING_ENTRIES = 5000;
 
-function sanitizeModelOverrides(rawOverrides, baseOverrides = {}) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:42:00
+// Description: Initialize pricingSync & observedRawModels, validate dynamic
+// profile IDs with PROFILE_ID_RE, and preserve saved user modelOverrides across
+// upstream pricing updates.
+// ============================================================================
+const observedRawModels = new Set();
+const pricingSync = createPricingSyncManager({
+  stateDir,
+  baseCatalog: MODEL_PRICING_CATALOG,
+});
+
+const FALLBACK_BASE_PROFILE = {
+  inputPer1M: 2.0,
+  cachedPer1M: 0.2,
+  outputPer1M: 10.0,
+  longContextTier: false,
+};
+
+function sanitizeModelOverrides(
+  rawOverrides,
+  baseOverrides = {},
+  { pruneMatchingDefault = true } = {},
+) {
   if (rawOverrides === null) return {};
   if (!rawOverrides || typeof rawOverrides !== 'object') {
     return { ...baseOverrides };
   }
+  const runtimeCatalog = pricingSync.getRuntimeCatalog([...observedRawModels]);
   const next = { ...baseOverrides };
   for (const [profileId, rawVal] of Object.entries(rawOverrides)) {
-    if (!VALID_PROFILE_IDS.has(profileId)) continue;
+    if (!PROFILE_ID_RE.test(profileId)) continue;
     if (rawVal === null) {
       delete next[profileId];
       continue;
     }
     if (!rawVal || typeof rawVal !== 'object') continue;
-    const baseProfile = MODEL_PRICING_CATALOG.find((p) => p.id === profileId);
+    const matchedProfile = runtimeCatalog.find((p) => p.id === profileId);
+    const baseProfile = matchedProfile || FALLBACK_BASE_PROFILE;
     const prevOverride = next[profileId] || {};
     const entry = {
       inputPer1M: prevOverride.inputPer1M ?? baseProfile.inputPer1M,
@@ -171,6 +205,8 @@ function sanitizeModelOverrides(rawOverrides, baseOverrides = {}) {
       entry.longContextTier = rawVal.longContextTier;
     }
     const matchesDefault =
+      pruneMatchingDefault &&
+      Boolean(matchedProfile) &&
       Math.abs(entry.inputPer1M - baseProfile.inputPer1M) < 1e-9 &&
       Math.abs(entry.cachedPer1M - baseProfile.cachedPer1M) < 1e-9 &&
       Math.abs(entry.outputPer1M - baseProfile.outputPer1M) < 1e-9 &&
@@ -183,6 +219,9 @@ function sanitizeModelOverrides(rawOverrides, baseOverrides = {}) {
   }
   return next;
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:42:00
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:14:00
@@ -236,7 +275,17 @@ function sanitizeLoadedPrefs(rawPrefs) {
   ) {
     merged.subscriptionPlan = rawPrefs.subscriptionPlan;
   }
-  merged.modelOverrides = sanitizeModelOverrides(rawPrefs.modelOverrides, {});
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:42:00
+// Description: Preserve persisted user modelOverrides on load without pruning
+// against updated upstream synced defaults.
+// ============================================================================
+  merged.modelOverrides = sanitizeModelOverrides(rawPrefs.modelOverrides, {}, {
+    pruneMatchingDefault: false,
+  });
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:42:00
+// ============================================================================
   return merged;
 }
 
@@ -438,9 +487,16 @@ function validateAndMergePrefs(currentPrefs, input) {
     }
     if (input.modelOverrides && typeof input.modelOverrides === 'object') {
       for (const [pid, val] of Object.entries(input.modelOverrides)) {
-        if (!VALID_PROFILE_IDS.has(pid)) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:42:00
+// Description: Validate modelOverrides profile IDs dynamically via PROFILE_ID_RE.
+// ============================================================================
+        if (!PROFILE_ID_RE.test(pid)) {
           return { error: `Unknown model profile: ${pid}` };
         }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:42:00
+// ============================================================================
         if (val !== null && typeof val === 'object') {
           for (const field of ['inputPer1M', 'cachedPer1M', 'outputPer1M']) {
             if (val[field] !== undefined) {
@@ -596,7 +652,17 @@ function pollWatchedTranscripts() {
 const watcherTimer = setInterval(pollWatchedTranscripts, 400);
 
 // Self-reload check when sidecar code files are updated on disk in Antigravity runtime.
-const watchedCodePaths = [join(__dirname, 'main.mjs'), join(__dirname, 'parser.mjs')];
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 11:42:00
+// Description: Watch pricing_sync.mjs for hot-reload and integrate dynamic
+// runtimeCatalog, daily auto-sync, /api/snapshot pricingSync status, and
+// POST /api/sync-pricing.
+// ============================================================================
+const watchedCodePaths = [
+  join(__dirname, 'main.mjs'),
+  join(__dirname, 'parser.mjs'),
+  join(__dirname, 'pricing_sync.mjs'),
+];
 const initialCodeMtimes = new Map(
   watchedCodePaths.map((p) => {
     try {
@@ -638,11 +704,14 @@ app.api(
       });
     }
 
-    const globalRaw = summarizeGlobalAndRecent({
+    let runtimeCatalog = pricingSync.getRuntimeCatalog([...observedRawModels]);
+
+    let globalRaw = summarizeGlobalAndRecent({
       prefs: state.prefs,
       timingStore,
       metadataStore,
       ledger: usageLedger,
+      runtimeCatalog,
     });
 
     if (usageLedger.isDirty() && Date.now() - lastLedgerSavedMs >= 2000) {
@@ -656,14 +725,64 @@ app.api(
 
     if (targetConv) watchedConvIds.add(targetConv);
 
-    const currentRaw = targetConv
+    let currentRaw = targetConv
       ? analyzeConversation(targetConv, {
           prefs: state.prefs,
           timingStore,
           metadataStore,
           observedProfiles: globalRaw._observedProfiles,
+          runtimeCatalog,
         })
       : null;
+
+    const prevObservedSize = observedRawModels.size;
+    if (Array.isArray(globalRaw._observedRawModels)) {
+      for (const m of globalRaw._observedRawModels) {
+        if (typeof m === 'string' && m.trim() && !/^(?:auto|unknown|none)$/i.test(m.trim())) {
+          observedRawModels.add(m.trim());
+        }
+      }
+    }
+    if (Array.isArray(currentRaw?.totals?.byModel)) {
+      for (const entry of currentRaw.totals.byModel) {
+        const m = typeof entry?.model === 'string' ? entry.model.trim() : '';
+        if (m && !/^(?:auto|unknown|none)$/i.test(m)) {
+          observedRawModels.add(m);
+        }
+      }
+    }
+    if (currentRaw?.activeModel && !/^(?:auto|unknown|none)$/i.test(currentRaw.activeModel)) {
+      observedRawModels.add(currentRaw.activeModel);
+    }
+
+    if (observedRawModels.size > prevObservedSize) {
+      const nextCatalog = pricingSync.getRuntimeCatalog([...observedRawModels]);
+      if (nextCatalog.length !== runtimeCatalog.length) {
+        runtimeCatalog = nextCatalog;
+        globalRaw = summarizeGlobalAndRecent({
+          prefs: state.prefs,
+          timingStore,
+          metadataStore,
+          ledger: usageLedger,
+          runtimeCatalog,
+        });
+        if (targetConv) {
+          currentRaw = analyzeConversation(targetConv, {
+            prefs: state.prefs,
+            timingStore,
+            metadataStore,
+            observedProfiles: globalRaw._observedProfiles,
+            runtimeCatalog,
+          });
+        }
+      } else {
+        runtimeCatalog = nextCatalog;
+      }
+    }
+
+    pricingSync.maybeTriggerDailySync([...observedRawModels], () => {
+      prefsVersion += 1;
+    });
 
     if (currentRaw?._activeWatchIds) {
       for (const id of currentRaw._activeWatchIds) {
@@ -689,7 +808,12 @@ app.api(
       const { _etagPart, _activeWatchIds, ...restCurrent } = currentRaw;
       current = restCurrent;
     }
-    const { _etagPart: _gEtag, _observedProfiles: _obs, ...global } = globalRaw;
+    const {
+      _etagPart: _gEtag,
+      _observedProfiles: _obs,
+      _observedRawModels: _obsRaw,
+      ...global
+    } = globalRaw;
 
     return {
       unchanged: false,
@@ -697,7 +821,8 @@ app.api(
       serverTimeMs,
       boundConversationId,
       prefs: state.prefs,
-      pricingCatalog: buildEffectivePricingCatalog(state.prefs),
+      pricingSync: pricingSync.getPublicStatus(),
+      pricingCatalog: buildEffectivePricingCatalog(state.prefs, runtimeCatalog),
       subscriptionCatalog: SUBSCRIPTION_CATALOG,
       current,
       global,
@@ -722,11 +847,31 @@ app.api(
     return {
       ok: true,
       prefs: state.prefs,
-      pricingCatalog: buildEffectivePricingCatalog(state.prefs),
+      pricingCatalog: buildEffectivePricingCatalog(
+        state.prefs,
+        pricingSync.getRuntimeCatalog([...observedRawModels]),
+      ),
     };
   },
   'POST',
 );
+
+app.api(
+  '/api/sync-pricing',
+  async () => {
+    const syncRes = await pricingSync.syncNow([...observedRawModels]);
+    prefsVersion += 1;
+    return {
+      ok: syncRes.ok,
+      pricingSync: syncRes.status,
+      pricingCatalog: buildEffectivePricingCatalog(state.prefs, syncRes.runtimeCatalog),
+    };
+  },
+  'POST',
+);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 11:42:00
+// ============================================================================
 
 app.api(
   '/api/resync-ledger',

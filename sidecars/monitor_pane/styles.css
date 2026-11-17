@@ -1678,6 +1678,72 @@ Description: Style 7-column model breakdown tables with crisp .total-col emphasi
   color: var(--tm-amber);
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 11:35:00
+Description: Add styles for official pricing sync status bar (.pricing-sync-bar,
+.pricing-sync-status, .is-ok, .is-offline) and interactive catalog preview rows
+(.data-table tr.catalog-row, :hover, .is-selected).
+============================================================================ */
+.pricing-sync-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: var(--r-sm);
+  background: var(--tm-subtle);
+  border: 1px solid var(--tm-border);
+}
+
+.pricing-sync-status {
+  font-size: 11px;
+  color: var(--tm-muted-fg);
+  min-width: 0;
+  flex: 1 1 160px;
+  line-height: 1.35;
+}
+
+.pricing-sync-status.is-ok {
+  color: var(--tm-emerald);
+  font-weight: 500;
+}
+
+.pricing-sync-status.is-offline {
+  color: var(--tm-amber);
+}
+
+.mini-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.data-table tr.catalog-row {
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.data-table tr.catalog-row:hover,
+.data-table tr.catalog-row:focus-visible {
+  background: var(--tm-hover);
+}
+
+.data-table tr.catalog-row.is-selected {
+  background: color-mix(in srgb, var(--tm-cyan) 12%, transparent);
+}
+
+.data-table tr.catalog-row.is-selected td:first-child {
+  color: var(--tm-cyan);
+  font-weight: 700;
+}
+
+.data-table tr.catalog-row.is-overridden.is-selected td:first-child {
+  color: var(--tm-amber);
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-17 11:35:00
+============================================================================ */
+
 .sub-anchor-note {
   font-size: 11px;
   color: var(--tm-muted-fg);
