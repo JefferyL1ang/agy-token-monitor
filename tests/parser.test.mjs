@@ -3626,3 +3626,403 @@ test('app.js I18N zh/en tables maintain 100% key parity including context.compac
 // ============================================================================
 // [MODIFIED END] 2026-11-17 16:08:26
 // ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:27:07
+// Description: Add v0.2.3 regression tests for zero-timestamp & prototype-key
+// safety, malformed SQLite isolation, chunked cold-start usageLedger.sync with
+// priorityConvId, standalone HTTP /api/snapshot & /_sidecar/get-conversation-metadata
+// fast-path, and app.js static serial-polling & DOM safety invariants.
+// ============================================================================
+test('zero-timestamp filtering, prototype-key safety (constructor), and malformed DB isolation', () => {
+  clearParserCache();
+  const { root, appData } = makeTempEnv();
+  try {
+    const convsDir = join(appData, 'conversations');
+    mkdirSync(convsDir, { recursive: true });
+
+    const convA = 'a1a1a1a1-1111-4111-8111-111111111111';
+    const convB = 'b2b2b2b2-2222-4222-8222-222222222222';
+    const convC = 'c3c3c3c3-3333-4333-8333-333333333333';
+    const nowMs = Date.parse('2026-11-17T09:00:00Z');
+    const validTs = '2026-11-17T08:00:00Z';
+
+    // Conv A: Go zero-time "0001-01-01T00:00:00Z" + model ID "constructor" alongside valid 2026-11-17 step
+    writeConversation(appData, convA, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: '0001-01-01T00:00:00Z',
+          content:
+            '<USER_REQUEST>Zero-timestamp prototype test</USER_REQUEST>\n<USER_SETTINGS_CHANGE>The user changed setting `Model Selection` from None to constructor.</USER_SETTINGS_CHANGE>',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: '0001-01-01T00:00:00Z',
+          input_tokens: 1000,
+          cache_read_tokens: 0,
+          output_tokens: 50,
+          tool_calls: [],
+        },
+        {
+          step_index: 2,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: validTs,
+          input_tokens: 4000,
+          cache_read_tokens: 1000,
+          output_tokens: 500,
+          tool_calls: [],
+        },
+      ],
+      mtimeMs: Date.parse(validTs) + 1000,
+    });
+
+    // Conv B: corrupt/unreadable SQLite .db file with invalid header
+    writeFileSync(
+      join(convsDir, `${convB}.db`),
+      Buffer.from('CORRUPT_SQLITE_HEADER_BYTES_NOT_A_VALID_DATABASE_FILE'),
+    );
+
+    // Conv C: normal healthy conversation
+    writeConversation(appData, convC, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: '2026-11-17T08:05:00Z',
+          content:
+            '<USER_REQUEST>Normal conversation C</USER_REQUEST>\n<USER_SETTINGS_CHANGE>The user changed setting `Model Selection` from None to Gemini 3.1 Pro (High).</USER_SETTINGS_CHANGE>',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: '2026-11-17T08:05:05Z',
+          input_tokens: 2000,
+          cache_read_tokens: 3000,
+          output_tokens: 200,
+          tool_calls: [],
+        },
+      ],
+      mtimeMs: Date.parse('2026-11-17T08:05:06Z'),
+    });
+
+    const resA = analyzeConversation(convA, { appDataDirs: [appData], disableAgentApi: true });
+    assert.ok(resA);
+    assert.equal(resA.activeModel, 'constructor');
+    const resB = analyzeConversation(convB, { appDataDirs: [appData], disableAgentApi: true });
+    assert.equal(resB, null);
+    const resC = analyzeConversation(convC, { appDataDirs: [appData], disableAgentApi: true });
+    assert.ok(resC);
+    assert.equal(resC.activeModel, 'gemini-3.1-pro');
+    assert.equal(resC.totals.mainOnly.totalTokens, 5200);
+
+    const ledger = createUsageLedger();
+    const global = summarizeGlobalAndRecent({
+      appDataDirs: [appData],
+      nowMs,
+      ledger,
+      disableAgentApi: true,
+    });
+
+    assert.ok(global.periods.all.series.length >= 1);
+    assert.ok(global.periods.all.series.length <= 20);
+    assert.ok(global.periods.all.startDate >= '2000-01-01');
+    assert.equal(global.periods.all.conversationsCount, 2);
+
+    const ctorBucket = global.periods.all.byModel.find((m) => m.model === 'constructor');
+    assert.ok(ctorBucket, 'Model ID "constructor" should be tracked as own property');
+    assert.equal(ctorBucket.totalTokens, 5500);
+
+    const proBucket = global.periods.all.byModel.find((m) => m.model === 'gemini-3.1-pro');
+    assert.ok(proBucket, 'Normal Conv C should still be included despite corrupt Conv B');
+    assert.equal(proBucket.totalTokens, 5200);
+
+    // Ensure Object.prototype was not corrupted
+    assert.equal(Object.prototype.constructor, Object);
+    assert.equal(({}).constructor, Object);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('chunked cold-start usageLedger.sync prioritizes priorityConvId and converges to full rebuild totals', () => {
+  clearParserCache();
+  const { root, appData } = makeTempEnv();
+  try {
+    const nowMs = Date.parse('2026-11-17T09:00:00Z');
+    const dayOffsets = [0, 0, 1, 2, 4, 6, 8, 12, 18, 25, 35, 70];
+    const convIds = [];
+
+    for (let i = 0; i < dayOffsets.length; i++) {
+      const hex = (i + 1).toString(16).padStart(2, '0');
+      const convId = `c01d00${hex}-0000-4000-8000-0000000000${hex}`;
+      convIds.push(convId);
+      const stepMs = nowMs - dayOffsets[i] * 86400 * 1000 - i * 60000;
+      const iso = new Date(stepMs).toISOString();
+      const modelLabel = i % 2 === 0 ? 'Gemini 3.1 Pro (High)' : 'Gemini 4 Carbon (High)';
+      writeConversation(appData, convId, {
+        compactLines: [
+          {
+            step_index: 0,
+            type: 'USER_INPUT',
+            status: 'DONE',
+            created_at: iso,
+            content: `<USER_REQUEST>Session ${i}</USER_REQUEST>\n<USER_SETTINGS_CHANGE>Model Selection from None to ${modelLabel}</USER_SETTINGS_CHANGE>`,
+          },
+          {
+            step_index: 1,
+            type: 'PLANNER_RESPONSE',
+            status: 'DONE',
+            created_at: iso,
+            input_tokens: 1000 * (i + 1),
+            cache_read_tokens: 500 * (i + 1),
+            output_tokens: 100 * (i + 1),
+            tool_calls: [],
+          },
+        ],
+        mtimeMs: stepMs + 1000,
+      });
+    }
+
+    const oldestId = convIds[convIds.length - 1];
+    const chunkLedger = createUsageLedger();
+
+    // First chunked call: maxRebuildBatch = 4 with priorityConvId = oldestId
+    const first = summarizeGlobalAndRecent({
+      appDataDirs: [appData],
+      nowMs,
+      ledger: chunkLedger,
+      maxRebuildBatch: 4,
+      priorityConvId: oldestId,
+      disableAgentApi: true,
+    });
+    assert.equal(first.ledgerSync.syncing, true);
+    assert.ok(first.ledgerSync.pendingCount > 0);
+    assert.equal(first.ledgerSync.onDiskCount, 12);
+    assert.ok(chunkLedger.getData().conversations[oldestId], 'priorityConvId must be indexed on first call');
+    assert.ok(Object.keys(chunkLedger.getData().conversations[oldestId].days).length > 0);
+
+    // Continue chunked sync until complete
+    let latest = first;
+    let guard = 0;
+    while (latest.ledgerSync.syncing && guard < 10) {
+      guard += 1;
+      latest = summarizeGlobalAndRecent({
+        appDataDirs: [appData],
+        nowMs,
+        ledger: chunkLedger,
+        maxRebuildBatch: 4,
+        disableAgentApi: true,
+      });
+    }
+    assert.equal(latest.ledgerSync.syncing, false);
+    assert.equal(latest.ledgerSync.pendingCount, 0);
+    assert.equal(latest.ledgerSync.onDiskCount, 12);
+
+    const oneShot = summarizeGlobalAndRecent({
+      appDataDirs: [appData],
+      nowMs,
+      disableAgentApi: true,
+    });
+    assert.equal(oneShot.ledgerSync.syncing, false);
+    assert.equal(oneShot.ledgerSync.pendingCount, 0);
+
+    for (const p of ['today', '7d', '30d', 'all']) {
+      assert.equal(latest.periods[p].conversationsCount, oneShot.periods[p].conversationsCount);
+      assert.equal(latest.periods[p].stepsCount, oneShot.periods[p].stepsCount);
+      assert.equal(latest.periods[p].inputTokens, oneShot.periods[p].inputTokens);
+      assert.equal(latest.periods[p].cacheReadTokens, oneShot.periods[p].cacheReadTokens);
+      assert.equal(latest.periods[p].outputTokens, oneShot.periods[p].outputTokens);
+      assert.equal(latest.periods[p].totalTokens, oneShot.periods[p].totalTokens);
+      assert.ok(Math.abs(latest.periods[p].costActual - oneShot.periods[p].costActual) < 1e-9);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('standalone HTTP E2E cold-start chunked sync, corrupt DB resilience, and fast /_sidecar/get-conversation-metadata', async () => {
+  const { root, appData } = makeTempEnv();
+  const dataDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'data');
+  mkdirSync(dataDir, { recursive: true });
+  const convsDir = join(appData, 'conversations');
+  mkdirSync(convsDir, { recursive: true });
+  const fakeHome = join(root, 'home');
+  mkdirSync(fakeHome, { recursive: true });
+
+  const baseMs = Date.parse('2026-11-17T08:00:00Z');
+  let latestConvId = '';
+  for (let i = 0; i < 30; i++) {
+    const hex = (i + 1).toString(16).padStart(2, '0');
+    const cid = `e2e000${hex}-0000-4000-8000-0000000000${hex}`;
+    if (i === 29) latestConvId = cid;
+    const ts = new Date(baseMs + i * 10000).toISOString();
+    writeConversation(appData, cid, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: ts,
+          content: `<USER_REQUEST>Cold start ${i}</USER_REQUEST>\n<USER_SETTINGS_CHANGE>Model Selection from None to Gemini 3.1 Pro (High)</USER_SETTINGS_CHANGE>`,
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: ts,
+          input_tokens: 1000,
+          cache_read_tokens: 2000,
+          output_tokens: 100,
+          tool_calls: [],
+        },
+      ],
+      mtimeMs: baseMs + i * 10000 + 500,
+    });
+  }
+  const corruptId = 'e2e0bad0-0000-4000-8000-000000000bad';
+  const corruptDbPath = join(convsDir, `${corruptId}.db`);
+  writeFileSync(corruptDbPath, Buffer.from('BAD_SQLITE_HEADER'));
+  utimesSync(corruptDbPath, (baseMs - 5000) / 1000, (baseMs - 5000) / 1000);
+
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const mainPath = join(__dirname, '..', 'sidecars', 'monitor_pane', 'main.mjs');
+  const sdkFallback = join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs');
+  const port = 19844;
+
+  const env = { ...process.env };
+  delete env.ANTIGRAVITY_LS_ADDRESS;
+  delete env.ANTIGRAVITY_CSRF_TOKEN;
+  delete env.ANTIGRAVITY_SIDECAR_WEB_PORT;
+  delete env.ANTIGRAVITY_CONVERSATION_ID;
+  delete env.ANTIGRAVITY_SIDECAR_UI_TOKEN;
+  delete env.ANTIGRAVITY_AGENTAPI_EXE;
+  if (existsSync(sdkFallback)) {
+    env.SIDECAR_SDK_PATH = sdkFallback;
+  }
+  env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
+  env.USERPROFILE = fakeHome;
+  env.HOME = fakeHome;
+  env.PRICING_SYNC_DISABLE_AUTO = '1';
+
+  const child = spawn(process.execPath, [mainPath, '--standalone', String(port)], {
+    env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  try {
+    await new Promise((resolveReady, rejectReady) => {
+      if (child.exitCode !== null) {
+        rejectReady(new Error(`Sidecar exited prematurely (${child.exitCode})`));
+        return;
+      }
+      const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 5000);
+      let out = '';
+      child.stdout.on('data', (chunk) => {
+        out += chunk.toString();
+        if (out.includes(`[sidecar] listening on 127.0.0.1:${port}`)) {
+          clearTimeout(timer);
+          resolveReady();
+        }
+      });
+      child.stderr.on('data', (chunk) => {
+        out += chunk.toString();
+      });
+      child.once('exit', (code) => {
+        clearTimeout(timer);
+        rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+      });
+    });
+
+    const base = `http://127.0.0.1:${port}`;
+    const snapRes = await fetch(`${base}/api/snapshot`);
+    assert.equal(snapRes.status, 200);
+    let snap = await snapRes.json();
+    assert.equal(snap.unchanged, false);
+    assert.equal(typeof snap.global?.ledgerSync?.syncing, 'boolean');
+    assert.equal(snap.global.ledgerSync.syncing, true);
+    assert.equal(snap.global.ledgerSync.pendingCount, 6);
+    assert.equal(snap.global.ledgerSync.onDiskCount, 31);
+    assert.equal(snap.current?.conversationId, latestConvId);
+
+    // Background ledger pump should finish syncing all 31 conversations cleanly without HTTP 500
+    for (let attempt = 0; attempt < 40 && snap.global?.ledgerSync?.syncing; attempt++) {
+      await new Promise((r) => setTimeout(r, 50));
+      const pollRes = await fetch(`${base}/api/snapshot`);
+      assert.equal(pollRes.status, 200);
+      snap = await pollRes.json();
+    }
+    assert.equal(snap.global.ledgerSync.syncing, false);
+    assert.equal(snap.global.ledgerSync.pendingCount, 0);
+    assert.equal(snap.global.ledgerSync.onDiskCount, 31);
+    assert.equal(snap.global.periods.all.conversationsCount, 30);
+
+    // Explicitly querying the corrupt DB conversation returns HTTP 200 (current: null), never HTTP 500
+    const badSnapRes = await fetch(`${base}/api/snapshot?conv=${encodeURIComponent(corruptId)}`);
+    assert.equal(badSnapRes.status, 200);
+    const badSnap = await badSnapRes.json();
+    assert.equal(badSnap.current, null);
+
+    // /_sidecar/get-conversation-metadata fast-path responds HTTP 200 quickly without agentapi
+    const t0 = Date.now();
+    const metaRes = await fetch(`${base}/_sidecar/get-conversation-metadata`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversationId: latestConvId }),
+    });
+    const elapsedMs = Date.now() - t0;
+    assert.equal(metaRes.status, 200);
+    const metaJson = await metaRes.json();
+    assert.ok(metaJson?.response?.conversationMetadata);
+    assert.ok(elapsedMs < 2000, `Expected fast response without agentapi, took ${elapsedMs}ms`);
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill();
+      await new Promise((r) => {
+        if (child.exitCode !== null || child.signalCode !== null) return r();
+        const t = setTimeout(r, 3000);
+        child.once('exit', () => {
+          clearTimeout(t);
+          r();
+        });
+      });
+    }
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('app.js static polling safety: serial polling, zero requestSeq, I18N parity, and zero unsafe DOM calls', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const appSource = readFileSync(join(testDir, '..', 'sidecars', 'monitor_pane', 'app.js'), 'utf-8');
+
+  assert.equal(/setInterval\s*\([^)]*pollSnapshot/.test(appSource), false);
+  assert.equal(appSource.includes('if (seq !== state.requestSeq'), false);
+  assert.equal(/\brequestSeq\b/.test(appSource), false);
+  assert.ok(appSource.includes('POLL_TIMEOUT_MS'));
+  assert.ok(appSource.includes('state.convEpoch'));
+  assert.equal(/\b(?:innerHTML|outerHTML|insertAdjacentHTML|document\.write)\b/.test(appSource), false);
+
+  const zhStart = appSource.indexOf('const I18N = {');
+  assert.ok(zhStart >= 0, 'I18N object should exist in app.js');
+  const zhBlockMatch = appSource
+    .slice(zhStart)
+    .match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(zhBlockMatch, 'Both zh and en blocks should be extractable from I18N');
+
+  const extractKeys = (block) => [...block.matchAll(/^\s*'([^']+)'\s*:/gm)].map((m) => m[1]);
+  const zhKeys = extractKeys(zhBlockMatch[1]);
+  const enKeys = extractKeys(zhBlockMatch[2]);
+  assert.ok(zhKeys.includes('common.backendTimeout'));
+  assert.ok(enKeys.includes('common.backendTimeout'));
+  assert.deepEqual([...zhKeys].sort(), [...enKeys].sort());
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:27:07
+// ============================================================================

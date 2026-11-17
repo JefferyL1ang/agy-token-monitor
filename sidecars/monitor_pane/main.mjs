@@ -136,6 +136,15 @@ try {
 // ============================================================================
   const sdkCandidates = [
     process.env.SIDECAR_SDK_PATH,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:17:13
+// Description: Add Antigravity built-in sidecar_sdk path immediately after
+// SIDECAR_SDK_PATH for portable launch without ~/.gemini/config copy.
+// ============================================================================
+    join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:17:13
+// ============================================================================
     join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
     join(__dirname, '..', '..', '..', '..', 'node_modules', 'sidecar_sdk', 'index.mjs'),
   ].filter((p) => typeof p === 'string' && p.trim() && existsSync(p));
@@ -776,83 +785,91 @@ const codeReloadTimer = !isStandalone
     }, 2000)
   : null;
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:17:13
+// Description: Add chunked background ledger pump and make /api/snapshot
+// resilient (<200ms cold-start batching, global recent fallback, and try/catch
+// error isolation for analyzeConversation and top-level snapshot handling).
+// ============================================================================
+const SNAPSHOT_SYNC_BATCH = 25;
+const BG_LEDGER_BATCH = 25;
+let bgLedgerTimer = null;
+let isShuttingDown = false;
+
+function scheduleBackgroundLedgerPump() {
+  if (isShuttingDown || bgLedgerTimer) return;
+  bgLedgerTimer = setTimeout(() => {
+    bgLedgerTimer = null;
+    if (isShuttingDown) return;
+    try {
+      const res = usageLedger.sync({
+        threshold: state.prefs.longContextThreshold,
+        timingStore,
+        maxRebuildBatch: BG_LEDGER_BATCH,
+      });
+      if (res.pendingRebuildCount > 0) {
+        if (usageLedger.isDirty() && Date.now() - lastLedgerSavedMs >= 2000) {
+          persistLedgerNow();
+        }
+        prefsVersion += 1;
+        scheduleBackgroundLedgerPump();
+      } else {
+        if (usageLedger.isDirty()) persistLedgerNow();
+        prefsVersion += 1;
+      }
+    } catch (err) {
+      console.error('[monitor_pane] background ledger sync failed:', err?.message || err);
+    }
+  }, 15);
+}
+
 app.api(
   '/api/snapshot',
   (data) => {
-    const boundConversationId = isValidConversationId(app.config.conversationId)
-      ? app.config.conversationId
-      : '';
-    const requestedConv = typeof data?.conv === 'string' ? data.conv.trim() : '';
-    if (requestedConv && !isValidConversationId(requestedConv)) {
-      return new Response(JSON.stringify({ error: 'Invalid conversation ID' }), {
-        status: 400,
-        contentType: 'application/json',
-      });
-    }
-
-    let runtimeCatalog = pricingSync.getRuntimeCatalog([...observedRawModels]);
-
-    let globalRaw = summarizeGlobalAndRecent({
-      prefs: state.prefs,
-      timingStore,
-      metadataStore,
-      ledger: usageLedger,
-      runtimeCatalog,
-    });
-
-    if (usageLedger.isDirty() && Date.now() - lastLedgerSavedMs >= 2000) {
-      persistLedgerNow();
-    }
-
-    const targetConv =
-      requestedConv ||
-      boundConversationId ||
-      (isStandalone ? globalRaw.recentConversations[0]?.conversationId || '' : '');
-
-    if (targetConv) watchedConvIds.add(targetConv);
-
-    let currentRaw = targetConv
-      ? analyzeConversation(targetConv, {
-          prefs: state.prefs,
-          timingStore,
-          metadataStore,
-          observedProfiles: globalRaw._observedProfiles,
-          runtimeCatalog,
-        })
-      : null;
-
-    const prevObservedSize = observedRawModels.size;
-    if (Array.isArray(globalRaw._observedRawModels)) {
-      for (const m of globalRaw._observedRawModels) {
-        if (typeof m === 'string' && m.trim() && !/^(?:auto|unknown|none)$/i.test(m.trim())) {
-          observedRawModels.add(m.trim());
-        }
-      }
-    }
-    if (Array.isArray(currentRaw?.totals?.byModel)) {
-      for (const entry of currentRaw.totals.byModel) {
-        const m = typeof entry?.model === 'string' ? entry.model.trim() : '';
-        if (m && !/^(?:auto|unknown|none)$/i.test(m)) {
-          observedRawModels.add(m);
-        }
-      }
-    }
-    if (currentRaw?.activeModel && !/^(?:auto|unknown|none)$/i.test(currentRaw.activeModel)) {
-      observedRawModels.add(currentRaw.activeModel);
-    }
-
-    if (observedRawModels.size > prevObservedSize) {
-      const nextCatalog = pricingSync.getRuntimeCatalog([...observedRawModels]);
-      if (nextCatalog.length !== runtimeCatalog.length) {
-        runtimeCatalog = nextCatalog;
-        globalRaw = summarizeGlobalAndRecent({
-          prefs: state.prefs,
-          timingStore,
-          metadataStore,
-          ledger: usageLedger,
-          runtimeCatalog,
+    try {
+      const boundConversationId = isValidConversationId(app.config.conversationId)
+        ? app.config.conversationId
+        : '';
+      const requestedConv = typeof data?.conv === 'string' ? data.conv.trim() : '';
+      if (requestedConv && !isValidConversationId(requestedConv)) {
+        return new Response(JSON.stringify({ error: 'Invalid conversation ID' }), {
+          status: 400,
+          contentType: 'application/json',
         });
-        if (targetConv) {
+      }
+
+      const prelimTargetConv = requestedConv || boundConversationId;
+      let runtimeCatalog = pricingSync.getRuntimeCatalog([...observedRawModels]);
+
+      let globalRaw = summarizeGlobalAndRecent({
+        prefs: state.prefs,
+        timingStore,
+        metadataStore,
+        ledger: usageLedger,
+        runtimeCatalog,
+        maxRebuildBatch: SNAPSHOT_SYNC_BATCH,
+        priorityConvId: prelimTargetConv,
+      });
+
+      if (globalRaw.ledgerSync?.syncing) {
+        scheduleBackgroundLedgerPump();
+      }
+
+      if (usageLedger.isDirty() && Date.now() - lastLedgerSavedMs >= 2000) {
+        persistLedgerNow();
+      }
+
+      const targetConv =
+        requestedConv ||
+        boundConversationId ||
+        globalRaw.recentConversations[0]?.conversationId ||
+        '';
+
+      if (targetConv) watchedConvIds.add(targetConv);
+
+      let currentRaw = null;
+      if (targetConv) {
+        try {
           currentRaw = analyzeConversation(targetConv, {
             prefs: state.prefs,
             timingStore,
@@ -860,70 +877,139 @@ app.api(
             observedProfiles: globalRaw._observedProfiles,
             runtimeCatalog,
           });
+        } catch (err) {
+          console.error(
+            `[monitor_pane] analyzeConversation(${targetConv}) failed: ${err?.stack || err}`,
+          );
+          currentRaw = null;
         }
-      } else {
-        runtimeCatalog = nextCatalog;
       }
-    }
 
-    pricingSync.maybeTriggerDailySync([...observedRawModels], () => {
+      const prevObservedSize = observedRawModels.size;
+      if (Array.isArray(globalRaw._observedRawModels)) {
+        for (const m of globalRaw._observedRawModels) {
+          if (typeof m === 'string' && m.trim() && !/^(?:auto|unknown|none)$/i.test(m.trim())) {
+            observedRawModels.add(m.trim());
+          }
+        }
+      }
+      if (Array.isArray(currentRaw?.totals?.byModel)) {
+        for (const entry of currentRaw.totals.byModel) {
+          const m = typeof entry?.model === 'string' ? entry.model.trim() : '';
+          if (m && !/^(?:auto|unknown|none)$/i.test(m)) {
+            observedRawModels.add(m);
+          }
+        }
+      }
+      if (currentRaw?.activeModel && !/^(?:auto|unknown|none)$/i.test(currentRaw.activeModel)) {
+        observedRawModels.add(currentRaw.activeModel);
+      }
+
+      if (observedRawModels.size > prevObservedSize) {
+        const nextCatalog = pricingSync.getRuntimeCatalog([...observedRawModels]);
+        if (nextCatalog.length !== runtimeCatalog.length) {
+          runtimeCatalog = nextCatalog;
+          globalRaw = summarizeGlobalAndRecent({
+            prefs: state.prefs,
+            timingStore,
+            metadataStore,
+            ledger: usageLedger,
+            runtimeCatalog,
+            maxRebuildBatch: SNAPSHOT_SYNC_BATCH,
+            priorityConvId: targetConv,
+          });
+          if (globalRaw.ledgerSync?.syncing) {
+            scheduleBackgroundLedgerPump();
+          }
+          if (targetConv) {
+            try {
+              currentRaw = analyzeConversation(targetConv, {
+                prefs: state.prefs,
+                timingStore,
+                metadataStore,
+                observedProfiles: globalRaw._observedProfiles,
+                runtimeCatalog,
+              });
+            } catch (err) {
+              console.error(
+                `[monitor_pane] analyzeConversation(${targetConv}) failed: ${err?.stack || err}`,
+              );
+              currentRaw = null;
+            }
+          }
+        } else {
+          runtimeCatalog = nextCatalog;
+        }
+      }
+
+      pricingSync.maybeTriggerDailySync([...observedRawModels], () => {
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 15:45:00
 // Description: Apply newly synced USD-to-CNY rate on background daily sync completion.
 // ============================================================================
-      applyAutoSyncedFxIfNeeded({ persistImmediately: true });
+        applyAutoSyncedFxIfNeeded({ persistImmediately: true });
 // ============================================================================
 // [MODIFIED END] 2026-11-17 15:45:00
 // ============================================================================
-      prefsVersion += 1;
-    });
+        prefsVersion += 1;
+      });
 
-    if (currentRaw?._activeWatchIds) {
-      for (const id of currentRaw._activeWatchIds) {
-        if (isValidConversationId(id)) watchedConvIds.add(id);
+      if (currentRaw?._activeWatchIds) {
+        for (const id of currentRaw._activeWatchIds) {
+          if (isValidConversationId(id)) watchedConvIds.add(id);
+        }
       }
+
+      const etag = [
+        targetConv || '-',
+        `p${prefsVersion}`,
+        `m${metadataStore.getVersion()}`,
+        currentRaw?._etagPart || '-',
+        globalRaw._etagPart || '-',
+      ].join('|');
+
+      const serverTimeMs = Date.now();
+      if (data?.etag && data.etag === etag) {
+        return { unchanged: true, etag, serverTimeMs };
+      }
+
+      let current = null;
+      if (currentRaw) {
+        const { _etagPart, _activeWatchIds, ...restCurrent } = currentRaw;
+        current = restCurrent;
+      }
+      const {
+        _etagPart: _gEtag,
+        _observedProfiles: _obs,
+        _observedRawModels: _obsRaw,
+        ...global
+      } = globalRaw;
+
+      return {
+        unchanged: false,
+        etag,
+        serverTimeMs,
+        boundConversationId,
+        prefs: state.prefs,
+        pricingSync: pricingSync.getPublicStatus(),
+        pricingCatalog: buildEffectivePricingCatalog(state.prefs, runtimeCatalog),
+        subscriptionCatalog: SUBSCRIPTION_CATALOG,
+        current,
+        global,
+      };
+    } catch (err) {
+      console.error(`[monitor_pane] /api/snapshot failed: ${err?.stack || err}`);
+      return new Response(JSON.stringify({ error: err?.message || 'Internal snapshot error' }), {
+        status: 500,
+        contentType: 'application/json',
+      });
     }
-
-    const etag = [
-      targetConv || '-',
-      `p${prefsVersion}`,
-      `m${metadataStore.getVersion()}`,
-      currentRaw?._etagPart || '-',
-      globalRaw._etagPart || '-',
-    ].join('|');
-
-    const serverTimeMs = Date.now();
-    if (data?.etag && data.etag === etag) {
-      return { unchanged: true, etag, serverTimeMs };
-    }
-
-    let current = null;
-    if (currentRaw) {
-      const { _etagPart, _activeWatchIds, ...restCurrent } = currentRaw;
-      current = restCurrent;
-    }
-    const {
-      _etagPart: _gEtag,
-      _observedProfiles: _obs,
-      _observedRawModels: _obsRaw,
-      ...global
-    } = globalRaw;
-
-    return {
-      unchanged: false,
-      etag,
-      serverTimeMs,
-      boundConversationId,
-      prefs: state.prefs,
-      pricingSync: pricingSync.getPublicStatus(),
-      pricingCatalog: buildEffectivePricingCatalog(state.prefs, runtimeCatalog),
-      subscriptionCatalog: SUBSCRIPTION_CATALOG,
-      current,
-      global,
-    };
   },
   'GET',
 );
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:17:13
+// ============================================================================
 
 app.api(
   '/api/prefs',
@@ -976,9 +1062,19 @@ app.api(
 // [MODIFIED END] 2026-11-17 11:42:00
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:17:13
+// Description: Cancel pending bgLedgerTimer in /api/resync-ledger and shutdown(),
+// and override /_sidecar/get-conversation-metadata after app.run() so preload.js
+// resolves projectId without blocking execFileSync.
+// ============================================================================
 app.api(
   '/api/resync-ledger',
   () => {
+    if (bgLedgerTimer) {
+      clearTimeout(bgLedgerTimer);
+      bgLedgerTimer = null;
+    }
     usageLedger.resyncFromDisk({
       threshold: state.prefs.longContextThreshold,
       timingStore,
@@ -994,8 +1090,13 @@ app.api(
 );
 
 function shutdown() {
+  isShuttingDown = true;
   clearInterval(watcherTimer);
   if (codeReloadTimer) clearInterval(codeReloadTimer);
+  if (bgLedgerTimer) {
+    clearTimeout(bgLedgerTimer);
+    bgLedgerTimer = null;
+  }
   if (stateDirty) persistStateNow();
   if (usageLedger.isDirty()) persistLedgerNow();
   app.close().finally(() => process.exit(0));
@@ -1005,6 +1106,23 @@ process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 await app.run();
+
+app.api(
+  '/_sidecar/get-conversation-metadata',
+  () => ({
+    response: {
+      conversationMetadata: {
+        metadata: {
+          projectId: app.config.projectId || '',
+        },
+      },
+    },
+  }),
+  'POST',
+);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:17:13
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED END] 2026-11-16 21:25:00

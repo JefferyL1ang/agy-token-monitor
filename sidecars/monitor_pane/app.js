@@ -10,6 +10,17 @@
 
   const POLL_INTERVAL_MS = 1000;
   const STOPWATCH_INTERVAL_MS = 100;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:18:17
+// Description: Add serial polling timeout, chunked ledger-sync interval, and
+// preference mutation sequence counter to decouple prefs saves from polling.
+// ============================================================================
+  const POLL_TIMEOUT_MS = 15000;
+  const LEDGER_SYNC_POLL_MS = 350;
+  let prefMutationSeq = 0;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:18:17
+// ============================================================================
 
   const apiFetch = (...args) => (window.sidecar?.fetch || fetch)(...args);
   const boundConvId = window.sidecar?.conversationId || '';
@@ -32,7 +43,21 @@
     costScope: 'withChildren',
     spikesExpanded: false,
     drawerOpen: false,
-    requestSeq: 0,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:18:17
+// Description: Replace overlapping request sequence counter with conversation-epoch and serial
+// polling control fields (convEpoch, pollInFlight, pollTimer, activePollController,
+// inFlightConv, pendingForcePoll).
+// ============================================================================
+    convEpoch: 0,
+    pollInFlight: false,
+    pollTimer: null,
+    activePollController: null,
+    inFlightConv: '',
+    pendingForcePoll: false,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:18:17
+// ============================================================================
     serverClockOffsetMs: 0,
     lastStopwatchText: '',
     toastTimer: null,
@@ -90,6 +115,14 @@
       'common.standaloneOpenHint': '独立浏览器模式下不可直接跳转，已切换到监控视图',
       'common.fetchErrorPrefix': '监控数据拉取异常: {msg}',
       'common.backendConnFailed': '连接后台失败',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:18:17
+// Description: Add localized 15s backend timeout error message (zh).
+// ============================================================================
+      'common.backendTimeout': '后台响应超时 (15s)',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:18:17
+// ============================================================================
       'common.relSec': '{n}s 前',
       'common.relMin': '{n}m 前',
       'common.relHour': '{n}h 前',
@@ -340,6 +373,14 @@
       'common.standaloneOpenHint': 'Cannot focus host chat in standalone browser mode; switched to monitor view',
       'common.fetchErrorPrefix': 'Failed to fetch metrics: {msg}',
       'common.backendConnFailed': 'Backend connection failed',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:18:17
+// Description: Add localized 15s backend timeout error message (en).
+// ============================================================================
+      'common.backendTimeout': 'Backend response timed out (15s)',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:18:17
+// ============================================================================
       'common.relSec': '{n}s ago',
       'common.relMin': '{n}m ago',
       'common.relHour': '{n}h ago',
@@ -896,7 +937,12 @@
 
   async function patchPrefs(partial) {
     state.pendingPrefSaves += 1;
-    state.requestSeq += 1;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:18:17
+// Description: Track preference saves via prefMutationSeq instead of mutating
+// polling sequence so background snapshot requests are not canceled or dropped.
+// ============================================================================
+    prefMutationSeq += 1;
     try {
       const res = await apiFetch('/api/prefs', {
         method: 'POST',
@@ -907,6 +953,12 @@
       const data = await res.json();
       if (!data?.ok) throw new Error(data?.error || t('settings.saveFailedDefault'));
       lastEtag = '';
+      if (state.pollInFlight) {
+        state.pendingForcePoll = true;
+      }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:18:17
+// ============================================================================
       if (state.snapshot) {
         if (data.prefs) state.snapshot.prefs = data.prefs;
         if (data.pricingCatalog) state.snapshot.pricingCatalog = data.pricingCatalog;
@@ -935,13 +987,35 @@
 // [MODIFIED END] 2026-11-17 10:15:00
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:18:17
+// Description: Bump convEpoch, clear pending poll timer, and abort stale
+// in-flight requests when switching to another conversation.
+// ============================================================================
   function selectConversation(convId) {
     if (!convId) return;
-    selectedConv = convId;
+    if (convId !== selectedConv) {
+      state.convEpoch += 1;
+      if (state.pollTimer) {
+        clearTimeout(state.pollTimer);
+        state.pollTimer = null;
+      }
+      if (state.activePollController && state.inFlightConv !== convId) {
+        try {
+          state.activePollController.abort('conversation-switch');
+        } catch {
+          // Ignore abort errors
+        }
+      }
+      selectedConv = convId;
+    }
     lastEtag = '';
     setActiveTab('current');
     pollSnapshot(true);
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:18:17
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 15:15:00
@@ -3093,21 +3167,84 @@
   }
 
   // ---------------- Polling Loop ----------------
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:18:17
+// Description: Implement serial polling scheduler and pollSnapshot with 15s
+// AbortController timeout, detailed HTTP error parsing, conversation-epoch
+// abort handling, and adaptive 350ms chunked ledger-sync polling.
+// ============================================================================
+  function scheduleNextPoll(delayMs, force = false) {
+    if (state.pollTimer) {
+      clearTimeout(state.pollTimer);
+      state.pollTimer = null;
+    }
+    const ms = Number.isFinite(delayMs) && delayMs >= 0 ? delayMs : POLL_INTERVAL_MS;
+    state.pollTimer = setTimeout(() => {
+      state.pollTimer = null;
+      pollSnapshot(Boolean(force));
+    }, ms);
+  }
+
   async function pollSnapshot(force = false) {
-    const seq = ++state.requestSeq;
+    if (state.pollInFlight) {
+      if (state.inFlightConv === selectedConv) {
+        if (force) state.pendingForcePoll = true;
+        return;
+      }
+      if (state.activePollController) {
+        try {
+          state.activePollController.abort('conversation-switch');
+        } catch {
+          // Ignore abort errors
+        }
+      }
+    }
+
+    if (state.pollTimer) {
+      clearTimeout(state.pollTimer);
+      state.pollTimer = null;
+    }
+
+    const epoch = state.convEpoch;
     const reqConv = selectedConv;
     const reqEtag = force ? '' : lastEtag;
+    const reqPrefSeq = prefMutationSeq;
+    const controller = new AbortController();
+    let timedOut = false;
+    let ledgerSyncing = false;
+
+    state.pollInFlight = true;
+    state.inFlightConv = reqConv;
+    state.activePollController = controller;
+    state.pendingForcePoll = false;
+
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, POLL_TIMEOUT_MS);
 
     try {
       const url = `/api/snapshot?conv=${encodeURIComponent(reqConv)}&etag=${encodeURIComponent(reqEtag)}`;
-      const res = await apiFetch(url, { method: 'GET' });
+      const res = await apiFetch(url, { method: 'GET', signal: controller.signal });
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+        let detail = '';
+        try {
+          const errTxt = await res.text();
+          try {
+            const parsedErr = JSON.parse(errTxt);
+            if (parsedErr?.error) detail = String(parsedErr.error);
+          } catch {
+            if (errTxt && errTxt.trim()) detail = errTxt.trim().slice(0, 140);
+          }
+        } catch {
+          // Ignore body read error
+        }
+        throw new Error(detail ? `HTTP ${res.status}: ${detail}` : `HTTP ${res.status}`);
       }
       const data = await res.json();
 
       // Discard stale responses after conversation switch
-      if (seq !== state.requestSeq || reqConv !== selectedConv) {
+      if (epoch !== state.convEpoch || reqConv !== selectedConv) {
         return;
       }
 
@@ -3124,8 +3261,13 @@
 
       if (data?.unchanged === true) {
         if (data.etag) lastEtag = String(data.etag);
+        ledgerSyncing = Boolean(
+          state.snapshot?.global?.ledgerSync?.syncing || state.snapshot?.ledgerSync?.syncing,
+        );
         return;
       }
+
+      ledgerSyncing = Boolean(data?.global?.ledgerSync?.syncing || data?.ledgerSync?.syncing);
 
       lastEtag = String(data?.etag || '');
       state.snapshot = data;
@@ -3133,7 +3275,7 @@
         state.homeConvId = boundConvId || data?.boundConversationId || data?.current?.conversationId || '';
       }
 
-      if (state.pendingPrefSaves === 0 && data?.prefs) {
+      if (state.pendingPrefSaves === 0 && reqPrefSeq === prefMutationSeq && data?.prefs) {
         const nextLang = VALID_LANGUAGES.includes(data.prefs.language) ? data.prefs.language : 'zh';
         const nextUnit = VALID_TOKEN_UNITS.includes(data.prefs.tokenUnit) ? data.prefs.tokenUnit : 'auto';
         if (nextLang !== state.lang) {
@@ -3142,6 +3284,9 @@
         }
         state.tokenUnit = nextUnit;
       }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:18:17
+// ============================================================================
 
       if (!state.drawerOpen && data?.prefs) {
         populateSettingsForm(data.prefs);
@@ -3176,15 +3321,38 @@
       } else {
         renderGlobalTab(data);
       }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:18:17
+// Description: Surface HTTP error details and 15s timeout cleanly in #error-banner
+// while ignoring switch-aborted requests, and schedule next serial poll in finally.
+// ============================================================================
     } catch (err) {
-      if (seq !== state.requestSeq) return;
+      if (epoch !== state.convEpoch || reqConv !== selectedConv || (!timedOut && controller.signal.aborted)) {
+        return;
+      }
       $('loading-state').classList.add('hidden');
-      state.lastError = err?.message || t('common.backendConnFailed');
+      state.lastError = timedOut
+        ? t('common.backendTimeout')
+        : (err?.message || (typeof err === 'string' ? err : '') || t('common.backendConnFailed'));
       const errBanner = $('error-banner');
       errBanner.textContent = t('common.fetchErrorPrefix', { msg: state.lastError });
       errBanner.classList.remove('hidden');
+    } finally {
+      clearTimeout(timeoutId);
+      if (state.activePollController === controller) {
+        state.pollInFlight = false;
+        state.activePollController = null;
+        state.inFlightConv = '';
+        const shouldForce = state.pendingForcePoll;
+        state.pendingForcePoll = false;
+        const nextDelay = shouldForce ? 0 : (ledgerSyncing ? LEDGER_SYNC_POLL_MS : POLL_INTERVAL_MS);
+        scheduleNextPoll(nextDelay, shouldForce);
+      }
     }
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:18:17
+// ============================================================================
 
   // ---------------- Event Bindings & Bootstrap ----------------
   function init() {
@@ -3290,9 +3458,16 @@
       }
     });
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:18:17
+// Description: Trigger initial snapshot poll once and rely on serial scheduleNextPoll
+// instead of overlapping setInterval polling (keep stopwatch interval).
+// ============================================================================
     pollSnapshot(true);
-    setInterval(() => pollSnapshot(false), POLL_INTERVAL_MS);
     setInterval(tickLiveStopwatch, STOPWATCH_INTERVAL_MS);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:18:17
+// ============================================================================
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:15:00

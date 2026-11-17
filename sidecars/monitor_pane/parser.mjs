@@ -245,6 +245,26 @@ export const DEFAULT_PREFS = Object.freeze({
 const transcriptCache = new Map(); // cacheId -> { key, parsed }
 const MAX_TRANSCRIPT_CACHE = 128;
 const summariesDbCache = new Map(); // sumDbPath -> { key, byConvId }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Add module-level subagentDescCache for O(1) parent-subagent
+// descriptor reuse across chunked ledger sync batches.
+// ============================================================================
+const subagentDescCache = new Map(); // parentConvId -> { cacheKey, descriptors }
+const MAX_SUBAGENT_DESC_CACHE = 2048;
+
+function setSubagentDescCache(parentConvId, entry) {
+  if (subagentDescCache.has(parentConvId)) {
+    subagentDescCache.delete(parentConvId);
+  } else if (subagentDescCache.size >= MAX_SUBAGENT_DESC_CACHE) {
+    const oldestKey = subagentDescCache.keys().next().value;
+    if (oldestKey !== undefined) subagentDescCache.delete(oldestKey);
+  }
+  subagentDescCache.set(parentConvId, entry);
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
 
 /**
  * Normalizes backend model slugs and UI display names into canonical tier-free raw model IDs.
@@ -329,6 +349,14 @@ export function isValidConversationId(convId) {
 export function clearParserCache() {
   transcriptCache.clear();
   summariesDbCache.clear();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Clear subagentDescCache inside clearParserCache for test isolation.
+// ============================================================================
+  subagentDescCache.clear();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
 }
 
 function safeReaddir(dirPath) {
@@ -349,11 +377,28 @@ function statOf(filePath) {
   }
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Enforce [2000-01-01, 2100-01-01] timestamp bounds and add
+// safeIsoString() so zero/corrupt timestamps cannot trigger RangeError.
+// ============================================================================
+const MIN_VALID_TS_MS = 946684800000; // 2000-01-01T00:00:00Z
+const MAX_VALID_TS_MS = 4102444800000; // 2100-01-01T00:00:00Z
+
+function safeIsoString(ms) {
+  return Number.isFinite(ms) && ms >= MIN_VALID_TS_MS && ms <= MAX_VALID_TS_MS
+    ? new Date(ms).toISOString()
+    : '';
+}
+
 function parseTimestampMs(ts) {
   if (typeof ts !== 'string' || !ts.trim()) return null;
   const ms = Date.parse(ts.trim());
-  return Number.isFinite(ms) ? ms : null;
+  return Number.isFinite(ms) && ms >= MIN_VALID_TS_MS && ms <= MAX_VALID_TS_MS ? ms : null;
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
 
 export function formatLocalDate(ms) {
   const d = new Date(ms);
@@ -586,6 +631,11 @@ function decodeProtoFields(buf, start = 0, end = buf.length) {
   return fields;
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Clamp decoded protobuf timestamps to [MIN_VALID_TS_MS, MAX_VALID_TS_MS]
+// to reject Go zero-time and unsigned-varint negative values.
+// ============================================================================
 function decodeProtoTimestampMs(bytes) {
   if (!bytes || bytes.length === 0) return null;
   let sec = 0;
@@ -596,8 +646,12 @@ function decodeProtoTimestampMs(bytes) {
     else if (f.fieldNo === 2) nanos = f.value;
   }
   if (!Number.isFinite(sec) || sec <= 0) return null;
-  return sec * 1000 + Math.round((Number.isFinite(nanos) ? nanos : 0) / 1e6);
+  const ms = sec * 1000 + Math.round((Number.isFinite(nanos) ? nanos : 0) / 1e6);
+  return Number.isFinite(ms) && ms >= MIN_VALID_TS_MS && ms <= MAX_VALID_TS_MS ? ms : null;
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
 
 function decodeProtoDurationSec(bytes) {
   if (!bytes || bytes.length === 0) return 0;
@@ -842,7 +896,14 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
       if (createdAtMs !== null) {
         createdAtByStepIdx.set(stepIndex, createdAtMs);
       }
-      const createdAtIso = createdAtMs !== null ? new Date(createdAtMs).toISOString() : '';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Format createdAtIso via safeIsoString() so out-of-range dates never throw.
+// ============================================================================
+      const createdAtIso = safeIsoString(createdAtMs);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
 
       if (stepType === 15) {
         const genEntry =
@@ -1050,7 +1111,14 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
         step_index: syntheticIdx,
         type: 'COMPACTION_SUMMARY',
         status: 'DONE',
-        created_at: new Date(orphanCreatedAtMs).toISOString(),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Format orphanStep.created_at via safeIsoString() so zero/invalid dates never throw.
+// ============================================================================
+        created_at: safeIsoString(orphanCreatedAtMs),
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
         createdAtMs: orphanCreatedAtMs,
         firstTokenAtMs: null,
         completedAtMs: null,
@@ -1402,6 +1470,27 @@ export function parseTranscript(convId, paths) {
 // [MODIFIED END] 2026-11-16 22:15:00
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Avoid unnecessary multi-MB transcript_full.jsonl reads for mid-session
+// truncated USER_INPUT steps when SQLite dbParsed already provides planner models.
+// ============================================================================
+  let lastPlannerLineIdx = -1;
+  if (dbParsed && dbParsed.plannerByStepIdx.size > 0) {
+    for (let k = rawLines.length - 1; k >= 0; k--) {
+      if (
+        rawLines[k].includes('PLANNER_RESPONSE') &&
+        /"type"\s*:\s*"PLANNER_RESPONSE"/.test(rawLines[k])
+      ) {
+        lastPlannerLineIdx = k;
+        break;
+      }
+    }
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
+
   for (let i = 0; i < rawLines.length; i++) {
     const line = rawLines[i];
     if (!line.trim()) continue;
@@ -1425,12 +1514,25 @@ export function parseTranscript(convId, paths) {
       lastPlannerHadSubagent = false;
       let modelChanges = extractModelChangesFromContent(raw.content);
       let fullStep = null;
-      if (modelChanges.length === 0 && trunc.includes('content')) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Skip loadFullStep on truncated USER_INPUT when SQLite planner telemetry
+// covers earlier steps and firstUserPrompt is already resolved or extractable.
+// ============================================================================
+      const shouldLoadFullUserInput =
+        !dbParsed ||
+        dbParsed.plannerByStepIdx.size === 0 ||
+        i > lastPlannerLineIdx ||
+        (!firstUserPrompt && !extractFirstUserPrompt(raw.content));
+      if (modelChanges.length === 0 && trunc.includes('content') && shouldLoadFullUserInput) {
         fullStep = loadFullStep(i, stepIndex);
         if (fullStep) {
           modelChanges = extractModelChangesFromContent(fullStep.content);
         }
       }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
       if (!firstUserPrompt) {
         const promptContent = fullStep?.content ?? raw.content;
         firstUserPrompt = extractFirstUserPrompt(promptContent);
@@ -2866,7 +2968,12 @@ export function createMetadataStore(options = {}) {
     }
   }
 
-  function get(convId, { schedule = true, appDataDirs } = {}) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Skip agentapi execFile fallback when hasFallback is true and
+// conversation metadata is missing from conversation_summaries.db.
+// ============================================================================
+  function get(convId, { schedule = true, hasFallback = false, appDataDirs } = {}) {
     if (!isValidConversationId(convId)) return { title: '', workspace: '' };
     const dirs = appDataDirs || discoverAppDataDirs(options);
     const summaries = readConversationSummariesMap(dirs);
@@ -2884,6 +2991,9 @@ export function createMetadataStore(options = {}) {
     if (hit && Date.now() - hit.fetchedAt < TTL_MS) {
       return hit;
     }
+    if (hasFallback) {
+      return hit || { title: '', workspace: '' };
+    }
     if (schedule && !options.disableAgentApi && !inFlight.has(convId)) {
       inFlight.add(convId);
       queue.push(convId);
@@ -2891,6 +3001,9 @@ export function createMetadataStore(options = {}) {
     }
     return hit || { title: '', workspace: '' };
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
 
   return {
     get,
@@ -3303,25 +3416,45 @@ function makeStepDedupeKey(convIdLower, step) {
   return step.botId || `${convIdLower}:${step.step_index}:${step.createdAtMs ?? 0}`;
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Reject out-of-range timestamps and use Object.hasOwn + defineProperty
+// in addDatedStepToDays so prototype keys (constructor, toString, __proto__) are safe.
+// ============================================================================
+function defineOwnModelBucket(target, key) {
+  Object.defineProperty(target, key, {
+    value: emptyRawTokenCounts(),
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  });
+}
+
 function addDatedStepToDays(days, stepMs, stepModel, step, threshold) {
+  if (!Number.isFinite(stepMs) || stepMs < MIN_VALID_TS_MS || stepMs > MAX_VALID_TS_MS) {
+    return;
+  }
   const dateKey = formatLocalDate(stepMs);
   const hourKey = String(new Date(stepMs).getHours());
-  if (!days[dateKey]) {
+  if (!Object.hasOwn(days, dateKey)) {
     days[dateKey] = { byModel: {}, hours: {} };
   }
-  if (!days[dateKey].byModel[stepModel]) {
-    days[dateKey].byModel[stepModel] = emptyRawTokenCounts();
+  if (!Object.hasOwn(days[dateKey].byModel, stepModel)) {
+    defineOwnModelBucket(days[dateKey].byModel, stepModel);
   }
   addStepToRawCounts(days[dateKey].byModel[stepModel], step, threshold);
 
-  if (!days[dateKey].hours[hourKey]) {
+  if (!Object.hasOwn(days[dateKey].hours, hourKey)) {
     days[dateKey].hours[hourKey] = {};
   }
-  if (!days[dateKey].hours[hourKey][stepModel]) {
-    days[dateKey].hours[hourKey][stepModel] = emptyRawTokenCounts();
+  if (!Object.hasOwn(days[dateKey].hours[hourKey], stepModel)) {
+    defineOwnModelBucket(days[dateKey].hours[hourKey], stepModel);
   }
   addStepToRawCounts(days[dateKey].hours[hourKey][stepModel], step, threshold);
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
 
 /**
  * Creates a persistent incremental usage ledger (schema version 4).
@@ -3454,6 +3587,18 @@ export function createUsageLedger(initialData = null) {
         continue;
       }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Defer recovered-parent synthesis when an on-disk parent is still
+// queued in a later chunked rebuild batch.
+// ============================================================================
+      if (diskByLower.has(originLower) && !existing) {
+        continue;
+      }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
+
       // Deleted parent conversation not present on disk or in archived ledger — synthesize entry.
       const canonicalId = group.canonicalId;
       const days = {};
@@ -3513,6 +3658,74 @@ export function createUsageLedger(initialData = null) {
       dirty = true;
     }
   }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Add makeEmptyConvEntry and getSubagentDescriptorsForCandidate helpers
+// for fault-isolated ledger entries and O(1) parent-subagent descriptor caching.
+// ============================================================================
+  function makeEmptyConvEntry(cand, summariesMap) {
+    const sumEntry = summariesMap.get(cand.convId);
+    return {
+      cacheKey: cand.cacheKey,
+      updatedAtMs: cand.updatedAtMs,
+      onDisk: true,
+      activeModel: 'Auto',
+      latestContextTotal: 0,
+      latestTokPerSec: null,
+      status: 'IDLE',
+      totalOutputTokens: 0,
+      title: sumEntry?.title || '',
+      workspace: sumEntry?.workspace || '',
+      fallbackTitle: cand.convId.slice(0, 8),
+      observedProfiles: [],
+      days: {},
+    };
+  }
+
+  function getSubagentDescriptorsForCandidate(cand, swarmMemberLookup) {
+    if (!cand || !existsSync(cand.paths.transcriptPath)) return [];
+    const memberMeta = swarmMemberLookup.get(cand.convId);
+    const seedModel = memberMeta?.model || 'Auto';
+    const descKey = `${cand.cacheKey}|${seedModel}`;
+    const cached = subagentDescCache.get(cand.convId);
+    if (cached && cached.cacheKey === descKey) {
+      subagentDescCache.delete(cand.convId);
+      subagentDescCache.set(cand.convId, cached);
+      return cached.descriptors;
+    }
+
+    const cacheId = cand.paths.dbPath || cand.paths.transcriptPath;
+    let parsedParent = null;
+    const tHit = transcriptCache.get(cacheId);
+    if (tHit && tHit.key === cand.cacheKey) {
+      parsedParent = tHit.parsed;
+    } else {
+      let rawText = '';
+      try {
+        rawText = readFileSync(cand.paths.transcriptPath, 'utf-8');
+      } catch {
+        rawText = '';
+      }
+      if (!rawText.includes('invoke_subagent')) {
+        setSubagentDescCache(cand.convId, { cacheKey: descKey, descriptors: [] });
+        return [];
+      }
+      parsedParent = parseTranscript(cand.convId, cand.paths);
+    }
+
+    if (!parsedParent) {
+      setSubagentDescCache(cand.convId, { cacheKey: descKey, descriptors: [] });
+      return [];
+    }
+    const { modelByStepIdx } = resolveModelTimeline(parsedParent, seedModel);
+    const descriptors = extractSubagentCallDescriptors(parsedParent, modelByStepIdx);
+    setSubagentDescCache(cand.convId, { cacheKey: descKey, descriptors });
+    return descriptors;
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
 
   function sync(options = {}) {
     const appDataDirs = discoverAppDataDirs(options);
@@ -3634,19 +3847,55 @@ export function createUsageLedger(initialData = null) {
       }
     }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Support chunked cold-start batching (maxRebuildBatch + priorityConvId),
+// O(1) parent-subagent descriptor lookup, and per-conversation try/catch isolation.
+// ============================================================================
+    let batch = [];
     if (needRebuild.length > 0) {
-      // If a parent DB was updated/rewound, also refresh any on-disk child fork referencing it.
-      const rebuiltLowers = new Set(needRebuild.map((c) => c.convId.toLowerCase()));
+      const maxBatch =
+        Number.isFinite(Number(options.maxRebuildBatch)) && Number(options.maxRebuildBatch) > 0
+          ? Math.floor(Number(options.maxRebuildBatch))
+          : 0;
+      const priorityLower =
+        typeof options.priorityConvId === 'string' &&
+        isValidConversationId(options.priorityConvId.trim())
+          ? options.priorityConvId.trim().toLowerCase()
+          : '';
+
+      if (maxBatch > 0 && needRebuild.length > maxBatch) {
+        batch = needRebuild.slice(0, maxBatch);
+        if (priorityLower && !batch.some((c) => c.convId.toLowerCase() === priorityLower)) {
+          const priorityCand = needRebuild.find((c) => c.convId.toLowerCase() === priorityLower);
+          if (priorityCand) {
+            batch.push(priorityCand);
+          }
+        }
+      } else {
+        batch = [...needRebuild];
+      }
+
+      // If a parent DB in this batch is being rebuilt/rewound, also refresh any cached on-disk child fork referencing it.
+      const batchLowers = new Set(batch.map((c) => c.convId.toLowerCase()));
       const needRebuildSet = new Set(needRebuild.map((c) => c.convId));
+      const batchSet = new Set(batch.map((c) => c.convId));
       for (const c of candidates) {
-        if (needRebuildSet.has(c.convId)) continue;
+        if (batchSet.has(c.convId)) continue;
         const prev = data.conversations[c.convId];
         if (
           Array.isArray(prev?.parentCascadeIds) &&
-          prev.parentCascadeIds.some((pid) => rebuiltLowers.has(pid))
+          prev.parentCascadeIds.some((pid) => batchLowers.has(pid))
         ) {
-          needRebuild.push(c);
-          needRebuildSet.add(c.convId);
+          if (!needRebuildSet.has(c.convId)) {
+            needRebuild.push(c);
+            needRebuildSet.add(c.convId);
+            batch.push(c);
+            batchSet.add(c.convId);
+          } else if (maxBatch === 0 || needRebuild.length <= maxBatch) {
+            batch.push(c);
+            batchSet.add(c.convId);
+          }
         }
       }
 
@@ -3670,17 +3919,32 @@ export function createUsageLedger(initialData = null) {
       }
 
       // Collect subagent parent hints when transcript-only conversations are rebuilt.
+      // Check summariesMap.parentConversationId first in O(1), then fall back to cached descriptor index.
+      const directSubagentHints = new Map();
+      const unresolvedTranscriptOnly = [];
+      for (const c of batch) {
+        if (c.hasDb || swarmMemberLookup.has(c.convId)) continue;
+        const convLower = c.convId.toLowerCase();
+        const parentId = summariesMap.get(c.convId)?.parentConversationId;
+        if (parentId && isValidConversationId(parentId)) {
+          const parentCand = diskByLower.get(parentId.toLowerCase());
+          if (parentCand) {
+            const match = getSubagentDescriptorsForCandidate(parentCand, swarmMemberLookup).find(
+              (d) => d.conversationId.toLowerCase() === convLower,
+            );
+            if (match) {
+              directSubagentHints.set(convLower, match);
+              continue;
+            }
+          }
+        }
+        unresolvedTranscriptOnly.push(convLower);
+      }
+
       const subagentHintMap = new Map();
-      const hasTranscriptOnlyRebuild = needRebuild.some((c) => !c.hasDb);
-      if (hasTranscriptOnlyRebuild) {
+      if (unresolvedTranscriptOnly.length > 0) {
         for (const c of candidates) {
-          if (!existsSync(c.paths.transcriptPath)) continue;
-          const parsedParent = parseTranscript(c.convId, c.paths);
-          if (!parsedParent) continue;
-          const memberMeta = swarmMemberLookup.get(c.convId);
-          const seedModel = memberMeta?.model || 'Auto';
-          const { modelByStepIdx } = resolveModelTimeline(parsedParent, seedModel);
-          for (const desc of extractSubagentCallDescriptors(parsedParent, modelByStepIdx)) {
+          for (const desc of getSubagentDescriptorsForCandidate(c, swarmMemberLookup)) {
             const key = desc.conversationId.toLowerCase();
             if (!subagentHintMap.has(key)) subagentHintMap.set(key, desc);
           }
@@ -3689,20 +3953,25 @@ export function createUsageLedger(initialData = null) {
 
       const forkedRebuilds = [];
 
-      for (const c of needRebuild) {
-        const parsed = parseTranscript(c.convId, c.paths);
-        if (!parsed) continue;
-        const convLower = c.convId.toLowerCase();
-        const memberMeta = swarmMemberLookup.get(c.convId);
-        let subHint = subagentHintMap.get(convLower);
-        if (!subHint && !c.hasDb && !memberMeta) {
-          subHint = findSubagentParentHint(c.convId, appDataDirs);
-        }
-        const defaultModel = normalizeModelId(
-          memberMeta?.model || subHint?.defaultModel || 'Auto',
-        );
-        const { activeModel, modelByStepIdx } = resolveModelTimeline(parsed, defaultModel);
-        const live = computeLiveStatus(parsed);
+      for (const c of batch) {
+        try {
+          const parsed = parseTranscript(c.convId, c.paths);
+          if (!parsed) {
+            data.conversations[c.convId] = makeEmptyConvEntry(c, summariesMap);
+            dirty = true;
+            continue;
+          }
+          const convLower = c.convId.toLowerCase();
+          const memberMeta = swarmMemberLookup.get(c.convId);
+          const subHint = directSubagentHints.get(convLower) || subagentHintMap.get(convLower);
+          const defaultModel = normalizeModelId(
+            memberMeta?.model || subHint?.defaultModel || 'Auto',
+          );
+          const { activeModel, modelByStepIdx } = resolveModelTimeline(parsed, defaultModel);
+          const live = computeLiveStatus(parsed);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:13:00
 // Description: Pass activeModel to computeSpeed when updating ledger entries.
@@ -3843,6 +4112,18 @@ export function createUsageLedger(initialData = null) {
         }
         data.conversations[c.convId] = nextEntry;
         dirty = true;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Isolate malformed conversation errors inside chunked rebuild loop,
+// run rebuildRecoveredParents on batch progress, and return pendingRebuildCount.
+// ============================================================================
+        } catch (err) {
+          console.error(
+            `[monitor_pane] skipping malformed conversation ${c.convId}: ${err?.message || err}`,
+          );
+          data.conversations[c.convId] = makeEmptyConvEntry(c, summariesMap);
+          dirty = true;
+        }
       }
 
       // Filter cloned steps to ONLY genuinely orphaned (deleted-parent or rewound-parent) steps.
@@ -3868,11 +4149,18 @@ export function createUsageLedger(initialData = null) {
       }
     }
 
-    if (needRebuild.length > 0 || diskTopologyChanged) {
+    if (batch.length > 0 || diskTopologyChanged) {
       rebuildRecoveredParents(diskByLower, summariesMap, threshold);
     }
 
-    return { candidates, onDiskCount: candidates.length };
+    return {
+      candidates,
+      onDiskCount: candidates.length,
+      pendingRebuildCount: Math.max(0, needRebuild.length - batch.length),
+    };
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
   }
 
   function resyncFromDisk(options = {}) {
@@ -4072,9 +4360,21 @@ function buildPeriodSummary({
     }
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Clamp buildPeriodSummary date span to MAX_SPAN_DAYS (3650) so
+// corrupted historical dates cannot trigger unbounded trend series loops.
+// ============================================================================
+  const MAX_SPAN_DAYS = 3650;
   let trendGranularity = 'day';
   let series = [];
+  if (daysBetweenLocalDates(startDate, endDate) + 1 > MAX_SPAN_DAYS) {
+    startDate = shiftLocalDate(endDate, -(MAX_SPAN_DAYS - 1));
+  }
   const spanDaysCount = Math.max(1, daysBetweenLocalDates(startDate, endDate) + 1);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
 
   if (rangeKey === 'today') {
     trendGranularity = 'hour';
@@ -4211,12 +4511,19 @@ export function summarizeGlobalAndRecent(options = {}) {
   const appDataDirs = discoverAppDataDirs(options);
 
   const ledger = options.ledger || createUsageLedger();
-  const { onDiskCount } = ledger.sync({
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Forward chunked batching options to ledger.sync() and validate
+// date keys (>= 2000-01-01) when tracking earliestDate.
+// ============================================================================
+  const { onDiskCount, pendingRebuildCount = 0 } = ledger.sync({
     appDataDirs,
     env: options.env,
     homeDir: options.homeDir,
     timingStore: options.timingStore,
     threshold: Number(effectivePrefs.longContextThreshold) || DEFAULT_PREFS.longContextThreshold,
+    maxRebuildBatch: options.maxRebuildBatch,
+    priorityConvId: options.priorityConvId,
   });
 
   const conversations = ledger.getData().conversations;
@@ -4235,7 +4542,9 @@ export function summarizeGlobalAndRecent(options = {}) {
       if (nm && !AUTO_UNKNOWN_RE.test(nm)) observedRawModels.add(nm);
     }
     for (const [dk, dayObj] of Object.entries(conv.days || {})) {
-      if (dk < earliestDate) earliestDate = dk;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dk) && dk >= '2000-01-01' && dk < earliestDate) {
+        earliestDate = dk;
+      }
       for (const rawModelName of Object.keys(dayObj?.byModel || {})) {
         const nm = normalizeModelId(rawModelName);
         if (nm && !AUTO_UNKNOWN_RE.test(nm)) observedRawModels.add(nm);
@@ -4245,6 +4554,9 @@ export function summarizeGlobalAndRecent(options = {}) {
       onDiskEntries.push([convId, conv]);
     }
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
 
   const subInfo = resolveSubscriptionInfo(effectivePrefs, observedProfiles);
   const start7d = shiftLocalDate(todayDate, -6);
@@ -4321,10 +4633,22 @@ export function summarizeGlobalAndRecent(options = {}) {
   };
 
   const recentConversations = recentTop20.map(([convId, conv]) => {
-    const meta = options.metadataStore?.get?.(convId, { schedule: true, appDataDirs }) || {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Pass hasFallback to metadataStore.get() when title or fallbackTitle
+// already exists so agentapi CLI fallback is skipped on cold start.
+// ============================================================================
+    const meta = options.metadataStore?.get?.(convId, {
+      schedule: true,
+      hasFallback: Boolean(conv.title || conv.fallbackTitle),
+      appDataDirs,
+    }) || {
       title: '',
       workspace: '',
     };
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
     if (meta.title && conv.title !== meta.title) {
       conv.title = meta.title;
       ledger.markDirty();
@@ -4377,6 +4701,16 @@ export function summarizeGlobalAndRecent(options = {}) {
     todayByModel: todayPeriod.byModel,
     recentConversations,
     subscription: subInfo,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 17:19:56
+// Description: Expose ledgerSync chunked sync status and include pendingRebuildCount
+// in _etagPart so chunk progress invalidates ETag cleanly.
+// ============================================================================
+    ledgerSync: {
+      syncing: pendingRebuildCount > 0,
+      pendingCount: pendingRebuildCount,
+      onDiskCount,
+    },
     periods: {
       today: todayPeriod,
       '7d': period7d,
@@ -4385,7 +4719,10 @@ export function summarizeGlobalAndRecent(options = {}) {
     },
     _observedProfiles: observedProfiles,
     _observedRawModels: [...observedRawModels],
-    _etagPart: `${todayDate}|${onDiskCount}|${Object.keys(conversations).length}|${etagParts.join(',')}`,
+    _etagPart: `${todayDate}|${onDiskCount}|${Object.keys(conversations).length}|p${pendingRebuildCount}|${etagParts.join(',')}`,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 17:19:56
+// ============================================================================
   };
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:40:00
