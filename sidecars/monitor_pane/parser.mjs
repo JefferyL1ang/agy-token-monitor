@@ -218,12 +218,19 @@ export const SUBSCRIPTION_CATALOG = Object.freeze({
 // ============================================================================
 export const VALID_TOKEN_UNITS = Object.freeze(['auto', 'wan_yi', 'exact', 'm']);
 export const VALID_LANGUAGES = Object.freeze(['zh', 'en']);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:43:00
+// Description: Add VALID_CNY_RATE_MODES and cnyRateMode: 'auto' default for
+// daily automatic USD-to-CNY exchange rate synchronization.
+// ============================================================================
+export const VALID_CNY_RATE_MODES = Object.freeze(['auto', 'manual']);
 
 export const DEFAULT_PREFS = Object.freeze({
   softContextLimit: 400000,
   hardContextLimit: 500000,
   currency: 'USD',
   cnyRate: 7.25,
+  cnyRateMode: 'auto',
   tokenUnit: 'auto',
   language: 'zh',
   subscriptionPlan: 'auto',
@@ -231,6 +238,9 @@ export const DEFAULT_PREFS = Object.freeze({
   longContextThreshold: 200000,
   modelOverrides: Object.freeze({}),
 });
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:43:00
+// ============================================================================
 
 const transcriptCache = new Map(); // cacheId -> { key, parsed }
 const MAX_TRANSCRIPT_CACHE = 128;

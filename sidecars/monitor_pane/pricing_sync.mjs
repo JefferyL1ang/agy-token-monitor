@@ -21,6 +21,16 @@ const DEFAULT_GOOGLE_PRICING_URL = 'https://ai.google.dev/gemini-api/docs/pricin
 const DEFAULT_MODELS_DEV_URL = 'https://models.dev/api.json';
 const DEFAULT_LITELLM_URL =
   'https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:43:00
+// Description: Add dual-source public USD-to-CNY FX endpoints (ECB Frankfurter
+// primary + Open ER API fallback) for daily exchange rate synchronization.
+// ============================================================================
+const DEFAULT_FX_PRIMARY_URL = 'https://api.frankfurter.dev/v1/latest?base=USD&symbols=CNY';
+const DEFAULT_FX_FALLBACK_URL = 'https://open.er-api.com/v6/latest/USD';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:43:00
+// ============================================================================
 
 const FETCH_TIMEOUT_MS = 4500;
 const RETRY_COOLDOWN_MS = 15 * 60 * 1000;
@@ -1143,6 +1153,30 @@ function deriveFamilyBaseline(slug) {
   };
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:44:00
+// Description: Add parseUsdToCnyRateJson helper, persist synced USD-to-CNY FX
+// rate fields in pricing_cache.json, and expose getSyncedCnyRate().
+// ============================================================================
+export function parseUsdToCnyRateJson(raw) {
+  let obj = raw;
+  if (typeof raw === 'string') {
+    try {
+      obj = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (!obj || typeof obj !== 'object') return null;
+  const candidate =
+    obj?.rates?.CNY ?? obj?.rates?.cny ?? obj?.conversion_rates?.CNY ?? obj?.usd?.cny ?? null;
+  const rate = Number(candidate);
+  if (!Number.isFinite(rate) || rate < 1.0 || rate > 50.0) {
+    return null;
+  }
+  return Number(rate.toFixed(4));
+}
+
 function emptyCacheState() {
   return {
     schemaVersion: CACHE_SCHEMA_VERSION,
@@ -1152,6 +1186,10 @@ function emptyCacheState() {
     status: 'idle',
     sources: [],
     error: '',
+    usdToCnyRate: null,
+    fxSource: '',
+    fxLastSyncLocalDate: '',
+    fxAttemptLocalDate: '',
     syncedRates: {},
     upstreamPool: {},
     discoveredModels: [],
@@ -1166,6 +1204,8 @@ function loadPricingCache(cachePath) {
     if (!raw || typeof raw !== 'object' || raw.schemaVersion !== CACHE_SCHEMA_VERSION) {
       return fallback;
     }
+    const rawFx = Number(raw.usdToCnyRate);
+    const validFx = Number.isFinite(rawFx) && rawFx >= 1.0 && rawFx <= 50.0 ? Number(rawFx.toFixed(4)) : null;
     return {
       schemaVersion: CACHE_SCHEMA_VERSION,
       lastSyncLocalDate: typeof raw.lastSyncLocalDate === 'string' ? raw.lastSyncLocalDate : '',
@@ -1181,6 +1221,10 @@ function loadPricingCache(cachePath) {
         ? raw.sources.filter((s) => typeof s === 'string')
         : [],
       error: typeof raw.error === 'string' ? raw.error : '',
+      usdToCnyRate: validFx,
+      fxSource: typeof raw.fxSource === 'string' ? raw.fxSource : '',
+      fxLastSyncLocalDate: typeof raw.fxLastSyncLocalDate === 'string' ? raw.fxLastSyncLocalDate : '',
+      fxAttemptLocalDate: typeof raw.fxAttemptLocalDate === 'string' ? raw.fxAttemptLocalDate : '',
       syncedRates:
         raw.syncedRates && typeof raw.syncedRates === 'object' && !Array.isArray(raw.syncedRates)
           ? raw.syncedRates
@@ -1210,7 +1254,8 @@ function persistPricingCache(stateDir, cachePath, cache) {
 
 /**
  * Creates the dual-channel pricing synchronization manager with daily cadence,
- * offline fallback, new Gemini auto-discovery, and local observed model promotion.
+ * offline fallback, new Gemini auto-discovery, local observed model promotion,
+ * and daily USD-to-CNY exchange rate synchronization.
  */
 export function createPricingSyncManager({
   stateDir,
@@ -1220,6 +1265,8 @@ export function createPricingSyncManager({
   googlePricingUrl = process.env.PRICING_SYNC_GOOGLE_URL || DEFAULT_GOOGLE_PRICING_URL,
   modelsDevUrl = process.env.PRICING_SYNC_MODELS_DEV_URL || DEFAULT_MODELS_DEV_URL,
   liteLlmUrl = process.env.PRICING_SYNC_LITELLM_URL || DEFAULT_LITELLM_URL,
+  fxPrimaryUrl = process.env.PRICING_SYNC_FX_URL || DEFAULT_FX_PRIMARY_URL,
+  fxFallbackUrl = process.env.PRICING_SYNC_FX_FALLBACK_URL || DEFAULT_FX_FALLBACK_URL,
   autoSyncDisabled = process.env.PRICING_SYNC_DISABLE_AUTO === '1',
 } = {}) {
   const catalogBase =
@@ -1227,6 +1274,12 @@ export function createPricingSyncManager({
   const cachePath = stateDir ? join(stateDir, 'pricing_cache.json') : '';
   const cache = loadPricingCache(cachePath);
   let inFlightPromise = null;
+
+  function getSyncedCnyRate() {
+    return Number.isFinite(cache.usdToCnyRate) && cache.usdToCnyRate > 0
+      ? cache.usdToCnyRate
+      : null;
+  }
 
   function getPublicStatus() {
     return {
@@ -1238,8 +1291,14 @@ export function createPricingSyncManager({
       error: cache.error,
       syncing: Boolean(inFlightPromise),
       discoveredCount: Array.isArray(cache.discoveredModels) ? cache.discoveredModels.length : 0,
+      usdToCnyRate: getSyncedCnyRate(),
+      fxSource: cache.fxSource || '',
+      fxLastSyncLocalDate: cache.fxLastSyncLocalDate || '',
     };
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:44:00
+// ============================================================================
 
   function getRuntimeCatalog(observedModelIds = []) {
     const autoBase =
@@ -1527,12 +1586,68 @@ export function createPricingSyncManager({
     return { source: 'google-official', parsed };
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:44:00
+// Description: Fetch USD-to-CNY exchange rate concurrently during daily sync
+// with fallback, preserve cached FX rate offline, and trigger once if FX was
+// not yet attempted today.
+// ============================================================================
+  async function fetchFxChannel() {
+    if (typeof fetchImpl !== 'function') {
+      throw new Error('fetch unavailable');
+    }
+    const candidates = [
+      [fxPrimaryUrl, 'frankfurter.dev'],
+      [fxFallbackUrl, 'open.er-api.com'],
+    ];
+    const errors = [];
+    for (const [url, source] of candidates) {
+      if (!url) continue;
+      try {
+        const res = await fetchImpl(url, {
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+          headers: { Accept: 'application/json' },
+        });
+        if (!res || !res.ok) {
+          throw new Error(`${source} HTTP ${res?.status || 'ERR'}`);
+        }
+        const payload =
+          typeof res.json === 'function'
+            ? await res.json()
+            : typeof res.text === 'function'
+              ? await res.text()
+              : null;
+        const rate = parseUsdToCnyRateJson(payload);
+        if (rate !== null) {
+          return { source, rate };
+        }
+        throw new Error(`${source} invalid CNY rate`);
+      } catch (err) {
+        errors.push(err?.message || `${source} failed`);
+      }
+    }
+    throw new Error(errors.join('; ') || 'FX channel failed');
+  }
+
   async function executeSync(observedModelIds) {
     const nowMs = nowFn();
-    const [ch1Res, ch2Res] = await Promise.allSettled([fetchChannel1(), fetchChannel2(nowMs)]);
+    const todayLocal = formatLocalDate(nowMs);
+    const [ch1Res, ch2Res, fxRes] = await Promise.allSettled([
+      fetchChannel1(),
+      fetchChannel2(nowMs),
+      fetchFxChannel(),
+    ]);
 
     const ch1Ok = ch1Res.status === 'fulfilled';
     const ch2Ok = ch2Res.status === 'fulfilled';
+    const fxOk = fxRes.status === 'fulfilled';
+    cache.fxAttemptLocalDate = todayLocal;
+
+    if (fxOk) {
+      cache.usdToCnyRate = fxRes.value.rate;
+      cache.fxSource = fxRes.value.source;
+      cache.fxLastSyncLocalDate = todayLocal;
+    }
 
     if (!ch1Ok && !ch2Ok) {
       const errs = [
@@ -1548,11 +1663,14 @@ export function createPricingSyncManager({
       persistPricingCache(stateDir, cachePath, cache);
       return {
         ok: false,
-        updated: false,
+        updated: fxOk,
         status: getPublicStatus(),
         runtimeCatalog: getRuntimeCatalog(observedModelIds),
       };
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:44:00
+// ============================================================================
 
     const activeSources = [];
     const nextSyncedRates = ch1Ok ? {} : { ...(cache.syncedRates || {}) };
@@ -1671,7 +1789,18 @@ export function createPricingSyncManager({
   function maybeTriggerDailySync(observedModelIds = [], onUpdated = null) {
     if (autoSyncDisabled || inFlightPromise) return false;
     const nowMs = nowFn();
-    if (cache.lastSyncLocalDate === formatLocalDate(nowMs)) return false;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:44:00
+// Description: Also trigger daily sync once if fxAttemptLocalDate is not yet
+// today (e.g. upgrading from a cache created before FX sync existed).
+// ============================================================================
+    const todayLocal = formatLocalDate(nowMs);
+    if (cache.lastSyncLocalDate === todayLocal && cache.fxAttemptLocalDate === todayLocal) {
+      return false;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:44:00
+// ============================================================================
     if (cache.lastAttemptAtMs !== null && nowMs - cache.lastAttemptAtMs < RETRY_COOLDOWN_MS) {
       return false;
     }
@@ -1696,6 +1825,14 @@ export function createPricingSyncManager({
 
   return {
     getPublicStatus,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:44:00
+// Description: Export getSyncedCnyRate on pricingSync manager instance.
+// ============================================================================
+    getSyncedCnyRate,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:44:00
+// ============================================================================
     getRuntimeCatalog,
     syncNow,
     maybeTriggerDailySync,

@@ -95,6 +95,14 @@ import {
   parseGoogleOfficialPricingHtml,
   parseLiteLlmCatalog,
   parseModelsDevCatalog,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:51:00
+// Description: Import parseUsdToCnyRateJson for FX synchronization tests.
+// ============================================================================
+  parseUsdToCnyRateJson,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:51:00
+// ============================================================================
 } from '../sidecars/monitor_pane/pricing_sync.mjs';
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:50:00
@@ -2883,6 +2891,18 @@ test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro over
       res.end(JSON.stringify(mockModelsDev));
       return;
     }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:51:00
+// Description: Serve deterministic mock USD-to-CNY FX endpoint in E2E server.
+// ============================================================================
+    if (req.url === '/fx-usd.json') {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ base: 'USD', date: '2026-11-17', rates: { CNY: 6.6688 } }));
+      return;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:51:00
+// ============================================================================
     res.writeHead(404);
     res.end('not found');
   });
@@ -2912,6 +2932,15 @@ test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro over
     env.PRICING_SYNC_GOOGLE_URL = `${mockBase}/google-pricing`;
     env.PRICING_SYNC_MODELS_DEV_URL = `${mockBase}/models-dev.json`;
     env.PRICING_SYNC_LITELLM_URL = `${mockBase}/missing-litellm.json`;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:51:00
+// Description: Point FX primary & fallback URLs to deterministic mock server.
+// ============================================================================
+    env.PRICING_SYNC_FX_URL = `${mockBase}/missing-fx-primary.json`;
+    env.PRICING_SYNC_FX_FALLBACK_URL = `${mockBase}/fx-usd.json`;
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:51:00
+// ============================================================================
 
     const child = spawn(process.execPath, [mainPath, '--standalone', String(port)], {
       env,
@@ -2981,6 +3010,21 @@ test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro over
     const syncBody = await syncRes.json();
     assert.equal(syncBody.ok, true);
     assert.equal(syncBody.pricingSync.status, 'ok');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:51:00
+// Description: Verify automatic USD-to-CNY FX sync (with fallback), manual FX
+// lock priority across syncs/restarts, and auto-mode restoration.
+// ============================================================================
+    assert.equal(parseUsdToCnyRateJson({ rates: { CNY: 6.66654 } }), 6.6665);
+    assert.equal(parseUsdToCnyRateJson({ rates: { CNY: 0.2 } }), null);
+    assert.equal(parseUsdToCnyRateJson({ rates: { CNY: 99 } }), null);
+    assert.equal(syncBody.pricingSync.usdToCnyRate, 6.6688);
+    assert.equal(syncBody.pricingSync.fxSource, 'open.er-api.com');
+    assert.equal(syncBody.prefs.cnyRateMode, 'auto');
+    assert.equal(syncBody.prefs.cnyRate, 6.6688);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:51:00
+// ============================================================================
     assert.ok(syncBody.pricingSync.discoveredCount >= 1);
     assert.ok(syncBody.pricingCatalog.some((m) => m.id === 'gemini-4.5-pro'));
     assert.equal(syncBody.pricingCatalog.some((m) => m.id === 'gemini-3.8-flash-tts'), false);
@@ -3001,6 +3045,16 @@ test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro over
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:51:00
+// Description: Lock manual FX rate (7.15) and verify preservation across sync & restart.
+// ============================================================================
+        currency: 'CNY',
+        cnyRateMode: 'manual',
+        cnyRate: 7.15,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:51:00
+// ============================================================================
         modelOverrides: {
           'gemini-3.1-pro': { inputPer1M: 7.5, cachedPer1M: 0.75, outputPer1M: 27.5, longContextTier: true },
           'gemini-4.5-pro': { inputPer1M: 8.5, cachedPer1M: 0.85, outputPer1M: 35.0, longContextTier: false },
@@ -3010,6 +3064,16 @@ test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro over
     assert.equal(ovRes.status, 200);
     const ovBody = await ovRes.json();
     assert.equal(ovBody.ok, true);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:51:00
+// Description: Assert manual FX rate is saved and preserved across re-sync & restart,
+// then snaps back to synced 6.6688 when cnyRateMode is switched back to 'auto'.
+// ============================================================================
+    assert.equal(ovBody.prefs.cnyRateMode, 'manual');
+    assert.equal(ovBody.prefs.cnyRate, 7.15);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:51:00
+// ============================================================================
     assert.equal(ovBody.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').isOverridden, true);
     assert.equal(ovBody.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').usd.inputPer1M, 7.5);
     assert.equal(ovBody.pricingCatalog.find((m) => m.id === 'gemini-4.5-pro').isOverridden, true);
@@ -3025,6 +3089,15 @@ test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro over
     ).json();
     assert.equal(syncAgain.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').usd.inputPer1M, 7.5);
     assert.equal(syncAgain.pricingCatalog.find((m) => m.id === 'gemini-4.5-pro').usd.outputPer1M, 35.0);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:51:00
+// Description: Verify manual cnyRate (7.15) is not overwritten by /api/sync-pricing.
+// ============================================================================
+    assert.equal(syncAgain.prefs.cnyRateMode, 'manual');
+    assert.equal(syncAgain.prefs.cnyRate, 7.15);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:51:00
+// ============================================================================
 
     await stopChild(child1);
     child1 = null;
@@ -3035,6 +3108,16 @@ test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro over
     const base2 = `http://127.0.0.1:${port2}`;
     const snapRestart = await (await fetch(`${base2}/api/snapshot?conv=${encodeURIComponent(convId)}`)).json();
     assert.equal(snapRestart.pricingSync.status, 'ok');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:51:00
+// Description: Verify persisted manual FX mode across restart and auto-mode snap back.
+// ============================================================================
+    assert.equal(snapRestart.pricingSync.usdToCnyRate, 6.6688);
+    assert.equal(snapRestart.prefs.cnyRateMode, 'manual');
+    assert.equal(snapRestart.prefs.cnyRate, 7.15);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:51:00
+// ============================================================================
     assert.equal(snapRestart.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').isOverridden, true);
     assert.equal(snapRestart.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').usd.inputPer1M, 7.5);
     assert.equal(snapRestart.pricingCatalog.find((m) => m.id === 'gemini-4.5-pro').isOverridden, true);
@@ -3046,6 +3129,14 @@ test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro over
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:51:00
+// Description: Switch cnyRateMode back to 'auto' and verify cnyRate adopts synced 6.6688.
+// ============================================================================
+          cnyRateMode: 'auto',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:51:00
+// ============================================================================
           modelOverrides: {
             'gemini-3.1-pro': null,
             'gemini-4.5-pro': null,
@@ -3053,6 +3144,15 @@ test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro over
         }),
       })
     ).json();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:51:00
+// Description: Assert cnyRate snapped back to synced 6.6688 upon returning to 'auto'.
+// ============================================================================
+    assert.equal(resetRes.prefs.cnyRateMode, 'auto');
+    assert.equal(resetRes.prefs.cnyRate, 6.6688);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:51:00
+// ============================================================================
     assert.equal(resetRes.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').isOverridden, false);
     assert.equal(resetRes.pricingCatalog.find((m) => m.id === 'gemini-3.1-pro').usd.inputPer1M, 2.0);
     assert.equal(resetRes.pricingCatalog.find((m) => m.id === 'gemini-4.5-pro').isOverridden, false);

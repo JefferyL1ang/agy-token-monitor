@@ -20,8 +20,8 @@
   - Breaks down uncached input, cache read, output tokens, and total token consumption per session, with a toggle between **With Subagents** and **Main Only**.
   - Compares API equivalent cost against your monthly subscription (`Free`, `Google AI Pro`, `Ultra 5x`, `Ultra 20x`, or custom fee) across `USD` and `CNY`.
 - **Daily Official Model & Pricing Sync**:
-  - Syncs model lists and token pricing once per day when opened (`ai.google.dev` and `models.dev`), caching results locally with a `↻ Sync Now` button and offline fallback.
-  - Custom per-model price edits (`*`) always take priority over auto-synced defaults, and clicking any row in the rate table loads that model for quick editing.
+  - Syncs model lists, token pricing, and `USD / CNY` exchange rates once per day when opened (`ai.google.dev`, `models.dev`, and ECB reference FX rates), caching results locally with a `↻ Sync Now` button and offline fallback.
+  - Custom per-model price edits (`*`) and manual FX rate locks always take priority over auto-synced defaults, and clicking any row in the rate table loads that model for quick editing.
 - **Multi-Period Usage Analytics**:
   - Aggregates usage across **Today** (24-hour bars), **7 Days**, **30 Days**, and **All Time** with horizontally scrollable, mouse-draggable trend charts.
   - Deduplicates forked, branched, and rewound conversations so inherited history is never double-counted.
@@ -112,9 +112,9 @@ node --test tests/parser.test.mjs
 - **会话费用、总 Token 消耗与订阅对比**：
   - 统计单次会话的未缓存输入、缓存读取、累计输出与**总 Token 消耗**，支持在「含子代理」与「仅主对话」之间切换。
   - 支持 `USD` / `CNY` 折算，并将等效 API 费用与订阅月费（`Free`、`Google AI Pro`、`Ultra 5x`、`Ultra 20x` 或自定义月费）进行回本对比。
-- **每日同步官方模型与价格**：
-  - 每天首次打开面板时自动从官方定价页与公开模型库（`ai.google.dev` + `models.dev`）同步在役模型及单价，支持离线缓存回退与 **`↻ 立即同步`** 按钮。
-  - 手动修改过的模型单价（带 `*` 标记）始终优先于自动同步默认价；展开下方费率表后可直接点击任意模型行切换编辑。
+- **每日同步官方模型、价格与汇率**：
+  - 每天首次打开面板时自动同步在役模型单价与实时 `USD / CNY` 汇率（`ai.google.dev`、`models.dev` 及欧洲央行参考汇率），支持离线缓存回退与 **`↻ 立即同步`** 按钮。
+  - 手动修改过的模型单价（带 `*` 标记）与手动固定汇率始终优先于自动同步值；展开下方费率表后可直接点击任意模型行切换编辑。
 - **多周期历史统计与分支去重**：
   - 支持查看 **今日**（24 小时分时）、**近 7 天**、**近 30 天** 与 **全部历史** 用量趋势，柱状图支持鼠标按住横向拖动与滚轮横滑。
   - 自动识别分支（Fork）、并行对比及回退重生的会话，避免继承的历史步骤被重复计费。

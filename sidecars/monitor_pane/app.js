@@ -231,6 +231,18 @@
       'settings.unitExact': '1,234,567 (精确整数)',
       'settings.unitM': '固定 M (百万)',
       'settings.currencyLabel': '货币单位',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:47:00
+// Description: Add FX sync mode and synced FX status i18n keys (zh).
+// ============================================================================
+      'settings.cnyRateModeLabel': '汇率更新方式',
+      'settings.cnyModeAuto': '每日自动联网同步',
+      'settings.cnyModeManual': '手动固定汇率',
+      'settings.cnyAutoTitle': '当前为每日自动同步模式；如需自定义请将汇率更新方式切换为「手动固定汇率」',
+      'settings.syncFxPart': ' · 汇率 {rate}',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:47:00
+// ============================================================================
       'settings.cnyRateLabel': '汇率 (1 USD = ? CNY)',
       'settings.sec2Title': '当前订阅方案',
       'settings.subPlanLabel': '订阅档位',
@@ -257,19 +269,26 @@
 // [MODIFIED BEGIN] 2026-11-17 11:35:00
 // Description: Add interactive catalog row tooltip and official pricing sync i18n keys (zh).
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:47:00
+// Description: Mention FX synchronization in sync button tooltips & toasts (zh).
+// ============================================================================
       'settings.catalogRowTip': '点击切换并编辑此模型单价',
       'settings.syncPricingBtn': '↻ 立即同步',
-      'settings.syncPricingTitle': '立即从官方定价页与模型目录拉取最新模型与单价',
+      'settings.syncPricingTitle': '立即同步官方模型单价与最新 USD/CNY 汇率',
       'settings.syncingBtn': '↻ 同步中…',
-      'settings.syncingOfficial': '正在同步官方模型与最新定价…',
+      'settings.syncingOfficial': '正在同步官方定价与最新汇率…',
       'settings.syncDiscoveredPart': ' · +{count} 模型',
-      'settings.syncOk': '已同步官方定价 · {date} ({sources}){discovered}',
-      'settings.syncCachedBaseline': '使用缓存定价基线 (上次同步 {date})',
-      'settings.syncBuiltinBaseline': '使用内置定价基线（联网每日自动同步）',
-      'settings.syncSuccessToast': '已同步官方最新模型与定价',
-      'settings.syncSuccessDiscoveredToast': '已同步官方定价，并发现 {count} 个新模型',
+      'settings.syncOk': '已同步官方定价{fx} · {date} ({sources}){discovered}',
+      'settings.syncCachedBaseline': '使用缓存定价基线{fx} (上次同步 {date})',
+      'settings.syncBuiltinBaseline': '使用内置基线{fx}（联网每日自动同步）',
+      'settings.syncSuccessToast': '已同步官方最新模型单价与汇率',
+      'settings.syncSuccessDiscoveredToast': '已同步官方定价与汇率，并发现 {count} 个新模型',
       'settings.syncOfflineHint': '无法连接官方数据源，保留当前基线',
       'settings.syncFailedToast': '定价同步未完成: {msg}',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:47:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:35:00
 // ============================================================================
@@ -454,6 +473,18 @@
       'settings.unitExact': '1,234,567 (Exact)',
       'settings.unitM': 'Fixed M (Millions)',
       'settings.currencyLabel': 'Currency',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:47:00
+// Description: Add FX sync mode and synced FX status i18n keys (en).
+// ============================================================================
+      'settings.cnyRateModeLabel': 'FX Rate Mode',
+      'settings.cnyModeAuto': 'Auto-Sync Daily',
+      'settings.cnyModeManual': 'Manual Fixed Rate',
+      'settings.cnyAutoTitle': 'Managed automatically via daily online sync; switch FX Rate Mode to Manual Fixed Rate to edit',
+      'settings.syncFxPart': ' · FX {rate}',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:47:00
+// ============================================================================
       'settings.cnyRateLabel': 'FX Rate (1 USD = ? CNY)',
       'settings.sec2Title': 'Subscription Plan',
       'settings.subPlanLabel': 'Plan Tier',
@@ -480,19 +511,26 @@
 // [MODIFIED BEGIN] 2026-11-17 11:35:00
 // Description: Add interactive catalog row tooltip and official pricing sync i18n keys (en).
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:48:00
+// Description: Mention FX synchronization in sync button tooltips & toasts (en).
+// ============================================================================
       'settings.catalogRowTip': 'Click to edit this model pricing',
       'settings.syncPricingBtn': '↻ Sync Now',
-      'settings.syncPricingTitle': 'Sync latest official models & pricing now',
+      'settings.syncPricingTitle': 'Sync latest official model rates & USD/CNY FX rate now',
       'settings.syncingBtn': '↻ Syncing…',
-      'settings.syncingOfficial': 'Syncing official models & pricing…',
+      'settings.syncingOfficial': 'Syncing official pricing & FX rate…',
       'settings.syncDiscoveredPart': ' · +{count} new',
-      'settings.syncOk': 'Official pricing synced · {date} ({sources}){discovered}',
-      'settings.syncCachedBaseline': 'Using cached pricing baseline (synced {date})',
-      'settings.syncBuiltinBaseline': 'Using built-in pricing baseline (auto-syncs daily online)',
-      'settings.syncSuccessToast': 'Official models & pricing synced',
-      'settings.syncSuccessDiscoveredToast': 'Synced official pricing (+{count} discovered models)',
+      'settings.syncOk': 'Official pricing synced{fx} · {date} ({sources}){discovered}',
+      'settings.syncCachedBaseline': 'Using cached pricing{fx} (synced {date})',
+      'settings.syncBuiltinBaseline': 'Using built-in baseline{fx} (auto-syncs daily online)',
+      'settings.syncSuccessToast': 'Official models, pricing & FX rate synced',
+      'settings.syncSuccessDiscoveredToast': 'Synced official pricing & FX (+{count} new models)',
       'settings.syncOfflineHint': 'Upstream unreachable; keeping current baseline',
       'settings.syncFailedToast': 'Pricing sync incomplete: {msg}',
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:48:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:35:00
 // ============================================================================
@@ -1339,7 +1377,31 @@
 
   function updateConditionalSettingsFields() {
     const currency = $('pref-currency').value === 'CNY' ? 'CNY' : 'USD';
-    $('pref-cny-rate-wrap').classList.toggle('hidden', currency !== 'CNY');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:48:00
+// Description: Toggle FX rate mode selector, lock #pref-cny-rate as read-only
+// when auto-synced, and fill live synced USD-to-CNY rate when available.
+// ============================================================================
+    const isCny = currency === 'CNY';
+    $('pref-cny-rate-mode-wrap')?.classList.toggle('hidden', !isCny);
+    $('pref-cny-rate-wrap').classList.toggle('hidden', !isCny);
+
+    const cnyModeEl = $('pref-cny-rate-mode');
+    const cnyRateEl = $('pref-cny-rate');
+    if (cnyRateEl) {
+      const isManual = cnyModeEl?.value === 'manual';
+      cnyRateEl.readOnly = !isManual;
+      cnyRateEl.title = isManual ? '' : t('settings.cnyAutoTitle');
+      if (!isManual) {
+        const syncedFx = Number(state.snapshot?.pricingSync?.usdToCnyRate);
+        if (Number.isFinite(syncedFx) && syncedFx > 0) {
+          cnyRateEl.value = syncedFx;
+        }
+      }
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:48:00
+// ============================================================================
 
     const subPlan = $('pref-sub-plan').value;
     $('pref-sub-custom-wrap').classList.toggle('hidden', subPlan !== 'custom');
@@ -1369,6 +1431,16 @@
       unitSelect.value = VALID_TOKEN_UNITS.includes(prefs.tokenUnit) ? prefs.tokenUnit : 'auto';
     }
     $('pref-currency').value = prefs.currency === 'CNY' ? 'CNY' : 'USD';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:48:00
+// Description: Populate #pref-cny-rate-mode from prefs.cnyRateMode.
+// ============================================================================
+    if ($('pref-cny-rate-mode')) {
+      $('pref-cny-rate-mode').value = prefs.cnyRateMode === 'manual' ? 'manual' : 'auto';
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:48:00
+// ============================================================================
     $('pref-cny-rate').value = num(prefs.cnyRate, 7.25);
     $('pref-sub-plan').value = prefs.subscriptionPlan || 'auto';
     $('pref-sub-custom-usd').value = num(prefs.customSubscriptionMonthlyUsd, 99.99);
@@ -1405,6 +1477,14 @@
     const rawUnit = $('pref-token-unit')?.value || 'auto';
     const tokenUnit = VALID_TOKEN_UNITS.includes(rawUnit) ? rawUnit : 'auto';
     const currency = $('pref-currency').value === 'CNY' ? 'CNY' : 'USD';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:48:00
+// Description: Read and submit cnyRateMode ('auto' | 'manual') in saveSettings.
+// ============================================================================
+    const cnyRateMode = $('pref-cny-rate-mode')?.value === 'manual' ? 'manual' : 'auto';
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:48:00
+// ============================================================================
     const cnyRate = Number($('pref-cny-rate').value);
     const subscriptionPlan = $('pref-sub-plan').value || 'auto';
     const customSubscriptionMonthlyUsd = Number($('pref-sub-custom-usd').value);
@@ -1456,6 +1536,14 @@
         tokenUnit,
         language: state.lang,
         currency,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:48:00
+// Description: Include cnyRateMode in POST /api/prefs payload.
+// ============================================================================
+        cnyRateMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:48:00
+// ============================================================================
         cnyRate,
         subscriptionPlan,
         customSubscriptionMonthlyUsd,
@@ -1559,10 +1647,20 @@
     const discoveredPart = discoveredCount > 0
       ? t('settings.syncDiscoveredPart', { count: discoveredCount })
       : '';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:48:00
+// Description: Display synced USD-to-CNY FX rate in #pricing-sync-status and
+// refresh auto-mode #pref-cny-rate upon manual /api/sync-pricing completion.
+// ============================================================================
+    const syncedFx = Number(ps?.usdToCnyRate);
+    const fxPart = Number.isFinite(syncedFx) && syncedFx > 0
+      ? t('settings.syncFxPart', { rate: syncedFx })
+      : '';
 
     if (ps?.status === 'ok' && ps?.lastSyncLocalDate) {
       statusEl.classList.add('is-ok');
       statusEl.textContent = t('settings.syncOk', {
+        fx: fxPart,
         date: ps.lastSyncLocalDate,
         sources: sourcesText,
         discovered: discoveredPart,
@@ -1575,11 +1673,12 @@
     }
     if (ps?.lastSyncLocalDate) {
       statusEl.textContent = t('settings.syncCachedBaseline', {
+        fx: fxPart,
         date: ps.lastSyncLocalDate,
       });
       return;
     }
-    statusEl.textContent = t('settings.syncBuiltinBaseline');
+    statusEl.textContent = t('settings.syncBuiltinBaseline', { fx: fxPart });
   }
 
   async function handleSyncPricingClick() {
@@ -1598,13 +1697,18 @@
       const data = await res.json();
       stageCurrentProfileFromInputs();
       if (!state.snapshot) state.snapshot = {};
+      if (data?.prefs) state.snapshot.prefs = data.prefs;
       if (data?.pricingSync) state.snapshot.pricingSync = data.pricingSync;
       if (Array.isArray(data?.pricingCatalog)) state.snapshot.pricingCatalog = data.pricingCatalog;
 
       state.pricingSyncing = false;
       renderModelSelectOptions();
       loadSelectedProfileInputs();
+      updateConditionalSettingsFields();
       renderPricingSyncStatus();
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:48:00
+// ============================================================================
       lastEtag = '';
       if (state.snapshot) {
         renderCurrentTab(state.snapshot);
@@ -3011,6 +3115,19 @@
 
       if (!state.drawerOpen && data?.prefs) {
         populateSettingsForm(data.prefs);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:48:00
+// Description: Refresh auto-mode FX input live if drawer is open during background sync.
+// ============================================================================
+      } else if (state.drawerOpen && $('pref-cny-rate-mode')?.value !== 'manual') {
+        const syncedFx = Number(data?.pricingSync?.usdToCnyRate);
+        if (Number.isFinite(syncedFx) && syncedFx > 0 && $('pref-cny-rate')) {
+          $('pref-cny-rate').value = syncedFx;
+          renderCatalogPreviewTable();
+        }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:48:00
+// ============================================================================
       }
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:35:00
@@ -3087,6 +3204,14 @@
     $('settings-form').addEventListener('submit', saveSettings);
 
     $('pref-currency').addEventListener('change', updateConditionalSettingsFields);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:48:00
+// Description: Bind #pref-cny-rate-mode change listener to toggle auto vs manual FX input.
+// ============================================================================
+    $('pref-cny-rate-mode')?.addEventListener('change', updateConditionalSettingsFields);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:48:00
+// ============================================================================
     $('pref-cny-rate').addEventListener('input', renderCatalogPreviewTable);
     $('pref-sub-plan').addEventListener('change', updateConditionalSettingsFields);
 

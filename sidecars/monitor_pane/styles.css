@@ -539,6 +539,19 @@ Description: Style header EN/ZH language toggle button (.lang-btn).
   border-color: var(--tm-cyan);
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-17 15:47:00
+Description: Style read-only auto-synced FX rate input cleanly.
+============================================================================ */
+.field-input[readonly] {
+  background: var(--tm-subtle);
+  color: var(--tm-muted-fg);
+  cursor: default;
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-17 15:47:00
+============================================================================ */
+
 .checkbox-row {
   display: flex;
   align-items: flex-start;

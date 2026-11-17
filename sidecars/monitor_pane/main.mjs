@@ -26,6 +26,14 @@ import {
 // Description: Import VALID_LANGUAGES and VALID_TOKEN_UNITS and define
 // PREFS_SCHEMA_VERSION = 2 for v0.2.2 preference validation and migration.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:45:00
+// Description: Import VALID_CNY_RATE_MODES for daily FX auto-sync vs manual lock.
+// ============================================================================
+  VALID_CNY_RATE_MODES,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:45:00
+// ============================================================================
   VALID_LANGUAGES,
   VALID_TOKEN_UNITS,
 // ============================================================================
@@ -60,6 +68,14 @@ const VALID_SUBSCRIPTION_PLANS = new Set(Object.keys(SUBSCRIPTION_CATALOG));
 // ============================================================================
 const VALID_TOKEN_UNIT_SET = new Set(VALID_TOKEN_UNITS);
 const VALID_LANGUAGE_SET = new Set(VALID_LANGUAGES);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:45:00
+// Description: Validate cnyRateMode ('auto' | 'manual').
+// ============================================================================
+const VALID_CNY_RATE_MODE_SET = new Set(VALID_CNY_RATE_MODES);
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:45:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:26:00
 // Description: Bump PREFS_SCHEMA_VERSION to 3 so v1/v2 states with default
@@ -235,6 +251,14 @@ function sanitizeLoadedPrefs(rawPrefs) {
     hardContextLimit: DEFAULT_PREFS.hardContextLimit,
     currency: DEFAULT_PREFS.currency,
     cnyRate: DEFAULT_PREFS.cnyRate,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:45:00
+// Description: Include cnyRateMode default in sanitizeLoadedPrefs.
+// ============================================================================
+    cnyRateMode: DEFAULT_PREFS.cnyRateMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:45:00
+// ============================================================================
     tokenUnit: DEFAULT_PREFS.tokenUnit,
     language: DEFAULT_PREFS.language,
     subscriptionPlan: DEFAULT_PREFS.subscriptionPlan,
@@ -263,6 +287,19 @@ function sanitizeLoadedPrefs(rawPrefs) {
   if (rawPrefs.currency === 'USD' || rawPrefs.currency === 'CNY') {
     merged.currency = rawPrefs.currency;
   }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:45:00
+// Description: Restore persisted cnyRateMode when valid.
+// ============================================================================
+  if (
+    typeof rawPrefs.cnyRateMode === 'string' &&
+    VALID_CNY_RATE_MODE_SET.has(rawPrefs.cnyRateMode)
+  ) {
+    merged.cnyRateMode = rawPrefs.cnyRateMode;
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:45:00
+// ============================================================================
   if (typeof rawPrefs.tokenUnit === 'string' && VALID_TOKEN_UNIT_SET.has(rawPrefs.tokenUnit)) {
     merged.tokenUnit = rawPrefs.tokenUnit;
   }
@@ -396,6 +433,31 @@ if (loadedState.migrated) {
 // [MODIFIED END] 2026-11-17 10:14:00
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:45:00
+// Description: Sync state.prefs.cnyRate with pricingSync.getSyncedCnyRate()
+// whenever cnyRateMode !== 'manual' and a valid online rate is available.
+// ============================================================================
+function applyAutoSyncedFxIfNeeded({ persistImmediately = false } = {}) {
+  if (state.prefs.cnyRateMode === 'manual') return false;
+  const syncedFx = pricingSync.getSyncedCnyRate();
+  if (!Number.isFinite(syncedFx) || syncedFx <= 0) return false;
+  if (Math.abs(Number(state.prefs.cnyRate) - syncedFx) <= 1e-6) return false;
+  state.prefs.cnyRate = syncedFx;
+  prefsVersion += 1;
+  if (persistImmediately) {
+    persistStateNow();
+  } else {
+    stateDirty = true;
+  }
+  return true;
+}
+
+applyAutoSyncedFxIfNeeded({ persistImmediately: true });
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:45:00
+// ============================================================================
+
 function persistLedgerNow() {
   if (!usageLedger.isDirty()) return;
   try {
@@ -447,6 +509,30 @@ function validateAndMergePrefs(currentPrefs, input) {
     }
     next.currency = input.currency;
   }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:45:00
+// Description: Validate optional cnyRateMode and apply synced FX rate when set to 'auto'.
+// ============================================================================
+  if (input.cnyRateMode !== undefined) {
+    if (
+      typeof input.cnyRateMode !== 'string' ||
+      !VALID_CNY_RATE_MODE_SET.has(input.cnyRateMode)
+    ) {
+      return { error: 'cnyRateMode must be auto or manual.' };
+    }
+    next.cnyRateMode = input.cnyRateMode;
+  }
+
+  if (next.cnyRateMode !== 'manual') {
+    const syncedFx = pricingSync.getSyncedCnyRate();
+    if (Number.isFinite(syncedFx) && syncedFx > 0) {
+      next.cnyRate = syncedFx;
+    }
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:45:00
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:14:00
@@ -781,6 +867,14 @@ app.api(
     }
 
     pricingSync.maybeTriggerDailySync([...observedRawModels], () => {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:45:00
+// Description: Apply newly synced USD-to-CNY rate on background daily sync completion.
+// ============================================================================
+      applyAutoSyncedFxIfNeeded({ persistImmediately: true });
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:45:00
+// ============================================================================
       prefsVersion += 1;
     });
 
@@ -860,12 +954,21 @@ app.api(
   '/api/sync-pricing',
   async () => {
     const syncRes = await pricingSync.syncNow([...observedRawModels]);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-17 15:45:00
+// Description: Update auto-mode cnyRate and return prefs from /api/sync-pricing.
+// ============================================================================
+    applyAutoSyncedFxIfNeeded({ persistImmediately: true });
     prefsVersion += 1;
     return {
       ok: syncRes.ok,
+      prefs: state.prefs,
       pricingSync: syncRes.status,
       pricingCatalog: buildEffectivePricingCatalog(state.prefs, syncRes.runtimeCatalog),
     };
+// ============================================================================
+// [MODIFIED END] 2026-11-17 15:45:00
+// ============================================================================
   },
   'POST',
 );
