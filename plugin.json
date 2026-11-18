@@ -1,8 +1,8 @@
 {
   "name": "agy-token-monitor",
   "displayName": "Token Monitor",
-  "version": "0.3.1",
-  "description": "Lightweight Token & Context Monitor for Antigravity (v0.3.1 beta): live tok/s speed, context usage monitor & one-click /compact helper, session total tokens & one-click session checkout receipt image copy, Top-5 active subagent folding, daily official model/pricing sync, OS/env proxy auto-sync & connection pool rebuild, 3-channel release check & SHA-256 CDN hot update, bilingual EN/ZH UI, and multi-period usage analytics. | 面向 Antigravity 的轻量级实时 Token 测速、上下文监控与一键 /compact、会话总 Token 消耗与一键结账收工票根直接复制剪贴板、Top-5 活跃子代理折叠、每日官方模型价格同步、系统与环境变量代理自动同步与连接池自愈、三通道版本检测与 SHA-256 CDN 热更新、中英双语切换及多周期统计插件。",
+  "version": "0.3.2",
+  "description": "Lightweight Token & Context Monitor for Antigravity (v0.3.2 beta): live tok/s speed, context usage monitor & one-click /compact helper, session total tokens & one-click session checkout receipt image copy, Top-5 active subagent folding, daily official model/pricing sync, OS/env proxy auto-sync & connection pool rebuild, 3-channel release check & SHA-256 CDN hot update, bilingual EN/ZH UI, and multi-period usage analytics. | 面向 Antigravity 的轻量级实时 Token 测速、上下文监控与一键 /compact、会话总 Token 消耗与一键结账收工票根直接复制剪贴板、Top-5 活跃子代理折叠、每日官方模型价格同步、系统与环境变量代理自动同步与连接池自愈、三通道版本检测与 SHA-256 CDN 热更新、中英双语切换及多周期统计插件。",
   "logo": "assets/logo.svg",
   "suggestedPrompts": [
     "Open the Token Monitor panel to track live tok/s, context usage, and session total tokens",

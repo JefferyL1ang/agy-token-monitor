@@ -10,7 +10,14 @@
 // [MODIFIED BEGIN] 2026-11-17 19:00:30
 // Description: Import randomUUID and resolve for release hot-update bootId and pluginRoot resolution.
 // ============================================================================
-import { randomUUID } from 'node:crypto';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:37:35
+// Description: Import createHash from node:crypto to hash /api/snapshot ETags to a constant 43-char URL-safe digest.
+// ============================================================================
+import { createHash, randomUUID } from 'node:crypto';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:37:35
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:30
 // ============================================================================
@@ -126,7 +133,14 @@ function readPluginVersion(rootDir) {
 // [MODIFIED BEGIN] 2026-11-18 16:21:30
 // Description: Bump fallback plugin version string to 0.3.1.
 // ============================================================================
-  return '0.3.1';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:37:35
+// Description: Bump fallback plugin version string to 0.3.2.
+// ============================================================================
+  return '0.3.2';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:37:35
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:21:30
 // ============================================================================
@@ -1270,7 +1284,11 @@ app.api(
       });
       const updateStatus = releaseUpdater.getPublicStatus(state.prefs.skippedReleaseTag);
 
-      const etag = [
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:37:35
+// Description: Hash snapshot rawEtag with SHA-256 base64url to keep /api/snapshot query ETag at constant 43 chars and avoid exceeding Node.js 16 KB request header/URL limit.
+// ============================================================================
+      const rawEtag = [
         targetConv || '-',
         `p${prefsVersion}`,
         `m${metadataStore.getVersion()}`,
@@ -1278,6 +1296,10 @@ app.api(
         globalRaw._etagPart || '-',
         `u:${updateStatus.latestTag}:${updateStatus.shouldPrompt ? 1 : 0}:${updateStatus.checking ? 1 : 0}`,
       ].join('|');
+      const etag = createHash('sha256').update(rawEtag).digest('base64url');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:37:35
+// ============================================================================
 
       const serverTimeMs = Date.now();
       if (data?.etag && data.etag === etag) {

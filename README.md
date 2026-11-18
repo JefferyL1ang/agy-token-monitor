@@ -23,6 +23,7 @@
 - **Subagent & Swarm Activity Tracking (Top-5 Active Folding)**:
   - Prioritizes active workers (`Generating` and `Tools` first, then most recently updated) and folds large subagent or swarm rosters to the **Top 5** most recently active entries by default, with one-click expansion into a **`400px` scrollable** list that preserves scroll position across live updates.
   - Displays each worker's relative last-active time alongside an **`● Ended`** badge for terminated subagents and killed swarm workers.
+  - Uses fixed 43-char SHA-256 snapshot ETags to prevent `HTTP 431` request header overflows on large rosters (75+ workers).
 - **Daily Official Model & Pricing Sync**:
   - Syncs model lists, token pricing, and `USD / CNY` exchange rates once per day when opened (`ai.google.dev`, `models.dev`, and ECB reference FX rates), caching results locally with a `↻ Sync Now` button and offline fallback.
   - Custom per-model price edits (`*`) and manual FX rate locks always take priority over auto-synced defaults, and clicking any row in the rate table loads that model for quick editing.
@@ -46,7 +47,7 @@
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.3.1.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.3.2.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -133,6 +134,7 @@ node --test tests/parser.test.mjs
 - **子代理与 Swarm 动态排序及 Top-5 折叠**：
   - 按活跃优先级（生成中、工具调用中优先，其次按最近更新时间倒序）排列子代理与 Swarm Worker；超过 5 个节点时默认折叠展示最近活跃的 **Top 5**，支持一键展开为 **`400px` 可滚动列表**并在实时刷新时保持滚动位置。
   - 每行显示节点相对活跃时间，并对已终止的子代理及已销毁（killed）的 Swarm Worker 明确标注 **`● 已结束`** 状态徽章。
+  - 采用固定 43 字符 SHA-256 快照 ETag 摘要，避免超大规模子代理 / Swarm 节点列表（75+ 并发节点）触发 `HTTP 431` 请求头过大错误。
 - **每日同步官方模型、价格与汇率**：
   - 每天首次打开面板时自动同步现役模型单价与实时 `USD / CNY` 汇率（`ai.google.dev`、`models.dev` 及欧洲央行参考汇率），支持离线缓存回退与 **`↻ 立即同步`** 按钮。
   - 手动修改过的模型单价（带 `*` 标记）与手动固定汇率始终优先于自动同步值；展开下方费率表后可直接点击任意模型行切换编辑。
@@ -156,7 +158,7 @@ node --test tests/parser.test.mjs
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.3.1.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.3.2.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 

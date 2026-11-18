@@ -5865,11 +5865,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 // [MODIFIED BEGIN] 2026-11-18 16:26:30
 // Description: Bump current manifest version assertion from 0.3.0 to 0.3.1.
 // ============================================================================
-  // Manifests bumped to 0.3.1 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:40:11
+// Description: Bump current manifest version assertion from 0.3.1 to 0.3.2.
+// ============================================================================
+  // Manifests bumped to 0.3.2 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.3.1');
-  assert.equal(packageJson.version, '0.3.1');
+  assert.equal(pluginJson.version, '0.3.2');
+  assert.equal(packageJson.version, '0.3.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:40:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:26:30
 // ============================================================================
@@ -6109,18 +6116,25 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
 // [MODIFIED BEGIN] 2026-11-18 16:26:30
 // Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.3.0 to 0.3.1.
 // ============================================================================
-  // Version & docs consistency for current v0.3.1 release
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:40:11
+// Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.3.1 to 0.3.2.
+// ============================================================================
+  // Version & docs consistency for current v0.3.2 release
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.3.1');
-  assert.equal(packageJson.version, '0.3.1');
-  assert.equal(pluginJson.description.includes('v0.3.1 beta'), true);
-  assert.equal(packageJson.description.includes('v0.3.1 beta'), true);
-  assert.equal(mainSource.includes("return '0.3.1'"), true);
-  assert.equal(releaseUpdaterSource.includes(": '0.3.1'"), true);
-  assert.equal(appSource.includes("'0.3.1'"), true);
-  assert.equal(skillMd.includes('# Token Monitor (v0.3.1 Beta)'), true);
-  assert.equal(readmeMd.includes('agy-token-monitor-v0.3.1.zip'), true);
+  assert.equal(pluginJson.version, '0.3.2');
+  assert.equal(packageJson.version, '0.3.2');
+  assert.equal(pluginJson.description.includes('v0.3.2 beta'), true);
+  assert.equal(packageJson.description.includes('v0.3.2 beta'), true);
+  assert.equal(mainSource.includes("return '0.3.2'"), true);
+  assert.equal(releaseUpdaterSource.includes(": '0.3.2'"), true);
+  assert.equal(appSource.includes("'0.3.2'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.3.2 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.3.2.zip'), true);
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:40:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:26:30
 // ============================================================================
@@ -7130,7 +7144,14 @@ test('v0.2.8 createSystemProxyManager lifecycle, TTL cache, restore-before-set o
 // [MODIFIED BEGIN] 2026-11-18 16:26:30
 // Description: Update standalone /api/snapshot appVersion assertion to 0.3.1.
 // ============================================================================
-    assert.equal(snap.appVersion, '0.3.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:40:11
+// Description: Update standalone /api/snapshot appVersion assertion to 0.3.2.
+// ============================================================================
+    assert.equal(snap.appVersion, '0.3.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:40:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:26:30
 // ============================================================================
@@ -7691,8 +7712,15 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
 // [MODIFIED BEGIN] 2026-11-18 16:26:30
 // Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.3.1.
 // ============================================================================
-  assert.equal(pluginJson.version, '0.3.1');
-  assert.equal(packageJson.version, '0.3.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:40:11
+// Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.3.2.
+// ============================================================================
+  assert.equal(pluginJson.version, '0.3.2');
+  assert.equal(packageJson.version, '0.3.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:40:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:26:30
 // ============================================================================
@@ -7923,7 +7951,14 @@ test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showTo
 // [MODIFIED BEGIN] 2026-11-18 16:26:30
 // Description: Update getCurrentAppVersion fallback assertion to 0.3.1.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.3.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:40:11
+// Description: Update getCurrentAppVersion fallback assertion to 0.3.2.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.3.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:40:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:26:30
 // ============================================================================
@@ -9424,7 +9459,14 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
 // [MODIFIED BEGIN] 2026-11-18 16:26:30
 // Description: Bump createReleaseUpdater default currentVersion assertion to 0.3.1.
 // ============================================================================
-  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.3.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:40:11
+// Description: Bump createReleaseUpdater default currentVersion assertion to 0.3.2.
+// ============================================================================
+  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.3.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:40:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:26:30
 // ============================================================================
@@ -10968,7 +11010,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-18 16:27:30
 // Description: Bump standalone /api/snapshot appVersion assertion to 0.3.1.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.3.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:40:11
+// Description: Bump standalone /api/snapshot appVersion assertion to 0.3.2.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.3.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:40:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:27:30
 // ============================================================================
@@ -10991,7 +11040,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-18 16:27:30
 // Description: Bump standalone /api/check-update appVersion assertion to 0.3.1.
 // ============================================================================
-      assert.equal(checkBody.appVersion, '0.3.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:40:11
+// Description: Bump standalone /api/check-update appVersion assertion to 0.3.2.
+// ============================================================================
+      assert.equal(checkBody.appVersion, '0.3.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:40:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:27:30
 // ============================================================================
@@ -11277,7 +11333,14 @@ test('v0.3.0 headless Node VM Settings tooltip proxy diagnostics and static I18N
 // [MODIFIED BEGIN] 2026-11-18 16:27:30
 // Description: Bump getCurrentAppVersion fallback assertion to 0.3.1.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.3.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:40:11
+// Description: Bump getCurrentAppVersion fallback assertion to 0.3.2.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.3.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:40:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:27:30
 // ============================================================================
@@ -11677,4 +11740,254 @@ test('v0.3.1 clipboard_image.mjs syntax, balanced annotations, and banned-term c
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:27:30
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:40:11
+// Description: Add v0.3.2 standalone E2E test verifying constant 43-char SHA-256 base64url /api/snapshot etag prevents HTTP 431 with 140+ swarm members and invalidates cleanly on members.json kill update.
+// ============================================================================
+test('v0.3.2 constant 43-char SHA-256 base64url /api/snapshot etag prevents HTTP 431 with 140+ swarm members and invalidates cleanly', async () => {
+  const { root, appData } = makeTempEnv();
+  try {
+    const dataDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'data');
+    mkdirSync(dataDir, { recursive: true });
+    const fakeHome = join(root, 'home');
+    mkdirSync(fakeHome, { recursive: true });
+
+    const baseMs = Date.parse('2026-11-18T06:00:00Z');
+    const coordId = '03200000-0000-4000-8000-000000000000';
+    const workerCount = 140;
+    const members = {
+      coordinator: {
+        conversation_id: coordId,
+        role: 'coordinator',
+        model: 'gemini-4-argon',
+      },
+    };
+
+    for (let i = 1; i <= workerCount; i += 1) {
+      const workerId = `03200000-0000-4000-8000-${String(i).padStart(12, '0')}`;
+      const workerName = `w${String(i).padStart(3, '0')}`;
+      members[workerName] = {
+        conversation_id: workerId,
+        role: 'worker',
+        model: 'gemini-3.8-flash',
+        killed: false,
+        state: 'waiting',
+      };
+      writeConversation(appData, workerId, {
+        compactLines: [
+          {
+            step_index: 0,
+            type: 'USER_INPUT',
+            status: 'DONE',
+            created_at: new Date(baseMs + i * 1000).toISOString(),
+            content: `Worker ${workerName} task`,
+          },
+          {
+            step_index: 1,
+            type: 'PLANNER_RESPONSE',
+            status: 'DONE',
+            created_at: new Date(baseMs + i * 1000 + 500).toISOString(),
+            input_tokens: 1500,
+            cache_read_tokens: 500,
+            output_tokens: 120,
+          },
+        ],
+        fullLines: [
+          {
+            step_index: 0,
+            type: 'USER_INPUT',
+            status: 'DONE',
+            created_at: new Date(baseMs + i * 1000).toISOString(),
+            content: `Worker ${workerName} full task payload`,
+          },
+        ],
+        mtimeMs: baseMs + i * 1000 + 500,
+      });
+    }
+
+    const swarmMembersObj = {
+      title: 'v0.3.2 140+ Swarm ETag Overflow Prevention Test',
+      members,
+    };
+
+    writeConversation(appData, coordId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs).toISOString(),
+          content: '<USER_REQUEST>Coordinate 140 swarm workers</USER_REQUEST>',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: new Date(baseMs + 500).toISOString(),
+          input_tokens: 4000,
+          cache_read_tokens: 1000,
+          output_tokens: 300,
+        },
+      ],
+      members: swarmMembersObj,
+      mtimeMs: baseMs + 500,
+    });
+
+    // Confirm raw unhashed _etagPart + global _etagPart would exceed Node's 16 KB HTTP header limit when URL-encoded in /api/snapshot?etag=.
+    const rawCoord = analyzeConversation(coordId, {
+      appDataDirs: [appData],
+      disableAgentApi: true,
+    });
+    const rawGlobal = summarizeGlobalAndRecent({
+      appDataDirs: [appData],
+    });
+    assert.equal(rawCoord.children.length, workerCount);
+    const simulatedUnhashedQuery = encodeURIComponent(
+      `${coordId}|p0|m0|${rawCoord._etagPart}|${rawGlobal._etagPart}|u::0:0`,
+    );
+    assert.ok(
+      simulatedUnhashedQuery.length > 16384,
+      `Expected URL-encoded unhashed rawEtag (> 16 KB) to overflow HTTP headers, got ${simulatedUnhashedQuery.length}`,
+    );
+
+    const sidecarPort = await pickFetchSafeFreePort();
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    const mainPath = join(__dirname, '..', 'sidecars', 'monitor_pane', 'main.mjs');
+    const sdkCandidates = [
+      join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+      join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+    ].filter((p) => existsSync(p));
+
+    const env = { ...process.env };
+    delete env.ANTIGRAVITY_LS_ADDRESS;
+    delete env.ANTIGRAVITY_CSRF_TOKEN;
+    delete env.ANTIGRAVITY_SIDECAR_WEB_PORT;
+    delete env.ANTIGRAVITY_CONVERSATION_ID;
+    delete env.ANTIGRAVITY_SIDECAR_UI_TOKEN;
+    delete env.ANTIGRAVITY_AGENTAPI_EXE;
+    if (sdkCandidates[0]) env.SIDECAR_SDK_PATH = sdkCandidates[0];
+    env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
+    env.USERPROFILE = fakeHome;
+    env.HOME = fakeHome;
+    env.PRICING_SYNC_DISABLE_AUTO = '1';
+    env.RELEASE_UPDATE_DISABLE_AUTO = '1';
+    env.DISABLE_SYSTEM_PROXY_LOOKUP = '1';
+
+    const child = spawn(process.execPath, [mainPath, '--standalone', String(sidecarPort)], {
+      env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    try {
+      await new Promise((resolveReady, rejectReady) => {
+        if (child.exitCode !== null) {
+          rejectReady(new Error(`Sidecar exited prematurely (${child.exitCode})`));
+          return;
+        }
+        const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 10000);
+        let out = '';
+        child.stdout.on('data', (chunk) => {
+          out += chunk.toString();
+          if (out.includes(`[sidecar] listening on 127.0.0.1:${sidecarPort}`)) {
+            clearTimeout(timer);
+            resolveReady();
+          }
+        });
+        child.stderr.on('data', (chunk) => {
+          out += chunk.toString();
+        });
+        child.once('exit', (code) => {
+          clearTimeout(timer);
+          rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+        });
+      });
+
+      const base = `http://127.0.0.1:${sidecarPort}`;
+
+      // Finish cold-start ledger sync and drain initial metadataStore fallback lookups so background versions stabilize before timed polls
+      const resyncRes = await fetch(`${base}/api/resync-ledger`, { method: 'POST' });
+      assert.equal(resyncRes.status, 200);
+      const resyncBody = await resyncRes.json();
+      assert.equal(resyncBody.ok, true);
+      assert.equal(resyncBody.conversationsCount, workerCount + 1);
+
+      let warmEtag = '';
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        const warmRes = await fetch(
+          `${base}/api/snapshot?conv=${encodeURIComponent(coordId)}&etag=${encodeURIComponent(warmEtag)}`,
+        );
+        assert.equal(warmRes.status, 200);
+        const warmBody = await warmRes.json();
+        if (warmBody.unchanged === true) break;
+        warmEtag = warmBody.etag || '';
+        await new Promise((r) => setTimeout(r, 100));
+      }
+
+      // 1. Initial poll: returns 200, full payload, and constant 43-char SHA-256 base64url etag
+      const snapRes1 = await fetch(`${base}/api/snapshot?conv=${encodeURIComponent(coordId)}&etag=`);
+      assert.equal(snapRes1.status, 200);
+      const snap = await snapRes1.json();
+      assert.equal(snap.unchanged, false);
+      assert.equal(typeof snap.etag, 'string');
+      assert.equal(snap.etag.length, 43);
+      assert.match(snap.etag, /^[A-Za-z0-9_-]{43}$/);
+      assert.equal(snap.appVersion, '0.3.2');
+      assert.equal(snap.current?.children?.length, workerCount);
+
+      // 2. Second poll with etag + realistic ~1.5 KB request headers -> must return 200 (never 431) and unchanged: true
+      const snapRes2 = await fetch(
+        `${base}/api/snapshot?conv=${encodeURIComponent(coordId)}&etag=${encodeURIComponent(snap.etag)}`,
+        {
+          headers: {
+            Referer: `${base}/?session=${'r'.repeat(480)}`,
+            'User-Agent': `Mozilla/5.0 (${'u'.repeat(500)})`,
+            'X-Extra-Test': 'x'.repeat(500),
+          },
+        },
+      );
+      assert.equal(snapRes2.status, 200);
+      const snap2 = await snapRes2.json();
+      assert.equal(snap2.unchanged, true);
+      assert.equal(snap2.etag, snap.etag);
+
+      // 3. Flip one worker in members.json to killed: true -> etag invalidates cleanly to a new 43-char digest
+      const membersPath = join(appData, 'brain', coordId, '.system_generated', 'swarm', 'members.json');
+      const mutatedMembers = JSON.parse(JSON.stringify(swarmMembersObj));
+      mutatedMembers.members.w001.killed = true;
+      writeFileSync(membersPath, JSON.stringify(mutatedMembers, null, 2), 'utf-8');
+
+      const snapRes3 = await fetch(
+        `${base}/api/snapshot?conv=${encodeURIComponent(coordId)}&etag=${encodeURIComponent(snap.etag)}`,
+      );
+      assert.equal(snapRes3.status, 200);
+      const snap3 = await snapRes3.json();
+      assert.equal(snap3.unchanged, false);
+      assert.equal(typeof snap3.etag, 'string');
+      assert.equal(snap3.etag.length, 43);
+      assert.match(snap3.etag, /^[A-Za-z0-9_-]{43}$/);
+      assert.notEqual(snap3.etag, snap.etag);
+      const w001After = snap3.current?.children?.find((c) => c.name === 'w001');
+      assert.ok(w001After, 'w001 must remain present in children after kill');
+      assert.equal(w001After.killed, true);
+    } finally {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill();
+        await new Promise((r) => {
+          if (child.exitCode !== null || child.signalCode !== null) return r();
+          const t = setTimeout(r, 3000);
+          child.once('exit', () => {
+            clearTimeout(t);
+            r();
+          });
+        });
+      }
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:40:11
 // ============================================================================
