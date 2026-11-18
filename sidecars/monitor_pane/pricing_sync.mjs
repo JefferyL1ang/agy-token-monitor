@@ -1314,6 +1314,14 @@ export function createPricingSyncManager({
   fxPrimaryUrl = process.env.PRICING_SYNC_FX_URL || DEFAULT_FX_PRIMARY_URL,
   fxFallbackUrl = process.env.PRICING_SYNC_FX_FALLBACK_URL || DEFAULT_FX_FALLBACK_URL,
   autoSyncDisabled = process.env.PRICING_SYNC_DISABLE_AUTO === '1',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Accept optional beforeNetworkSync hook in createPricingSyncManager.
+// ============================================================================
+  beforeNetworkSync = null,
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
 } = {}) {
   const catalogBase =
     Array.isArray(baseCatalog) && baseCatalog.length > 0 ? baseCatalog : MODEL_PRICING_CATALOG;
@@ -1690,6 +1698,18 @@ export function createPricingSyncManager({
   }
 
   async function executeSync(observedModelIds) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Invoke optional beforeNetworkSync hook prior to pricing network fetches.
+// ============================================================================
+    try {
+      beforeNetworkSync?.();
+    } catch {
+      // Ignore pre-sync hook errors.
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
     const nowMs = nowFn();
     const todayLocal = formatLocalDate(nowMs);
     const [ch1Res, ch2Res, fxRes] = await Promise.allSettled([

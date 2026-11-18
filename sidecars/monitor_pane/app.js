@@ -540,6 +540,15 @@
 // [MODIFIED END] 2026-11-18 10:23:36
 // ============================================================================
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:27:50
+// Description: Add v0.3.0 proxy diagnostic tooltip i18n keys (zh).
+// ============================================================================
+      'settings.proxyDiagActive': '代理: {url} ({source})',
+      'settings.proxyDiagDirect': '直连模式 (未检测到系统代理)',
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:27:50
+// ============================================================================
+// ============================================================================
 // [MODIFIED BEGIN] 2026-11-18 11:40:30
 // Description: Add v0.2.9 Top-5 subagent/swarm folding, Ended badge, and session checkout receipt modal i18n keys (zh).
 // ============================================================================
@@ -913,6 +922,15 @@
       'update.errNetwork': 'Unable to reach update server — please check your network or proxy',
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:27:50
+// Description: Add v0.3.0 proxy diagnostic tooltip i18n keys (en).
+// ============================================================================
+      'settings.proxyDiagActive': 'Proxy: {url} ({source})',
+      'settings.proxyDiagDirect': 'Direct connection (no proxy detected)',
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:27:50
 // ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-18 11:40:30
@@ -2555,6 +2573,14 @@
       if (data?.prefs) state.snapshot.prefs = data.prefs;
       if (data?.pricingSync) state.snapshot.pricingSync = data.pricingSync;
       if (Array.isArray(data?.pricingCatalog)) state.snapshot.pricingCatalog = data.pricingCatalog;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:27:50
+// Description: Persist returned proxyStatus from /api/sync-pricing into state.snapshot.
+// ============================================================================
+      if (data?.proxyStatus) state.snapshot.proxyStatus = data.proxyStatus;
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:27:50
+// ============================================================================
 
       state.pricingSyncing = false;
       renderModelSelectOptions();
@@ -2563,6 +2589,14 @@
       renderPricingSyncStatus();
 // ============================================================================
 // [MODIFIED END] 2026-11-17 15:48:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:27:50
+// Description: Refresh update check status tooltip after storing refreshed proxyStatus from /api/sync-pricing.
+// ============================================================================
+      renderUpdateCheckStatus();
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:27:50
 // ============================================================================
       lastEtag = '';
       if (state.snapshot) {
@@ -2645,12 +2679,19 @@
 // [MODIFIED BEGIN] 2026-11-18 11:41:00
 // Description: Bump fallback app version to 0.2.9.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:27:50
+// Description: Bump fallback app version from 0.2.9 to 0.3.0.
+// ============================================================================
     const raw =
       state.snapshot?.appVersion ||
       state.snapshot?.updateStatus?.currentVersion ||
       state.activeUpdateStatus?.currentVersion ||
-      '0.2.9';
-    return String(raw).trim().replace(/^[vV]/, '') || '0.2.9';
+      '0.3.0';
+    return String(raw).trim().replace(/^[vV]/, '') || '0.3.0';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:27:50
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:41:00
 // ============================================================================
@@ -2662,6 +2703,40 @@
   function getEffectiveUpdateStatus() {
     return state.snapshot?.updateStatus || state.activeUpdateStatus || null;
   }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:27:50
+// Description: Add formatProxyDiagHint helper to format active proxy or direct-connection diagnostics for update tooltips.
+// ============================================================================
+  function formatProxyDiagHint(us) {
+    const ps = state.snapshot?.proxyStatus || null;
+    if (ps && typeof ps === 'object') {
+      if (ps.enabled && ps.proxyUrl) {
+        return t('settings.proxyDiagActive', {
+          url: ps.proxyUrl,
+          source: ps.source || 'proxy',
+        });
+      }
+      return t('settings.proxyDiagDirect');
+    }
+    if (typeof us?.proxySummary === 'string' && us.proxySummary.trim()) {
+      const sum = us.proxySummary.trim();
+      if (sum === 'direct') {
+        return t('settings.proxyDiagDirect');
+      }
+      const colonIdx = sum.indexOf(':');
+      if (colonIdx > 0) {
+        return t('settings.proxyDiagActive', {
+          source: sum.slice(0, colonIdx),
+          url: sum.slice(colonIdx + 1),
+        });
+      }
+    }
+    return '';
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:27:50
+// ============================================================================
 
   function fmtReleaseDate(isoStr) {
     if (!isoStr) return '';
@@ -2882,9 +2957,18 @@
       const rawErr = String(us.error).trim();
       statusEl.className = 'pricing-sync-status muted-hint tabular-nums is-offline';
       statusEl.textContent = t('settings.verCheckError', { cur: curVer });
-      statusEl.title = rawErr && rawErr !== friendlyErr
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:27:50
+// Description: Append proxy diagnostic hint to update check error tooltip via formatProxyDiagHint.
+// ============================================================================
+      const baseTip = rawErr && rawErr !== friendlyErr
         ? `${friendlyErr} (${rawErr})`
         : friendlyErr;
+      const proxyHint = formatProxyDiagHint(us);
+      statusEl.title = proxyHint ? `${baseTip} · ${proxyHint}` : baseTip;
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:27:50
+// ============================================================================
       return;
     }
 // ============================================================================
@@ -3041,6 +3125,16 @@
         state.snapshot.updateStatus = data.updateStatus;
         state.activeUpdateStatus = data.updateStatus;
       }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:27:50
+// Description: Store returned proxyStatus from /api/check-update before calling renderUpdateCheckStatus.
+// ============================================================================
+      if (data?.proxyStatus) {
+        state.snapshot.proxyStatus = data.proxyStatus;
+      }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:27:50
+// ============================================================================
 
       state.updateChecking = false;
       const us = data?.updateStatus || state.activeUpdateStatus;

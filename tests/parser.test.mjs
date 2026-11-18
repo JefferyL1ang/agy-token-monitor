@@ -47,6 +47,14 @@ import {
 // ============================================================================
 import http, { createServer } from 'node:http';
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:38:33
+// Description: Import connect from node:net for v0.3.0 live TCP CONNECT proxy blackhole E2E recovery tests.
+// ============================================================================
+import { connect as netConnect } from 'node:net';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:38:33
+// ============================================================================
+// ============================================================================
 // [MODIFIED END] 2026-11-18 10:33:22
 // ============================================================================
 // ============================================================================
@@ -219,11 +227,29 @@ import {
 // ============================================================================
 import {
   LOOPBACK_NO_PROXY,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:38:33
+// Description: Import DEFAULT_MAX_DISPATCHER_AGE_MS, parseWindowsUserEnvProxyOutput,
+// and resolveLiveOsSystemProxy for v0.3.0 net_proxy lifecycle and fallback tests.
+// ============================================================================
+  DEFAULT_MAX_DISPATCHER_AGE_MS,
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:38:33
+// ============================================================================
   normalizeHttpProxyUrl,
   redactProxyUrl,
   ensureLoopbackNoProxy,
   parseWindowsRegProxyOutput,
   parseMacScutilProxyOutput,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:38:33
+// Description: Import parseWindowsUserEnvProxyOutput and resolveLiveOsSystemProxy for v0.3.0 tests.
+// ============================================================================
+  parseWindowsUserEnvProxyOutput,
+  resolveLiveOsSystemProxy,
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:38:33
+// ============================================================================
   resolveProxyConfig,
   createSystemProxyManager,
 } from '../sidecars/monitor_pane/net_proxy.mjs';
@@ -5817,11 +5843,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 // [MODIFIED BEGIN] 2026-11-18 11:58:45
 // Description: Bump current manifest version assertion from 0.2.8 to 0.2.9.
 // ============================================================================
-  // Manifests bumped to 0.2.9 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:38:33
+// Description: Bump current manifest version assertion from 0.2.9 to 0.3.0.
+// ============================================================================
+  // Manifests bumped to 0.3.0 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.2.9');
-  assert.equal(packageJson.version, '0.2.9');
+  assert.equal(pluginJson.version, '0.3.0');
+  assert.equal(packageJson.version, '0.3.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:38:33
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:58:45
 // ============================================================================
@@ -6047,18 +6080,25 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
 // [MODIFIED BEGIN] 2026-11-18 11:58:45
 // Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.2.8 to 0.2.9.
 // ============================================================================
-  // Version & docs consistency for current v0.2.9 release
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:38:33
+// Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.2.9 to 0.3.0.
+// ============================================================================
+  // Version & docs consistency for current v0.3.0 release
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.2.9');
-  assert.equal(packageJson.version, '0.2.9');
-  assert.equal(pluginJson.description.includes('v0.2.9 beta'), true);
-  assert.equal(packageJson.description.includes('v0.2.9 beta'), true);
-  assert.equal(mainSource.includes("return '0.2.9'"), true);
-  assert.equal(releaseUpdaterSource.includes(": '0.2.9'"), true);
-  assert.equal(appSource.includes("'0.2.9'"), true);
-  assert.equal(skillMd.includes('# Token Monitor (v0.2.9 Beta)'), true);
-  assert.equal(readmeMd.includes('agy-token-monitor-v0.2.9.zip'), true);
+  assert.equal(pluginJson.version, '0.3.0');
+  assert.equal(packageJson.version, '0.3.0');
+  assert.equal(pluginJson.description.includes('v0.3.0 beta'), true);
+  assert.equal(packageJson.description.includes('v0.3.0 beta'), true);
+  assert.equal(mainSource.includes("return '0.3.0'"), true);
+  assert.equal(releaseUpdaterSource.includes(": '0.3.0'"), true);
+  assert.equal(appSource.includes("'0.3.0'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.3.0 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.3.0.zip'), true);
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:38:33
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:58:45
 // ============================================================================
@@ -7054,7 +7094,14 @@ test('v0.2.8 createSystemProxyManager lifecycle, TTL cache, restore-before-set o
 // [MODIFIED BEGIN] 2026-11-18 11:58:45
 // Description: Update standalone /api/snapshot appVersion assertion to 0.2.9.
 // ============================================================================
-    assert.equal(snap.appVersion, '0.2.9');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:38:33
+// Description: Update standalone /api/snapshot appVersion assertion to 0.3.0.
+// ============================================================================
+    assert.equal(snap.appVersion, '0.3.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:38:33
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:58:45
 // ============================================================================
@@ -7593,8 +7640,15 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
 // [MODIFIED BEGIN] 2026-11-18 11:58:45
 // Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.2.9.
 // ============================================================================
-  assert.equal(pluginJson.version, '0.2.9');
-  assert.equal(packageJson.version, '0.2.9');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:38:33
+// Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.3.0.
+// ============================================================================
+  assert.equal(pluginJson.version, '0.3.0');
+  assert.equal(packageJson.version, '0.3.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:38:33
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:58:45
 // ============================================================================
@@ -7811,7 +7865,14 @@ test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showTo
 // [MODIFIED BEGIN] 2026-11-18 11:58:45
 // Description: Update getCurrentAppVersion fallback assertion to 0.2.9.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.2.9');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:38:33
+// Description: Update getCurrentAppVersion fallback assertion to 0.3.0.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.3.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:38:33
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:58:45
 // ============================================================================
@@ -9261,7 +9322,14 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
   }
 
   const defaultUpdater = createReleaseUpdater({ stateDir: '' });
-  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.2.9');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:38:33
+// Description: Bump createReleaseUpdater default currentVersion assertion to 0.3.0.
+// ============================================================================
+  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.3.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:38:33
+// ============================================================================
 });
 
 test('v0.2.9 headless Node VM integration: Top-5 children folding, 400px scroll preservation, Ended badge, and #receipt-modal workflow', async () => {
@@ -10060,4 +10128,1043 @@ test('v0.2.9 headless Node VM integration: Top-5 children folding, 400px scroll 
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-18 12:01:00
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:38:33
+// Description: Add v0.3.0 Suites A, B, and C covering net_proxy forced/max-age
+// pool rebuild, dispatcher .close() drain, HKCU\Environment & System32\reg.exe
+// ENOENT fallbacks, recoverFromTransportFailure, live TCP CONNECT half-open
+// blackhole E2E recovery, release_updater transport/concurrent retry hooks,
+// standalone /api/snapshot & /api/check-update proxyStatus, and VM Settings
+// tooltip proxy diagnostics + I18N/annotation hygiene.
+// ============================================================================
+test('v0.3.0 net_proxy forced same-signature rebuild, old dispatcher .close() drain, maxDispatcherAgeMs rotation, HKCU\\Environment fallback, ENOENT System32\\reg.exe fallback, and recoverFromTransportFailure', async () => {
+  assert.equal(DEFAULT_MAX_DISPATCHER_AGE_MS, 15 * 60 * 1000);
+
+  // 1. parseWindowsUserEnvProxyOutput: empty, REG_SZ, REG_EXPAND_SZ, priority, socks5 rejection, NO_PROXY loopback merge
+  assert.deepEqual(parseWindowsUserEnvProxyOutput(''), {
+    enabled: false,
+    httpProxy: '',
+    httpsProxy: '',
+    noProxy: LOOPBACK_NO_PROXY,
+  });
+
+  const userEnvCustom = parseWindowsUserEnvProxyOutput(`
+HKEY_CURRENT_USER\\Environment
+    AGY_TOKEN_MONITOR_PROXY    REG_EXPAND_SZ    https://custom-user-env:9443/
+    HTTPS_PROXY    REG_SZ    http://127.0.0.1:7890
+    HTTP_PROXY    REG_SZ    http://127.0.0.1:7891
+    ALL_PROXY    REG_SZ    http://127.0.0.1:7892
+    NO_PROXY    REG_EXPAND_SZ    <local>;*.internal
+`);
+  assert.equal(userEnvCustom.enabled, true);
+  assert.equal(userEnvCustom.httpProxy, 'https://custom-user-env:9443');
+  assert.equal(userEnvCustom.httpsProxy, 'https://custom-user-env:9443');
+  assert.equal(userEnvCustom.noProxy.includes('*.internal'), true);
+  assert.equal(userEnvCustom.noProxy.includes('127.0.0.1'), true);
+  assert.equal(userEnvCustom.noProxy.includes('localhost'), true);
+  assert.equal(userEnvCustom.noProxy.includes('::1'), true);
+
+  const userEnvStandard = parseWindowsUserEnvProxyOutput(`
+    HTTPS_PROXY    REG_SZ    http://127.0.0.1:7891
+    HTTP_PROXY    REG_EXPAND_SZ    http://127.0.0.1:7890
+    ALL_PROXY    REG_SZ    http://127.0.0.1:7892
+    NO_PROXY    REG_SZ    corp.local
+`);
+  assert.equal(userEnvStandard.enabled, true);
+  assert.equal(userEnvStandard.httpProxy, 'http://127.0.0.1:7890');
+  assert.equal(userEnvStandard.httpsProxy, 'http://127.0.0.1:7891');
+  assert.equal(userEnvStandard.noProxy, 'corp.local,127.0.0.1,localhost,::1');
+
+  const userEnvAllOnly = parseWindowsUserEnvProxyOutput(`
+    ALL_PROXY    REG_EXPAND_SZ    127.0.0.1:8080
+`);
+  assert.equal(userEnvAllOnly.enabled, true);
+  assert.equal(userEnvAllOnly.httpProxy, 'http://127.0.0.1:8080');
+  assert.equal(userEnvAllOnly.httpsProxy, 'http://127.0.0.1:8080');
+
+  const userEnvSocksRejected = parseWindowsUserEnvProxyOutput(`
+    HTTPS_PROXY    REG_SZ    socks5h://127.0.0.1:7891
+    HTTP_PROXY    REG_SZ    socks5://127.0.0.1:7891
+    ALL_PROXY    REG_SZ    socks5://127.0.0.1:7892
+`);
+  assert.deepEqual(userEnvSocksRejected, {
+    enabled: false,
+    httpProxy: '',
+    httpsProxy: '',
+    noProxy: LOOPBACK_NO_PROXY,
+  });
+
+  // 2. resolveProxyConfig HKCU\Environment fallback when Internet Settings ProxyEnable = 0x0
+  const fallbackQueries = [];
+  const winUserEnvResolved = resolveProxyConfig({
+    env: {},
+    platform: 'win32',
+    execFileSyncImpl: (cmd, args) => {
+      fallbackQueries.push([cmd, args[1]]);
+      if (args[1].endsWith('Internet Settings')) {
+        return '    ProxyEnable    REG_DWORD    0x0\n    ProxyServer    REG_SZ    127.0.0.1:7890\n';
+      }
+      if (args[1] === 'HKCU\\Environment') {
+        return '    HTTPS_PROXY    REG_SZ    http://127.0.0.1:7898\n    NO_PROXY    REG_SZ    intranet.local\n';
+      }
+      return '';
+    },
+  });
+  assert.equal(winUserEnvResolved.enabled, true);
+  assert.equal(winUserEnvResolved.source, 'win-user-env');
+  assert.equal(winUserEnvResolved.httpProxy, 'http://127.0.0.1:7898');
+  assert.equal(winUserEnvResolved.httpsProxy, 'http://127.0.0.1:7898');
+  assert.equal(winUserEnvResolved.noProxy.includes('intranet.local'), true);
+  assert.equal(winUserEnvResolved.noProxy.includes('::1'), true);
+  assert.deepEqual(fallbackQueries, [
+    ['reg.exe', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings'],
+    ['reg.exe', 'HKCU\\Environment'],
+  ]);
+
+  // 3. ENOENT fallback to %SystemRoot%\System32\reg.exe in resolveLiveOsSystemProxy and resolveProxyConfig
+  const expectedSystem32Reg = join('D:\\WinTest', 'System32', 'reg.exe');
+  const enoentLiveCalls = [];
+  const liveViaSystem32 = resolveLiveOsSystemProxy({
+    env: { SystemRoot: 'D:\\WinTest' },
+    platform: 'win32',
+    execFileSyncImpl: (cmd, args) => {
+      enoentLiveCalls.push([cmd, args[1]]);
+      if (cmd === 'reg.exe') {
+        const err = new Error('spawn reg.exe ENOENT');
+        err.code = 'ENOENT';
+        throw err;
+      }
+      assert.equal(cmd, expectedSystem32Reg);
+      return '    ProxyEnable    REG_DWORD    0x1\n    ProxyServer    REG_SZ    127.0.0.1:7897\n';
+    },
+  });
+  assert.equal(liveViaSystem32?.enabled, true);
+  assert.equal(liveViaSystem32?.source, 'win-registry');
+  assert.equal(liveViaSystem32?.httpsProxy, 'http://127.0.0.1:7897');
+  assert.deepEqual(enoentLiveCalls, [
+    ['reg.exe', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings'],
+    [expectedSystem32Reg, 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings'],
+  ]);
+
+  const enoentFallbackCalls = [];
+  const userEnvViaSystem32 = resolveProxyConfig({
+    env: { SystemRoot: 'D:\\WinTest', NO_PROXY: 'env.local' },
+    platform: 'win32',
+    execFileSyncImpl: (cmd, args) => {
+      enoentFallbackCalls.push([cmd, args[1]]);
+      if (cmd === 'reg.exe') {
+        const err = new Error('spawn reg.exe ENOENT');
+        err.code = 'ENOENT';
+        throw err;
+      }
+      assert.equal(cmd, expectedSystem32Reg);
+      if (args[1].endsWith('Internet Settings')) {
+        return '    ProxyEnable    REG_DWORD    0x0\n';
+      }
+      if (args[1] === 'HKCU\\Environment') {
+        return '    HTTP_PROXY    REG_EXPAND_SZ    http://127.0.0.1:7895\n';
+      }
+      return '';
+    },
+  });
+  assert.equal(userEnvViaSystem32.enabled, true);
+  assert.equal(userEnvViaSystem32.source, 'win-user-env');
+  assert.equal(userEnvViaSystem32.httpProxy, 'http://127.0.0.1:7895');
+  assert.equal(userEnvViaSystem32.noProxy.includes('env.local'), true);
+  assert.equal(userEnvViaSystem32.noProxy.includes('127.0.0.1'), true);
+  assert.deepEqual(enoentFallbackCalls, [
+    ['reg.exe', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings'],
+    [expectedSystem32Reg, 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings'],
+    ['reg.exe', 'HKCU\\Environment'],
+    [expectedSystem32Reg, 'HKCU\\Environment'],
+  ]);
+
+  // 4. createSystemProxyManager same-signature forced rebuild & maxDispatcherAgeMs rotation
+  let nowMs = 5_000_000;
+  const events = [];
+  const sameSigMgr = createSystemProxyManager({
+    env: {
+      AGY_TOKEN_MONITOR_PROXY: 'http://127.0.0.1:7890',
+      DISABLE_SYSTEM_PROXY_LOOKUP: '1',
+    },
+    platform: 'win32',
+    cacheTtlMs: 300_000,
+    maxDispatcherAgeMs: DEFAULT_MAX_DISPATCHER_AGE_MS,
+    nowFn: () => nowMs,
+    setGlobalProxyFn: (proxyEnv) => {
+      const tag = proxyEnv.HTTPS_PROXY;
+      events.push(`set:${tag}`);
+      return () => {
+        events.push(`restore:${tag}`);
+      };
+    },
+  });
+
+  const stInit = sameSigMgr.refresh();
+  assert.equal(stInit.enabled, true);
+  assert.equal(stInit.proxyUrl, 'http://127.0.0.1:7890');
+  assert.equal(stInit.rebuildCount, 0);
+  assert.deepEqual(events, ['set:http://127.0.0.1:7890']);
+
+  // Normal refresh within TTL (and even past cacheTtlMs while < maxDispatcherAgeMs) does NOT rebuild
+  nowMs += 60_000;
+  assert.equal(sameSigMgr.refresh().rebuildCount, 0);
+  nowMs += 300_000;
+  assert.equal(sameSigMgr.refresh().rebuildCount, 0);
+  assert.deepEqual(events, ['set:http://127.0.0.1:7890']);
+
+  // Forced rebuild with identical signature executes restore -> set and increments rebuildCount
+  const stForced = sameSigMgr.refresh({ force: true });
+  assert.equal(stForced.rebuildCount, 1);
+  assert.deepEqual(events, [
+    'set:http://127.0.0.1:7890',
+    'restore:http://127.0.0.1:7890',
+    'set:http://127.0.0.1:7890',
+  ]);
+
+  // Advancing nowMs by >= maxDispatcherAgeMs triggers automatic rotation on normal refresh()
+  nowMs += DEFAULT_MAX_DISPATCHER_AGE_MS;
+  const stRotated = sameSigMgr.refresh();
+  assert.equal(stRotated.rebuildCount, 2);
+  assert.deepEqual(events, [
+    'set:http://127.0.0.1:7890',
+    'restore:http://127.0.0.1:7890',
+    'set:http://127.0.0.1:7890',
+    'restore:http://127.0.0.1:7890',
+    'set:http://127.0.0.1:7890',
+  ]);
+  sameSigMgr.dispose();
+
+  // 5. Real http.setGlobalProxyFromEnv replacement calls .close() on replaced EnvHttpProxyAgent (closed === true)
+  const realCloseMgr = createSystemProxyManager({
+    env: {
+      HTTPS_PROXY: 'http://127.0.0.1:7890',
+      HTTP_PROXY: 'http://127.0.0.1:7890',
+      DISABLE_SYSTEM_PROXY_LOOKUP: '1',
+    },
+    setGlobalProxyFn: http.setGlobalProxyFromEnv,
+  });
+
+  try {
+    realCloseMgr.refresh({ force: true });
+    const firstWrapper = globalThis[Symbol.for('undici.globalDispatcher.1')];
+    const firstAgent =
+      globalThis[Symbol.for('undici.globalDispatcher.2')] ||
+      globalThis[Symbol.for('undici.globalDispatcher.1')];
+    assert.ok(firstWrapper && typeof firstWrapper.close === 'function');
+    assert.ok(firstAgent);
+    assert.equal(firstAgent.closed, false);
+
+    let closeCallCount = 0;
+    const origWrapperClose = firstWrapper.close.bind(firstWrapper);
+    firstWrapper.close = (...args) => {
+      closeCallCount += 1;
+      return origWrapperClose(...args);
+    };
+
+    const stRealRebuild = realCloseMgr.refresh({ force: true });
+    await new Promise((r) => setImmediate(r));
+    const secondAgent =
+      globalThis[Symbol.for('undici.globalDispatcher.2')] ||
+      globalThis[Symbol.for('undici.globalDispatcher.1')];
+
+    assert.equal(stRealRebuild.rebuildCount, 1);
+    assert.ok(closeCallCount >= 1, 'Replacing active dispatcher must invoke .close() on old dispatcher');
+    assert.equal(firstAgent.closed, true, 'Replaced EnvHttpProxyAgent must be closed === true');
+    assert.notEqual(secondAgent, firstAgent);
+    assert.equal(secondAgent.closed, false);
+
+    realCloseMgr.dispose();
+    await new Promise((r) => setImmediate(r));
+    assert.equal(secondAgent.closed, true, 'Disposing proxy manager must close active EnvHttpProxyAgent');
+  } finally {
+    realCloseMgr.dispose();
+  }
+
+  // 6. recoverFromTransportFailure():
+  //    a) source === 'env' fails & live win-registry has ProxyEnable = 0x1 -> switches to win-registry
+  const recDriftEvents = [];
+  const recDriftMgr = createSystemProxyManager({
+    env: {
+      HTTPS_PROXY: 'http://127.0.0.1:10809',
+      HTTP_PROXY: 'http://127.0.0.1:10809',
+    },
+    platform: 'win32',
+    execFileSyncImpl: () => '    ProxyEnable    REG_DWORD    0x1\n    ProxyServer    REG_SZ    127.0.0.1:7890\n',
+    setGlobalProxyFn: (proxyEnv) => {
+      const tag = proxyEnv.HTTPS_PROXY;
+      recDriftEvents.push(`set:${tag}`);
+      return () => {
+        recDriftEvents.push(`restore:${tag}`);
+      };
+    },
+  });
+  const initDrift = recDriftMgr.refresh();
+  assert.equal(initDrift.source, 'env');
+  assert.equal(initDrift.proxyUrl, 'http://127.0.0.1:10809');
+  const recoveredDrift = recDriftMgr.recoverFromTransportFailure();
+  assert.equal(recoveredDrift.enabled, true);
+  assert.equal(recoveredDrift.source, 'win-registry');
+  assert.equal(recoveredDrift.proxyUrl, 'http://127.0.0.1:7890');
+  assert.equal(recoveredDrift.rebuildCount, 1);
+  assert.deepEqual(recDriftEvents, [
+    'set:http://127.0.0.1:10809',
+    'restore:http://127.0.0.1:10809',
+    'set:http://127.0.0.1:7890',
+  ]);
+  recDriftMgr.dispose();
+
+  //    b) source === 'env' fails & live win-registry has ProxyEnable = 0x0 -> NEVER drops to direct; rebuilds env
+  const recKeepEvents = [];
+  const recKeepMgr = createSystemProxyManager({
+    env: {
+      HTTPS_PROXY: 'http://127.0.0.1:10809',
+      HTTP_PROXY: 'http://127.0.0.1:10809',
+    },
+    platform: 'win32',
+    execFileSyncImpl: () => '    ProxyEnable    REG_DWORD    0x0\n',
+    setGlobalProxyFn: (proxyEnv) => {
+      const tag = proxyEnv.HTTPS_PROXY;
+      recKeepEvents.push(`set:${tag}`);
+      return () => {
+        recKeepEvents.push(`restore:${tag}`);
+      };
+    },
+  });
+  const initKeep = recKeepMgr.refresh();
+  assert.equal(initKeep.source, 'env');
+  const recoveredKeep = recKeepMgr.recoverFromTransportFailure();
+  assert.equal(recoveredKeep.enabled, true, 'Must NEVER drop configured env proxy to direct');
+  assert.equal(recoveredKeep.source, 'env');
+  assert.equal(recoveredKeep.proxyUrl, 'http://127.0.0.1:10809');
+  assert.equal(recoveredKeep.rebuildCount, 1);
+  assert.deepEqual(recKeepEvents, [
+    'set:http://127.0.0.1:10809',
+    'restore:http://127.0.0.1:10809',
+    'set:http://127.0.0.1:10809',
+  ]);
+  recKeepMgr.dispose();
+});
+
+test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_updater onTransportFailure, proxySummary, and concurrent manual checkPromise retry', async () => {
+  // Part A: Live local HTTP target server (Keep-Alive: timeout=600) + local CONNECT/HTTP proxy half-open blackhole E2E
+  const targetSockets = new Set();
+  const targetServer = createServer((req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      Connection: 'keep-alive',
+      'Keep-Alive': 'timeout=600',
+    });
+    res.end(JSON.stringify({ ok: true, path: req.url }));
+  });
+  targetServer.on('connection', (sock) => {
+    targetSockets.add(sock);
+    sock.on('close', () => targetSockets.delete(sock));
+  });
+  const targetPort = await listenOnFetchSafePort(targetServer);
+
+  const directAgent = new http.Agent({ keepAlive: false });
+  const proxyClientSockets = new Set();
+  const upstreamTunnelSockets = new Set();
+  const blackholedSockets = new Set();
+
+  const proxyServer = createServer((req, res) => {
+    if (blackholedSockets.has(req.socket)) {
+      return;
+    }
+    const parsed = new URL(req.url);
+    const fwd = http.request(
+      {
+        host: '127.0.0.1',
+        port: targetPort,
+        path: `${parsed.pathname}${parsed.search}`,
+        method: req.method,
+        headers: { ...req.headers, host: `127.0.0.1:${targetPort}` },
+        agent: directAgent,
+      },
+      (pres) => {
+        res.writeHead(pres.statusCode || 200, {
+          ...pres.headers,
+          Connection: 'keep-alive',
+          'Keep-Alive': 'timeout=600',
+        });
+        pres.pipe(res);
+      },
+    );
+    fwd.on('error', () => {
+      if (!res.headersSent) res.writeHead(502);
+      res.end();
+    });
+    req.pipe(fwd);
+  });
+
+  proxyServer.on('connection', (sock) => {
+    proxyClientSockets.add(sock);
+    sock.on('close', () => proxyClientSockets.delete(sock));
+  });
+
+  proxyServer.on('connect', (_req, clientSocket, head) => {
+    proxyClientSockets.add(clientSocket);
+    clientSocket.on('close', () => proxyClientSockets.delete(clientSocket));
+    if (blackholedSockets.has(clientSocket)) {
+      return;
+    }
+    const upstream = netConnect(targetPort, '127.0.0.1', () => {
+      clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+      if (head?.length) upstream.write(head);
+      clientSocket.on('data', (chunk) => {
+        if (!blackholedSockets.has(clientSocket)) {
+          upstream.write(chunk);
+        }
+      });
+      upstream.on('data', (chunk) => {
+        if (!blackholedSockets.has(clientSocket)) {
+          clientSocket.write(chunk);
+        }
+      });
+    });
+    upstreamTunnelSockets.add(upstream);
+    upstream.on('close', () => upstreamTunnelSockets.delete(upstream));
+    upstream.on('error', () => clientSocket.destroy());
+    clientSocket.on('error', () => upstream.destroy());
+  });
+
+  const proxyPort = await listenOnFetchSafePort(proxyServer);
+  const proxyUrl = `http://127.0.0.1:${proxyPort}`;
+
+  const proxyMgr = createSystemProxyManager({
+    env: {
+      HTTP_PROXY: proxyUrl,
+      HTTPS_PROXY: proxyUrl,
+      DISABLE_SYSTEM_PROXY_LOOKUP: '1',
+    },
+    setGlobalProxyFn: http.setGlobalProxyFromEnv,
+  });
+
+  try {
+    const initProxy = proxyMgr.refresh({ force: true });
+    assert.equal(initProxy.enabled, true);
+    assert.equal(initProxy.proxyUrl, proxyUrl);
+
+    // 1. Initial proxied fetch succeeds over the tunnel/proxy connection
+    const firstRes = await fetch(`http://remote.test:${targetPort}/initial`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    assert.equal(firstRes.status, 200);
+    const firstBody = await firstRes.json();
+    assert.deepEqual(firstBody, { ok: true, path: '/initial' });
+
+    await new Promise((r) => setTimeout(r, 30));
+    assert.ok(proxyClientSockets.size >= 1, 'Initial proxied fetch must open at least 1 proxy socket');
+
+    // 2. Blackhole the pooled tunnel/proxy socket(s) without closing them
+    for (const sock of proxyClientSockets) {
+      blackholedSockets.add(sock);
+    }
+
+    // 3. Un-rebuilt fetch reuses the half-open blackholed socket and throws TimeoutError
+    await assert.rejects(
+      () =>
+        fetch(`http://remote.test:${targetPort}/blackhole`, {
+          signal: AbortSignal.timeout(400),
+        }),
+      (err) => err?.name === 'TimeoutError',
+    );
+
+    // 4. Forced refresh on the exact same proxy URL closes stale pool and restores fast 200 OK
+    const rebuiltStatus = proxyMgr.refresh({ force: true });
+    assert.equal(rebuiltStatus.proxyUrl, proxyUrl);
+    assert.equal(rebuiltStatus.rebuildCount, 1);
+
+    const t0 = Date.now();
+    const recoveredRes = await fetch(`http://remote.test:${targetPort}/recovered`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    const elapsedMs = Date.now() - t0;
+    assert.equal(recoveredRes.status, 200);
+    assert.deepEqual(await recoveredRes.json(), { ok: true, path: '/recovered' });
+    assert.ok(elapsedMs < 1000, `Recovered fetch should finish rapidly, took ${elapsedMs}ms`);
+  } finally {
+    proxyMgr.dispose();
+    directAgent.destroy();
+    for (const sock of [...proxyClientSockets, ...upstreamTunnelSockets, ...targetSockets]) {
+      sock.destroy();
+    }
+    proxyServer.closeAllConnections?.();
+    targetServer.closeAllConnections?.();
+    await new Promise((r) => proxyServer.close(() => r()));
+    await new Promise((r) => targetServer.close(() => r()));
+  }
+
+  // Part B: release_updater onTransportFailure hook ordering, proxySummary, and concurrent manual checkPromise retry
+  const { root, appData } = makeTempEnv();
+  try {
+    // B1. Channel 1 TimeoutError invokes onTransportFailure BEFORE Channel 2/3 and exposes proxySummary
+    const stateDirHook = join(appData, 'hook-order');
+    mkdirSync(stateDirHook, { recursive: true });
+    const hookEvents = [];
+    let currentProxy = { enabled: true, source: 'env', proxyUrl: 'http://127.0.0.1:10809' };
+
+    const hookUpdater = createReleaseUpdater({
+      stateDir: stateDirHook,
+      currentVersion: '0.2.9',
+      enableFallbackChannels: true,
+      getProxyStatus: () => currentProxy,
+      beforeNetworkCheck: ({ manual }) => {
+        hookEvents.push(`before:${manual}`);
+      },
+      onTransportFailure: (info) => {
+        hookEvents.push(`recover:${info.errorCode}`);
+        currentProxy = { enabled: true, source: 'win-registry', proxyUrl: 'http://127.0.0.1:7890' };
+      },
+      fetchImpl: async (url) => {
+        if (url.includes('api.github.com')) {
+          hookEvents.push('ch1');
+          throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+        }
+        if (url.includes('releases/latest')) {
+          hookEvents.push('ch2');
+          return new Response(null, {
+            status: 302,
+            headers: { location: 'https://github.com/JefferyL1ang/agy-token-monitor/releases/tag/v0.3.1' },
+          });
+        }
+        hookEvents.push('ch3');
+        return new Response('unexpected', { status: 500 });
+      },
+    });
+
+    const hookRes = await hookUpdater.checkForUpdatesNow({ manual: true });
+    assert.equal(hookRes.ok, true);
+    assert.equal(hookRes.status.checkSource, 'github-web');
+    assert.equal(hookRes.status.latestVersion, '0.3.1');
+    assert.equal(hookRes.status.proxySummary, 'win-registry:http://127.0.0.1:7890');
+    assert.deepEqual(hookEvents, ['before:true', 'ch1', 'recover:timeout', 'ch2']);
+
+    const hookCache = JSON.parse(readFileSync(join(stateDirHook, 'update_cache.json'), 'utf-8'));
+    assert.equal(hookCache.proxySummary, 'win-registry:http://127.0.0.1:7890');
+
+    // B2. Concurrent manual checkForUpdatesNow({ manual: true }) retries cleanly when in-flight background check fails
+    const stateDirRetry = join(appData, 'concurrent-retry');
+    mkdirSync(stateDirRetry, { recursive: true });
+    const beforeCalls = [];
+    let releaseBgGate;
+    const bgGate = new Promise((r) => {
+      releaseBgGate = r;
+    });
+    let fetchAttempt = 0;
+
+    const retryUpdater = createReleaseUpdater({
+      stateDir: stateDirRetry,
+      currentVersion: '0.2.9',
+      autoCheckDisabled: false,
+      enableFallbackChannels: false,
+      getProxyStatus: () => ({ enabled: false, source: 'direct', proxyUrl: '' }),
+      beforeNetworkCheck: ({ manual }) => {
+        beforeCalls.push(manual);
+      },
+      fetchImpl: async () => {
+        fetchAttempt += 1;
+        if (fetchAttempt === 1) {
+          await bgGate;
+          throw new TypeError('fetch failed', { cause: { code: 'ECONNRESET', message: 'stale socket' } });
+        }
+        return new Response(
+          JSON.stringify({
+            tag_name: 'v0.3.0',
+            name: 'Token Monitor v0.3.0',
+            published_at: '2026-11-18T00:00:00Z',
+            html_url: 'https://github.com/JefferyL1ang/agy-token-monitor/releases/tag/v0.3.0',
+            assets: [],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      },
+    });
+
+    const bgStarted = retryUpdater.maybeCheckForUpdates();
+    assert.equal(bgStarted, true);
+    assert.equal(retryUpdater.getPublicStatus().checking, true);
+
+    const manualPromise = retryUpdater.checkForUpdatesNow({ manual: true });
+    releaseBgGate();
+    const manualRes = await manualPromise;
+
+    assert.deepEqual(beforeCalls, [false, true]);
+    assert.equal(manualRes.ok, true);
+    assert.equal(manualRes.status.latestVersion, '0.3.0');
+    assert.equal(manualRes.status.latestTag, 'v0.3.0');
+    assert.equal(manualRes.status.error, '');
+    assert.equal(manualRes.status.proxySummary, 'direct');
+
+    // Part C: Standalone main.mjs /api/snapshot and /api/check-update expose proxyStatus
+    const dataDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'data');
+    mkdirSync(dataDir, { recursive: true });
+    const fakeHome = join(root, 'home');
+    mkdirSync(fakeHome, { recursive: true });
+
+    const mockUpdateServer = createServer((req, res) => {
+      if (req.url === '/releases/latest') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            tag_name: 'v0.3.1',
+            name: 'Token Monitor v0.3.1',
+            published_at: '2026-11-18T00:00:00Z',
+            html_url: 'https://github.com/JefferyL1ang/agy-token-monitor/releases/tag/v0.3.1',
+            assets: [],
+          }),
+        );
+        return;
+      }
+      res.writeHead(404);
+      res.end('not found');
+    });
+    const mockUpdatePort = await listenOnFetchSafePort(mockUpdateServer);
+    const deadProxyPort = await pickFetchSafeFreePort();
+    const sidecarPort = await pickFetchSafeFreePort();
+
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    const mainPath = join(__dirname, '..', 'sidecars', 'monitor_pane', 'main.mjs');
+    const sdkCandidates = [
+      join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+      join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+    ].filter((p) => existsSync(p));
+
+    const env = { ...process.env };
+    delete env.ANTIGRAVITY_LS_ADDRESS;
+    delete env.ANTIGRAVITY_CSRF_TOKEN;
+    delete env.ANTIGRAVITY_SIDECAR_WEB_PORT;
+    delete env.ANTIGRAVITY_CONVERSATION_ID;
+    delete env.ANTIGRAVITY_SIDECAR_UI_TOKEN;
+    delete env.ANTIGRAVITY_AGENTAPI_EXE;
+    delete env.HTTP_PROXY;
+    delete env.http_proxy;
+    delete env.HTTPS_PROXY;
+    delete env.https_proxy;
+    delete env.ALL_PROXY;
+    delete env.all_proxy;
+    delete env.NO_PROXY;
+    delete env.no_proxy;
+    if (sdkCandidates[0]) env.SIDECAR_SDK_PATH = sdkCandidates[0];
+    env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
+    env.USERPROFILE = fakeHome;
+    env.HOME = fakeHome;
+    env.PRICING_SYNC_DISABLE_AUTO = '1';
+    env.RELEASE_UPDATE_DISABLE_AUTO = '1';
+    env.DISABLE_SYSTEM_PROXY_LOOKUP = '1';
+    env.AGY_TOKEN_MONITOR_PROXY = `http://user:secret@127.0.0.1:${deadProxyPort}`;
+    env.RELEASE_UPDATE_API_URL = `http://127.0.0.1:${mockUpdatePort}/releases/latest`;
+    env.RELEASE_UPDATE_ALLOW_LOOPBACK = '1';
+
+    const child = spawn(process.execPath, [mainPath, '--standalone', String(sidecarPort)], {
+      env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    try {
+      await new Promise((resolveReady, rejectReady) => {
+        if (child.exitCode !== null) {
+          rejectReady(new Error(`Sidecar exited prematurely (${child.exitCode})`));
+          return;
+        }
+        const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 5000);
+        let out = '';
+        child.stdout.on('data', (chunk) => {
+          out += chunk.toString();
+          if (out.includes(`[sidecar] listening on 127.0.0.1:${sidecarPort}`)) {
+            clearTimeout(timer);
+            resolveReady();
+          }
+        });
+        child.stderr.on('data', (chunk) => {
+          out += chunk.toString();
+        });
+        child.once('exit', (code) => {
+          clearTimeout(timer);
+          rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+        });
+      });
+
+      const base = `http://127.0.0.1:${sidecarPort}`;
+      const expectedMaskedProxy = `http://***@127.0.0.1:${deadProxyPort}`;
+
+      const snapRes = await fetch(`${base}/api/snapshot`);
+      assert.equal(snapRes.status, 200);
+      const snap = await snapRes.json();
+      assert.equal(snap.appVersion, '0.3.0');
+      assert.ok(snap.proxyStatus && typeof snap.proxyStatus === 'object');
+      assert.equal(snap.proxyStatus.enabled, true);
+      assert.equal(snap.proxyStatus.source, 'custom-env');
+      assert.equal(snap.proxyStatus.proxyUrl, expectedMaskedProxy);
+      assert.equal(snap.proxyStatus.noProxy, LOOPBACK_NO_PROXY);
+      assert.equal(snap.proxyStatus.rebuildCount, 0);
+
+      const checkRes = await fetch(`${base}/api/check-update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      assert.equal(checkRes.status, 200);
+      const checkBody = await checkRes.json();
+      assert.equal(checkBody.ok, true);
+      assert.equal(checkBody.appVersion, '0.3.0');
+      assert.ok(checkBody.proxyStatus && typeof checkBody.proxyStatus === 'object');
+      assert.equal(checkBody.proxyStatus.enabled, true);
+      assert.equal(checkBody.proxyStatus.source, 'custom-env');
+      assert.equal(checkBody.proxyStatus.proxyUrl, expectedMaskedProxy);
+      assert.equal(checkBody.proxyStatus.rebuildCount, 1);
+      assert.equal(checkBody.updateStatus.proxySummary, `custom-env:${expectedMaskedProxy}`);
+    } finally {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill();
+        await new Promise((r) => {
+          if (child.exitCode !== null || child.signalCode !== null) return r();
+          const t = setTimeout(r, 3000);
+          child.once('exit', () => {
+            clearTimeout(t);
+            r();
+          });
+        });
+      }
+      await new Promise((r) => mockUpdateServer.close(() => r()));
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.3.0 headless Node VM Settings tooltip proxy diagnostics and static I18N/annotation hygiene', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = join(testDir, '..');
+  const paneDir = join(repoRoot, 'sidecars', 'monitor_pane');
+
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+  const netProxySource = readFileSync(join(paneDir, 'net_proxy.mjs'), 'utf-8');
+  const mainSource = readFileSync(join(paneDir, 'main.mjs'), 'utf-8');
+  const releaseUpdaterSource = readFileSync(join(paneDir, 'release_updater.mjs'), 'utf-8');
+  const selfSource = readFileSync(fileURLToPath(import.meta.url), 'utf-8');
+
+  // 1. Static I18N parity for v0.3.0 proxy diagnostic tooltip keys and placeholder parity
+  const i18nStart = appSource.indexOf('const I18N = {');
+  assert.ok(i18nStart >= 0, 'I18N object must exist in app.js');
+  const i18nMatch = appSource
+    .slice(i18nStart)
+    .match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(i18nMatch, 'Both zh and en blocks must be extractable from I18N');
+
+  const extractEntries = (block) => {
+    const map = new Map();
+    for (const match of block.matchAll(/^\s*'([^']+)'\s*:\s*'((?:\\.|[^'\\])*)'/gm)) {
+      map.set(match[1], match[2]);
+    }
+    return map;
+  };
+  const zhEntries = extractEntries(i18nMatch[1]);
+  const enEntries = extractEntries(i18nMatch[2]);
+  assert.deepEqual([...zhEntries.keys()].sort(), [...enEntries.keys()].sort());
+
+  assert.equal(zhEntries.get('settings.proxyDiagActive'), '代理: {url} ({source})');
+  assert.equal(enEntries.get('settings.proxyDiagActive'), 'Proxy: {url} ({source})');
+  assert.equal(zhEntries.get('settings.proxyDiagDirect'), '直连模式 (未检测到系统代理)');
+  assert.equal(enEntries.get('settings.proxyDiagDirect'), 'Direct connection (no proxy detected)');
+
+  const extractPlaceholders = (str) =>
+    [...str.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
+  for (const key of ['settings.proxyDiagActive', 'settings.proxyDiagDirect']) {
+    assert.deepEqual(
+      extractPlaceholders(zhEntries.get(key)),
+      extractPlaceholders(enEntries.get(key)),
+      `Placeholder mismatch for ${key}`,
+    );
+  }
+  assert.deepEqual(extractPlaceholders(enEntries.get('settings.proxyDiagActive')), ['source', 'url']);
+  assert.deepEqual(extractPlaceholders(enEntries.get('settings.proxyDiagDirect')), []);
+
+  // 2. Balanced [MODIFIED BEGIN/END] annotations across all v0.3.0 modified files
+  const modBeginMarker = '[' + 'MODIFIED BEGIN]';
+  const modEndMarker = '[' + 'MODIFIED END]';
+  for (const [label, src] of [
+    ['net_proxy.mjs', netProxySource],
+    ['release_updater.mjs', releaseUpdaterSource],
+    ['main.mjs', mainSource],
+    ['app.js', appSource],
+    ['tests/parser.test.mjs', selfSource],
+  ]) {
+    let depth = 0;
+    let minDepth = 0;
+    let begins = 0;
+    let ends = 0;
+    for (const line of src.split(/\r?\n/)) {
+      if (line.includes(modBeginMarker)) {
+        depth += 1;
+        begins += 1;
+      }
+      if (line.includes(modEndMarker)) {
+        depth -= 1;
+        ends += 1;
+        if (depth < minDepth) minDepth = depth;
+      }
+    }
+    assert.ok(begins > 0, `${label} must contain modification annotations`);
+    assert.equal(begins, ends, `${label} begin/end annotation count mismatch`);
+    assert.equal(depth, 0, `${label} unclosed modification annotation (depth=${depth})`);
+    assert.equal(minDepth, 0, `${label} unmatched end annotation (minDepth=${minDepth})`);
+  }
+
+  // 3. Headless Node VM behavioral tests for renderUpdateCheckStatus() proxy diagnostics tooltip in zh & en
+  const iifeCloseIdx = appSource.lastIndexOf('})();');
+  assert.ok(iifeCloseIdx > 0, 'app.js must end with IIFE closing })();');
+
+  const instrumentedSource =
+    appSource.slice(0, iifeCloseIdx) +
+    `\n  globalThis.__tmV030Exports = {\n` +
+    `    state,\n` +
+    `    t,\n` +
+    `    getCurrentAppVersion,\n` +
+    `    formatProxyDiagHint,\n` +
+    `    renderUpdateCheckStatus,\n` +
+    `  };\n` +
+    appSource.slice(iifeCloseIdx);
+
+  class FakeNode {
+    constructor() {
+      this.parentNode = null;
+      this.childNodes = [];
+    }
+  }
+  class FakeTextNode extends FakeNode {
+    constructor(text) {
+      super();
+      this.nodeType = 3;
+      this._text = String(text ?? '');
+    }
+    get textContent() {
+      return this._text;
+    }
+    set textContent(v) {
+      this._text = String(v ?? '');
+    }
+  }
+  class FakeElement extends FakeNode {
+    constructor(tagName, namespaceURI = 'http://www.w3.org/1999/xhtml') {
+      super();
+      this.nodeType = 1;
+      this.tagName = String(tagName || 'div').toUpperCase();
+      this.namespaceURI = namespaceURI;
+      this._classSet = new Set();
+      this.attributes = new Map();
+      this.listeners = new Map();
+      this.dataset = {};
+      this.title = '';
+      this.disabled = false;
+      this.style = {
+        cssText: '',
+        setProperty(name, val) {
+          this[name] = String(val);
+        },
+        getPropertyValue(name) {
+          return this[name] ?? '';
+        },
+      };
+      this.classList = {
+        add: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.add(part);
+            }
+          }
+        },
+        remove: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.delete(part);
+            }
+          }
+        },
+        contains: (tok) => this._classSet.has(String(tok || '')),
+      };
+    }
+    get className() {
+      return [...this._classSet].join(' ');
+    }
+    set className(val) {
+      this._classSet.clear();
+      for (const part of String(val || '').trim().split(/\s+/)) {
+        if (part) this._classSet.add(part);
+      }
+    }
+    get textContent() {
+      return this.childNodes.map((n) => n.textContent).join('');
+    }
+    set textContent(val) {
+      for (const c of this.childNodes) c.parentNode = null;
+      this.childNodes = [];
+      const str = val === null || val === undefined ? '' : String(val);
+      if (str !== '') {
+        const tn = new FakeTextNode(str);
+        tn.parentNode = this;
+        this.childNodes.push(tn);
+      }
+    }
+    setAttribute(name, val) {
+      this.attributes.set(String(name), String(val));
+    }
+    getAttribute(name) {
+      const k = String(name);
+      return this.attributes.has(k) ? this.attributes.get(k) : null;
+    }
+    removeAttribute(name) {
+      this.attributes.delete(String(name));
+    }
+    appendChild(child) {
+      child.parentNode = this;
+      this.childNodes.push(child);
+      return child;
+    }
+    remove() {
+      this.parentNode = null;
+    }
+  }
+
+  const elementsById = new Map();
+  const rootHtml = new FakeElement('html');
+  const rootBody = new FakeElement('body');
+  rootHtml.appendChild(rootBody);
+  const fakeDocument = {
+    readyState: 'loading',
+    hidden: false,
+    documentElement: rootHtml,
+    body: rootBody,
+    createElement: (tag) => new FakeElement(tag),
+    createElementNS: (ns, tag) => new FakeElement(tag, ns),
+    createTextNode: (text) => new FakeTextNode(text),
+    getElementById(id) {
+      const key = String(id);
+      if (!elementsById.has(key)) {
+        const elem = new FakeElement('div');
+        elem.setAttribute('id', key);
+        rootBody.appendChild(elem);
+        elementsById.set(key, elem);
+      }
+      return elementsById.get(key);
+    },
+    querySelectorAll: () => [],
+    addEventListener: () => {},
+  };
+
+  const sandbox = {
+    Node: FakeNode,
+    document: fakeDocument,
+    window: {
+      addEventListener: () => {},
+      matchMedia: () => ({ matches: false }),
+      sidecar: { conversationId: 'conv-vm-v030' },
+      location: { reload: () => {} },
+    },
+    navigator: { clipboard: { writeText: async () => {} } },
+    MutationObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+    getComputedStyle: () => ({ color: 'rgb(246, 247, 249)' }),
+    AbortController,
+    fetch: async () => ({ ok: true, status: 200, json: async () => ({ ok: true }) }),
+    requestAnimationFrame: (cb) => {
+      cb();
+      return 1;
+    },
+    setTimeout: () => 1,
+    clearTimeout: () => {},
+    setInterval: () => 1,
+    clearInterval: () => {},
+    console,
+    URLSearchParams,
+    Intl,
+  };
+  sandbox.globalThis = sandbox;
+
+  vm.runInNewContext(instrumentedSource, sandbox);
+  const exports = sandbox.__tmV030Exports;
+  assert.ok(exports, 'VM execution must expose __tmV030Exports');
+  assert.equal(exports.getCurrentAppVersion(), '0.3.0');
+
+  const statusEl = fakeDocument.getElementById('update-version-status');
+  exports.state.updateChecking = false;
+  exports.state.updateApplying = false;
+
+  // Case A: Active proxy from state.snapshot.proxyStatus (en & zh)
+  exports.state.snapshot = {
+    appVersion: '0.3.0',
+    proxyStatus: {
+      enabled: true,
+      source: 'win-registry',
+      proxyUrl: 'http://127.0.0.1:7890',
+    },
+    updateStatus: {
+      currentVersion: '0.3.0',
+      hasUpdate: false,
+      lastCheckedAtMs: Date.now() - 10_000,
+      error: 'The operation was aborted due to timeout',
+      errorCode: 'timeout',
+    },
+  };
+
+  exports.state.lang = 'en';
+  exports.renderUpdateCheckStatus();
+  assert.equal(statusEl.classList.contains('is-offline'), true);
+  assert.equal(statusEl.title.includes(exports.t('update.errTimeout')), true);
+  assert.equal(statusEl.title.includes('Proxy: http://127.0.0.1:7890 (win-registry)'), true);
+
+  exports.state.lang = 'zh';
+  exports.renderUpdateCheckStatus();
+  assert.equal(statusEl.title.includes(exports.t('update.errTimeout')), true);
+  assert.equal(statusEl.title.includes('代理: http://127.0.0.1:7890 (win-registry)'), true);
+
+  // Case B: Direct connection from state.snapshot.proxyStatus (en & zh)
+  exports.state.snapshot.proxyStatus = {
+    enabled: false,
+    source: 'direct',
+    proxyUrl: '',
+  };
+
+  exports.state.lang = 'en';
+  exports.renderUpdateCheckStatus();
+  assert.equal(statusEl.title.includes('Direct connection (no proxy detected)'), true);
+
+  exports.state.lang = 'zh';
+  exports.renderUpdateCheckStatus();
+  assert.equal(statusEl.title.includes('直连模式 (未检测到系统代理)'), true);
+
+  // Case C: Fallback to updateStatus.proxySummary when snapshot.proxyStatus is absent
+  exports.state.snapshot = null;
+  exports.state.activeUpdateStatus = {
+    currentVersion: '0.3.0',
+    hasUpdate: false,
+    error: 'fetch failed',
+    errorCode: 'network',
+    proxySummary: 'win-user-env:http://127.0.0.1:7898',
+  };
+
+  exports.state.lang = 'en';
+  exports.renderUpdateCheckStatus();
+  assert.equal(statusEl.title.includes('Proxy: http://127.0.0.1:7898 (win-user-env)'), true);
+
+  exports.state.lang = 'zh';
+  exports.renderUpdateCheckStatus();
+  assert.equal(statusEl.title.includes('代理: http://127.0.0.1:7898 (win-user-env)'), true);
+
+  exports.state.activeUpdateStatus.proxySummary = 'direct';
+  exports.state.lang = 'en';
+  exports.renderUpdateCheckStatus();
+  assert.equal(statusEl.title.includes(exports.t('settings.proxyDiagDirect')), true);
+
+  exports.state.lang = 'zh';
+  exports.renderUpdateCheckStatus();
+  assert.equal(statusEl.title.includes(exports.t('settings.proxyDiagDirect')), true);
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:38:33
 // ============================================================================

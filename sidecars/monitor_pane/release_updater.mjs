@@ -32,8 +32,15 @@ const CACHE_SCHEMA_VERSION = 1;
 const BOOT_SKIP_WINDOW_MS = 60 * 1000;
 const AUTO_CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000;
 const RETRY_COOLDOWN_MS = 15 * 60 * 1000;
-const CHECK_TIMEOUT_MS = 10000;
-const FALLBACK_CHECK_TIMEOUT_MS = 8000;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Tune primary and fallback release check timeouts to 8s / 6s.
+// ============================================================================
+const CHECK_TIMEOUT_MS = 8000;
+const FALLBACK_CHECK_TIMEOUT_MS = 6000;
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
 const DOWNLOAD_TIMEOUT_MS = 30000;
 const CDN_FILE_TIMEOUT_MS = 15000;
 // ============================================================================
@@ -638,6 +645,14 @@ function createEmptyCache() {
     error: '',
     errorCode: '',
     checkSource: '',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Persist proxySummary diagnostics in update_cache.json schema.
+// ============================================================================
+    proxySummary: '',
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
   };
 }
 
@@ -672,6 +687,14 @@ function loadUpdateCache(cachePath) {
       error: typeof raw.error === 'string' ? raw.error : '',
       errorCode: typeof raw.errorCode === 'string' ? raw.errorCode : '',
       checkSource: typeof raw.checkSource === 'string' ? raw.checkSource : '',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Restore truncated proxySummary string from update_cache.json.
+// ============================================================================
+      proxySummary: typeof raw.proxySummary === 'string' ? raw.proxySummary.slice(0, 160) : '',
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
     };
   } catch {
     return fallback;
@@ -722,7 +745,12 @@ export function createReleaseUpdater(options = {}) {
   const {
     stateDir = '',
     pluginRoot = '',
-    currentVersion: initialVersion = '0.2.9',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Bump default initialVersion fallback to 0.3.0 and accept proxy
+// lifecycle hooks (beforeNetworkCheck, onTransportFailure, getProxyStatus).
+// ============================================================================
+    currentVersion: initialVersion = '0.3.0',
     fetchImpl = globalThis.fetch,
     nowFn = Date.now,
     releaseApiUrl = process.env.RELEASE_UPDATE_API_URL || DEFAULT_RELEASE_API_URL,
@@ -732,6 +760,9 @@ export function createReleaseUpdater(options = {}) {
     allowGitRepoOverwrite = process.env.ALLOW_GIT_REPO_HOT_UPDATE === '1',
     autoCheckDisabled = process.env.RELEASE_UPDATE_DISABLE_AUTO === '1',
     allowLoopbackDownload = process.env.RELEASE_UPDATE_ALLOW_LOOPBACK === '1',
+    beforeNetworkCheck = null,
+    onTransportFailure = null,
+    getProxyStatus = null,
   } = options || {};
 
   const enableFallbackChannels =
@@ -749,7 +780,10 @@ export function createReleaseUpdater(options = {}) {
     .filter(Boolean);
 
   let currentVersion =
-    typeof initialVersion === 'string' && initialVersion.trim() ? initialVersion.trim() : '0.2.9';
+    typeof initialVersion === 'string' && initialVersion.trim() ? initialVersion.trim() : '0.3.0';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:42:30
 // ============================================================================
@@ -762,7 +796,30 @@ export function createReleaseUpdater(options = {}) {
 
   let hasCheckedSinceBoot = false;
   let checkPromise = null;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Track whether in-flight checkPromise is manual and compute proxy
+// summary string from getProxyStatus hook.
+// ============================================================================
+  let checkPromiseIsManual = false;
   let applyPromise = null;
+
+  function computeProxySummary() {
+    try {
+      const st = getProxyStatus?.();
+      if (st && typeof st === 'object') {
+        return st.enabled && st.proxyUrl
+          ? `${st.source || 'proxy'}:${st.proxyUrl}`
+          : st.source || 'direct';
+      }
+    } catch {
+      // Ignore proxy status lookup errors.
+    }
+    return '';
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
 
   function getFallbackUrl() {
     if (typeof cache.htmlUrl === 'string' && /^https?:\/\//i.test(cache.htmlUrl.trim())) {
@@ -810,6 +867,14 @@ export function createReleaseUpdater(options = {}) {
         cache.errorCode ||
         (cache.error ? classifyFetchError(new Error(cache.error)).errorCode : ''),
       checkSource: cache.checkSource || '',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Expose cached or live proxySummary in getPublicStatus().
+// ============================================================================
+      proxySummary: cache.proxySummary || computeProxySummary(),
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
       releaseNotes: cache.releaseNotes || '',
     };
   }
@@ -834,19 +899,40 @@ export function createReleaseUpdater(options = {}) {
     cache.checkSource = source;
     cache.error = '';
     cache.errorCode = '';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Record proxySummary when persisting fallback release metadata.
+// ============================================================================
+    cache.proxySummary = computeProxySummary();
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
     persistUpdateCache(stateDir, cachePath, cache);
     return { ok: true };
   }
 
-  async function executeCheck() {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Invoke beforeNetworkCheck, record proxySummary on all cache
+// writes, trigger onTransportFailure before fallback channels on Channel 1
+// timeout/network errors, and prevent background vs manual checkPromise race.
+// ============================================================================
+  async function executeCheck({ manual = false } = {}) {
     const nowMs = nowFn();
     cache.lastAttemptAtMs = nowMs;
 
     if (typeof fetchImpl !== 'function') {
       cache.error = 'fetch unavailable';
       cache.errorCode = 'unknown';
+      cache.proxySummary = computeProxySummary();
       persistUpdateCache(stateDir, cachePath, cache);
       return { ok: false };
+    }
+
+    try {
+      beforeNetworkCheck?.({ manual });
+    } catch {
+      // Ignore pre-check hook errors.
     }
 
     let primaryErr = null;
@@ -872,6 +958,7 @@ export function createReleaseUpdater(options = {}) {
         cache.checkSource = 'github-api';
         cache.error = '';
         cache.errorCode = '';
+        cache.proxySummary = computeProxySummary();
         persistUpdateCache(stateDir, cachePath, cache);
         return { ok: true };
       }
@@ -937,11 +1024,25 @@ export function createReleaseUpdater(options = {}) {
       cache.checkSource = 'github-api';
       cache.error = '';
       cache.errorCode = '';
+      cache.proxySummary = computeProxySummary();
 
       persistUpdateCache(stateDir, cachePath, cache);
       return { ok: true };
     } catch (err) {
       primaryErr = err;
+    }
+
+    const prelim = classifyFetchError(primaryErr);
+    if (
+      enableFallbackChannels &&
+      (prelim.errorCode === 'timeout' || prelim.errorCode === 'network')
+    ) {
+      try {
+        onTransportFailure?.(prelim);
+      } catch {
+        // Ignore transport recovery hook errors.
+      }
+      cache.proxySummary = computeProxySummary();
     }
 
     if (enableFallbackChannels) {
@@ -1006,32 +1107,70 @@ export function createReleaseUpdater(options = {}) {
       }
     }
 
-    const classified = classifyFetchError(primaryErr);
-    cache.error = classified.message;
-    cache.errorCode = classified.errorCode;
+    cache.error = prelim.message;
+    cache.errorCode = prelim.errorCode;
+    cache.proxySummary = computeProxySummary();
     persistUpdateCache(stateDir, cachePath, cache);
     return { ok: false };
   }
 // ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
+// ============================================================================
 // [MODIFIED END] 2026-11-18 10:23:31
 // ============================================================================
 
-  function checkForUpdatesNow() {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Prevent manual checkForUpdatesNow({ manual: true }) from joining
+// and stopping on a failing background check without retrying cleanly.
+// ============================================================================
+  async function checkForUpdatesNow({ manual = false } = {}) {
     hasCheckedSinceBoot = true;
     if (!checkPromise) {
-      const p = executeCheck().finally(() => {
-        if (checkPromise === p) checkPromise = null;
-      });
+      checkPromiseIsManual = Boolean(manual);
+      const p = executeCheck({ manual: Boolean(manual) }).then(
+        (res) => {
+          if (checkPromise === p) {
+            checkPromise = null;
+            checkPromiseIsManual = false;
+          }
+          return res;
+        },
+        (err) => {
+          if (checkPromise === p) {
+            checkPromise = null;
+            checkPromiseIsManual = false;
+          }
+          throw err;
+        },
+      );
       checkPromise = p;
-    }
-    return checkPromise.then((res) => {
-      checkPromise = null;
+      const res = await p;
       return {
         ok: Boolean(res?.ok),
         status: getPublicStatus(),
       };
-    });
+    }
+
+    const inFlight = checkPromise;
+    const joinedManual = checkPromiseIsManual;
+    const firstRes = await inFlight;
+    if (checkPromise === inFlight) {
+      checkPromise = null;
+      checkPromiseIsManual = false;
+    }
+    if (!firstRes?.ok && manual && !joinedManual) {
+      return checkForUpdatesNow({ manual: true });
+    }
+    return {
+      ok: Boolean(firstRes?.ok),
+      status: getPublicStatus(),
+    };
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
 
   function maybeCheckForUpdates(onUpdated = null) {
     if (autoCheckDisabled || checkPromise || applyPromise) return false;
@@ -1440,6 +1579,14 @@ export function createReleaseUpdater(options = {}) {
     cache.checkedFromVersion = currentVersion;
     cache.error = '';
     cache.errorCode = '';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Record proxySummary when persisting successful apply cache state.
+// ============================================================================
+    cache.proxySummary = computeProxySummary();
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
     persistUpdateCache(stateDir, cachePath, cache);
 
     return {
@@ -1534,6 +1681,18 @@ export function createReleaseUpdater(options = {}) {
 // preserve strict failure on any 200 OK ZIP integrity/manifest check and
 // clear/classify errorCode cleanly.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Invoke beforeNetworkCheck({ manual: true }) before hot-update
+// download and trigger onTransportFailure before jsDelivr CDN fallback on
+// primary ZIP timeout/network failures.
+// ============================================================================
+      try {
+        beforeNetworkCheck?.({ manual: true });
+      } catch {
+        // Ignore pre-download hook errors.
+      }
+
       let res = null;
       let primaryFetchErr = null;
       try {
@@ -1550,6 +1709,20 @@ export function createReleaseUpdater(options = {}) {
 
       if (!res || !res.ok) {
         if (enableFallbackChannels && (cache.latestVersion || cache.latestTag)) {
+          if (primaryFetchErr) {
+            const prelim = classifyFetchError(primaryFetchErr);
+            if (prelim.errorCode === 'timeout' || prelim.errorCode === 'network') {
+              try {
+                onTransportFailure?.(prelim);
+              } catch {
+                // Ignore transport recovery hook errors.
+              }
+              cache.proxySummary = computeProxySummary();
+            }
+          }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
           const cdnResult = await fetchEntriesFromJsdelivrCdn(
             cache.latestVersion,
             cache.latestTag,
@@ -1660,6 +1833,14 @@ export function createReleaseUpdater(options = {}) {
       const errMsg = err?.message || classified.message || 'Failed to apply release update.';
       cache.error = classified.message || errMsg.slice(0, 240);
       cache.errorCode = classified.errorCode;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Record proxySummary when persisting apply failure cache state.
+// ============================================================================
+      cache.proxySummary = computeProxySummary();
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
       persistUpdateCache(stateDir, cachePath, cache);
       return {
         ok: false,

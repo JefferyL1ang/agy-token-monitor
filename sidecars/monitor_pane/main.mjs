@@ -110,7 +110,14 @@ function readPluginVersion(rootDir) {
 // [MODIFIED BEGIN] 2026-11-18 11:42:30
 // Description: Update fallback plugin version string to 0.2.9.
 // ============================================================================
-  return '0.2.9';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Update fallback plugin version string to 0.3.0.
+// ============================================================================
+  return '0.3.0';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:42:30
 // ============================================================================
@@ -260,6 +267,15 @@ const observedRawModels = new Set();
 const pricingSync = createPricingSyncManager({
   stateDir,
   baseCatalog: MODEL_PRICING_CATALOG,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Wire beforeNetworkSync hook so background and manual pricing
+// syncs refresh TTL-cached proxy state before issuing requests.
+// ============================================================================
+  beforeNetworkSync: () => systemProxy.refresh(),
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
 });
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 19:00:30
@@ -270,6 +286,18 @@ const releaseUpdater = createReleaseUpdater({
   stateDir,
   pluginRoot,
   currentVersion: APP_VERSION,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Wire proxy refresh/rebuild, transport-failure recovery, and proxy
+// status diagnostics into releaseUpdater.
+// ============================================================================
+  beforeNetworkCheck: ({ manual } = {}) =>
+    systemProxy.refresh(manual ? { force: true, rebuild: true } : {}),
+  onTransportFailure: () => systemProxy.recoverFromTransportFailure(),
+  getProxyStatus: () => systemProxy.getStatus(),
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
 });
 let hotUpdateInProgress = false;
 // ============================================================================
@@ -1262,6 +1290,14 @@ app.api(
         boundConversationId,
         prefs: state.prefs,
         updateStatus,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Expose current proxyStatus diagnostics in /api/snapshot payload.
+// ============================================================================
+        proxyStatus: systemProxy.getStatus(),
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
         pricingSync: pricingSync.getPublicStatus(),
         pricingCatalog: buildEffectivePricingCatalog(state.prefs, runtimeCatalog),
         subscriptionCatalog: SUBSCRIPTION_CATALOG,
@@ -1314,12 +1350,13 @@ app.api(
   '/api/sync-pricing',
   async () => {
 // ============================================================================
-// [MODIFIED BEGIN] 2026-11-18 10:23:20
-// Description: Force-refresh system proxy settings before manual pricing sync.
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Force-refresh and rebuild system proxy pool before manual pricing
+// sync and include proxyStatus in response.
 // ============================================================================
-    systemProxy.refresh({ force: true });
+    systemProxy.refresh({ force: true, rebuild: true });
 // ============================================================================
-// [MODIFIED END] 2026-11-18 10:23:20
+// [MODIFIED END] 2026-11-18 15:28:03
 // ============================================================================
     const syncRes = await pricingSync.syncNow([...observedRawModels]);
 // ============================================================================
@@ -1333,6 +1370,14 @@ app.api(
       prefs: state.prefs,
       pricingSync: syncRes.status,
       pricingCatalog: buildEffectivePricingCatalog(state.prefs, syncRes.runtimeCatalog),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Return current proxyStatus in /api/sync-pricing response.
+// ============================================================================
+      proxyStatus: systemProxy.getStatus(),
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
     };
 // ============================================================================
 // [MODIFIED END] 2026-11-17 15:45:00
@@ -1353,21 +1398,29 @@ app.api(
   '/api/check-update',
   async () => {
 // ============================================================================
-// [MODIFIED BEGIN] 2026-11-18 10:23:20
-// Description: Force-refresh system proxy settings before manual update check and hot-update apply.
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Run manual release check (triggering forced proxy pool rebuild via
+// beforeNetworkCheck), log concise failure diagnostics, and return proxyStatus.
 // ============================================================================
-    systemProxy.refresh({ force: true });
-// ============================================================================
-// [MODIFIED END] 2026-11-18 10:23:20
-// ============================================================================
-    const res = await releaseUpdater.checkForUpdatesNow();
+    const res = await releaseUpdater.checkForUpdatesNow({ manual: true });
     prefsVersion += 1;
+    const updateStatus = releaseUpdater.getPublicStatus(state.prefs.skippedReleaseTag);
+    const proxyStatus = systemProxy.getStatus();
+    if (!res.ok) {
+      console.warn(
+        `[monitor_pane] check-update failed: code=${updateStatus.errorCode || 'unknown'} proxy=${proxyStatus.enabled ? `${proxyStatus.source}:${proxyStatus.proxyUrl}` : 'direct'} rebuilds=${proxyStatus.rebuildCount} err=${updateStatus.error || 'unknown'}`,
+      );
+    }
     return {
       ok: res.ok,
       appVersion: APP_VERSION,
       bootId: BOOT_ID,
-      updateStatus: releaseUpdater.getPublicStatus(state.prefs.skippedReleaseTag),
+      updateStatus,
+      proxyStatus,
     };
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
   },
   'POST',
 );
@@ -1376,13 +1429,11 @@ app.api(
   '/api/apply-update',
   async () => {
 // ============================================================================
-// [MODIFIED BEGIN] 2026-11-18 10:23:20
-// Description: Force-refresh system proxy settings at start of hot-update apply.
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Force-refresh and rebuild system proxy pool at start of hot-update
+// apply and include proxyStatus across all success and error responses.
 // ============================================================================
-    systemProxy.refresh({ force: true });
-// ============================================================================
-// [MODIFIED END] 2026-11-18 10:23:20
-// ============================================================================
+    systemProxy.refresh({ force: true, rebuild: true });
     hotUpdateInProgress = true;
     try {
       const res = await releaseUpdater.applyLatestUpdate();
@@ -1393,6 +1444,7 @@ app.api(
           appVersion: APP_VERSION,
           bootId: BOOT_ID,
           updateStatus: releaseUpdater.getPublicStatus(state.prefs.skippedReleaseTag),
+          proxyStatus: systemProxy.getStatus(),
         };
       }
       if (state.prefs.skippedReleaseTag) {
@@ -1411,6 +1463,7 @@ app.api(
         appVersion: APP_VERSION,
         bootId: BOOT_ID,
         updateStatus: releaseUpdater.getPublicStatus(state.prefs.skippedReleaseTag),
+        proxyStatus: systemProxy.getStatus(),
       };
     } catch (err) {
       hotUpdateInProgress = false;
@@ -1421,8 +1474,12 @@ app.api(
         appVersion: APP_VERSION,
         bootId: BOOT_ID,
         updateStatus: releaseUpdater.getPublicStatus(state.prefs.skippedReleaseTag),
+        proxyStatus: systemProxy.getStatus(),
       };
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
   },
   'POST',
 );
@@ -1467,6 +1524,18 @@ function shutdown() {
   }
   if (stateDirty) persistStateNow();
   if (usageLedger.isDirty()) persistLedgerNow();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:03
+// Description: Dispose system proxy dispatcher cleanly during shutdown.
+// ============================================================================
+  try {
+    systemProxy.dispose();
+  } catch {
+    // Ignore proxy disposal failure during shutdown.
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:03
+// ============================================================================
   app.close().finally(() => process.exit(0));
 }
 

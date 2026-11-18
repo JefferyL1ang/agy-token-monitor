@@ -6,8 +6,24 @@
 
 import http from 'node:http';
 import { execFileSync } from 'node:child_process';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:51
+// Description: Import join from node:path for Windows System32 reg.exe fallback lookup.
+// ============================================================================
+import { join } from 'node:path';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:51
+// ============================================================================
 
 export const LOOPBACK_NO_PROXY = '127.0.0.1,localhost,::1';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:51
+// Description: Export default 15-minute max dispatcher age threshold for proxy pool rebuilds.
+// ============================================================================
+export const DEFAULT_MAX_DISPATCHER_AGE_MS = 15 * 60 * 1000;
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:51
+// ============================================================================
 
 const UNSUPPORTED_PROXY_SCHEME_RE =
   /^(?:socks4a?|socks5h?|socks|pac(?:\+[a-z0-9.+-]+)?|ftp|ws|wss):\/\//i;
@@ -244,13 +260,181 @@ export function parseMacScutilProxyOutput(stdout) {
   };
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:51
+// Description: Add parseWindowsUserEnvProxyOutput, resilient Windows reg.exe
+// query helper with System32 fallback, and resolveLiveOsSystemProxy helper.
+// ============================================================================
+/**
+ * Parse `reg.exe query HKCU\Environment` stdout into normalized HTTP/HTTPS proxy settings.
+ */
+export function parseWindowsUserEnvProxyOutput(stdout) {
+  if (typeof stdout !== 'string' || !stdout) {
+    return {
+      enabled: false,
+      httpProxy: '',
+      httpsProxy: '',
+      noProxy: LOOPBACK_NO_PROXY,
+    };
+  }
+
+  const exactVars = Object.create(null);
+  const lowerVars = Object.create(null);
+  const lineRe = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s+REG_(?:EXPAND_)?SZ\s+([^\r\n]+)/;
+  for (const line of stdout.split(/\r?\n/)) {
+    const match = line.match(lineRe);
+    if (!match) continue;
+    const name = match[1];
+    const value = match[2].trim();
+    if (!value) continue;
+    exactVars[name] = value;
+    const lowerName = name.toLowerCase();
+    if (!(lowerName in lowerVars)) {
+      lowerVars[lowerName] = value;
+    }
+  }
+
+  const pickVar = (upperName) => {
+    const lowerName = upperName.toLowerCase();
+    return exactVars[upperName] || exactVars[lowerName] || lowerVars[lowerName] || '';
+  };
+
+  const noProxy = ensureLoopbackNoProxy(pickVar('NO_PROXY'));
+  const custom = normalizeHttpProxyUrl(pickVar('AGY_TOKEN_MONITOR_PROXY'));
+  if (custom) {
+    return {
+      enabled: true,
+      httpProxy: custom,
+      httpsProxy: custom,
+      noProxy,
+    };
+  }
+
+  const envHttps = normalizeHttpProxyUrl(pickVar('HTTPS_PROXY'));
+  const envHttp = normalizeHttpProxyUrl(pickVar('HTTP_PROXY'));
+  const envAll = normalizeHttpProxyUrl(pickVar('ALL_PROXY'));
+  const httpProxy = envHttp || envAll;
+  const httpsProxy = envHttps || envAll;
+
+  if (httpProxy || httpsProxy) {
+    return {
+      enabled: true,
+      httpProxy: httpProxy || httpsProxy,
+      httpsProxy: httpsProxy || httpProxy,
+      noProxy,
+    };
+  }
+
+  return {
+    enabled: false,
+    httpProxy: '',
+    httpsProxy: '',
+    noProxy,
+  };
+}
+
+/**
+ * Query a Windows registry key via reg.exe, retrying via System32\reg.exe on ENOENT.
+ */
+function queryWindowsRegistryKey(execFileSyncImpl, regKeyPath, safeEnv) {
+  const execOpts = {
+    encoding: 'utf-8',
+    timeout: 1200,
+    windowsHide: true,
+    stdio: ['ignore', 'pipe', 'ignore'],
+  };
+  try {
+    return execFileSyncImpl('reg.exe', ['query', regKeyPath], execOpts);
+  } catch (err) {
+    if (err?.code === 'ENOENT') {
+      const systemRoot =
+        typeof safeEnv?.SystemRoot === 'string' && safeEnv.SystemRoot.trim()
+          ? safeEnv.SystemRoot.trim()
+          : 'C:\\Windows';
+      return execFileSyncImpl(
+        join(systemRoot, 'System32', 'reg.exe'),
+        ['query', regKeyPath],
+        execOpts,
+      );
+    }
+    throw err;
+  }
+}
+
+/**
+ * Resolve live OS-level system proxy settings (Windows Internet Settings or macOS scutil).
+ * Returns null if disabled, unsupported, or lookup fails.
+ */
+export function resolveLiveOsSystemProxy({
+  env = process.env,
+  platform = process.platform,
+  execFileSyncImpl = execFileSync,
+} = {}) {
+  const safeEnv = env || {};
+  const baseNoProxy = ensureLoopbackNoProxy(safeEnv.NO_PROXY || safeEnv.no_proxy || '');
+
+  if (platform === 'win32') {
+    try {
+      const stdout = queryWindowsRegistryKey(
+        execFileSyncImpl,
+        'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings',
+        safeEnv,
+      );
+      const parsed = parseWindowsRegProxyOutput(stdout);
+      if (parsed.enabled) {
+        return {
+          ...parsed,
+          noProxy: ensureLoopbackNoProxy(`${baseNoProxy},${parsed.noProxy}`),
+          source: 'win-registry',
+        };
+      }
+    } catch {
+      // Ignore Windows Internet Settings registry lookup failure.
+    }
+    return null;
+  }
+
+  if (platform === 'darwin') {
+    try {
+      const stdout = execFileSyncImpl('/usr/sbin/scutil', ['--proxy'], {
+        encoding: 'utf-8',
+        timeout: 1200,
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      const parsed = parseMacScutilProxyOutput(stdout);
+      if (parsed.enabled) {
+        return {
+          ...parsed,
+          noProxy: ensureLoopbackNoProxy(`${baseNoProxy},${parsed.noProxy}`),
+          source: 'mac-scutil',
+        };
+      }
+    } catch {
+      // Ignore macOS scutil lookup failure.
+    }
+    return null;
+  }
+
+  return null;
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:51
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:51
+// Description: Document HKCU\Environment fallback in resolveProxyConfig JSDoc.
+// ============================================================================
 /**
  * Resolve effective proxy config in priority order:
  * 1) AGY_TOKEN_MONITOR_PROXY
  * 2) HTTPS_PROXY / HTTP_PROXY / ALL_PROXY (and lowercase variants)
- * 3) Windows Registry or macOS scutil system proxy
+ * 3) Windows Registry (Internet Settings, then HKCU\Environment) or macOS scutil system proxy
  * 4) Direct fallback
  */
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:51
+// ============================================================================
 export function resolveProxyConfig({
   env = process.env,
   platform = process.platform,
@@ -287,50 +471,43 @@ export function resolveProxyConfig({
     };
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:51
+// Description: Use resolveLiveOsSystemProxy and add Windows HKCU\Environment fallback.
+// ============================================================================
   if (!disableOsLookup && safeEnv.DISABLE_SYSTEM_PROXY_LOOKUP !== '1') {
+    const liveOs = resolveLiveOsSystemProxy({
+      env: safeEnv,
+      platform,
+      execFileSyncImpl,
+    });
+    if (liveOs && liveOs.enabled) {
+      return liveOs;
+    }
+
     if (platform === 'win32') {
       try {
-        const stdout = execFileSyncImpl(
-          'reg.exe',
-          ['query', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings'],
-          {
-            encoding: 'utf-8',
-            timeout: 1200,
-            windowsHide: true,
-            stdio: ['ignore', 'pipe', 'ignore'],
-          },
+        const envStdout = queryWindowsRegistryKey(
+          execFileSyncImpl,
+          'HKCU\\Environment',
+          safeEnv,
         );
-        const parsed = parseWindowsRegProxyOutput(stdout);
-        if (parsed.enabled) {
+        const userEnvParsed = parseWindowsUserEnvProxyOutput(envStdout);
+        if (userEnvParsed.enabled) {
           return {
-            ...parsed,
-            noProxy: ensureLoopbackNoProxy(`${noProxy},${parsed.noProxy}`),
-            source: 'win-registry',
+            ...userEnvParsed,
+            noProxy: ensureLoopbackNoProxy(`${noProxy},${userEnvParsed.noProxy}`),
+            source: 'win-user-env',
           };
         }
       } catch {
-        // Ignore OS registry lookup failure and fall back to direct mode.
-      }
-    } else if (platform === 'darwin') {
-      try {
-        const stdout = execFileSyncImpl('/usr/sbin/scutil', ['--proxy'], {
-          encoding: 'utf-8',
-          timeout: 1200,
-          stdio: ['ignore', 'pipe', 'ignore'],
-        });
-        const parsed = parseMacScutilProxyOutput(stdout);
-        if (parsed.enabled) {
-          return {
-            ...parsed,
-            noProxy: ensureLoopbackNoProxy(`${noProxy},${parsed.noProxy}`),
-            source: 'mac-scutil',
-          };
-        }
-      } catch {
-        // Ignore OS scutil lookup failure and fall back to direct mode.
+        // Ignore OS HKCU\Environment lookup failure and fall back to direct mode.
       }
     }
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:51
+// ============================================================================
 
   return {
     enabled: false,
@@ -341,9 +518,23 @@ export function resolveProxyConfig({
   };
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 15:28:51
+// Description: Add readGlobalUndiciDispatcher helper and upgrade createSystemProxyManager
+// with forced/max-age dispatcher rebuilds, old dispatcher close() drain, and
+// recoverFromTransportFailure() live OS proxy drift recovery.
+// ============================================================================
+function readGlobalUndiciDispatcher() {
+  return (
+    globalThis[Symbol.for('undici.globalDispatcher.1')] ||
+    globalThis[Symbol.for('undici.globalDispatcher.2')] ||
+    null
+  );
+}
+
 /**
- * Create a TTL-cached system proxy manager that applies/restores Node's global
- * HTTP/HTTPS proxy dispatcher cleanly when OS or env proxy settings change.
+ * Create a TTL-cached system proxy manager that applies, rebuilds, drains, and restores
+ * Node's global HTTP/HTTPS proxy dispatcher cleanly across OS or env proxy changes.
  */
 export function createSystemProxyManager(options = {}) {
   const {
@@ -353,12 +544,16 @@ export function createSystemProxyManager(options = {}) {
     setGlobalProxyFn = http.setGlobalProxyFromEnv,
     nowFn = Date.now,
     cacheTtlMs = 300_000,
+    maxDispatcherAgeMs = DEFAULT_MAX_DISPATCHER_AGE_MS,
     disableOsLookup = false,
   } = options || {};
 
   let lastResolvedAtMs = null;
+  let lastAppliedAtMs = null;
+  let rebuildCount = 0;
   let activeSig = 'direct';
   let restoreFn = null;
+  let activeDispatcher = null;
   let activeConfig = {
     enabled: false,
     source: 'direct',
@@ -373,10 +568,14 @@ export function createSystemProxyManager(options = {}) {
       source: activeConfig.source || 'direct',
       proxyUrl: redactProxyUrl(activeConfig.httpsProxy || activeConfig.httpProxy),
       noProxy: activeConfig.noProxy || LOOPBACK_NO_PROXY,
+      rebuildCount,
+      lastAppliedAtMs,
     };
   }
 
   function clearActiveRestore() {
+    const prevDispatcher = activeDispatcher;
+    activeDispatcher = null;
     if (typeof restoreFn === 'function') {
       try {
         restoreFn();
@@ -385,10 +584,79 @@ export function createSystemProxyManager(options = {}) {
       }
     }
     restoreFn = null;
+
+    const restoredDispatcher = readGlobalUndiciDispatcher();
+    if (
+      prevDispatcher &&
+      prevDispatcher !== restoredDispatcher &&
+      typeof prevDispatcher.close === 'function'
+    ) {
+      try {
+        Promise.resolve(prevDispatcher.close()).catch(() => {});
+      } catch {
+        // Ignore dispatcher close/drain failure.
+      }
+    }
   }
 
-  function refresh({ force = false } = {}) {
-    if (!force && lastResolvedAtMs !== null && nowFn() - lastResolvedAtMs < cacheTtlMs) {
+  function applyProxyConfig(next, nextSig, isRebuild) {
+    // Restore and drain previous global dispatcher before applying a new one to prevent nested wrapping.
+    clearActiveRestore();
+    if (next.enabled && typeof setGlobalProxyFn === 'function') {
+      try {
+        const beforeDisp = readGlobalUndiciDispatcher();
+        const maybeRestore = setGlobalProxyFn({
+          HTTP_PROXY: next.httpProxy,
+          HTTPS_PROXY: next.httpsProxy,
+          NO_PROXY: next.noProxy,
+          http_proxy: next.httpProxy,
+          https_proxy: next.httpsProxy,
+          no_proxy: next.noProxy,
+        });
+        const afterDisp = readGlobalUndiciDispatcher();
+        activeDispatcher = afterDisp && afterDisp !== beforeDisp ? afterDisp : null;
+        restoreFn = typeof maybeRestore === 'function' ? maybeRestore : null;
+        activeSig = nextSig;
+        activeConfig = { ...next };
+        lastAppliedAtMs = nowFn();
+        if (isRebuild) {
+          rebuildCount += 1;
+        }
+      } catch {
+        restoreFn = null;
+        activeDispatcher = null;
+        activeSig = 'direct';
+        activeConfig = {
+          enabled: false,
+          source: 'direct',
+          httpProxy: '',
+          httpsProxy: '',
+          noProxy: next.noProxy || LOOPBACK_NO_PROXY,
+        };
+        lastAppliedAtMs = null;
+      }
+    } else {
+      activeSig = !next.enabled ? 'direct' : nextSig;
+      activeConfig = { ...next };
+      lastAppliedAtMs = null;
+    }
+  }
+
+  function refresh(refreshOpts = {}) {
+    const { force = false, rebuild = false } = refreshOpts || {};
+    const ageExceeded = Boolean(
+      activeConfig.enabled &&
+        lastAppliedAtMs !== null &&
+        maxDispatcherAgeMs > 0 &&
+        nowFn() - lastAppliedAtMs >= maxDispatcherAgeMs,
+    );
+    if (
+      !force &&
+      !rebuild &&
+      !ageExceeded &&
+      lastResolvedAtMs !== null &&
+      nowFn() - lastResolvedAtMs < cacheTtlMs
+    ) {
       return getStatus();
     }
 
@@ -400,38 +668,15 @@ export function createSystemProxyManager(options = {}) {
       disableOsLookup,
     });
     const nextSig = next.enabled ? `${next.httpProxy}|${next.httpsProxy}|${next.noProxy}` : 'direct';
+    const sigChanged = nextSig !== activeSig;
+    const shouldRebuildSameProxy = !sigChanged && next.enabled && (force || rebuild || ageExceeded);
 
-    if (nextSig !== activeSig) {
-      // Restore previous global dispatcher before applying a new one to prevent nested wrapping.
-      clearActiveRestore();
-      if (next.enabled && typeof setGlobalProxyFn === 'function') {
-        try {
-          const maybeRestore = setGlobalProxyFn({
-            HTTP_PROXY: next.httpProxy,
-            HTTPS_PROXY: next.httpsProxy,
-            NO_PROXY: next.noProxy,
-            http_proxy: next.httpProxy,
-            https_proxy: next.httpsProxy,
-            no_proxy: next.noProxy,
-          });
-          restoreFn = typeof maybeRestore === 'function' ? maybeRestore : null;
-          activeSig = nextSig;
-          activeConfig = { ...next };
-        } catch {
-          restoreFn = null;
-          activeSig = 'direct';
-          activeConfig = {
-            enabled: false,
-            source: 'direct',
-            httpProxy: '',
-            httpsProxy: '',
-            noProxy: next.noProxy || LOOPBACK_NO_PROXY,
-          };
-        }
-      } else {
-        activeSig = nextSig;
-        activeConfig = { ...next };
-      }
+    if (sigChanged || shouldRebuildSameProxy) {
+      applyProxyConfig(
+        next,
+        nextSig,
+        shouldRebuildSameProxy || (sigChanged && activeSig !== 'direct' && next.enabled),
+      );
     } else {
       activeConfig = { ...next };
     }
@@ -439,9 +684,38 @@ export function createSystemProxyManager(options = {}) {
     return getStatus();
   }
 
+  function recoverFromTransportFailure() {
+    // SECURITY INVARIANT: NEVER bypass an explicitly configured proxy to direct!
+    if (
+      activeConfig.source === 'env' &&
+      !disableOsLookup &&
+      env?.DISABLE_SYSTEM_PROXY_LOOKUP !== '1'
+    ) {
+      const liveOs = resolveLiveOsSystemProxy({
+        env,
+        platform,
+        execFileSyncImpl,
+      });
+      if (liveOs && liveOs.enabled) {
+        const liveSig = `${liveOs.httpProxy}|${liveOs.httpsProxy}|${liveOs.noProxy}`;
+        if (liveSig !== activeSig) {
+          lastResolvedAtMs = nowFn();
+          applyProxyConfig(liveOs, liveSig, true);
+          return getStatus();
+        }
+      }
+    }
+
+    if (activeConfig.enabled) {
+      return refresh({ force: true, rebuild: true });
+    }
+    return refresh({ force: true });
+  }
+
   function dispose() {
     clearActiveRestore();
     lastResolvedAtMs = null;
+    lastAppliedAtMs = null;
     activeSig = 'direct';
     activeConfig = {
       enabled: false,
@@ -454,10 +728,14 @@ export function createSystemProxyManager(options = {}) {
 
   return {
     refresh,
+    recoverFromTransportFailure,
     getStatus,
     dispose,
   };
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 15:28:51
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:22:38
