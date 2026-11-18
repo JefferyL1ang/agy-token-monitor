@@ -176,6 +176,14 @@
     lastReceiptVm: null,
     lastReceiptDataSig: '',
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:21:00
+// Description: Track in-flight receipt clipboard copy state in v0.3.1.
+// ============================================================================
+    receiptCopying: false,
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:21:00
+// ============================================================================
+// ============================================================================
 // [MODIFIED END] 2026-11-18 11:40:30
 // ============================================================================
   };
@@ -561,7 +569,11 @@
       'receipt.checkoutBtn': '🧾 结账',
       'receipt.checkoutTitle': '生成当前会话收工票根 (PNG)',
       'receipt.modalTitle': '会话结账票根',
-      'receipt.modalHint': '可右键图片或使用下方按钮复制 / 保存',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:21:00
+// Description: Update receipt i18n strings for direct clipboard copy in v0.3.1 (zh).
+// ============================================================================
+      'receipt.modalHint': '点击下方按钮即可直接复制高清票根图片到剪贴板',
       'receipt.closeTip': '关闭票根预览',
       'receipt.scopeAria': '票根统计范围',
       'receipt.detailAria': '票根明细模式',
@@ -569,12 +581,14 @@
       'receipt.scopeAll': '全程累计',
       'receipt.modeCompact': '精简',
       'receipt.modeFull': '完整',
-      'receipt.saveBtn': '↓ 保存 PNG',
       'receipt.copyBtn': '复制小票图片',
+      'receipt.copyingBtn': '正在复制...',
       'receipt.copiedToast': '✓ 小票图片已复制到剪贴板',
-      'receipt.copyFallbackToast': '当前环境限制剪贴板写图，请直接右键小票图片选择「复制图片」或点击保存 PNG',
-      'receipt.savedToast': '✓ 已保存小票 {name}',
+      'receipt.copyFailedToast': '复制小票图片失败：{msg}',
       'receipt.unavailableToast': '当前暂无可生成票根的会话数据',
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:21:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:40:30
 // ============================================================================
@@ -945,7 +959,11 @@
       'receipt.checkoutBtn': '🧾 Checkout',
       'receipt.checkoutTitle': 'Generate session checkout receipt (PNG)',
       'receipt.modalTitle': 'Session Receipt',
-      'receipt.modalHint': 'Copy or save PNG receipt below',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:21:00
+// Description: Update receipt i18n strings for direct clipboard copy in v0.3.1 (en).
+// ============================================================================
+      'receipt.modalHint': 'Click below to copy the HD PNG receipt directly to your clipboard',
       'receipt.closeTip': 'Close receipt preview',
       'receipt.scopeAria': 'Receipt time scope',
       'receipt.detailAria': 'Receipt detail mode',
@@ -953,12 +971,14 @@
       'receipt.scopeAll': 'All-Time',
       'receipt.modeCompact': 'Compact',
       'receipt.modeFull': 'Full',
-      'receipt.saveBtn': '↓ Save PNG',
       'receipt.copyBtn': 'Copy Receipt Image',
+      'receipt.copyingBtn': 'Copying...',
       'receipt.copiedToast': '✓ Receipt image copied to clipboard',
-      'receipt.copyFallbackToast': 'Clipboard image write restricted — right-click the receipt image to Copy, or click Save PNG',
-      'receipt.savedToast': '✓ Saved receipt {name}',
+      'receipt.copyFailedToast': 'Failed to copy receipt image: {msg}',
       'receipt.unavailableToast': 'No active session data available for receipt',
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:21:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:40:30
 // ============================================================================
@@ -1087,6 +1107,14 @@
       const resyncBtn = document.getElementById('btn-resync-ledger');
       if (resyncBtn) resyncBtn.textContent = t('settings.resyncArmed');
     }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:21:00
+// Description: Keep #btn-receipt-copy label synchronized with receiptCopying state after static i18n updates.
+// ============================================================================
+    syncReceiptCopyControl();
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:21:00
+// ============================================================================
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:15:00
@@ -2683,12 +2711,19 @@
 // [MODIFIED BEGIN] 2026-11-18 15:27:50
 // Description: Bump fallback app version from 0.2.9 to 0.3.0.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:21:00
+// Description: Bump fallback app version from 0.3.0 to 0.3.1.
+// ============================================================================
     const raw =
       state.snapshot?.appVersion ||
       state.snapshot?.updateStatus?.currentVersion ||
       state.activeUpdateStatus?.currentVersion ||
-      '0.3.0';
-    return String(raw).trim().replace(/^[vV]/, '') || '0.3.0';
+      '0.3.1';
+    return String(raw).trim().replace(/^[vV]/, '') || '0.3.1';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:21:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:27:50
 // ============================================================================
@@ -3457,7 +3492,21 @@
       imgEl.src = canvas.toDataURL('image/png');
       imgEl.alt = vm?.title || t('receipt.modalTitle');
     }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:21:00
+// Description: Add syncReceiptCopyControl, sync copy button in render/open modal, upgrade handleCopyReceiptClick with /api/copy-receipt sidecar fallback, and remove handleSaveReceiptClick.
+// ============================================================================
+    syncReceiptCopyControl();
     return true;
+  }
+
+  function syncReceiptCopyControl() {
+    const btn = $('btn-receipt-copy');
+    if (!btn) return;
+    btn.disabled = Boolean(state.receiptCopying);
+    btn.textContent = state.receiptCopying
+      ? t('receipt.copyingBtn')
+      : t('receipt.copyBtn');
   }
 
   function openReceiptModal() {
@@ -3470,6 +3519,7 @@
     state.receiptScope = current.receipt?.today?.hasData ? 'today' : 'all';
     state.receiptModalOpen = true;
     renderReceiptModal();
+    syncReceiptCopyControl();
     $('receipt-modal')?.classList.remove('hidden');
     $('btn-receipt-copy')?.focus();
   }
@@ -3480,62 +3530,63 @@
   }
 
   async function handleCopyReceiptClick() {
+    if (state.receiptCopying) return;
     const receiptApi = window.TokenMonitorReceipt;
     const canvas = state.lastReceiptCanvas;
-    if (
-      !canvas ||
-      !receiptApi ||
-      typeof receiptApi.canvasToBlob !== 'function' ||
-      !navigator.clipboard ||
-      typeof navigator.clipboard.write !== 'function' ||
-      typeof ClipboardItem !== 'function'
-    ) {
-      showToast(t('receipt.copyFallbackToast'), 'warn');
-      return;
-    }
+    if (!canvas || !receiptApi) return;
+
+    state.receiptCopying = true;
+    syncReceiptCopyControl();
 
     try {
-      const blobPromise = receiptApi.canvasToBlob(canvas);
-      let item;
-      try {
-        item = new ClipboardItem({ 'image/png': blobPromise });
-      } catch {
-        const resolvedBlob = await blobPromise;
-        item = new ClipboardItem({ 'image/png': resolvedBlob });
+      if (
+        navigator.clipboard &&
+        typeof navigator.clipboard.write === 'function' &&
+        typeof ClipboardItem === 'function' &&
+        typeof receiptApi.canvasToBlob === 'function'
+      ) {
+        try {
+          const blobPromise = receiptApi.canvasToBlob(canvas);
+          let item;
+          try {
+            item = new ClipboardItem({ 'image/png': blobPromise });
+          } catch {
+            const resolvedBlob = await blobPromise;
+            item = new ClipboardItem({ 'image/png': resolvedBlob });
+          }
+          await navigator.clipboard.write([item]);
+          showToast(t('receipt.copiedToast'), 'ok');
+          return;
+        } catch {
+          // Fall back to native sidecar clipboard write in restricted iframe environments.
+        }
       }
-      await navigator.clipboard.write([item]);
-      showToast(t('receipt.copiedToast'), 'ok');
-    } catch {
-      showToast(t('receipt.copyFallbackToast'), 'warn');
-    }
-  }
 
-  async function handleSaveReceiptClick() {
-    const receiptApi = window.TokenMonitorReceipt;
-    const canvas = state.lastReceiptCanvas;
-    if (!canvas || !receiptApi || typeof receiptApi.canvasToBlob !== 'function') return;
-
-    try {
-      const blob = await receiptApi.canvasToBlob(canvas);
-      if (!blob) return;
-      const filename = state.lastReceiptVm?.suggestedFilename || 'AGY-receipt.png';
-      const objUrl = URL.createObjectURL(blob);
-      const link = el('a', {
-        href: objUrl,
-        download: filename,
-        style: { display: 'none' },
+      const imageBase64 =
+        typeof canvas.toDataURL === 'function' ? canvas.toDataURL('image/png') : '';
+      if (!imageBase64) {
+        throw new Error('Canvas export unavailable');
+      }
+      const res = await apiFetch('/api/copy-receipt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64 }),
       });
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => {
-        URL.revokeObjectURL(objUrl);
-      }, 10000);
-      showToast(t('receipt.savedToast', { name: filename }), 'ok');
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || `HTTP ${res.status}`);
+      }
+      showToast(t('receipt.copiedToast'), 'ok');
     } catch (err) {
-      showToast(err?.message || 'Save failed', 'error');
+      showToast(t('receipt.copyFailedToast', { msg: err?.message || 'error' }), 'error');
+    } finally {
+      state.receiptCopying = false;
+      syncReceiptCopyControl();
     }
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:21:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:41:00
 // ============================================================================
@@ -6028,6 +6079,14 @@
         renderReceiptModal();
       }
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:21:00
+// Description: Sync #btn-receipt-copy text on language toggle even while copying or modal closed.
+// ============================================================================
+      syncReceiptCopyControl();
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:21:00
+// ============================================================================
+// ============================================================================
 // [MODIFIED END] 2026-11-18 11:43:00
 // ============================================================================
       patchPrefs({ language: state.lang });
@@ -6177,8 +6236,14 @@
         renderReceiptModal();
       }
     });
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:21:00
+// Description: Remove obsolete #btn-receipt-save listener in v0.3.1.
+// ============================================================================
     $('btn-receipt-copy')?.addEventListener('click', handleCopyReceiptClick);
-    $('btn-receipt-save')?.addEventListener('click', handleSaveReceiptClick);
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:21:00
+// ============================================================================
     $('receipt-modal')?.addEventListener('click', (e) => {
       if (e.target === $('receipt-modal')) {
         closeReceiptModal();

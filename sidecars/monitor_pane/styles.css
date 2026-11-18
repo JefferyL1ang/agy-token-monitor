@@ -2818,6 +2818,19 @@ Description: Add #receipt-modal toolbar, scrollable thermal-receipt preview cont
   user-select: auto;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-18 16:21:00
+Description: Style single .receipt-copy-btn in #receipt-modal footer for desktop and <=360px Aux Pane viewports.
+============================================================================ */
+.receipt-modal-card .update-modal-footer {
+  justify-content: flex-end;
+}
+
+.receipt-modal-card .update-modal-footer .receipt-copy-btn,
+.receipt-modal-card .update-modal-footer .btn-primary {
+  min-width: 150px;
+}
+
 @media (max-width: 360px) {
   .receipt-toolbar,
   .receipt-preview-wrap {
@@ -2825,12 +2838,15 @@ Description: Add #receipt-modal toolbar, scrollable thermal-receipt preview cont
     padding-right: 11px;
   }
 
-  .receipt-modal-card .update-modal-footer .btn-secondary,
+  .receipt-modal-card .update-modal-footer .receipt-copy-btn,
   .receipt-modal-card .update-modal-footer .btn-primary {
     flex: 1 1 auto;
     text-align: center;
   }
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-18 16:21:00
+============================================================================ */
 /* ============================================================================
 [MODIFIED END] 2026-11-18 11:39:30
 ============================================================================ */

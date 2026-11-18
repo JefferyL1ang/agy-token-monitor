@@ -93,6 +93,14 @@ import { createSystemProxyManager } from './net_proxy.mjs';
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:23:20
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:21:30
+// Description: Import clipboard_image helpers for /api/copy-receipt PNG validation and OS clipboard write.
+// ============================================================================
+import { copyPngToSystemClipboard, decodeAndValidatePngBase64 } from './clipboard_image.mjs';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:21:30
+// ============================================================================
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pluginRoot = resolve(__dirname, '..', '..');
@@ -114,7 +122,14 @@ function readPluginVersion(rootDir) {
 // [MODIFIED BEGIN] 2026-11-18 15:28:03
 // Description: Update fallback plugin version string to 0.3.0.
 // ============================================================================
-  return '0.3.0';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:21:30
+// Description: Bump fallback plugin version string to 0.3.1.
+// ============================================================================
+  return '0.3.1';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:21:30
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:28:03
 // ============================================================================
@@ -1001,6 +1016,14 @@ const watchedCodePaths = [
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:23:20
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:21:30
+// Description: Watch clipboard_image.mjs for sidecar hot-reload on disk updates.
+// ============================================================================
+  join(__dirname, 'clipboard_image.mjs'),
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:21:30
+// ============================================================================
 ];
 const initialCodeMtimes = new Map(
   watchedCodePaths.map((p) => {
@@ -1485,6 +1508,41 @@ app.api(
 );
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:30
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:22:00
+// Description: Add POST /api/copy-receipt route to validate PNG base64 image
+// payload and write it to the OS system clipboard for v0.3.1.
+// ============================================================================
+app.api(
+  '/api/copy-receipt',
+  async (data) => {
+    const rawImage = typeof data === 'string' ? data : data?.imageBase64;
+    const decoded = decodeAndValidatePngBase64(rawImage);
+    if (!decoded.ok) {
+      return new Response(JSON.stringify({ ok: false, error: decoded.error }), {
+        status: 400,
+        contentType: 'application/json',
+      });
+    }
+
+    const copyRes = await copyPngToSystemClipboard(decoded.buffer);
+    if (!copyRes.ok) {
+      const errMsg = copyRes.error || 'Clipboard write failed';
+      console.warn(`[monitor_pane] /api/copy-receipt failed: ${errMsg}`);
+      return new Response(JSON.stringify({ ok: false, error: errMsg }), {
+        status: 500,
+        contentType: 'application/json',
+      });
+    }
+
+    return { ok: true, bytes: decoded.buffer.length };
+  },
+  'POST',
+);
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:22:00
 // ============================================================================
 
 // ============================================================================

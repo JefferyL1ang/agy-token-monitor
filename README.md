@@ -18,7 +18,7 @@
   - Includes a **`⚡ Compact`** button in the Context card header that copies `/compact` to the clipboard so you can compress long conversations at the right time.
 - **Session Cost, Total Tokens, Checkout Receipt & Subscription ROI**:
   - Breaks down uncached input, cache read, output tokens, and total token consumption per session. Main conversations let you toggle between **With Subagents** and **Main Only**; when inspecting an individual subagent or swarm worker directly, Equivalent Cost stays isolated to that worker's own steps (**Subagent Only**) without pulling in parent or sibling usage, and model breakdown tables support clickable **Total** and **Cost** column sorting.
-  - Includes a one-click **`🧾 Checkout`** button on the Equivalent Cost card that renders a high-DPI thermal-style **Session Receipt** (`PNG`) via `receipt.js` for instant clipboard copy or file download — complete with **Today / All-Time** scope and **Compact / Full** itemization switches, merged active session duration, primary model, subagent & compaction counts, and adaptive **EN / ZH** language and **USD / CNY** currency formatting.
+  - Includes a one-click **`🧾 Checkout`** button on the Equivalent Cost card that renders a high-DPI `3x` thermal-style **Session Receipt** (`PNG`) via `receipt.js` and copies it directly to your clipboard (`navigator.clipboard.write`, with automatic Sidecar `POST /api/copy-receipt` OS-native clipboard fallback inside Antigravity's Aux Pane) — complete with **Today / All-Time** scope and **Compact / Full** itemization switches, merged active session duration, primary model, subagent & compaction counts, and adaptive **EN / ZH** language and **USD / CNY** currency formatting.
   - Automatically detects your monthly plan from models used over the past 14 days (`Jio AI Pro`, `Google AI Pro`, `Ultra 5x`, `Ultra 20x`, or manual `Free` / custom fee) and compares API equivalent cost across `USD` and `CNY`.
 - **Subagent & Swarm Activity Tracking (Top-5 Active Folding)**:
   - Prioritizes active workers (`Generating` and `Tools` first, then most recently updated) and folds large subagent or swarm rosters to the **Top 5** most recently active entries by default, with one-click expansion into a **`400px` scrollable** list that preserves scroll position across live updates.
@@ -46,7 +46,7 @@
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.3.0.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.3.1.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -87,6 +87,7 @@ agy-token-monitor/
 │       ├── net_proxy.mjs              # OS & env HTTP(S) proxy auto-detection
 │       ├── pricing_sync.mjs           # Daily model & pricing sync module
 │       ├── release_updater.mjs        # 3-channel release check & CDN hot-update module
+│       ├── clipboard_image.mjs        # Native OS clipboard PNG fallback
 │       ├── parser.mjs                 # Read-only SQLite & transcript parser
 │       ├── main.mjs                   # Sidecar HTTP server & file watcher
 │       ├── index.html                 # Panel HTML
@@ -127,7 +128,7 @@ node --test tests/parser.test.mjs
   - 卡片右上角提供 **`⚡ 压缩 /compact`** 按钮，点击即可复制 `/compact` 命令，方便在上下文接近上限时快速压缩。
 - **会话费用、总 Token 消耗、一键收工票根与订阅对比**：
   - 统计单次会话的未缓存输入、缓存读取、累计输出与**总 Token 消耗**：主对话可在「含子代理」与「仅主对话」间切换，直接查看单个子代理或 Swarm Worker 时会自动切换为「子代理独立计费」，仅统计该节点自身用量而不混入主对话或兄弟节点；模型用量明细表支持点击 **总计** 和 **费用** 列头升降序排列。
-  - 等效花费卡片提供一键 **`🧾 结账`** 按钮，基于 `receipt.js` 渲染高清账单式**收工票根（`PNG`）**并支持一键复制图片或保存本地；内置 **今日收工 / 全程累计** 统计范围与 **精简 / 完整** 明细模式切换，自动汇总有效会话时长、主力模型、子代理数、压缩次数及分项费用，并随当前界面自适应 **中 / 英** 文案与 **USD / CNY** 币种。
+  - 等效花费卡片提供一键 **`🧾 结账`** 按钮，基于 `receipt.js` 渲染高清 `3x` 账单式**收工票根（`PNG`）**并直接一键复制图片至系统剪贴板（优先调用 `navigator.clipboard.write`，在 Antigravity 辅助面板受限环境中自动回退至 Sidecar `POST /api/copy-receipt` 原生系统剪贴板写入）；内置 **今日收工 / 全程累计** 统计范围与 **精简 / 完整** 明细模式切换，自动汇总有效会话时长、主力模型、子代理数、压缩次数及分项费用，并随当前界面自适应 **中 / 英** 文案与 **USD / CNY** 币种。
   - 支持 `USD` / `CNY` 折算，基于近 14 天实际使用的模型自动识别订阅方案（`Jio AI Pro`、`Google AI Pro`、`Ultra 5x`、`Ultra 20x`），也支持手动选择 `Free` 或自定义月费进行回本对比。
 - **子代理与 Swarm 动态排序及 Top-5 折叠**：
   - 按活跃优先级（生成中、工具调用中优先，其次按最近更新时间倒序）排列子代理与 Swarm Worker；超过 5 个节点时默认折叠展示最近活跃的 **Top 5**，支持一键展开为 **`400px` 可滚动列表**并在实时刷新时保持滚动位置。
@@ -155,7 +156,7 @@ node --test tests/parser.test.mjs
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.3.0.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.3.1.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 
@@ -196,6 +197,7 @@ agy-token-monitor/
 │       ├── net_proxy.mjs              # 系统与环境变量 HTTP(S) 代理自动检测
 │       ├── pricing_sync.mjs           # 每日模型、价格与汇率同步模块
 │       ├── release_updater.mjs        # 三通道版本检测与 CDN 热更新模块
+│       ├── clipboard_image.mjs        # 系统原生剪贴板 PNG 图片复制兜底模块
 │       ├── parser.mjs                 # 只读 SQLite 与会话记录解析模块
 │       ├── main.mjs                   # Sidecar HTTP 服务与文件监听
 │       ├── index.html                 # 面板页面结构

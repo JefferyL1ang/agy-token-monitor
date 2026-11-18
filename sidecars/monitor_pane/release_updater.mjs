@@ -750,7 +750,14 @@ export function createReleaseUpdater(options = {}) {
 // Description: Bump default initialVersion fallback to 0.3.0 and accept proxy
 // lifecycle hooks (beforeNetworkCheck, onTransportFailure, getProxyStatus).
 // ============================================================================
-    currentVersion: initialVersion = '0.3.0',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:22:00
+// Description: Bump default initialVersion fallback to 0.3.1.
+// ============================================================================
+    currentVersion: initialVersion = '0.3.1',
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:22:00
+// ============================================================================
     fetchImpl = globalThis.fetch,
     nowFn = Date.now,
     releaseApiUrl = process.env.RELEASE_UPDATE_API_URL || DEFAULT_RELEASE_API_URL,
@@ -779,8 +786,15 @@ export function createReleaseUpdater(options = {}) {
     .map((u) => String(u || '').trim().replace(/\/+$/, ''))
     .filter(Boolean);
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:22:00
+// Description: Bump initialVersion string fallback to 0.3.1.
+// ============================================================================
   let currentVersion =
-    typeof initialVersion === 'string' && initialVersion.trim() ? initialVersion.trim() : '0.3.0';
+    typeof initialVersion === 'string' && initialVersion.trim() ? initialVersion.trim() : '0.3.1';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:22:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:28:03
 // ============================================================================

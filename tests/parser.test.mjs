@@ -256,6 +256,20 @@ import {
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:33:22
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:26:30
+// Description: Import clipboard_image helpers for v0.3.1 PNG validation and
+// cross-platform OS clipboard copy tests.
+// ============================================================================
+import {
+  MAX_CLIPBOARD_PNG_BYTES,
+  PNG_SIGNATURE,
+  decodeAndValidatePngBase64,
+  copyPngToSystemClipboard,
+} from '../sidecars/monitor_pane/clipboard_image.mjs';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:26:30
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 21:42:45
@@ -5847,11 +5861,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 // [MODIFIED BEGIN] 2026-11-18 15:38:33
 // Description: Bump current manifest version assertion from 0.2.9 to 0.3.0.
 // ============================================================================
-  // Manifests bumped to 0.3.0 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:26:30
+// Description: Bump current manifest version assertion from 0.3.0 to 0.3.1.
+// ============================================================================
+  // Manifests bumped to 0.3.1 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.3.0');
-  assert.equal(packageJson.version, '0.3.0');
+  assert.equal(pluginJson.version, '0.3.1');
+  assert.equal(packageJson.version, '0.3.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:26:30
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:38:33
 // ============================================================================
@@ -6084,18 +6105,25 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
 // [MODIFIED BEGIN] 2026-11-18 15:38:33
 // Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.2.9 to 0.3.0.
 // ============================================================================
-  // Version & docs consistency for current v0.3.0 release
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:26:30
+// Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.3.0 to 0.3.1.
+// ============================================================================
+  // Version & docs consistency for current v0.3.1 release
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.3.0');
-  assert.equal(packageJson.version, '0.3.0');
-  assert.equal(pluginJson.description.includes('v0.3.0 beta'), true);
-  assert.equal(packageJson.description.includes('v0.3.0 beta'), true);
-  assert.equal(mainSource.includes("return '0.3.0'"), true);
-  assert.equal(releaseUpdaterSource.includes(": '0.3.0'"), true);
-  assert.equal(appSource.includes("'0.3.0'"), true);
-  assert.equal(skillMd.includes('# Token Monitor (v0.3.0 Beta)'), true);
-  assert.equal(readmeMd.includes('agy-token-monitor-v0.3.0.zip'), true);
+  assert.equal(pluginJson.version, '0.3.1');
+  assert.equal(packageJson.version, '0.3.1');
+  assert.equal(pluginJson.description.includes('v0.3.1 beta'), true);
+  assert.equal(packageJson.description.includes('v0.3.1 beta'), true);
+  assert.equal(mainSource.includes("return '0.3.1'"), true);
+  assert.equal(releaseUpdaterSource.includes(": '0.3.1'"), true);
+  assert.equal(appSource.includes("'0.3.1'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.3.1 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.3.1.zip'), true);
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:26:30
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:38:33
 // ============================================================================
@@ -7098,7 +7126,14 @@ test('v0.2.8 createSystemProxyManager lifecycle, TTL cache, restore-before-set o
 // [MODIFIED BEGIN] 2026-11-18 15:38:33
 // Description: Update standalone /api/snapshot appVersion assertion to 0.3.0.
 // ============================================================================
-    assert.equal(snap.appVersion, '0.3.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:26:30
+// Description: Update standalone /api/snapshot appVersion assertion to 0.3.1.
+// ============================================================================
+    assert.equal(snap.appVersion, '0.3.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:26:30
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:38:33
 // ============================================================================
@@ -7577,6 +7612,14 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
     ['styles.css', stylesCss],
     ['app.js', appSource],
     ['main.mjs', mainSource],
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:26:30
+// Description: Include clipboard_image.mjs in balanced annotation checks.
+// ============================================================================
+    ['clipboard_image.mjs', readFileSync(join(paneDir, 'clipboard_image.mjs'), 'utf-8')],
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:26:30
+// ============================================================================
     ['net_proxy.mjs', netProxySource],
     ['parser.mjs', parserSource],
     ['pricing_sync.mjs', pricingSyncSource],
@@ -7644,8 +7687,15 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
 // [MODIFIED BEGIN] 2026-11-18 15:38:33
 // Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.3.0.
 // ============================================================================
-  assert.equal(pluginJson.version, '0.3.0');
-  assert.equal(packageJson.version, '0.3.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:26:30
+// Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.3.1.
+// ============================================================================
+  assert.equal(pluginJson.version, '0.3.1');
+  assert.equal(packageJson.version, '0.3.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:26:30
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:38:33
 // ============================================================================
@@ -7869,7 +7919,14 @@ test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showTo
 // [MODIFIED BEGIN] 2026-11-18 15:38:33
 // Description: Update getCurrentAppVersion fallback assertion to 0.3.0.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.3.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:26:30
+// Description: Update getCurrentAppVersion fallback assertion to 0.3.1.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.3.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:26:30
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:38:33
 // ============================================================================
@@ -9148,12 +9205,28 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
     'id="btn-receipt-scope-all"',
     'id="btn-receipt-mode-compact"',
     'id="btn-receipt-mode-full"',
-    'id="btn-receipt-save"',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:26:30
+// Description: Update receipt modal button ID checks for v0.3.1 removal of #btn-receipt-save.
+// ============================================================================
     'id="btn-receipt-copy"',
     'id="btn-receipt-close"',
   ]) {
     assert.equal(indexHtml.includes(requiredId), true, `index.html must contain ${requiredId}`);
   }
+  assert.equal(
+    indexHtml.includes('id="btn-receipt-save"'),
+    false,
+    'index.html must not contain removed #btn-receipt-save in v0.3.1',
+  );
+  assert.equal(
+    indexHtml.includes('id="btn-receipt-copy"'),
+    true,
+    'index.html must contain #btn-receipt-copy in v0.3.1',
+  );
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:26:30
+// ============================================================================
 
   // 2. styles.css v0.2.9 selectors & Zero-CLS .roll-col preserved
   const stylesNoComments = stylesCss.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -9211,12 +9284,25 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
     'receipt.scopeAll',
     'receipt.modeCompact',
     'receipt.modeFull',
-    'receipt.saveBtn',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:26:30
+// Description: Update receipt I18N key checks for v0.3.1 direct clipboard copy
+// (replacing receipt.saveBtn with receipt.copyingBtn and receipt.copyFailedToast).
+// ============================================================================
     'receipt.copyBtn',
+    'receipt.copyingBtn',
+    'receipt.copyFailedToast',
   ]) {
     assert.ok(zhEntries.has(key) && zhEntries.get(key).length > 0, `I18N.zh must define ${key}`);
     assert.ok(enEntries.has(key) && enEntries.get(key).length > 0, `I18N.en must define ${key}`);
   }
+  for (const removedKey of ['receipt.saveBtn', 'receipt.savedToast', 'receipt.copyFallbackToast']) {
+    assert.equal(zhEntries.has(removedKey), false, `I18N.zh must remove ${removedKey}`);
+    assert.equal(enEntries.has(removedKey), false, `I18N.en must remove ${removedKey}`);
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:26:30
+// ============================================================================
 
   const extractPlaceholders = (str) =>
     [...str.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
@@ -9288,6 +9374,14 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
     ['receipt.js', receiptSource],
     ['parser.mjs', parserSource],
     ['main.mjs', mainSource],
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:26:30
+// Description: Include clipboard_image.mjs in balanced annotation checks.
+// ============================================================================
+    ['clipboard_image.mjs', readFileSync(join(paneDir, 'clipboard_image.mjs'), 'utf-8')],
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:26:30
+// ============================================================================
     ['net_proxy.mjs', netProxySource],
     ['pricing_sync.mjs', pricingSyncSource],
     ['release_updater.mjs', releaseUpdaterSource],
@@ -9326,7 +9420,14 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
 // [MODIFIED BEGIN] 2026-11-18 15:38:33
 // Description: Bump createReleaseUpdater default currentVersion assertion to 0.3.0.
 // ============================================================================
-  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.3.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:26:30
+// Description: Bump createReleaseUpdater default currentVersion assertion to 0.3.1.
+// ============================================================================
+  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.3.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:26:30
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:38:33
 // ============================================================================
@@ -9942,6 +10043,16 @@ test('v0.2.9 headless Node VM integration: Top-5 children folding, 400px scroll 
   let currentMockSnap = buildSnapshotPayload(0);
   const clipboardItemsWritten = [];
   const createdObjectUrls = [];
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:27:30
+// Description: Track /api/copy-receipt fallback calls and configurable response
+// in v0.2.9/v0.3.1 VM receipt test.
+// ============================================================================
+  const copyReceiptCalls = [];
+  let copyReceiptMockResult = { ok: true, status: 200, body: { ok: true, bytes: 128 } };
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:27:30
+// ============================================================================
 
   const sandbox = {
     Node: FakeNode,
@@ -9982,12 +10093,33 @@ test('v0.2.9 headless Node VM integration: Top-5 children folding, 400px scroll 
     },
     getComputedStyle: () => ({ color: 'rgb(246, 247, 249)' }),
     AbortController,
-    fetch: async (url) => {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:27:30
+// Description: Intercept POST /api/copy-receipt in VM fetch mock.
+// ============================================================================
+    fetch: async (url, opts) => {
       if (String(url).includes('/api/snapshot')) {
         return { ok: true, status: 200, json: async () => currentMockSnap };
       }
+      if (String(url).includes('/api/copy-receipt')) {
+        let parsedBody = null;
+        try {
+          parsedBody = opts?.body ? JSON.parse(opts.body) : null;
+        } catch {
+          parsedBody = null;
+        }
+        copyReceiptCalls.push({ method: opts?.method || 'GET', body: parsedBody });
+        return {
+          ok: copyReceiptMockResult.ok,
+          status: copyReceiptMockResult.status,
+          json: async () => copyReceiptMockResult.body,
+        };
+      }
       return { ok: true, status: 200, json: async () => ({ ok: true, prefs: currentMockSnap.prefs }) };
     },
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:27:30
+// ============================================================================
     requestAnimationFrame: (cb) => {
       cb();
       return 1;
@@ -10116,12 +10248,50 @@ test('v0.2.9 headless Node VM integration: Top-5 children folding, 400px scroll 
   const relTimesEn = cardChildren.querySelectorAll('.child-rel-time');
   assert.ok(relTimesEn.length === 5 && /ago|just now/i.test(relTimesEn[0].textContent));
 
-  // Verify copy & save buttons and Escape close
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:27:30
+// Description: Verify #btn-receipt-save removal, #btn-receipt-copy ClipboardItem
+// write, NotAllowedError -> POST /api/copy-receipt fallback success & error toast.
+// ============================================================================
+  assert.equal(fakeDocument.querySelector('#btn-receipt-save'), null);
+
   fakeDocument.getElementById('btn-receipt-copy').click();
-  fakeDocument.getElementById('btn-receipt-save').click();
   await new Promise((r) => setImmediate(r));
   assert.equal(clipboardItemsWritten.length, 1);
-  assert.equal(createdObjectUrls.length, 1);
+  assert.equal(copyReceiptCalls.length, 0);
+  const toastBanner = fakeDocument.getElementById('toast-banner');
+  assert.equal(toastBanner.textContent, exports.t('receipt.copiedToast'));
+  assert.equal(toastBanner.classList.contains('is-error'), false);
+
+  // Fallback to POST /api/copy-receipt when navigator.clipboard.write throws NotAllowedError
+  sandbox.navigator.clipboard.write = async () => {
+    throw Object.assign(new Error('Clipboard write blocked'), { name: 'NotAllowedError' });
+  };
+  copyReceiptMockResult = { ok: true, status: 200, body: { ok: true, bytes: 256 } };
+  fakeDocument.getElementById('btn-receipt-copy').click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(copyReceiptCalls.length, 1);
+  assert.equal(copyReceiptCalls[0].method, 'POST');
+  assert.equal(typeof copyReceiptCalls[0].body?.imageBase64, 'string');
+  assert.equal(copyReceiptCalls[0].body.imageBase64.startsWith('data:image/png;base64,'), true);
+  assert.equal(toastBanner.textContent, exports.t('receipt.copiedToast'));
+  assert.equal(toastBanner.classList.contains('is-error'), false);
+
+  // Error toast when /api/copy-receipt fails
+  copyReceiptMockResult = { ok: false, status: 500, body: { ok: false, error: 'clipboard daemon offline' } };
+  fakeDocument.getElementById('btn-receipt-copy').click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(copyReceiptCalls.length, 2);
+  assert.equal(toastBanner.classList.contains('is-error'), true);
+  assert.equal(
+    toastBanner.textContent,
+    exports.t('receipt.copyFailedToast', { msg: 'clipboard daemon offline' }),
+  );
+  assert.equal(fakeDocument.getElementById('btn-receipt-copy').disabled, false);
+  assert.equal(fakeDocument.getElementById('btn-receipt-copy').textContent, exports.t('receipt.copyBtn'));
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:27:30
+// ============================================================================
 
   fakeDocument.dispatchEvent({ key: 'Escape', type: 'keydown', preventDefault() {} });
   assert.equal(receiptModal.classList.contains('hidden'), true, 'Escape must close #receipt-modal');
@@ -10794,7 +10964,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
       const snapRes = await fetch(`${base}/api/snapshot`);
       assert.equal(snapRes.status, 200);
       const snap = await snapRes.json();
-      assert.equal(snap.appVersion, '0.3.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:27:30
+// Description: Bump standalone /api/snapshot appVersion assertion to 0.3.1.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.3.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:27:30
+// ============================================================================
       assert.ok(snap.proxyStatus && typeof snap.proxyStatus === 'object');
       assert.equal(snap.proxyStatus.enabled, true);
       assert.equal(snap.proxyStatus.source, 'custom-env');
@@ -10810,7 +10987,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
       assert.equal(checkRes.status, 200);
       const checkBody = await checkRes.json();
       assert.equal(checkBody.ok, true);
-      assert.equal(checkBody.appVersion, '0.3.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:27:30
+// Description: Bump standalone /api/check-update appVersion assertion to 0.3.1.
+// ============================================================================
+      assert.equal(checkBody.appVersion, '0.3.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:27:30
+// ============================================================================
       assert.ok(checkBody.proxyStatus && typeof checkBody.proxyStatus === 'object');
       assert.equal(checkBody.proxyStatus.enabled, true);
       assert.equal(checkBody.proxyStatus.source, 'custom-env');
@@ -11089,7 +11273,14 @@ test('v0.3.0 headless Node VM Settings tooltip proxy diagnostics and static I18N
   vm.runInNewContext(instrumentedSource, sandbox);
   const exports = sandbox.__tmV030Exports;
   assert.ok(exports, 'VM execution must expose __tmV030Exports');
-  assert.equal(exports.getCurrentAppVersion(), '0.3.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:27:30
+// Description: Bump getCurrentAppVersion fallback assertion to 0.3.1.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.3.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:27:30
+// ============================================================================
 
   const statusEl = fakeDocument.getElementById('update-version-status');
   exports.state.updateChecking = false;
@@ -11167,4 +11358,323 @@ test('v0.3.0 headless Node VM Settings tooltip proxy diagnostics and static I18N
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:38:33
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 16:27:30
+// Description: Add v0.3.1 test suite covering decodeAndValidatePngBase64,
+// copyPngToSystemClipboard (win32/ENOENT/darwin/linux/finally cleanup),
+// standalone main.mjs POST /api/copy-receipt HTTP 400 validation, and
+// clipboard_image.mjs syntax/annotation/banned-term hygiene.
+// ============================================================================
+test('v0.3.1 decodeAndValidatePngBase64 validates PNG data URLs, raw base64, headers, signature, and size bounds', () => {
+  const validPng = Buffer.concat([PNG_SIGNATURE, Buffer.alloc(16, 0x41)]);
+  const validB64 = validPng.toString('base64');
+
+  for (const input of [
+    `data:image/png;base64,${validB64}`,
+    `data:image/png;charset=utf-8;base64,${validB64}`,
+    `DATA:IMAGE/PNG;BASE64,${validB64}`,
+    validB64,
+  ]) {
+    const res = decodeAndValidatePngBase64(input);
+    assert.equal(res.ok, true, `Expected valid PNG payload to pass: ${input.slice(0, 32)}`);
+    assert.equal(Buffer.isBuffer(res.buffer), true);
+    assert.equal(res.buffer.equals(validPng), true);
+  }
+
+  const tooSmallPng = Buffer.concat([PNG_SIGNATURE, Buffer.alloc(15, 0x41)]);
+  const badSigPng = Buffer.alloc(24, 0x5a);
+  const oversizedPng = Buffer.concat([PNG_SIGNATURE, Buffer.alloc(MAX_CLIPBOARD_PNG_BYTES, 0x41)]);
+
+  for (const badInput of [
+    '',
+    '   ',
+    null,
+    undefined,
+    12345,
+    { imageBase64: validB64 },
+    `data:image/jpeg;base64,${validB64}`,
+    `data:image/png;base64,${badSigPng.toString('base64')}`,
+    `data:image/png;base64,${tooSmallPng.toString('base64')}`,
+    `data:image/png;base64,${oversizedPng.toString('base64')}`,
+  ]) {
+    const res = decodeAndValidatePngBase64(badInput);
+    assert.equal(res.ok, false);
+    assert.equal(typeof res.error, 'string');
+    assert.ok(res.error.length > 0);
+  }
+});
+
+test('v0.3.1 copyPngToSystemClipboard handles win32/ENOENT fallback, darwin, linux missing helpers, and finally temp cleanup', async () => {
+  const validPng = Buffer.concat([PNG_SIGNATURE, Buffer.alloc(24, 0x42)]);
+  const tempRoot = mkdtempSync(join(tmpdir(), 'tm-v031-clip-'));
+
+  try {
+    // 1. win32 happy path: -NoProfile -NonInteractive -STA -Command, AGY_CLIP_PNG_PATH, temp cleaned up
+    const winDir = join(tempRoot, 'win-ok');
+    mkdirSync(winDir, { recursive: true });
+    let capturedWinCall = null;
+    const winRes = await copyPngToSystemClipboard(validPng, {
+      platform: 'win32',
+      tempDir: winDir,
+      execFileImpl(cmd, args, opts, cb) {
+        const clipPath = opts?.env?.AGY_CLIP_PNG_PATH;
+        capturedWinCall = {
+          cmd,
+          args,
+          clipPath,
+          existsDuringExec: Boolean(clipPath && existsSync(clipPath)),
+          bytesMatch: Boolean(clipPath && readFileSync(clipPath).equals(validPng)),
+        };
+        cb(null, '', '');
+      },
+    });
+    assert.deepEqual(winRes, { ok: true, platform: 'win32' });
+    assert.equal(capturedWinCall.cmd, 'powershell.exe');
+    assert.deepEqual(capturedWinCall.args.slice(0, 4), [
+      '-NoProfile',
+      '-NonInteractive',
+      '-STA',
+      '-Command',
+    ]);
+    assert.equal(capturedWinCall.args[4].includes('$env:AGY_CLIP_PNG_PATH'), true);
+    assert.equal(capturedWinCall.args[4].includes(capturedWinCall.clipPath), false);
+    assert.equal(capturedWinCall.existsDuringExec, true);
+    assert.equal(capturedWinCall.bytesMatch, true);
+    assert.equal(capturedWinCall.clipPath.endsWith('.png'), true);
+    assert.deepEqual(readdirSync(winDir), []);
+
+    // 2. win32 ENOENT fallback to SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe
+    const winEnoentDir = join(tempRoot, 'win-enoent');
+    mkdirSync(winEnoentDir, { recursive: true });
+    const enoentCmds = [];
+    const winEnoentRes = await copyPngToSystemClipboard(validPng, {
+      platform: 'win32',
+      env: { SystemRoot: 'C:\\CustomWinRoot' },
+      tempDir: winEnoentDir,
+      execFileImpl(cmd, args, opts, cb) {
+        enoentCmds.push({ cmd, args });
+        if (enoentCmds.length === 1) {
+          cb(Object.assign(new Error('spawn powershell.exe ENOENT'), { code: 'ENOENT' }));
+          return;
+        }
+        cb(null, '', '');
+      },
+    });
+    assert.deepEqual(winEnoentRes, { ok: true, platform: 'win32' });
+    assert.equal(enoentCmds.length, 2);
+    assert.equal(enoentCmds[0].cmd, 'powershell.exe');
+    assert.equal(
+      enoentCmds[1].cmd,
+      join('C:\\CustomWinRoot', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
+    );
+    assert.deepEqual(readdirSync(winEnoentDir), []);
+
+    // 3. Failure path guarantees tempDir .png cleanup inside finally
+    const winFailDir = join(tempRoot, 'win-fail');
+    mkdirSync(winFailDir, { recursive: true });
+    let sawTempDuringFail = false;
+    const winFailRes = await copyPngToSystemClipboard(validPng, {
+      platform: 'win32',
+      tempDir: winFailDir,
+      execFileImpl(cmd, args, opts, cb) {
+        sawTempDuringFail = Boolean(opts?.env?.AGY_CLIP_PNG_PATH && existsSync(opts.env.AGY_CLIP_PNG_PATH));
+        cb(new Error('SetDataObject failed'));
+      },
+    });
+    assert.equal(sawTempDuringFail, true);
+    assert.equal(winFailRes.ok, false);
+    assert.equal(winFailRes.error, 'SetDataObject failed');
+    assert.deepEqual(readdirSync(winFailDir), []);
+
+    // 4. darwin /usr/bin/osascript
+    const macDir = join(tempRoot, 'mac-ok');
+    mkdirSync(macDir, { recursive: true });
+    let capturedMacCall = null;
+    const macRes = await copyPngToSystemClipboard(validPng, {
+      platform: 'darwin',
+      tempDir: macDir,
+      execFileImpl(cmd, args, opts, cb) {
+        capturedMacCall = {
+          cmd,
+          args,
+          existsDuringExec: Boolean(
+            opts?.env?.AGY_CLIP_PNG_PATH && existsSync(opts.env.AGY_CLIP_PNG_PATH),
+          ),
+        };
+        cb(null, '', '');
+      },
+    });
+    assert.deepEqual(macRes, { ok: true, platform: 'darwin' });
+    assert.equal(capturedMacCall.cmd, '/usr/bin/osascript');
+    assert.equal(capturedMacCall.args[0], '-e');
+    assert.equal(capturedMacCall.args[1].includes('AGY_CLIP_PNG_PATH'), true);
+    assert.equal(capturedMacCall.existsDuringExec, true);
+    assert.deepEqual(readdirSync(macDir), []);
+
+    // 5. linux missing wl-copy & xclip graceful { ok: false } + cleanup
+    const linuxDir = join(tempRoot, 'linux-missing');
+    mkdirSync(linuxDir, { recursive: true });
+    const linuxCalls = [];
+    const linuxRes = await copyPngToSystemClipboard(validPng, {
+      platform: 'linux',
+      env: {},
+      tempDir: linuxDir,
+      execFileImpl(cmd, args, opts, cb) {
+        linuxCalls.push({ cmd, args });
+        cb(Object.assign(new Error(`${cmd} ENOENT`), { code: 'ENOENT' }));
+      },
+    });
+    assert.equal(linuxCalls.length, 2);
+    assert.equal(linuxCalls[0].cmd, 'wl-copy');
+    assert.deepEqual(linuxCalls[0].args, ['--type', 'image/png']);
+    assert.equal(linuxCalls[1].cmd, 'xclip');
+    assert.equal(linuxCalls[1].args[0], '-selection');
+    assert.equal(linuxRes.ok, false);
+    assert.match(linuxRes.error, /wl-copy or xclip/);
+    assert.deepEqual(readdirSync(linuxDir), []);
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test('v0.3.1 standalone main.mjs POST /api/copy-receipt rejects missing, non-PNG, and oversized payloads with HTTP 400', async () => {
+  const { root, appData } = makeTempEnv();
+  try {
+    const dataDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'data');
+    mkdirSync(dataDir, { recursive: true });
+    const fakeHome = join(root, 'home');
+    mkdirSync(fakeHome, { recursive: true });
+
+    const sidecarPort = await pickFetchSafeFreePort();
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    const mainPath = join(__dirname, '..', 'sidecars', 'monitor_pane', 'main.mjs');
+    const sdkCandidates = [
+      join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+      join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+    ].filter((p) => existsSync(p));
+
+    const env = { ...process.env };
+    delete env.ANTIGRAVITY_LS_ADDRESS;
+    delete env.ANTIGRAVITY_CSRF_TOKEN;
+    delete env.ANTIGRAVITY_SIDECAR_WEB_PORT;
+    delete env.ANTIGRAVITY_CONVERSATION_ID;
+    delete env.ANTIGRAVITY_SIDECAR_UI_TOKEN;
+    delete env.ANTIGRAVITY_AGENTAPI_EXE;
+    if (sdkCandidates[0]) env.SIDECAR_SDK_PATH = sdkCandidates[0];
+    env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
+    env.USERPROFILE = fakeHome;
+    env.HOME = fakeHome;
+    env.PRICING_SYNC_DISABLE_AUTO = '1';
+    env.RELEASE_UPDATE_DISABLE_AUTO = '1';
+    env.DISABLE_SYSTEM_PROXY_LOOKUP = '1';
+
+    const child = spawn(process.execPath, [mainPath, '--standalone', String(sidecarPort)], {
+      env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    try {
+      await new Promise((resolveReady, rejectReady) => {
+        if (child.exitCode !== null) {
+          rejectReady(new Error(`Sidecar exited prematurely (${child.exitCode})`));
+          return;
+        }
+        const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 5000);
+        let out = '';
+        child.stdout.on('data', (chunk) => {
+          out += chunk.toString();
+          if (out.includes(`[sidecar] listening on 127.0.0.1:${sidecarPort}`)) {
+            clearTimeout(timer);
+            resolveReady();
+          }
+        });
+        child.stderr.on('data', (chunk) => {
+          out += chunk.toString();
+        });
+        child.once('exit', (code) => {
+          clearTimeout(timer);
+          rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+        });
+      });
+
+      const endpoint = `http://127.0.0.1:${sidecarPort}/api/copy-receipt`;
+      const validPngB64 = Buffer.concat([PNG_SIGNATURE, Buffer.alloc(16, 0x41)]).toString('base64');
+      const oversizedPayload =
+        'data:image/png;base64,' +
+        Buffer.concat([PNG_SIGNATURE, Buffer.alloc(MAX_CLIPBOARD_PNG_BYTES, 0x41)]).toString('base64');
+
+      for (const payload of [
+        {},
+        { imageBase64: '' },
+        { imageBase64: `data:image/jpeg;base64,${validPngB64}` },
+        { imageBase64: `data:image/png;base64,${Buffer.alloc(32, 0x22).toString('base64')}` },
+        { imageBase64: oversizedPayload },
+      ]) {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        assert.equal(res.status, 400);
+        const body = await res.json();
+        assert.equal(body.ok, false);
+        assert.equal(typeof body.error, 'string');
+        assert.ok(body.error.length > 0);
+      }
+    } finally {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill();
+        await new Promise((r) => {
+          if (child.exitCode !== null || child.signalCode !== null) return r();
+          const t = setTimeout(r, 3000);
+          child.once('exit', () => {
+            clearTimeout(t);
+            r();
+          });
+        });
+      }
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.3.1 clipboard_image.mjs syntax, balanced annotations, and banned-term checks', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const clipboardImagePath = join(testDir, '..', 'sidecars', 'monitor_pane', 'clipboard_image.mjs');
+  const syntaxRes = spawnSync(process.execPath, ['--check', clipboardImagePath], { encoding: 'utf-8' });
+  assert.equal(syntaxRes.status, 0, `clipboard_image.mjs syntax check failed: ${syntaxRes.stderr}`);
+
+  const src = readFileSync(clipboardImagePath, 'utf-8');
+  const modBeginMarker = '[' + 'MODIFIED BEGIN]';
+  const modEndMarker = '[' + 'MODIFIED END]';
+  let depth = 0;
+  let minDepth = 0;
+  let begins = 0;
+  let ends = 0;
+  for (const line of src.split(/\r?\n/)) {
+    if (line.includes(modBeginMarker)) {
+      depth += 1;
+      begins += 1;
+    }
+    if (line.includes(modEndMarker)) {
+      depth -= 1;
+      ends += 1;
+      if (depth < minDepth) minDepth = depth;
+    }
+  }
+  assert.ok(begins > 0, 'clipboard_image.mjs must contain modification annotations');
+  assert.equal(begins, ends, 'clipboard_image.mjs begin/end annotation count mismatch');
+  assert.equal(depth, 0, `clipboard_image.mjs unclosed modification annotation (depth=${depth})`);
+  assert.equal(minDepth, 0, `clipboard_image.mjs unmatched end annotation (minDepth=${minDepth})`);
+
+  const bannedTerm = '\u6c34\u4f4d';
+  const legacyDocPhrase = 'Dedicated ' + 'Gemini 3.1 Pro';
+  assert.equal(src.includes(bannedTerm), false);
+  assert.equal(src.includes(legacyDocPhrase), false);
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-18 16:27:30
 // ============================================================================

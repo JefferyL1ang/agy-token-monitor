@@ -411,7 +411,14 @@ Description: Add accessible session checkout receipt preview & PNG export dialog
             <div class="update-modal-title-row">
               <h2 id="receipt-modal-title" class="update-modal-title" data-i18n="receipt.modalTitle">会话结账票根</h2>
             </div>
-            <div class="update-modal-date muted-hint" data-i18n="receipt.modalHint">可右键图片或使用下方按钮复制 / 保存</div>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-18 16:21:00
+Description: Update #receipt-modal hint text for direct clipboard copy in v0.3.1.
+============================================================================ -->
+            <div class="update-modal-date muted-hint" data-i18n="receipt.modalHint">点击下方按钮即可直接复制高清票根图片到剪贴板</div>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-18 16:21:00
+============================================================================ -->
           </div>
           <button
             id="btn-receipt-close"
@@ -448,10 +455,16 @@ Description: Add accessible session checkout receipt preview & PNG export dialog
         <div id="receipt-preview-wrap" class="receipt-preview-wrap">
           <img id="receipt-preview-img" class="receipt-preview-img" alt="">
         </div>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-18 16:21:00
+Description: Remove Save PNG button and keep single .receipt-copy-btn action in #receipt-modal footer.
+============================================================================ -->
         <div class="update-modal-footer">
-          <button id="btn-receipt-save" type="button" class="btn-secondary" data-i18n="receipt.saveBtn">↓ 保存 PNG</button>
-          <button id="btn-receipt-copy" type="button" class="btn-primary" data-i18n="receipt.copyBtn">复制小票图片</button>
+          <button id="btn-receipt-copy" type="button" class="btn-primary receipt-copy-btn" data-i18n="receipt.copyBtn">复制小票图片</button>
         </div>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-18 16:21:00
+============================================================================ -->
       </div>
     </div>
   </div>
