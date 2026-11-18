@@ -1717,6 +1717,25 @@ Description: Widen Tab 2 KPI grid columns to 136px min, lock KPI tile/val clippi
   font-weight: 600;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-18 10:23:36
+Description: Add .toast-banner.is-warn (amber) and .toast-banner.is-error (rose) tone styles.
+============================================================================ */
+.toast-banner.is-warn {
+  background: color-mix(in srgb, var(--tm-amber) 14%, var(--tm-card));
+  border-color: color-mix(in srgb, var(--tm-amber) 38%, transparent);
+  color: var(--tm-amber);
+}
+
+.toast-banner.is-error {
+  background: color-mix(in srgb, var(--tm-rose) 14%, var(--tm-card));
+  border-color: color-mix(in srgb, var(--tm-rose) 38%, transparent);
+  color: var(--tm-rose);
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-18 10:23:36
+============================================================================ */
+
 .error-banner {
   padding: 8px 10px;
   border-radius: var(--r-md);

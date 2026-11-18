@@ -506,6 +506,16 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 18:57:00
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Add localized update timeout, rate-limit, and network diagnostic keys (zh).
+// ============================================================================
+      'update.errTimeout': '连接更新源超时，请检查网络或系统代理设置',
+      'update.errRateLimit': 'GitHub API 请求受限 (HTTP 403/429)，请稍后重试',
+      'update.errNetwork': '无法连接更新服务器，请检查网络或代理设置',
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
     },
     en: {
       'header.waiting': 'Waiting',
@@ -840,6 +850,16 @@
       'update.emptyNotes': 'No release notes provided. View details on GitHub Releases.',
 // ============================================================================
 // [MODIFIED END] 2026-11-17 18:57:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Add localized update timeout, rate-limit, and network diagnostic keys (en).
+// ============================================================================
+      'update.errTimeout': 'Connection timed out — please check your network or system proxy',
+      'update.errRateLimit': 'GitHub API rate limit reached (HTTP 403/429) — please try again later',
+      'update.errNetwork': 'Unable to reach update server — please check your network or proxy',
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
 // ============================================================================
     },
   };
@@ -1466,16 +1486,27 @@
     return `${sec.toFixed(1)}s`;
   }
 
-  function showToast(msg) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Support ok/warn/error toast tones, ARIA alert role on errors, and extended 4.2s auto-hide for warn/error banners.
+// ============================================================================
+  function showToast(msg, tone = 'ok') {
     const banner = $('toast-banner');
     if (!banner) return;
+    banner.className =
+      tone === 'error'
+        ? 'toast-banner is-error'
+        : (tone === 'warn' ? 'toast-banner is-warn' : 'toast-banner');
+    banner.setAttribute('role', tone === 'error' ? 'alert' : 'status');
     banner.textContent = msg;
-    banner.classList.remove('hidden');
     if (state.toastTimer) clearTimeout(state.toastTimer);
     state.toastTimer = setTimeout(() => {
       banner.classList.add('hidden');
-    }, 2600);
+    }, tone === 'error' || tone === 'warn' ? 4200 : 2600);
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
 
   async function copyTextToClipboard(text) {
     if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
@@ -1534,7 +1565,14 @@
         populateSettingsForm(data.prefs);
       }
     } catch (err) {
-      showToast(t('settings.saveFailed', { msg: err?.message || 'error' }));
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Render preference save errors with error toast tone.
+// ============================================================================
+      showToast(t('settings.saveFailed', { msg: err?.message || 'error' }), 'error');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
     } finally {
       state.pendingPrefSaves = Math.max(0, state.pendingPrefSaves - 1);
     }
@@ -2436,14 +2474,31 @@
             : t('settings.syncSuccessToast'),
         );
       } else {
-        const errMsg = data?.pricingSync?.error || t('settings.syncOfflineHint');
-        showToast(t('settings.syncFailedToast', { msg: errMsg }));
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Localize pricing sync failure messages and display them with warn toast tone.
+// ============================================================================
+        const errMsg = formatUpdateErrorMessage(
+          data?.pricingSync?.error || t('settings.syncOfflineHint'),
+        );
+        showToast(t('settings.syncFailedToast', { msg: errMsg }), 'warn');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
       }
       await pollSnapshot(true);
     } catch (err) {
       state.pricingSyncing = false;
       renderPricingSyncStatus();
-      showToast(t('settings.syncFailedToast', { msg: err?.message || 'error' }));
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Localize caught pricing sync exceptions and display them with warn toast tone.
+// ============================================================================
+      const errMsg = formatUpdateErrorMessage(err?.message || 'error');
+      showToast(t('settings.syncFailedToast', { msg: errMsg }), 'warn');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
     }
   }
 // ============================================================================
@@ -2457,14 +2512,42 @@
 // and SHA-256 verified hot-update + sidecar restart polling workflow.
 // ============================================================================
   // ---------------- Release Update Check & Hot-Update Modal ----------------
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Add formatUpdateErrorMessage helper for localized timeout/rate-limit/network errors and bump fallback app version to 0.2.8.
+// ============================================================================
+  function formatUpdateErrorMessage(rawError, errorCode = '') {
+    const raw = String(rawError || '').trim();
+    const code = String(errorCode || '').trim().toLowerCase();
+    if (
+      code === 'timeout' ||
+      /aborted due to timeout|timed?\s*out|ETIMEDOUT|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT|UND_ERR_BODY_TIMEOUT/i.test(raw)
+    ) {
+      return t('update.errTimeout');
+    }
+    if (code === 'rate_limit' || /HTTP\s*(?:403|429)|rate\s*limit/i.test(raw)) {
+      return t('update.errRateLimit');
+    }
+    if (
+      code === 'network' ||
+      /fetch failed|ECONNREFUSED|ECONNRESET|ENOTFOUND|EAI_AGAIN|EHOSTUNREACH|ENETUNREACH|ERR_TLS|CERT_/i.test(raw)
+    ) {
+      return t('update.errNetwork');
+    }
+    return raw || 'error';
+  }
+
   function getCurrentAppVersion() {
     const raw =
       state.snapshot?.appVersion ||
       state.snapshot?.updateStatus?.currentVersion ||
       state.activeUpdateStatus?.currentVersion ||
-      '0.2.4';
-    return String(raw).trim().replace(/^[vV]/, '') || '0.2.4';
+      '0.2.8';
+    return String(raw).trim().replace(/^[vV]/, '') || '0.2.8';
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
 
   function getEffectiveUpdateStatus() {
     return state.snapshot?.updateStatus || state.activeUpdateStatus || null;
@@ -2680,12 +2763,23 @@
 
     statusEl.removeAttribute('role');
     statusEl.removeAttribute('tabindex');
-    if (us?.error && !us?.lastCheckedAtMs) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Show update check error status for any recent error regardless of prior lastCheckedAtMs and localize tooltip diagnostics.
+// ============================================================================
+    if (us?.error) {
+      const friendlyErr = formatUpdateErrorMessage(us.error, us.errorCode || '');
+      const rawErr = String(us.error).trim();
       statusEl.className = 'pricing-sync-status muted-hint tabular-nums is-offline';
       statusEl.textContent = t('settings.verCheckError', { cur: curVer });
-      statusEl.title = String(us.error);
+      statusEl.title = rawErr && rawErr !== friendlyErr
+        ? `${friendlyErr} (${rawErr})`
+        : friendlyErr;
       return;
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
 
     statusEl.className = 'pricing-sync-status muted-hint tabular-nums';
     statusEl.textContent = t('settings.verUpToDate', { cur: curVer });
@@ -2854,23 +2948,72 @@
         renderUpdateCheckStatus();
         if (state.snapshot) renderHeader(state.snapshot);
         else renderUpdatePill({ updateStatus: us });
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Clear stale drawer feedback when an update is found.
+// ============================================================================
+        const feedbackOnFound = $('settings-feedback');
+        if (state.drawerOpen && feedbackOnFound) {
+          feedbackOnFound.textContent = '';
+          feedbackOnFound.className = 'settings-feedback';
+        }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
         openUpdateModal(us);
-      } else if (data?.ok === false && us?.error) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Format update check failure/up-to-date messages with error toast tone and mirror into #settings-feedback when drawer is open.
+// ============================================================================
+      } else if (data?.ok === false) {
         renderUpdateCheckStatus();
-        showToast(t('settings.checkUpdateFailedToast', { msg: us.error }));
+        const friendlyErr = formatUpdateErrorMessage(
+          us?.error || data?.error || 'error',
+          us?.errorCode || '',
+        );
+        const failedMsg = t('settings.checkUpdateFailedToast', { msg: friendlyErr });
+        showToast(failedMsg, 'error');
+        const feedbackEl = $('settings-feedback');
+        if (state.drawerOpen && feedbackEl) {
+          feedbackEl.textContent = failedMsg;
+          feedbackEl.className = 'settings-feedback is-error';
+        }
       } else {
         renderUpdateCheckStatus();
         const curVer = String(data?.appVersion || us?.currentVersion || getCurrentAppVersion())
           .trim()
           .replace(/^[vV]/, '');
-        showToast(t('settings.upToDateToast', { cur: curVer }));
+        const upToDateMsg = t('settings.upToDateToast', { cur: curVer });
+        showToast(upToDateMsg);
+        const feedbackEl = $('settings-feedback');
+        if (state.drawerOpen && feedbackEl) {
+          feedbackEl.textContent = upToDateMsg;
+          feedbackEl.className = 'settings-feedback is-ok';
+        }
       }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
       lastEtag = '';
       pollSnapshot(true);
     } catch (err) {
       state.updateChecking = false;
       renderUpdateCheckStatus();
-      showToast(t('settings.checkUpdateFailedToast', { msg: err?.message || 'error' }));
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Format caught update check errors with error toast tone and mirror into #settings-feedback when drawer is open.
+// ============================================================================
+      const friendlyErr = formatUpdateErrorMessage(err?.message || 'error');
+      const failedMsg = t('settings.checkUpdateFailedToast', { msg: friendlyErr });
+      showToast(failedMsg, 'error');
+      const feedbackEl = $('settings-feedback');
+      if (state.drawerOpen && feedbackEl) {
+        feedbackEl.textContent = failedMsg;
+        feedbackEl.className = 'settings-feedback is-error';
+      }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
     }
   }
 
@@ -2914,13 +3057,20 @@
     renderUpdateCheckStatus();
     setUpdateModalFeedback('progress', t('update.downloading'));
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Hoist parsed response data so both !data?.ok and catch branches can resolve updateStatus.errorCode.
+// ============================================================================
+    let data = null;
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
     try {
       const res = await apiFetch('/api/apply-update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: '{}',
       });
-      let data = null;
       try {
         data = await res.json();
       } catch {
@@ -2939,7 +3089,18 @@
         }
         syncUpdateModalControls();
         renderUpdateCheckStatus();
-        const errMsg = data?.error || `HTTP ${res.status}`;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Format hot-update apply failure messages via formatUpdateErrorMessage with errorCode context.
+// ============================================================================
+        const rawErrMsg = data?.error || `HTTP ${res.status}`;
+        const errMsg = formatUpdateErrorMessage(
+          rawErrMsg,
+          data?.updateStatus?.errorCode || state.activeUpdateStatus?.errorCode,
+        );
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
         const fallbackUrl = data?.fallbackUrl || state.activeUpdateStatus?.htmlUrl || '';
         setUpdateModalFeedback('error', t('update.applyFailed', { msg: errMsg }), fallbackUrl);
         return;
@@ -2983,11 +3144,22 @@
       syncUpdateModalControls();
       renderUpdateCheckStatus();
       const fallbackUrl = state.activeUpdateStatus?.htmlUrl || '';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Format caught hot-update apply errors via formatUpdateErrorMessage with errorCode context.
+// ============================================================================
+      const errMsg = formatUpdateErrorMessage(
+        err?.message || 'error',
+        data?.updateStatus?.errorCode || state.activeUpdateStatus?.errorCode,
+      );
       setUpdateModalFeedback(
         'error',
-        t('update.applyFailed', { msg: err?.message || 'error' }),
+        t('update.applyFailed', { msg: errMsg }),
         fallbackUrl,
       );
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
       scheduleNextPoll(POLL_INTERVAL_MS, true);
     }
   }
@@ -3450,7 +3622,17 @@
         if (isNonBound && typeof window.sidecar?.ui?.toggleConversation === 'function') {
           window.sidecar.ui.toggleConversation(viewingId);
         }
-        showToast(copied ? t('context.compactToast') : t('context.compactFailed'));
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:36
+// Description: Use warn tone when copying /compact to clipboard fails.
+// ============================================================================
+        showToast(
+          copied ? t('context.compactToast') : t('context.compactFailed'),
+          copied ? 'ok' : 'warn',
+        );
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:36
+// ============================================================================
       },
     });
 

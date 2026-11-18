@@ -5,15 +5,15 @@ description: >-
   to inspect live token generation speed (tok/s) scoped to the active model, 400k/500k context usage thresholds
   and one-click `/compact` helper, bilingual EN/ZH UI, selectable token units, session total token consumption
   in Equivalent Cost, prompt cache hit rate, subagent/swarm aggregation, daily official model/pricing/FX
-  auto-sync, in-panel GitHub Release update check & hot update, subscription ROI, and SQLite fork-deduplicated
-  multi-period (today / 7d / 30d / all-time) usage history.
+  auto-sync, in-panel multi-channel release check & SHA-256 CDN hot update, automatic OS/env HTTP(S) proxy
+  detection, subscription ROI, and SQLite fork-deduplicated multi-period (today / 7d / 30d / all-time) usage history.
   Use whenever the user asks to monitor token speed, check context usage or `/compact` timing, inspect
   cache hit rate or context spikes, check session total tokens, switch token units or language, sync or
   customize model pricing, check or install plugin updates, compare token cost vs subscription price, or open
   the Token Monitor panel.
 ---
 
-# Token Monitor (v0.2.7 Beta)
+# Token Monitor (v0.2.8 Beta)
 
 The `agy-token-monitor` plugin provides a real-time, pure read-only Auxiliary Pane (`Token Monitor`) backed by the `monitor_pane` sidecar.
 
@@ -29,7 +29,8 @@ The `agy-token-monitor` plugin provides a real-time, pure read-only Auxiliary Pa
   - Automatically syncs official model lists & Paid Tier pricing once per day on open via dual channels (`ai.google.dev/gemini-api/docs/pricing` + `models.dev/api.json` with `litellm` fallback and effective-date awareness) into `pricing_cache.json` inside `sidecar_data`, auto-discovers newly released flagship Gemini chat models and locally observed slugs, keeps user-customized `*` overrides highest priority, offers a **`↻ Sync Now` / `↻ 立即同步`** button, and falls back gracefully offline (`4.5s` timeout).
   - Separates `Gemini 3.1 Pro` (`$2.00` / `$0.20` / `$12.00` per 1M tokens, `>200k` `×2` / `×1.5`) into its own model tier alongside Gemini 4 `Carbon`/`Argon`/`Hydrogen`, `Gemini 3.8 Flash`, `Claude Opus 5.5`/`4.6`, `Claude Sonnet 5.5`, `GPT-OSS 120B`, and `Auto`, with an interactive clickable effective rates table for direct rate editing.
   - Read-only `conversations/<id>.db` + `conversation_summaries.db` Protobuf tracking deduplicates forked/branched/rewound conversations via `originCascadeId` and `botId`, normalizes `gemini-pro-default` to `gemini-3.1-pro` and strips effort-tier suffixes to raw model IDs, compares equivalent API value against recent 14-day model-gated subscription detection (**`Jio AI Pro`** `$0/mo`, `Google AI Pro` `$19.99/mo`, `Ultra 5x`, `Ultra 20x`, plus `Free` / `Custom`), and plots `Cost` / `Tokens` trends across `today`, `7d`, `30d`, and scrollable `all-time` bar charts with two-line KPI summaries and a compact fixed left Y-axis backed by `usage_ledger.json`.
-- **In-Panel Release Update Check & Hot Update**: Automatically checks GitHub Releases on startup and every 4 hours (cached in `update_cache.json` with ETag `304` support, plus manual check in Settings), previews localized EN/ZH release notes in an in-panel modal, lets users skip a release tag until the next version, and applies one-click SHA-256 verified hot updates while keeping local preferences (`monitor_state.json`) and usage history (`usage_ledger.json`) intact.
+- **Automatic OS/Environment HTTP(S) Proxy Auto-Detection**: Automatically resolves HTTP/HTTPS proxies in priority order (`AGY_TOKEN_MONITOR_PROXY` -> `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY` -> Windows `HKCU\...\Internet Settings` registry or macOS `scutil --proxy`) and applies them via Node's `http.setGlobalProxyFromEnv` (5-minute cache on snapshots; force-refreshed on `Sync Now`, `Check Update`, and `Apply Update`). Unsupported schemes such as `socks5://` are safely ignored without breaking `EnvHttpProxyAgent`, while loopback addresses (`127.0.0.1,localhost,::1`) are guaranteed in `NO_PROXY`.
+- **In-Panel 3-Channel Release Check & SHA-256 CDN Hot Update**: Automatically checks for updates on startup and every 4 hours (cached in `update_cache.json` with ETag `304` support, plus manual check in Settings) across 3 fallback channels: GitHub Releases API (`10s` timeout), GitHub Releases web redirect (`releases/latest`, `8s`), and jsDelivr package metadata (`8s`). Previews localized EN/ZH release notes in an in-panel modal, lets users skip a release tag until the next version, applies one-click SHA-256 verified `.zip` hot updates (`30s` timeout) — or falls back to jsDelivr CDN (`cdn.jsdelivr.net` / `fastly.jsdelivr.net`, `15s` per-file timeout) with per-file Base64 SHA-256 verification against `@ref/flat` on network/HTTP download errors while preserving all integrity/manifest/downgrade guards — keeps local preferences (`monitor_state.json`) and usage history (`usage_ledger.json`) intact, and surfaces colored warning/error toasts with localized diagnostics (`timeout`, HTTP `403`/`429` rate limit, network/proxy errors).
 
 ## How to Surface the Panel Link
 

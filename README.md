@@ -29,15 +29,19 @@
   - Switch between **English** and **Chinese** (`EN / 中`) in one click from the top bar.
   - Choose between `K / M / B`, `万 / 亿`, exact integers (`1,234,567`), or fixed `M` token units.
   - Live metric numbers and progress/trend bars update with zero-layout-shift transitions (inline-grid per-digit slot rolling for matching lengths, whole-value swaps on unit or digit-count changes, fixed-row cards with per-card memoization, respecting `prefers-reduced-motion` and snapping immediately when switching language or conversations).
-- **In-Panel Release Update Check & Hot Update**:
-  - Checks GitHub Releases automatically on startup and every 4 hours (with manual check in Settings), and lets you preview release notes directly in the panel.
-  - Supports one-click hot update with SHA-256 verification while keeping local settings and usage history intact, or skipping the current version until the next release.
+- **Automatic OS & Environment Proxy Support**:
+  - Automatically detects HTTP/HTTPS proxies in priority order: `AGY_TOKEN_MONITOR_PROXY` -> `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY` -> OS system proxy (Windows Internet Settings registry and macOS `scutil --proxy`).
+  - Safely ignores unsupported schemes such as `socks5://` without crashing `EnvHttpProxyAgent`, guarantees loopback addresses (`127.0.0.1`, `localhost`, `::1`) remain in `NO_PROXY`, caches detection for 5 minutes during snapshots, and force-refreshes on manual pricing sync, update check, or hot-update actions.
+- **In-Panel 3-Channel Release Check, CDN Hot Update & Diagnostics**:
+  - Checks for new versions automatically on startup and every 4 hours (plus manual check in Settings) across 3 fallback channels — GitHub Releases API (ETag `304` cached), GitHub Releases web redirect (`releases/latest`), and jsDelivr package metadata — and lets you preview EN/ZH release notes or skip a release tag directly in the panel.
+  - Supports one-click SHA-256 verified `.zip` hot updates while keeping local settings and usage history intact; when the primary archive download fails or times out due to network or HTTP errors, automatically falls back to jsDelivr CDN (`cdn.jsdelivr.net` / `fastly.jsdelivr.net`) with per-file Base64 SHA-256 verification before atomic installation.
+  - Shows distinct warning (amber) and error (rose) toast banners with localized diagnostics for timeouts, HTTP `403`/`429` rate limits, and network/proxy errors across update, pricing sync, preference save, and `/compact` copy actions, and keeps recent check failure status visible in Settings.
 
 ### Installation
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.2.7.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.2.8.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -75,8 +79,9 @@ agy-token-monitor/
 │   └── monitor_pane/
 │       ├── package.json               # Sidecar package manifest
 │       ├── sidecar.json               # Aux Pane entrypoint config
+│       ├── net_proxy.mjs              # OS & env HTTP(S) proxy auto-detection
 │       ├── pricing_sync.mjs           # Daily model & pricing sync module
-│       ├── release_updater.mjs        # GitHub Release check & hot-update module
+│       ├── release_updater.mjs        # 3-channel release check & CDN hot-update module
 │       ├── parser.mjs                 # Read-only SQLite & transcript parser
 │       ├── main.mjs                   # Sidecar HTTP server & file watcher
 │       ├── index.html                 # Panel HTML
@@ -127,15 +132,19 @@ node --test tests/parser.test.mjs
   - 顶部栏设置按钮旁支持一键切换 **中文 / 英文**（`EN / 中`）。
   - 支持 `K / M / B`、`万 / 亿`、精确整数（`1,234,567`）和固定 `M` 四种 Token 显示单位。
   - 指标数值与进度条、柱状图更新时采用零布局抖动平滑过渡（同位数采用内联网格逐位滚动，跨单位或位数变化时整值平滑替换，固定行高卡片配合按卡缓存避免无变化重绘；遵循系统 `prefers-reduced-motion` 设置，切换语言或会话时直接刷新）。
-- **内置版本检测与一键热更新**：
-  - 启动时及每 4 小时自动检测 GitHub Releases 新版本（也可在设置中手动检查），支持在面板内直接预览更新说明。
-  - 支持经 SHA-256 校验的一键热更新，更新过程完整保留本地配置与历史用量记录；也可选择跳过当前版本，直到下个新版本发布再提醒。
+- **系统与环境变量代理自动适配**：
+  - 按优先级自动识别 HTTP/HTTPS 代理：`AGY_TOKEN_MONITOR_PROXY` → 标准环境变量（`HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY`）→ 操作系统代理（Windows Internet Settings 注册表与 macOS `scutil --proxy`）。
+  - 安全忽略 `socks5://` 等不支持的代理协议以避免请求异常，自动确保 `127.0.0.1`、`localhost`、`::1` 留在 `NO_PROXY` 中；快照轮询每 5 分钟缓存一次代理状态，手动同步价格、检查更新或执行热更新时强制实时刷新。
+- **内置三通道版本检测、CDN 热更新与错误诊断**：
+  - 启动时及每 4 小时自动检测新版本（也可在设置中手动检查），依次支持 GitHub Releases API（支持 ETag `304`）、GitHub Releases 网页跳转（`releases/latest`）与 jsDelivr 包元数据三通道兜底，并可在面板内直接预览中/英更新说明或跳过当前版本。
+  - 支持经 SHA-256 校验的一键 `.zip` 热更新，更新过程完整保留本地配置与历史用量记录；当主压缩包下载因网络或超时失败时，自动切换至 jsDelivr CDN（`cdn.jsdelivr.net` / `fastly.jsdelivr.net`），逐文件校验 Base64 SHA-256 哈希后再执行原子替换。
+  - 为检查更新、安装更新、价格同步、设置保存及 `/compact` 复制失败提供独立配色的警告（琥珀色）与错误（玫瑰红）提示条，并将超时、HTTP `403`/`429` 限流与网络/代理异常转译为本地化诊断提示，同时在设置面板保留最近一次检测失败状态。
 
 ### 安装方式
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.7.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.8.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 
@@ -173,8 +182,9 @@ agy-token-monitor/
 │   └── monitor_pane/
 │       ├── package.json               # Sidecar 包声明
 │       ├── sidecar.json               # 辅助面板入口配置
+│       ├── net_proxy.mjs              # 系统与环境变量 HTTP(S) 代理自动检测
 │       ├── pricing_sync.mjs           # 每日模型、价格与汇率同步模块
-│       ├── release_updater.mjs        # GitHub Release 版本检测与热更新模块
+│       ├── release_updater.mjs        # 三通道版本检测与 CDN 热更新模块
 │       ├── parser.mjs                 # 只读 SQLite 与会话记录解析模块
 │       ├── main.mjs                   # Sidecar HTTP 服务与文件监听
 │       ├── index.html                 # 面板页面结构

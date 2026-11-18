@@ -85,6 +85,14 @@ import { createPricingSyncManager } from './pricing_sync.mjs';
 // BOOT_ID, and SKIPPED_RELEASE_TAG_RE for v0.2.4 one-click hot updates.
 // ============================================================================
 import { createReleaseUpdater } from './release_updater.mjs';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:20
+// Description: Import createSystemProxyManager for OS/env HTTP(S) proxy auto-detection.
+// ============================================================================
+import { createSystemProxyManager } from './net_proxy.mjs';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:20
+// ============================================================================
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pluginRoot = resolve(__dirname, '..', '..');
@@ -99,12 +107,12 @@ function readPluginVersion(rootDir) {
     // Fallback to default version below.
   }
 // ============================================================================
-// [MODIFIED BEGIN] 2026-11-17 22:04:31
-// Description: Update fallback plugin version string to 0.2.7.
+// [MODIFIED BEGIN] 2026-11-18 10:23:20
+// Description: Update fallback plugin version string to 0.2.8.
 // ============================================================================
-  return '0.2.7';
+  return '0.2.8';
 // ============================================================================
-// [MODIFIED END] 2026-11-17 22:04:31
+// [MODIFIED END] 2026-11-18 10:23:20
 // ============================================================================
 }
 
@@ -230,6 +238,17 @@ const statePath = join(stateDir, 'monitor_state.json');
 const ledgerPath = join(stateDir, 'usage_ledger.json');
 
 const MAX_TIMING_ENTRIES = 5000;
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:20
+// Description: Initialize systemProxy manager and resolve initial OS/env proxy
+// before pricingSync and releaseUpdater background requests run.
+// ============================================================================
+const systemProxy = createSystemProxyManager();
+systemProxy.refresh();
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:20
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:42:00
@@ -938,6 +957,14 @@ const watchedCodePaths = [
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:30
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:20
+// Description: Watch net_proxy.mjs for sidecar hot-reload on disk updates.
+// ============================================================================
+  join(__dirname, 'net_proxy.mjs'),
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:20
+// ============================================================================
 ];
 const initialCodeMtimes = new Map(
   watchedCodePaths.map((p) => {
@@ -1147,6 +1174,15 @@ app.api(
         }
       }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:20
+// Description: Refresh TTL-cached system proxy settings before daily sync and update checks.
+// ============================================================================
+      systemProxy.refresh();
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:20
+// ============================================================================
+
       pricingSync.maybeTriggerDailySync([...observedRawModels], () => {
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 15:45:00
@@ -1269,6 +1305,14 @@ app.api(
 app.api(
   '/api/sync-pricing',
   async () => {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:20
+// Description: Force-refresh system proxy settings before manual pricing sync.
+// ============================================================================
+    systemProxy.refresh({ force: true });
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:20
+// ============================================================================
     const syncRes = await pricingSync.syncNow([...observedRawModels]);
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 15:45:00
@@ -1300,6 +1344,14 @@ app.api(
 app.api(
   '/api/check-update',
   async () => {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:20
+// Description: Force-refresh system proxy settings before manual update check and hot-update apply.
+// ============================================================================
+    systemProxy.refresh({ force: true });
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:20
+// ============================================================================
     const res = await releaseUpdater.checkForUpdatesNow();
     prefsVersion += 1;
     return {
@@ -1315,6 +1367,14 @@ app.api(
 app.api(
   '/api/apply-update',
   async () => {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:20
+// Description: Force-refresh system proxy settings at start of hot-update apply.
+// ============================================================================
+    systemProxy.refresh({ force: true });
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:20
+// ============================================================================
     hotUpdateInProgress = true;
     try {
       const res = await releaseUpdater.applyLatestUpdate();

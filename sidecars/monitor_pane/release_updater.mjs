@@ -14,13 +14,31 @@ const DEFAULT_RELEASE_API_URL =
   'https://api.github.com/repos/JefferyL1ang/agy-token-monitor/releases/latest';
 const DEFAULT_RELEASES_HTML_URL =
   'https://github.com/JefferyL1ang/agy-token-monitor/releases/latest';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:31
+// Description: Add multi-channel release check & jsDelivr CDN fallback endpoints
+// and raise check/download timeouts to accommodate slower cross-region links.
+// ============================================================================
+const DEFAULT_RELEASES_LATEST_WEB_URL =
+  'https://github.com/JefferyL1ang/agy-token-monitor/releases/latest';
+const DEFAULT_JSDELIVR_PKG_URL =
+  'https://data.jsdelivr.com/v1/package/gh/JefferyL1ang/agy-token-monitor';
+const DEFAULT_JSDELIVR_CDN_BASES = Object.freeze([
+  'https://cdn.jsdelivr.net/gh/JefferyL1ang/agy-token-monitor',
+  'https://fastly.jsdelivr.net/gh/JefferyL1ang/agy-token-monitor',
+]);
 
 const CACHE_SCHEMA_VERSION = 1;
 const BOOT_SKIP_WINDOW_MS = 60 * 1000;
 const AUTO_CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000;
 const RETRY_COOLDOWN_MS = 15 * 60 * 1000;
-const CHECK_TIMEOUT_MS = 5000;
-const DOWNLOAD_TIMEOUT_MS = 15000;
+const CHECK_TIMEOUT_MS = 10000;
+const FALLBACK_CHECK_TIMEOUT_MS = 8000;
+const DOWNLOAD_TIMEOUT_MS = 30000;
+const CDN_FILE_TIMEOUT_MS = 15000;
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:31
+// ============================================================================
 const MAX_RELEASE_NOTES_CHARS = 24000;
 
 const DEFAULT_ZIP_LIMITS = Object.freeze({
@@ -518,6 +536,88 @@ function isAllowedAssetUrl(rawUrl, allowLoopback) {
   return false;
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:31
+// Description: Unwrap fetch/undici errors into structured errorCode categories
+// (timeout, rate_limit, http_error, network, unknown) and concise user messages,
+// and extend cache schema with errorCode and checkSource fields.
+// ============================================================================
+/**
+ * Unwraps nested fetch/undici errors into `{ errorCode, message }` with message <= 240 chars.
+ */
+export function classifyFetchError(err) {
+  const name = typeof err?.name === 'string' ? err.name : '';
+  const message =
+    typeof err === 'string'
+      ? err
+      : typeof err?.message === 'string'
+        ? err.message
+        : '';
+  const code = typeof err?.code === 'string' ? err.code : '';
+  const firstInner = Array.isArray(err?.cause?.errors) ? err.cause.errors[0] : null;
+  const causeName = typeof err?.cause?.name === 'string' ? err.cause.name : '';
+  const causeCode =
+    (typeof err?.cause?.code === 'string' && err.cause.code) ||
+    (typeof firstInner?.code === 'string' && firstInner.code) ||
+    '';
+  const causeMessage =
+    (typeof err?.cause?.message === 'string' && err.cause.message) ||
+    (typeof firstInner?.message === 'string' && firstInner.message) ||
+    '';
+  const combined = [name, causeName, code, causeCode, message, causeMessage]
+    .filter(Boolean)
+    .join(' ');
+
+  if (
+    name === 'TimeoutError' ||
+    name === 'AbortError' ||
+    causeName === 'TimeoutError' ||
+    causeName === 'AbortError' ||
+    /aborted due to timeout|timed?\s*out|ETIMEDOUT|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT|UND_ERR_BODY_TIMEOUT/i.test(
+      combined,
+    )
+  ) {
+    return {
+      errorCode: 'timeout',
+      message: 'The operation was aborted due to timeout',
+    };
+  }
+
+  if (/HTTP\s*(?:403|429)|rate\s*limit/i.test(combined)) {
+    return {
+      errorCode: 'rate_limit',
+      message: String(message || combined || 'HTTP rate limit').slice(0, 240),
+    };
+  }
+
+  if (/Release check HTTP \d+|HTTP \d{3}/i.test(combined)) {
+    return {
+      errorCode: 'http_error',
+      message: String(message || combined || 'HTTP error').slice(0, 240),
+    };
+  }
+
+  if (
+    /fetch failed|ECONNREFUSED|ECONNRESET|ENOTFOUND|EAI_AGAIN|EHOSTUNREACH|ENETUNREACH|ECONNABORTED|EPIPE|CERT_|UNABLE_TO_VERIFY|ERR_TLS/i.test(
+      combined,
+    )
+  ) {
+    const effectiveCode = causeCode || code;
+    const detail = causeMessage || message || 'fetch failed';
+    return {
+      errorCode: 'network',
+      message: effectiveCode
+        ? `Network error (${effectiveCode}): ${detail}`.slice(0, 240)
+        : String(message || 'Network request failed').slice(0, 240),
+    };
+  }
+
+  return {
+    errorCode: 'unknown',
+    message: String(message || 'Release check failed').slice(0, 240),
+  };
+}
+
 function createEmptyCache() {
   return {
     schemaVersion: CACHE_SCHEMA_VERSION,
@@ -536,6 +636,8 @@ function createEmptyCache() {
     assetDigest: '',
     releaseNotes: '',
     error: '',
+    errorCode: '',
+    checkSource: '',
   };
 }
 
@@ -568,11 +670,16 @@ function loadUpdateCache(cachePath) {
           ? raw.releaseNotes.slice(0, MAX_RELEASE_NOTES_CHARS)
           : '',
       error: typeof raw.error === 'string' ? raw.error : '',
+      errorCode: typeof raw.errorCode === 'string' ? raw.errorCode : '',
+      checkSource: typeof raw.checkSource === 'string' ? raw.checkSource : '',
     };
   } catch {
     return fallback;
   }
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:31
+// ============================================================================
 
 function persistUpdateCache(stateDir, cachePath, cache) {
   if (!stateDir || !cachePath) return;
@@ -607,20 +714,45 @@ function persistUpdateCache(stateDir, cachePath, cache) {
  * Creates a GitHub Release update checker and atomic hot-update installer.
  */
 export function createReleaseUpdater(options = {}) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:31
+// Description: Update default initialVersion fallback to 0.2.8, accept fallback
+// channel URLs, and compute backward-compatible enableFallbackChannels flag.
+// ============================================================================
   const {
     stateDir = '',
     pluginRoot = '',
-    currentVersion: initialVersion = '0.2.4',
+    currentVersion: initialVersion = '0.2.8',
     fetchImpl = globalThis.fetch,
     nowFn = Date.now,
     releaseApiUrl = process.env.RELEASE_UPDATE_API_URL || DEFAULT_RELEASE_API_URL,
+    releaseWebLatestUrl = DEFAULT_RELEASES_LATEST_WEB_URL,
+    jsdelivrPkgUrl = DEFAULT_JSDELIVR_PKG_URL,
+    jsdelivrCdnBases = DEFAULT_JSDELIVR_CDN_BASES,
     allowGitRepoOverwrite = process.env.ALLOW_GIT_REPO_HOT_UPDATE === '1',
     autoCheckDisabled = process.env.RELEASE_UPDATE_DISABLE_AUTO === '1',
     allowLoopbackDownload = process.env.RELEASE_UPDATE_ALLOW_LOOPBACK === '1',
   } = options || {};
 
+  const enableFallbackChannels =
+    options?.enableFallbackChannels !== undefined
+      ? Boolean(options.enableFallbackChannels)
+      : !options?.releaseApiUrl && !process.env.RELEASE_UPDATE_API_URL && !options?.fetchImpl;
+  const normalizedJsdelivrPkgUrl =
+    typeof jsdelivrPkgUrl === 'string' ? jsdelivrPkgUrl.trim().replace(/\/+$/, '') : '';
+  const normalizedCdnBases = (
+    Array.isArray(jsdelivrCdnBases) && jsdelivrCdnBases.length > 0
+      ? jsdelivrCdnBases
+      : DEFAULT_JSDELIVR_CDN_BASES
+  )
+    .map((u) => String(u || '').trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+
   let currentVersion =
-    typeof initialVersion === 'string' && initialVersion.trim() ? initialVersion.trim() : '0.2.4';
+    typeof initialVersion === 'string' && initialVersion.trim() ? initialVersion.trim() : '0.2.8';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:31
+// ============================================================================
   const effectiveAllowLoopback = Boolean(
     allowLoopbackDownload || isLoopbackUrlPrefix(releaseApiUrl),
   );
@@ -639,6 +771,12 @@ export function createReleaseUpdater(options = {}) {
     return DEFAULT_RELEASES_HTML_URL;
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:31
+// Description: Expose errorCode and checkSource in getPublicStatus and implement
+// 3-channel release check (github-api -> github-web -> jsdelivr) with structured
+// error classification and conditional metadata preservation.
+// ============================================================================
   function getPublicStatus(skippedReleaseTag = '') {
     const hasAsset = Boolean(cache.assetUrl);
     const hasUpdate = Boolean(
@@ -668,8 +806,36 @@ export function createReleaseUpdater(options = {}) {
       applying: Boolean(applyPromise),
       lastCheckedAtMs: Number.isFinite(cache.lastCheckedAtMs) ? cache.lastCheckedAtMs : null,
       error: cache.error || '',
+      errorCode:
+        cache.errorCode ||
+        (cache.error ? classifyFetchError(new Error(cache.error)).errorCode : ''),
+      checkSource: cache.checkSource || '',
       releaseNotes: cache.releaseNotes || '',
     };
+  }
+
+  function applyFallbackTagMetadata(tagName, parsedVer, source, nowMs) {
+    const sameTag = normalizeReleaseTag(cache.latestTag) === normalizeReleaseTag(tagName);
+    if (!sameTag) {
+      cache.releaseNotes = '';
+      cache.publishedAt = '';
+      cache.assetDigest = '';
+      cache.assetSize = 0;
+    }
+    cache.etag = '';
+    cache.checkedFromVersion = currentVersion;
+    cache.lastCheckedAtMs = nowMs;
+    cache.latestTag = tagName;
+    cache.latestVersion = parsedVer.raw;
+    cache.releaseName = tagName;
+    cache.htmlUrl = `https://github.com/JefferyL1ang/agy-token-monitor/releases/tag/${encodeURIComponent(tagName)}`;
+    cache.assetName = `agy-token-monitor-${tagName}.zip`;
+    cache.assetUrl = `https://github.com/JefferyL1ang/agy-token-monitor/releases/download/${encodeURIComponent(tagName)}/agy-token-monitor-${encodeURIComponent(tagName)}.zip`;
+    cache.checkSource = source;
+    cache.error = '';
+    cache.errorCode = '';
+    persistUpdateCache(stateDir, cachePath, cache);
+    return { ok: true };
   }
 
   async function executeCheck() {
@@ -678,10 +844,12 @@ export function createReleaseUpdater(options = {}) {
 
     if (typeof fetchImpl !== 'function') {
       cache.error = 'fetch unavailable';
+      cache.errorCode = 'unknown';
       persistUpdateCache(stateDir, cachePath, cache);
       return { ok: false };
     }
 
+    let primaryErr = null;
     try {
       const headers = {
         Accept: 'application/vnd.github+json',
@@ -701,7 +869,9 @@ export function createReleaseUpdater(options = {}) {
         if (respEtag) cache.etag = respEtag;
         cache.lastCheckedAtMs = nowMs;
         cache.checkedFromVersion = currentVersion;
+        cache.checkSource = 'github-api';
         cache.error = '';
+        cache.errorCode = '';
         persistUpdateCache(stateDir, cachePath, cache);
         return { ok: true };
       }
@@ -764,16 +934,87 @@ export function createReleaseUpdater(options = {}) {
           : '';
       cache.releaseNotes =
         typeof json.body === 'string' ? json.body.slice(0, MAX_RELEASE_NOTES_CHARS) : '';
+      cache.checkSource = 'github-api';
       cache.error = '';
+      cache.errorCode = '';
 
       persistUpdateCache(stateDir, cachePath, cache);
       return { ok: true };
     } catch (err) {
-      cache.error = (err?.message || 'Release check failed').slice(0, 240);
-      persistUpdateCache(stateDir, cachePath, cache);
-      return { ok: false };
+      primaryErr = err;
     }
+
+    if (enableFallbackChannels) {
+      if (releaseWebLatestUrl) {
+        try {
+          const webRes = await fetchImpl(releaseWebLatestUrl, {
+            redirect: 'manual',
+            signal: AbortSignal.timeout(FALLBACK_CHECK_TIMEOUT_MS),
+            headers: {
+              'User-Agent': `agy-token-monitor/${currentVersion}`,
+            },
+          });
+          if (webRes && webRes.status >= 200 && webRes.status < 400) {
+            const loc = getHeaderValue(webRes.headers, 'location') || webRes.url || '';
+            const tagMatch = /\/releases\/tag\/([^/?#]+)/i.exec(loc);
+            if (tagMatch && tagMatch[1]) {
+              const rawTag = decodeURIComponent(tagMatch[1]).trim();
+              const parsed = parseSemver(rawTag);
+              if (parsed) {
+                return applyFallbackTagMetadata(
+                  normalizeReleaseTag(parsed.raw),
+                  parsed,
+                  'github-web',
+                  nowMs,
+                );
+              }
+            }
+          }
+        } catch {
+          // Fall through to Channel 3.
+        }
+      }
+
+      if (normalizedJsdelivrPkgUrl) {
+        try {
+          const cdnPkgRes = await fetchImpl(normalizedJsdelivrPkgUrl, {
+            signal: AbortSignal.timeout(FALLBACK_CHECK_TIMEOUT_MS),
+            headers: {
+              Accept: 'application/json',
+              'User-Agent': `agy-token-monitor/${currentVersion}`,
+            },
+          });
+          if (cdnPkgRes && cdnPkgRes.ok) {
+            const pkgJson = await cdnPkgRes.json();
+            const parsedVersions = (Array.isArray(pkgJson?.versions) ? pkgJson.versions : [])
+              .map((v) => parseSemver(v))
+              .filter(Boolean);
+            if (parsedVersions.length > 0) {
+              parsedVersions.sort((a, b) => compareSemver(b, a));
+              const top = parsedVersions[0];
+              return applyFallbackTagMetadata(
+                normalizeReleaseTag(top.raw),
+                top,
+                'jsdelivr',
+                nowMs,
+              );
+            }
+          }
+        } catch {
+          // Fall through to failure classification.
+        }
+      }
+    }
+
+    const classified = classifyFetchError(primaryErr);
+    cache.error = classified.message;
+    cache.errorCode = classified.errorCode;
+    persistUpdateCache(stateDir, cachePath, cache);
+    return { ok: false };
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:31
+// ============================================================================
 
   function checkForUpdatesNow() {
     hasCheckedSinceBoot = true;
@@ -834,6 +1075,384 @@ export function createReleaseUpdater(options = {}) {
       });
     return true;
   }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:31
+// Description: Factor out validateAndWriteExtractedEntries helper and add
+// SHA-256 verified jsDelivr CDN fallback in executeApply when primary ZIP
+// download fails network/HTTP status (never falling back after 200 OK failure).
+// ============================================================================
+  async function fetchEntriesFromJsdelivrCdn(latestVersion, latestTag) {
+    if (!normalizedJsdelivrPkgUrl || normalizedCdnBases.length === 0) {
+      return {
+        ok: false,
+        reason: 'download_failed',
+        error: 'jsDelivr CDN endpoints are not configured.',
+      };
+    }
+
+    const candidateRefs = [];
+    const strippedVer =
+      typeof latestVersion === 'string' ? latestVersion.trim().replace(/^[vV]/, '') : '';
+    const normTag = normalizeReleaseTag(latestTag || latestVersion);
+    for (const ref of [strippedVer, normTag]) {
+      if (ref && !candidateRefs.includes(ref)) {
+        candidateRefs.push(ref);
+      }
+    }
+    if (candidateRefs.length === 0) {
+      return {
+        ok: false,
+        reason: 'download_failed',
+        error: 'Missing target release ref for CDN fallback.',
+      };
+    }
+
+    let selectedRef = '';
+    let flatFiles = null;
+    for (const ref of candidateRefs) {
+      const flatUrl = `${normalizedJsdelivrPkgUrl}@${encodeURIComponent(ref)}/flat`;
+      try {
+        const res = await fetchImpl(flatUrl, {
+          signal: AbortSignal.timeout(CDN_FILE_TIMEOUT_MS),
+          headers: {
+            Accept: 'application/json',
+            'User-Agent': `agy-token-monitor/${currentVersion}`,
+          },
+        });
+        if (!res || !res.ok) continue;
+        const json = await res.json();
+        if (json && Array.isArray(json.files)) {
+          selectedRef = ref;
+          flatFiles = json.files;
+          break;
+        }
+      } catch {
+        // Try next candidate ref.
+      }
+    }
+
+    if (!flatFiles || !selectedRef) {
+      return {
+        ok: false,
+        reason: 'download_failed',
+        error: 'Failed to fetch jsDelivr file manifest.',
+      };
+    }
+
+    const plannedFiles = [];
+    const seenRelPaths = new Set();
+    let declaredTotalBytes = 0;
+
+    for (const f of flatFiles) {
+      const rawName = typeof f?.name === 'string' ? f.name : '';
+      const rawRel = rawName.startsWith('/') ? rawName.slice(1) : rawName;
+      if (!rawRel) continue;
+
+      const normSegments = rawRel.replace(/\\/g, '/').split('/');
+      const isDotSegment = normSegments.some(
+        (seg) => seg.length > 1 && seg.startsWith('.') && seg !== '..',
+      );
+      if (
+        isDotSegment ||
+        normSegments[0] === 'maintainer' ||
+        normSegments[0] === 'tests'
+      ) {
+        continue;
+      }
+
+      let relPath;
+      try {
+        relPath = normalizeAndValidateZipEntryPath(rawRel);
+      } catch (pathErr) {
+        return {
+          ok: false,
+          reason: 'invalid_archive',
+          error: pathErr?.message || `Unsafe CDN manifest path: ${rawRel}`,
+        };
+      }
+      if (!relPath) continue;
+
+      const dedupeKey = relPath.toLowerCase();
+      if (seenRelPaths.has(dedupeKey)) {
+        return {
+          ok: false,
+          reason: 'invalid_archive',
+          error: `Duplicate CDN entry path: ${relPath}`,
+        };
+      }
+      seenRelPaths.add(dedupeKey);
+
+      const expectedHash = typeof f.hash === 'string' ? f.hash.trim() : '';
+      if (!/^[A-Za-z0-9+/]{43}=$/.test(expectedHash)) {
+        return {
+          ok: false,
+          reason: 'integrity_failed',
+          error: `Invalid or missing SHA-256 hash in CDN manifest for ${relPath}`,
+        };
+      }
+
+      if (f.size !== undefined && f.size !== null) {
+        const sizeNum = Number(f.size);
+        if (!Number.isFinite(sizeNum) || sizeNum < 0 || sizeNum > DEFAULT_ZIP_LIMITS.maxEntryBytes) {
+          return {
+            ok: false,
+            reason: 'invalid_archive',
+            error: `CDN entry ${relPath} size (${f.size}) exceeds maxEntryBytes (${DEFAULT_ZIP_LIMITS.maxEntryBytes}).`,
+          };
+        }
+        declaredTotalBytes += sizeNum;
+        if (declaredTotalBytes > DEFAULT_ZIP_LIMITS.maxTotalBytes) {
+          return {
+            ok: false,
+            reason: 'invalid_archive',
+            error: `Total CDN manifest bytes exceed limit (${DEFAULT_ZIP_LIMITS.maxTotalBytes}).`,
+          };
+        }
+      }
+
+      plannedFiles.push({ relPath, expectedHash });
+      if (plannedFiles.length > DEFAULT_ZIP_LIMITS.maxEntries) {
+        return {
+          ok: false,
+          reason: 'invalid_archive',
+          error: `CDN entry count exceeds limit (${DEFAULT_ZIP_LIMITS.maxEntries}).`,
+        };
+      }
+    }
+
+    if (!plannedFiles.some((item) => item.relPath === 'plugin.json')) {
+      return {
+        ok: false,
+        reason: 'invalid_manifest',
+        error: 'CDN manifest is missing plugin.json.',
+      };
+    }
+    if (!plannedFiles.some((item) => item.relPath === 'sidecars/monitor_pane/main.mjs')) {
+      return {
+        ok: false,
+        reason: 'invalid_archive',
+        error: 'CDN manifest is missing sidecars/monitor_pane/main.mjs.',
+      };
+    }
+
+    const entries = new Array(plannedFiles.length);
+    let nextIdx = 0;
+    let totalDownloadedBytes = 0;
+    let abortedError = null;
+    const workerCount = Math.min(4, plannedFiles.length);
+
+    async function downloadWorker() {
+      while (!abortedError) {
+        const idx = nextIdx++;
+        if (idx >= plannedFiles.length) break;
+        const item = plannedFiles[idx];
+        const encodedRelPath = item.relPath.split('/').map(encodeURIComponent).join('/');
+        let downloaded = false;
+
+        for (const base of normalizedCdnBases) {
+          if (abortedError) break;
+          const fileUrl = `${base}@${encodeURIComponent(selectedRef)}/${encodedRelPath}`;
+          let fileRes = null;
+          try {
+            fileRes = await fetchImpl(fileUrl, {
+              signal: AbortSignal.timeout(CDN_FILE_TIMEOUT_MS),
+              headers: {
+                'User-Agent': `agy-token-monitor/${currentVersion}`,
+              },
+            });
+          } catch {
+            continue;
+          }
+          if (!fileRes || !fileRes.ok) {
+            continue;
+          }
+
+          const contentLenStr = getHeaderValue(fileRes.headers, 'content-length');
+          if (contentLenStr && Number(contentLenStr) > DEFAULT_ZIP_LIMITS.maxEntryBytes) {
+            abortedError = {
+              ok: false,
+              reason: 'invalid_archive',
+              error: `CDN entry ${item.relPath} exceeds maxEntryBytes (${DEFAULT_ZIP_LIMITS.maxEntryBytes}).`,
+            };
+            break;
+          }
+
+          let buf;
+          try {
+            buf = Buffer.from(await fileRes.arrayBuffer());
+          } catch {
+            continue;
+          }
+
+          if (buf.length > DEFAULT_ZIP_LIMITS.maxEntryBytes) {
+            abortedError = {
+              ok: false,
+              reason: 'invalid_archive',
+              error: `CDN entry ${item.relPath} size (${buf.length}) exceeds maxEntryBytes (${DEFAULT_ZIP_LIMITS.maxEntryBytes}).`,
+            };
+            break;
+          }
+          if (totalDownloadedBytes + buf.length > DEFAULT_ZIP_LIMITS.maxTotalBytes) {
+            abortedError = {
+              ok: false,
+              reason: 'invalid_archive',
+              error: `Total downloaded CDN bytes exceed limit (${DEFAULT_ZIP_LIMITS.maxTotalBytes}).`,
+            };
+            break;
+          }
+          totalDownloadedBytes += buf.length;
+
+          const actualHash = createHash('sha256').update(buf).digest('base64');
+          if (actualHash !== item.expectedHash) {
+            abortedError = {
+              ok: false,
+              reason: 'integrity_failed',
+              error: `CDN file SHA-256 mismatch for ${item.relPath}`,
+            };
+            break;
+          }
+
+          entries[idx] = { relPath: item.relPath, data: buf };
+          downloaded = true;
+          break;
+        }
+
+        if (!downloaded && !abortedError) {
+          abortedError = {
+            ok: false,
+            reason: 'download_failed',
+            error: `Failed to download CDN file ${item.relPath}`,
+          };
+          break;
+        }
+      }
+    }
+
+    await Promise.all(Array.from({ length: workerCount }, () => downloadWorker()));
+    if (abortedError) {
+      return abortedError;
+    }
+
+    return { ok: true, entries };
+  }
+
+  function validateAndWriteExtractedEntries(entries) {
+    const fallbackUrl = getFallbackUrl();
+    const manifestEntry = entries.find((e) => e.relPath === 'plugin.json');
+    if (!manifestEntry) {
+      return {
+        ok: false,
+        reason: 'invalid_manifest',
+        error: 'Archive is missing plugin.json.',
+        fallbackUrl,
+      };
+    }
+
+    let manifest;
+    try {
+      manifest = JSON.parse(manifestEntry.data.toString('utf-8'));
+    } catch {
+      return {
+        ok: false,
+        reason: 'invalid_manifest',
+        error: 'Archive plugin.json is not valid JSON.',
+        fallbackUrl,
+      };
+    }
+
+    if (!manifest || manifest.name !== 'agy-token-monitor') {
+      return {
+        ok: false,
+        reason: 'invalid_manifest',
+        error: 'Archive plugin.json name must be agy-token-monitor.',
+        fallbackUrl,
+      };
+    }
+
+    const manifestSemver = parseSemver(manifest.version);
+    if (!manifestSemver || compareSemver(manifestSemver, currentVersion) <= 0) {
+      return {
+        ok: false,
+        reason: 'downgrade_rejected',
+        error: `Archive version (${manifest?.version || 'unknown'}) must be newer than ${currentVersion}.`,
+        fallbackUrl,
+      };
+    }
+
+    const mainEntry = entries.find((e) => e.relPath === 'sidecars/monitor_pane/main.mjs');
+    if (!mainEntry || mainEntry.data.length === 0) {
+      return {
+        ok: false,
+        reason: 'invalid_archive',
+        error: 'Archive is missing sidecars/monitor_pane/main.mjs.',
+        fallbackUrl,
+      };
+    }
+
+    const resolvedRoot = resolve(pluginRoot);
+    const rootPrefix =
+      process.platform === 'win32'
+        ? `${resolvedRoot.toLowerCase()}${sep}`
+        : `${resolvedRoot}${sep}`;
+
+    const sortedEntries = [...entries].sort((a, b) => {
+      const aLast = a.relPath === 'sidecars/monitor_pane/main.mjs' ? 1 : 0;
+      const bLast = b.relPath === 'sidecars/monitor_pane/main.mjs' ? 1 : 0;
+      return aLast - bLast;
+    });
+
+    let writeSeq = 0;
+    for (const entry of sortedEntries) {
+      const destPath = resolve(resolvedRoot, ...entry.relPath.split('/'));
+      const normDest = process.platform === 'win32' ? destPath.toLowerCase() : destPath;
+      if (!normDest.startsWith(rootPrefix)) {
+        throw new Error(`Refusing to write outside pluginRoot: ${entry.relPath}`);
+      }
+
+      mkdirSync(dirname(destPath), { recursive: true });
+      const tmpPath = `${destPath}.upd-${process.pid}-${writeSeq++}.tmp`;
+      try {
+        writeFileSync(tmpPath, entry.data);
+        renameSync(tmpPath, destPath);
+      } catch (writeErr) {
+        try {
+          if (existsSync(tmpPath)) unlinkSync(tmpPath);
+        } catch {
+          // Ignore temp cleanup failure.
+        }
+        if (
+          writeErr &&
+          (writeErr.code === 'EPERM' ||
+            writeErr.code === 'EACCES' ||
+            writeErr.code === 'EBUSY')
+        ) {
+          writeFileSync(destPath, entry.data);
+        } else {
+          throw writeErr;
+        }
+      }
+    }
+
+    const targetVersion = manifestSemver.raw;
+    const targetTag = cache.latestTag || normalizeReleaseTag(targetVersion);
+    currentVersion = targetVersion;
+    cache.checkedFromVersion = currentVersion;
+    cache.error = '';
+    cache.errorCode = '';
+    persistUpdateCache(stateDir, cachePath, cache);
+
+    return {
+      ok: true,
+      targetVersion,
+      targetTag,
+      filesWritten: sortedEntries.length,
+      restarting: true,
+    };
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:31
+// ============================================================================
 
   async function executeApply() {
     try {
@@ -908,15 +1527,59 @@ export function createReleaseUpdater(options = {}) {
         };
       }
 
-      const res = await fetchImpl(cache.assetUrl, {
-        signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
-        headers: {
-          Accept: 'application/octet-stream, application/zip, */*',
-          'User-Agent': `agy-token-monitor/${currentVersion}`,
-        },
-      });
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:23:31
+// Description: Attempt jsDelivr SHA-256 verified CDN fallback ONLY when primary
+// ZIP fetch throws or returns !res.ok and enableFallbackChannels is active;
+// preserve strict failure on any 200 OK ZIP integrity/manifest check and
+// clear/classify errorCode cleanly.
+// ============================================================================
+      let res = null;
+      let primaryFetchErr = null;
+      try {
+        res = await fetchImpl(cache.assetUrl, {
+          signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
+          headers: {
+            Accept: 'application/octet-stream, application/zip, */*',
+            'User-Agent': `agy-token-monitor/${currentVersion}`,
+          },
+        });
+      } catch (fetchErr) {
+        primaryFetchErr = fetchErr;
+      }
 
       if (!res || !res.ok) {
+        if (enableFallbackChannels && (cache.latestVersion || cache.latestTag)) {
+          const cdnResult = await fetchEntriesFromJsdelivrCdn(
+            cache.latestVersion,
+            cache.latestTag,
+          );
+          if (cdnResult.ok) {
+            return validateAndWriteExtractedEntries(cdnResult.entries);
+          }
+          if (cdnResult.reason === 'integrity_failed') {
+            return {
+              ok: false,
+              reason: 'integrity_failed',
+              error: cdnResult.error,
+              fallbackUrl,
+            };
+          }
+          const fallbackErrMsg =
+            cdnResult.error ||
+            (primaryFetchErr
+              ? classifyFetchError(primaryFetchErr).message
+              : `Failed to download release archive (HTTP ${res?.status || 'ERR'}).`);
+          return {
+            ok: false,
+            reason: cdnResult.reason || 'download_failed',
+            error: fallbackErrMsg,
+            fallbackUrl,
+          };
+        }
+        if (primaryFetchErr) {
+          throw primaryFetchErr;
+        }
         return {
           ok: false,
           reason: 'download_failed',
@@ -990,119 +1653,13 @@ export function createReleaseUpdater(options = {}) {
         };
       }
 
-      const manifestEntry = entries.find((e) => e.relPath === 'plugin.json');
-      if (!manifestEntry) {
-        return {
-          ok: false,
-          reason: 'invalid_manifest',
-          error: 'Archive is missing plugin.json.',
-          fallbackUrl,
-        };
-      }
-
-      let manifest;
-      try {
-        manifest = JSON.parse(manifestEntry.data.toString('utf-8'));
-      } catch {
-        return {
-          ok: false,
-          reason: 'invalid_manifest',
-          error: 'Archive plugin.json is not valid JSON.',
-          fallbackUrl,
-        };
-      }
-
-      if (!manifest || manifest.name !== 'agy-token-monitor') {
-        return {
-          ok: false,
-          reason: 'invalid_manifest',
-          error: 'Archive plugin.json name must be agy-token-monitor.',
-          fallbackUrl,
-        };
-      }
-
-      const manifestSemver = parseSemver(manifest.version);
-      if (!manifestSemver || compareSemver(manifestSemver, currentVersion) <= 0) {
-        return {
-          ok: false,
-          reason: 'downgrade_rejected',
-          error: `Archive version (${manifest?.version || 'unknown'}) must be newer than ${currentVersion}.`,
-          fallbackUrl,
-        };
-      }
-
-      const mainEntry = entries.find((e) => e.relPath === 'sidecars/monitor_pane/main.mjs');
-      if (!mainEntry || mainEntry.data.length === 0) {
-        return {
-          ok: false,
-          reason: 'invalid_archive',
-          error: 'Archive is missing sidecars/monitor_pane/main.mjs.',
-          fallbackUrl,
-        };
-      }
-
-      const resolvedRoot = resolve(pluginRoot);
-      const rootPrefix =
-        process.platform === 'win32'
-          ? `${resolvedRoot.toLowerCase()}${sep}`
-          : `${resolvedRoot}${sep}`;
-
-      const sortedEntries = [...entries].sort((a, b) => {
-        const aLast = a.relPath === 'sidecars/monitor_pane/main.mjs' ? 1 : 0;
-        const bLast = b.relPath === 'sidecars/monitor_pane/main.mjs' ? 1 : 0;
-        return aLast - bLast;
-      });
-
-      let writeSeq = 0;
-      for (const entry of sortedEntries) {
-        const destPath = resolve(resolvedRoot, ...entry.relPath.split('/'));
-        const normDest = process.platform === 'win32' ? destPath.toLowerCase() : destPath;
-        if (!normDest.startsWith(rootPrefix)) {
-          throw new Error(`Refusing to write outside pluginRoot: ${entry.relPath}`);
-        }
-
-        mkdirSync(dirname(destPath), { recursive: true });
-        const tmpPath = `${destPath}.upd-${process.pid}-${writeSeq++}.tmp`;
-        try {
-          writeFileSync(tmpPath, entry.data);
-          renameSync(tmpPath, destPath);
-        } catch (writeErr) {
-          try {
-            if (existsSync(tmpPath)) unlinkSync(tmpPath);
-          } catch {
-            // Ignore temp cleanup failure.
-          }
-          if (
-            writeErr &&
-            (writeErr.code === 'EPERM' ||
-              writeErr.code === 'EACCES' ||
-              writeErr.code === 'EBUSY')
-          ) {
-            writeFileSync(destPath, entry.data);
-          } else {
-            throw writeErr;
-          }
-        }
-      }
-
-      const targetVersion = manifestSemver.raw;
-      const targetTag = cache.latestTag || normalizeReleaseTag(targetVersion);
-      currentVersion = targetVersion;
-      cache.checkedFromVersion = currentVersion;
-      cache.error = '';
-      persistUpdateCache(stateDir, cachePath, cache);
-
-      return {
-        ok: true,
-        targetVersion,
-        targetTag,
-        filesWritten: sortedEntries.length,
-        restarting: true,
-      };
+      return validateAndWriteExtractedEntries(entries);
     } catch (err) {
       const fallbackUrl = getFallbackUrl();
-      const errMsg = err?.message || 'Failed to apply release update.';
-      cache.error = errMsg.slice(0, 240);
+      const classified = classifyFetchError(err);
+      const errMsg = err?.message || classified.message || 'Failed to apply release update.';
+      cache.error = classified.message || errMsg.slice(0, 240);
+      cache.errorCode = classified.errorCode;
       persistUpdateCache(stateDir, cachePath, cache);
       return {
         ok: false,
@@ -1112,6 +1669,9 @@ export function createReleaseUpdater(options = {}) {
       };
     }
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:23:31
+// ============================================================================
 
   function applyLatestUpdate() {
     if (applyPromise) {

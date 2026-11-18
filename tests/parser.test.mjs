@@ -41,7 +41,14 @@ import {
 // [MODIFIED BEGIN] 2026-11-17 11:50:00
 // Description: Import node:http for local mock HTTP E2E tests of pricing sync.
 // ============================================================================
-import { createServer } from 'node:http';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:33:22
+// Description: Also import default http export for real http.setGlobalProxyFromEnv NO_PROXY loopback tests.
+// ============================================================================
+import http, { createServer } from 'node:http';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:33:22
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:50:00
 // ============================================================================
@@ -173,6 +180,14 @@ import {
 // ============================================================================
 import {
   buildZipBuffer,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:33:22
+// Description: Import classifyFetchError for v0.2.8 fetch/undici error classification tests.
+// ============================================================================
+  classifyFetchError,
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:33:22
+// ============================================================================
   compareSemver,
   createReleaseUpdater,
   normalizeReleaseTag,
@@ -181,6 +196,23 @@ import {
 } from '../sidecars/monitor_pane/release_updater.mjs';
 // ============================================================================
 // [MODIFIED END] 2026-11-17 18:54:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:33:22
+// Description: Import net_proxy exports for v0.2.8 OS/env HTTP(S) proxy auto-detection and NO_PROXY loopback tests.
+// ============================================================================
+import {
+  LOOPBACK_NO_PROXY,
+  normalizeHttpProxyUrl,
+  redactProxyUrl,
+  ensureLoopbackNoProxy,
+  parseWindowsRegProxyOutput,
+  parseMacScutilProxyOutput,
+  resolveProxyConfig,
+  createSystemProxyManager,
+} from '../sidecars/monitor_pane/net_proxy.mjs';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:33:22
 // ============================================================================
 
 // ============================================================================
@@ -5761,11 +5793,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 // [MODIFIED BEGIN] 2026-11-17 22:14:47
 // Description: Update manifest version assertion from 0.2.6 to 0.2.7 and add v0.2.7 Zero-Layout-Shift (CLS=0), anti-clipping, I18N, and headless VM behavioral tests.
 // ============================================================================
-  // Manifests bumped to 0.2.7 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:33:22
+// Description: Bump current manifest version assertion from 0.2.7 to 0.2.8.
+// ============================================================================
+  // Manifests bumped to 0.2.8 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.2.7');
-  assert.equal(packageJson.version, '0.2.7');
+  assert.equal(pluginJson.version, '0.2.8');
+  assert.equal(packageJson.version, '0.2.8');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:33:22
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:14:47
 // ============================================================================
@@ -5977,16 +6016,23 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
     );
   }
 
-  // Version & docs consistency for v0.2.7
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:33:22
+// Description: Bump current manifest, fallback version, and documentation assertions from 0.2.7 to 0.2.8.
+// ============================================================================
+  // Version & docs consistency for current v0.2.8 release
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.2.7');
-  assert.equal(packageJson.version, '0.2.7');
-  assert.equal(pluginJson.description.includes('v0.2.7 beta'), true);
-  assert.equal(packageJson.description.includes('v0.2.7 beta'), true);
-  assert.equal(mainSource.includes("return '0.2.7'"), true);
-  assert.equal(skillMd.includes('# Token Monitor (v0.2.7 Beta)'), true);
-  assert.equal(readmeMd.includes('agy-token-monitor-v0.2.7.zip'), true);
+  assert.equal(pluginJson.version, '0.2.8');
+  assert.equal(packageJson.version, '0.2.8');
+  assert.equal(pluginJson.description.includes('v0.2.8 beta'), true);
+  assert.equal(packageJson.description.includes('v0.2.8 beta'), true);
+  assert.equal(mainSource.includes("return '0.2.8'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.2.8 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.2.8.zip'), true);
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:33:22
+// ============================================================================
 });
 
 test('v0.2.7 headless Node VM behavioral tests: renderRollingText CLS=0 transitions and per-card memoization', () => {
@@ -6567,4 +6613,1244 @@ test('v0.2.7 headless Node VM behavioral tests: renderRollingText CLS=0 transiti
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:14:47
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 10:34:16
+// Description: Add v0.2.8 unit, E2E, static, and headless VM tests for OS/env
+// HTTP(S) proxy auto-detection & NO_PROXY loopback protection, 3-channel release
+// check & SHA-256 verified jsDelivr CDN hot-update fallback, and frontend toast
+// tones, localized diagnostics, and update status bar error retention.
+// ============================================================================
+test('v0.2.8 net_proxy unit tests: URL normalization, redaction, loopback NO_PROXY, Windows/macOS parsers, and priority resolution', () => {
+  assert.equal(LOOPBACK_NO_PROXY, '127.0.0.1,localhost,::1');
+
+  // normalizeHttpProxyUrl: valid HTTP/HTTPS/bare host:port/credentials vs rejected schemes
+  assert.equal(normalizeHttpProxyUrl('http://127.0.0.1:7890'), 'http://127.0.0.1:7890');
+  assert.equal(normalizeHttpProxyUrl('https://proxy.example:8443/'), 'https://proxy.example:8443');
+  assert.equal(normalizeHttpProxyUrl('127.0.0.1:7890'), 'http://127.0.0.1:7890');
+  assert.equal(normalizeHttpProxyUrl('  "127.0.0.1:7890"  '), 'http://127.0.0.1:7890');
+  assert.equal(
+    normalizeHttpProxyUrl('http://user:pass@host:8080/'),
+    'http://user:pass@host:8080',
+  );
+  for (const invalidProxy of [
+    'socks5://127.0.0.1:7891',
+    'socks5h://127.0.0.1:7891',
+    'socks4://127.0.0.1:7891',
+    'socks://127.0.0.1:7891',
+    'pac+http://127.0.0.1/proxy.pac',
+    'ftp://proxy.example:21',
+    'ws://proxy.example:80',
+    '',
+    '   ',
+    null,
+    undefined,
+    'http://host:99999',
+    'not a valid proxy url!!',
+  ]) {
+    assert.equal(
+      normalizeHttpProxyUrl(invalidProxy),
+      '',
+      `Expected normalizeHttpProxyUrl(${String(invalidProxy)}) to reject`,
+    );
+  }
+
+  // redactProxyUrl masks embedded credentials cleanly
+  assert.equal(redactProxyUrl('http://user:pass@host:8080'), 'http://***@host:8080');
+  assert.equal(redactProxyUrl('http://user@host:8080'), 'http://***@host:8080');
+  assert.equal(redactProxyUrl('http://127.0.0.1:7890'), 'http://127.0.0.1:7890');
+  assert.equal(redactProxyUrl('socks5://127.0.0.1:7891'), '');
+
+  // ensureLoopbackNoProxy expands <local>, normalizes ; and whitespace, deduplicates case-insensitively
+  assert.equal(ensureLoopbackNoProxy(''), LOOPBACK_NO_PROXY);
+  assert.equal(
+    ensureLoopbackNoProxy(' <LOCAL> ; *.corp.internal ; LocalHost ; 10.0.0.0/8 ; *.CORP.INTERNAL '),
+    'localhost,127.0.0.1,::1,*.corp.internal,10.0.0.0/8',
+  );
+  assert.equal(ensureLoopbackNoProxy('example.com;LOCALHOST'), 'example.com,LOCALHOST,127.0.0.1,::1');
+
+  // parseWindowsRegProxyOutput: single endpoint, per-protocol (ignoring socks), and ProxyEnable 0x0
+  const winSingle = parseWindowsRegProxyOutput(`
+HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings
+    ProxyEnable    REG_DWORD    0x1
+    ProxyServer    REG_SZ    127.0.0.1:7890
+    ProxyOverride    REG_SZ    localhost;127.*;10.*;<local>
+`);
+  assert.equal(winSingle.enabled, true);
+  assert.equal(winSingle.httpProxy, 'http://127.0.0.1:7890');
+  assert.equal(winSingle.httpsProxy, 'http://127.0.0.1:7890');
+  assert.equal(winSingle.noProxy.includes('10.*'), true);
+  assert.equal(winSingle.noProxy.includes('127.0.0.1'), true);
+  assert.equal(winSingle.noProxy.includes('localhost'), true);
+  assert.equal(winSingle.noProxy.includes('::1'), true);
+
+  const winPerProto = parseWindowsRegProxyOutput(`
+    ProxyEnable    REG_DWORD    0x1
+    ProxyServer    REG_SZ    http=127.0.0.1:7890;https=127.0.0.1:7891;socks=127.0.0.1:7892
+`);
+  assert.equal(winPerProto.enabled, true);
+  assert.equal(winPerProto.httpProxy, 'http://127.0.0.1:7890');
+  assert.equal(winPerProto.httpsProxy, 'http://127.0.0.1:7891');
+
+  const winDisabled = parseWindowsRegProxyOutput(`
+    ProxyEnable    REG_DWORD    0x0
+    ProxyServer    REG_SZ    127.0.0.1:7890
+`);
+  assert.deepEqual(winDisabled, {
+    enabled: false,
+    httpProxy: '',
+    httpsProxy: '',
+    noProxy: LOOPBACK_NO_PROXY,
+  });
+
+  // parseMacScutilProxyOutput: enabled HTTP/HTTPS + ExceptionsList vs disabled
+  const macEnabled = parseMacScutilProxyOutput(`
+<dictionary> {
+  ExceptionsList : <array> {
+    0 : *.local
+    1 : 169.254/16
+  }
+  HTTPEnable : 1
+  HTTPPort : 7890
+  HTTPProxy : 127.0.0.1
+  HTTPSEnable : 1
+  HTTPSPort : 7891
+  HTTPSProxy : 127.0.0.1
+}
+`);
+  assert.equal(macEnabled.enabled, true);
+  assert.equal(macEnabled.httpProxy, 'http://127.0.0.1:7890');
+  assert.equal(macEnabled.httpsProxy, 'http://127.0.0.1:7891');
+  assert.equal(macEnabled.noProxy.includes('*.local'), true);
+  assert.equal(macEnabled.noProxy.includes('169.254/16'), true);
+  assert.equal(macEnabled.noProxy.includes('::1'), true);
+
+  const macDisabled = parseMacScutilProxyOutput(`
+<dictionary> {
+  HTTPEnable : 0
+  HTTPPort : 7890
+  HTTPProxy : 127.0.0.1
+  HTTPSEnable : 0
+}
+`);
+  assert.equal(macDisabled.enabled, false);
+  assert.equal(macDisabled.httpProxy, '');
+  assert.equal(macDisabled.httpsProxy, '');
+
+  // resolveProxyConfig priority order: AGY_TOKEN_MONITOR_PROXY > env > OS lookup > direct
+  let osCalls = 0;
+  const mockWinExec = () => {
+    osCalls += 1;
+    return `
+    ProxyEnable    REG_DWORD    0x1
+    ProxyServer    REG_SZ    127.0.0.1:7899
+`;
+  };
+
+  const p1 = resolveProxyConfig({
+    env: {
+      AGY_TOKEN_MONITOR_PROXY: 'https://custom.proxy:9443/',
+      HTTPS_PROXY: 'http://env.proxy:8080',
+      HTTP_PROXY: 'http://env.proxy:8081',
+      ALL_PROXY: 'http://all.proxy:8082',
+    },
+    platform: 'win32',
+    execFileSyncImpl: mockWinExec,
+  });
+  assert.equal(p1.enabled, true);
+  assert.equal(p1.source, 'custom-env');
+  assert.equal(p1.httpProxy, 'https://custom.proxy:9443');
+  assert.equal(p1.httpsProxy, 'https://custom.proxy:9443');
+  assert.equal(osCalls, 0);
+
+  const p2 = resolveProxyConfig({
+    env: {
+      HTTPS_PROXY: 'http://env-https:8443',
+      HTTP_PROXY: 'http://env-http:8080',
+    },
+    platform: 'win32',
+    execFileSyncImpl: mockWinExec,
+  });
+  assert.equal(p2.enabled, true);
+  assert.equal(p2.source, 'env');
+  assert.equal(p2.httpProxy, 'http://env-http:8080');
+  assert.equal(p2.httpsProxy, 'http://env-https:8443');
+  assert.equal(osCalls, 0);
+
+  // socks5:// in ALL_PROXY safely ignored and falls through to OS lookup
+  const pSocksFallback = resolveProxyConfig({
+    env: { ALL_PROXY: 'socks5://127.0.0.1:7891' },
+    platform: 'win32',
+    execFileSyncImpl: mockWinExec,
+  });
+  assert.equal(pSocksFallback.enabled, true);
+  assert.equal(pSocksFallback.source, 'win-registry');
+  assert.equal(pSocksFallback.httpsProxy, 'http://127.0.0.1:7899');
+  assert.equal(osCalls, 1);
+
+  // macOS scutil resolution
+  let macExecCmd = '';
+  const pMac = resolveProxyConfig({
+    env: {},
+    platform: 'darwin',
+    execFileSyncImpl: (cmd) => {
+      macExecCmd = cmd;
+      return `
+HTTPEnable : 1
+HTTPProxy : 127.0.0.1
+HTTPPort : 6152
+HTTPSEnable : 1
+HTTPSProxy : 127.0.0.1
+HTTPSPort : 6153
+`;
+    },
+  });
+  assert.equal(macExecCmd, '/usr/sbin/scutil');
+  assert.equal(pMac.enabled, true);
+  assert.equal(pMac.source, 'mac-scutil');
+  assert.equal(pMac.httpProxy, 'http://127.0.0.1:6152');
+  assert.equal(pMac.httpsProxy, 'http://127.0.0.1:6153');
+
+  // DISABLE_SYSTEM_PROXY_LOOKUP: '1' skips OS exec and returns direct
+  let skippedOsCalls = 0;
+  const pDisabledLookup = resolveProxyConfig({
+    env: { DISABLE_SYSTEM_PROXY_LOOKUP: '1' },
+    platform: 'win32',
+    execFileSyncImpl: () => {
+      skippedOsCalls += 1;
+      return 'ProxyEnable REG_DWORD 0x1\nProxyServer REG_SZ 127.0.0.1:7890\n';
+    },
+  });
+  assert.equal(skippedOsCalls, 0);
+  assert.deepEqual(pDisabledLookup, {
+    enabled: false,
+    source: 'direct',
+    httpProxy: '',
+    httpsProxy: '',
+    noProxy: LOOPBACK_NO_PROXY,
+  });
+});
+
+test('v0.2.8 createSystemProxyManager lifecycle, TTL cache, restore-before-set order, and real loopback NO_PROXY protection', async () => {
+  // Part A: Lifecycle & TTL cache transitions with spy setGlobalProxyFn
+  const envObj = { DISABLE_SYSTEM_PROXY_LOOKUP: '1' };
+  let nowMs = 1_000_000;
+  const events = [];
+
+  const mgr = createSystemProxyManager({
+    env: envObj,
+    platform: 'win32',
+    cacheTtlMs: 300_000,
+    nowFn: () => nowMs,
+    setGlobalProxyFn: (proxyEnv) => {
+      const tag = proxyEnv.HTTPS_PROXY;
+      events.push(`set:${tag}`);
+      return () => {
+        events.push(`restore:${tag}`);
+      };
+    },
+  });
+
+  // 1. Initial direct state
+  const s0 = mgr.refresh();
+  assert.equal(s0.enabled, false);
+  assert.equal(s0.source, 'direct');
+  assert.equal(s0.proxyUrl, '');
+  assert.deepEqual(events, []);
+
+  // 2. direct -> proxyA
+  envObj.AGY_TOKEN_MONITOR_PROXY = 'http://user:secret@127.0.0.1:7890';
+  const s1 = mgr.refresh({ force: true });
+  assert.equal(s1.enabled, true);
+  assert.equal(s1.source, 'custom-env');
+  assert.equal(s1.proxyUrl, 'http://***@127.0.0.1:7890');
+  assert.deepEqual(events, ['set:http://user:secret@127.0.0.1:7890']);
+
+  // 3. Cached within cacheTtlMs (non-force refresh ignores env change while TTL valid)
+  envObj.AGY_TOKEN_MONITOR_PROXY = 'http://127.0.0.1:8888';
+  nowMs += 60_000;
+  const sCached = mgr.refresh();
+  assert.equal(sCached.proxyUrl, 'http://***@127.0.0.1:7890');
+  assert.deepEqual(events, ['set:http://user:secret@127.0.0.1:7890']);
+
+  // 4. Force refresh proxyA -> proxyB: MUST call restoreA BEFORE setB
+  const s2 = mgr.refresh({ force: true });
+  assert.equal(s2.enabled, true);
+  assert.equal(s2.proxyUrl, 'http://127.0.0.1:8888');
+  assert.deepEqual(events, [
+    'set:http://user:secret@127.0.0.1:7890',
+    'restore:http://user:secret@127.0.0.1:7890',
+    'set:http://127.0.0.1:8888',
+  ]);
+
+  // 5. proxyB -> direct: MUST call restoreB and leave zero active proxy
+  delete envObj.AGY_TOKEN_MONITOR_PROXY;
+  const s3 = mgr.refresh({ force: true });
+  assert.equal(s3.enabled, false);
+  assert.equal(s3.source, 'direct');
+  assert.equal(s3.proxyUrl, '');
+  assert.deepEqual(events, [
+    'set:http://user:secret@127.0.0.1:7890',
+    'restore:http://user:secret@127.0.0.1:7890',
+    'set:http://127.0.0.1:8888',
+    'restore:http://127.0.0.1:8888',
+  ]);
+  mgr.dispose();
+
+  // Part B: Real http.setGlobalProxyFromEnv + local loopback server with unreachable proxy port
+  const localServer = createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, path: req.url }));
+  });
+  const localPort = await listenOnFetchSafePort(localServer);
+  const deadProxyPort = await pickFetchSafeFreePort();
+
+  const realMgr = createSystemProxyManager({
+    env: {
+      HTTPS_PROXY: `http://127.0.0.1:${deadProxyPort}`,
+      HTTP_PROXY: `http://127.0.0.1:${deadProxyPort}`,
+      DISABLE_SYSTEM_PROXY_LOOKUP: '1',
+    },
+    setGlobalProxyFn: http.setGlobalProxyFromEnv,
+  });
+
+  try {
+    const realStatus = realMgr.refresh({ force: true });
+    assert.equal(realStatus.enabled, true);
+    assert.equal(realStatus.noProxy, LOOPBACK_NO_PROXY);
+
+    const loopbackRes = await fetch(`http://127.0.0.1:${localPort}/loopback-ping`);
+    assert.equal(loopbackRes.status, 200);
+    const loopbackBody = await loopbackRes.json();
+    assert.deepEqual(loopbackBody, { ok: true, path: '/loopback-ping' });
+  } finally {
+    realMgr.dispose();
+    await new Promise((r) => localServer.close(() => r()));
+  }
+
+  // Part C: Standalone main.mjs child process respects DISABLE_SYSTEM_PROXY_LOOKUP and NO_PROXY loopback
+  const { root, appData } = makeTempEnv();
+  const dataDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'data');
+  mkdirSync(dataDir, { recursive: true });
+  const fakeHome = join(root, 'home');
+  mkdirSync(fakeHome, { recursive: true });
+
+  const mockUpdateServer = createServer((req, res) => {
+    if (req.url === '/releases/latest') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          tag_name: 'v0.9.5',
+          name: 'Token Monitor v0.9.5',
+          published_at: '2026-11-18T00:00:00Z',
+          html_url: 'https://github.com/JefferyL1ang/agy-token-monitor/releases/tag/v0.9.5',
+          body: '## English\n- Loopback test',
+          assets: [],
+        }),
+      );
+      return;
+    }
+    res.writeHead(404);
+    res.end('not found');
+  });
+
+  const mockUpdatePort = await listenOnFetchSafePort(mockUpdateServer);
+  const sidecarPort = await pickFetchSafeFreePort();
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const mainPath = join(__dirname, '..', 'sidecars', 'monitor_pane', 'main.mjs');
+  const sdkCandidates = [
+    join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+    join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+  ].filter((p) => existsSync(p));
+
+  const env = { ...process.env };
+  delete env.ANTIGRAVITY_LS_ADDRESS;
+  delete env.ANTIGRAVITY_CSRF_TOKEN;
+  delete env.ANTIGRAVITY_SIDECAR_WEB_PORT;
+  delete env.ANTIGRAVITY_CONVERSATION_ID;
+  delete env.ANTIGRAVITY_SIDECAR_UI_TOKEN;
+  delete env.ANTIGRAVITY_AGENTAPI_EXE;
+  delete env.AGY_TOKEN_MONITOR_PROXY;
+  delete env.NO_PROXY;
+  delete env.no_proxy;
+  if (sdkCandidates[0]) env.SIDECAR_SDK_PATH = sdkCandidates[0];
+  env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
+  env.USERPROFILE = fakeHome;
+  env.HOME = fakeHome;
+  env.PRICING_SYNC_DISABLE_AUTO = '1';
+  env.DISABLE_SYSTEM_PROXY_LOOKUP = '1';
+  env.HTTPS_PROXY = `http://127.0.0.1:${deadProxyPort}`;
+  env.HTTP_PROXY = `http://127.0.0.1:${deadProxyPort}`;
+  env.RELEASE_UPDATE_API_URL = `http://127.0.0.1:${mockUpdatePort}/releases/latest`;
+  env.RELEASE_UPDATE_ALLOW_LOOPBACK = '1';
+
+  const child = spawn(process.execPath, [mainPath, '--standalone', String(sidecarPort)], {
+    env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  try {
+    await new Promise((resolveReady, rejectReady) => {
+      if (child.exitCode !== null) {
+        rejectReady(new Error(`Sidecar exited prematurely (${child.exitCode})`));
+        return;
+      }
+      const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 5000);
+      let out = '';
+      child.stdout.on('data', (chunk) => {
+        out += chunk.toString();
+        if (out.includes(`[sidecar] listening on 127.0.0.1:${sidecarPort}`)) {
+          clearTimeout(timer);
+          resolveReady();
+        }
+      });
+      child.stderr.on('data', (chunk) => {
+        out += chunk.toString();
+      });
+      child.once('exit', (code) => {
+        clearTimeout(timer);
+        rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+      });
+    });
+
+    const base = `http://127.0.0.1:${sidecarPort}`;
+    const snapRes = await fetch(`${base}/api/snapshot`);
+    assert.equal(snapRes.status, 200);
+    const snap = await snapRes.json();
+    assert.equal(snap.appVersion, '0.2.8');
+
+    const checkRes = await fetch(`${base}/api/check-update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    assert.equal(checkRes.status, 200);
+    const checkBody = await checkRes.json();
+    assert.equal(checkBody.ok, true);
+    assert.equal(checkBody.updateStatus.latestTag, 'v0.9.5');
+    assert.equal(checkBody.updateStatus.checkSource, 'github-api');
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill();
+      await new Promise((r) => {
+        if (child.exitCode !== null || child.signalCode !== null) return r();
+        const t = setTimeout(r, 3000);
+        child.once('exit', () => {
+          clearTimeout(t);
+          r();
+        });
+      });
+    }
+    await new Promise((r) => mockUpdateServer.close(() => r()));
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.2.8 release_updater classifyFetchError, 3-channel fallback check, and SHA-256 verified CDN hot update', async () => {
+  // 1. classifyFetchError mapping
+  const cTimeout = classifyFetchError(new DOMException('The operation was aborted due to timeout', 'TimeoutError'));
+  assert.equal(cTimeout.errorCode, 'timeout');
+
+  const cNetwork = classifyFetchError(
+    new TypeError('fetch failed', { cause: { code: 'ECONNREFUSED', message: 'connect ECONNREFUSED 127.0.0.1:443' } }),
+  );
+  assert.equal(cNetwork.errorCode, 'network');
+  assert.equal(cNetwork.message.includes('ECONNREFUSED'), true);
+
+  const cRate = classifyFetchError(new Error('Release check HTTP 403'));
+  assert.equal(cRate.errorCode, 'rate_limit');
+
+  const cHttp = classifyFetchError(new Error('Release check HTTP 502'));
+  assert.equal(cHttp.errorCode, 'http_error');
+
+  // 2. checkForUpdatesNow 3-channel fallback:
+  //    a) Channel 1 timeout -> Channel 2 (github-web 302) succeeds and clears stale releaseNotes/assetDigest on tag change
+  const { root, appData } = makeTempEnv();
+  try {
+    const stateDirA = join(appData, 'check-a');
+    mkdirSync(stateDirA, { recursive: true });
+    let phase = 'seed';
+    const updaterA = createReleaseUpdater({
+      stateDir: stateDirA,
+      currentVersion: '0.2.8',
+      enableFallbackChannels: true,
+      fetchImpl: async (url) => {
+        if (phase === 'seed' && url.includes('api.github.com')) {
+          return new Response(
+            JSON.stringify({
+              tag_name: 'v0.9.0',
+              name: 'v0.9.0',
+              body: 'Stale notes for v0.9.0',
+              published_at: '2026-11-01T00:00:00Z',
+              assets: [
+                {
+                  name: 'agy-token-monitor-v0.9.0.zip',
+                  size: 123,
+                  digest: `sha256:${'a'.repeat(64)}`,
+                  browser_download_url:
+                    'https://github.com/JefferyL1ang/agy-token-monitor/releases/download/v0.9.0/agy-token-monitor-v0.9.0.zip',
+                },
+              ],
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json', ETag: '"etag-090"' } },
+          );
+        }
+        if (phase === 'ch2' && url.includes('api.github.com')) {
+          throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+        }
+        if (phase === 'ch2' && url.includes('github.com/JefferyL1ang/agy-token-monitor/releases/latest')) {
+          return new Response(null, {
+            status: 302,
+            headers: {
+              location: 'https://github.com/JefferyL1ang/agy-token-monitor/releases/tag/v0.9.8',
+            },
+          });
+        }
+        if (phase === 'ch3' && url.includes('api.github.com')) {
+          return new Response('rate limit exceeded', { status: 403 });
+        }
+        if (phase === 'ch3' && url.includes('github.com/JefferyL1ang/agy-token-monitor/releases/latest')) {
+          throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+        }
+        if (phase === 'ch3' && url.includes('data.jsdelivr.com')) {
+          return new Response(
+            JSON.stringify({
+              versions: ['0.2.7', '0.9.9', '0.9.9-rc.1', 'not-semver'],
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+        if (phase === 'allfail' && url.includes('api.github.com')) {
+          throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+        }
+        if (phase === 'allfail' && url.includes('github.com/JefferyL1ang/agy-token-monitor/releases/latest')) {
+          return new Response('Bad Gateway', { status: 502 });
+        }
+        if (phase === 'allfail' && url.includes('data.jsdelivr.com')) {
+          throw new TypeError('fetch failed', { cause: { code: 'ECONNRESET', message: 'socket hang up' } });
+        }
+        throw new Error(`Unexpected URL ${url}`);
+      },
+    });
+
+    const seedRes = await updaterA.checkForUpdatesNow();
+    assert.equal(seedRes.ok, true);
+    assert.equal(seedRes.status.releaseNotes, 'Stale notes for v0.9.0');
+    assert.equal(seedRes.status.checkSource, 'github-api');
+
+    phase = 'ch2';
+    const ch2Res = await updaterA.checkForUpdatesNow();
+    assert.equal(ch2Res.ok, true);
+    assert.equal(ch2Res.status.checkSource, 'github-web');
+    assert.equal(ch2Res.status.latestVersion, '0.9.8');
+    assert.equal(ch2Res.status.hasUpdate, true);
+    assert.equal(ch2Res.status.error, '');
+    assert.equal(ch2Res.status.errorCode, '');
+    assert.equal(ch2Res.status.releaseNotes, '');
+    const cacheAfterCh2 = JSON.parse(readFileSync(join(stateDirA, 'update_cache.json'), 'utf-8'));
+    assert.equal(cacheAfterCh2.assetDigest, '');
+    assert.equal(cacheAfterCh2.releaseNotes, '');
+
+    //    b) Channel 1 403 + Channel 2 timeout -> Channel 3 jsDelivr picks highest stable SemVer 0.9.9
+    phase = 'ch3';
+    const ch3Res = await updaterA.checkForUpdatesNow();
+    assert.equal(ch3Res.ok, true);
+    assert.equal(ch3Res.status.checkSource, 'jsdelivr');
+    assert.equal(ch3Res.status.latestVersion, '0.9.9');
+    assert.equal(ch3Res.status.hasUpdate, true);
+
+    //    c) All 3 channels fail -> ok === false, errorCode === 'timeout' from Channel 1 primaryErr
+    phase = 'allfail';
+    const failRes = await updaterA.checkForUpdatesNow();
+    assert.equal(failRes.ok, false);
+    assert.equal(failRes.status.errorCode, 'timeout');
+
+    // 3. applyLatestUpdate CDN fallback scenarios
+    const b64Sha256 = (buf) => createHash('sha256').update(buf).digest('base64');
+
+    //    a) Primary ZIP timeout -> jsDelivr /flat + cdn.jsdelivr fails -> fastly.jsdelivr succeeds,
+    //       skipping .gitignore, maintainer/, tests/
+    const pluginRootCdn = join(root, 'plugin-cdn-ok');
+    const stateDirCdn = join(appData, 'state-cdn-ok');
+    mkdirSync(join(pluginRootCdn, 'sidecars', 'monitor_pane'), { recursive: true });
+    mkdirSync(stateDirCdn, { recursive: true });
+    writeFileSync(
+      join(pluginRootCdn, 'plugin.json'),
+      JSON.stringify({ name: 'agy-token-monitor', version: '0.2.8' }),
+      'utf-8',
+    );
+    writeFileSync(join(pluginRootCdn, 'sidecars', 'monitor_pane', 'main.mjs'), '// orig 0.2.8\n', 'utf-8');
+
+    const filesV099 = {
+      'plugin.json': Buffer.from(JSON.stringify({ name: 'agy-token-monitor', version: '0.9.9' }), 'utf-8'),
+      'README.md': Buffer.from('# agy-token-monitor v0.9.9\n', 'utf-8'),
+      'sidecars/monitor_pane/main.mjs': Buffer.from('// upgraded via fastly cdn 0.9.9\n', 'utf-8'),
+      'sidecars/monitor_pane/net_proxy.mjs': Buffer.from('export const PROXY_VER = "0.9.9";\n', 'utf-8'),
+    };
+    const skippedFiles = {
+      '.gitignore': Buffer.from('maintainer/\n', 'utf-8'),
+      'maintainer/secret.ps1': Buffer.from('# secret\n', 'utf-8'),
+      'tests/parser.test.mjs': Buffer.from('// skipped test file\n', 'utf-8'),
+    };
+    const requestedSkippedUrls = [];
+
+    const cdnUpdater = createReleaseUpdater({
+      stateDir: stateDirCdn,
+      pluginRoot: pluginRootCdn,
+      currentVersion: '0.2.8',
+      enableFallbackChannels: true,
+      fetchImpl: async (url) => {
+        if (url.includes('api.github.com')) {
+          return new Response('rate limit', { status: 403 });
+        }
+        if (url.includes('github.com/JefferyL1ang/agy-token-monitor/releases/latest')) {
+          throw new DOMException('timed out', 'TimeoutError');
+        }
+        if (url === 'https://data.jsdelivr.com/v1/package/gh/JefferyL1ang/agy-token-monitor') {
+          return new Response(JSON.stringify({ versions: ['0.9.9'] }), { status: 200 });
+        }
+        if (url.includes('/releases/download/')) {
+          throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+        }
+        if (url === 'https://data.jsdelivr.com/v1/package/gh/JefferyL1ang/agy-token-monitor@0.9.9/flat') {
+          const allFlat = [...Object.entries(filesV099), ...Object.entries(skippedFiles)].map(
+            ([rel, buf]) => ({
+              name: `/${rel}`,
+              size: buf.length,
+              hash: b64Sha256(buf),
+            }),
+          );
+          return new Response(JSON.stringify({ files: allFlat }), { status: 200 });
+        }
+        if (
+          url.includes('/.gitignore') ||
+          url.includes('/maintainer/') ||
+          url.includes('/tests/')
+        ) {
+          requestedSkippedUrls.push(url);
+          return new Response('should not be downloaded', { status: 404 });
+        }
+        if (url.startsWith('https://cdn.jsdelivr.net/')) {
+          return new Response('CDN edge error', { status: 502 });
+        }
+        if (url.startsWith('https://fastly.jsdelivr.net/gh/JefferyL1ang/agy-token-monitor@0.9.9/')) {
+          const rel = url.slice(
+            'https://fastly.jsdelivr.net/gh/JefferyL1ang/agy-token-monitor@0.9.9/'.length,
+          );
+          const buf = filesV099[rel];
+          if (buf) return new Response(buf, { status: 200 });
+        }
+        return new Response('not found', { status: 404 });
+      },
+    });
+
+    const preCheck = await cdnUpdater.checkForUpdatesNow();
+    assert.equal(preCheck.ok, true);
+    const cdnApplyRes = await cdnUpdater.applyLatestUpdate();
+    assert.equal(cdnApplyRes.ok, true);
+    assert.equal(cdnApplyRes.targetVersion, '0.9.9');
+    assert.equal(requestedSkippedUrls.length, 0, 'Skipped paths must never be downloaded');
+    assert.equal(
+      JSON.parse(readFileSync(join(pluginRootCdn, 'plugin.json'), 'utf-8')).version,
+      '0.9.9',
+    );
+    assert.equal(
+      readFileSync(join(pluginRootCdn, 'README.md'), 'utf-8'),
+      '# agy-token-monitor v0.9.9\n',
+    );
+    assert.equal(
+      readFileSync(join(pluginRootCdn, 'sidecars', 'monitor_pane', 'main.mjs'), 'utf-8'),
+      '// upgraded via fastly cdn 0.9.9\n',
+    );
+    assert.equal(
+      readFileSync(join(pluginRootCdn, 'sidecars', 'monitor_pane', 'net_proxy.mjs'), 'utf-8'),
+      'export const PROXY_VER = "0.9.9";\n',
+    );
+    assert.equal(existsSync(join(pluginRootCdn, '.gitignore')), false);
+    assert.equal(existsSync(join(pluginRootCdn, 'maintainer', 'secret.ps1')), false);
+    assert.equal(existsSync(join(pluginRootCdn, 'tests', 'parser.test.mjs')), false);
+
+    //    b) Primary ZIP timeout -> tampered CDN bytes -> rejected with integrity_failed, local files untouched
+    const pluginRootTamper = join(root, 'plugin-cdn-tamper');
+    const stateDirTamper = join(appData, 'state-cdn-tamper');
+    mkdirSync(join(pluginRootTamper, 'sidecars', 'monitor_pane'), { recursive: true });
+    mkdirSync(stateDirTamper, { recursive: true });
+    writeFileSync(
+      join(pluginRootTamper, 'plugin.json'),
+      JSON.stringify({ name: 'agy-token-monitor', version: '0.2.8' }),
+      'utf-8',
+    );
+    writeFileSync(
+      join(pluginRootTamper, 'sidecars', 'monitor_pane', 'main.mjs'),
+      '// untouched local 0.2.8\n',
+      'utf-8',
+    );
+
+    const tamperUpdater = createReleaseUpdater({
+      stateDir: stateDirTamper,
+      pluginRoot: pluginRootTamper,
+      currentVersion: '0.2.8',
+      enableFallbackChannels: true,
+      fetchImpl: async (url) => {
+        if (url === 'https://api.github.com/repos/JefferyL1ang/agy-token-monitor/releases/latest') {
+          return new Response(
+            JSON.stringify({
+              tag_name: 'v0.9.9',
+              assets: [
+                {
+                  name: 'agy-token-monitor-v0.9.9.zip',
+                  size: 100,
+                  browser_download_url:
+                    'https://github.com/JefferyL1ang/agy-token-monitor/releases/download/v0.9.9/agy-token-monitor-v0.9.9.zip',
+                },
+              ],
+            }),
+            { status: 200 },
+          );
+        }
+        if (url.includes('/releases/download/')) {
+          throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+        }
+        if (url.endsWith('/flat')) {
+          return new Response(
+            JSON.stringify({
+              files: Object.entries(filesV099).map(([rel, buf]) => ({
+                name: `/${rel}`,
+                size: buf.length,
+                hash: b64Sha256(buf),
+              })),
+            }),
+            { status: 200 },
+          );
+        }
+        if (url.endsWith('/sidecars/monitor_pane/main.mjs')) {
+          return new Response(Buffer.from('// TAMPERED MALICIOUS BYTES\n', 'utf-8'), { status: 200 });
+        }
+        for (const [rel, buf] of Object.entries(filesV099)) {
+          if (url.endsWith(`/${rel}`)) return new Response(buf, { status: 200 });
+        }
+        return new Response('not found', { status: 404 });
+      },
+    });
+    await tamperUpdater.checkForUpdatesNow();
+    const tamperRes = await tamperUpdater.applyLatestUpdate();
+    assert.equal(tamperRes.ok, false);
+    assert.equal(tamperRes.reason, 'integrity_failed');
+    assert.equal(
+      JSON.parse(readFileSync(join(pluginRootTamper, 'plugin.json'), 'utf-8')).version,
+      '0.2.8',
+    );
+    assert.equal(
+      readFileSync(join(pluginRootTamper, 'sidecars', 'monitor_pane', 'main.mjs'), 'utf-8'),
+      '// untouched local 0.2.8\n',
+    );
+
+    //    c) Primary ZIP HTTP 200 OK with mismatched assetDigest -> integrity_failed, MUST NOT fall back to CDN
+    const pluginRootNoFallback = join(root, 'plugin-no-cdn-fallback');
+    const stateDirNoFallback = join(appData, 'state-no-cdn-fallback');
+    mkdirSync(join(pluginRootNoFallback, 'sidecars', 'monitor_pane'), { recursive: true });
+    mkdirSync(stateDirNoFallback, { recursive: true });
+    writeFileSync(
+      join(pluginRootNoFallback, 'plugin.json'),
+      JSON.stringify({ name: 'agy-token-monitor', version: '0.2.8' }),
+      'utf-8',
+    );
+    writeFileSync(
+      join(pluginRootNoFallback, 'sidecars', 'monitor_pane', 'main.mjs'),
+      '// untouched 0.2.8\n',
+      'utf-8',
+    );
+
+    const validZip = buildZipBuffer([
+      { name: 'agy-token-monitor/plugin.json', data: filesV099['plugin.json'] },
+      { name: 'agy-token-monitor/sidecars/monitor_pane/main.mjs', data: filesV099['sidecars/monitor_pane/main.mjs'] },
+    ]);
+    let cdnRequestsOn200Fail = 0;
+
+    const noFallbackUpdater = createReleaseUpdater({
+      stateDir: stateDirNoFallback,
+      pluginRoot: pluginRootNoFallback,
+      currentVersion: '0.2.8',
+      enableFallbackChannels: true,
+      fetchImpl: async (url) => {
+        if (url.includes('jsdelivr.net')) {
+          cdnRequestsOn200Fail += 1;
+          return new Response('unexpected cdn request', { status: 500 });
+        }
+        if (url === 'https://api.github.com/repos/JefferyL1ang/agy-token-monitor/releases/latest') {
+          return new Response(
+            JSON.stringify({
+              tag_name: 'v0.9.9',
+              assets: [
+                {
+                  name: 'agy-token-monitor-v0.9.9.zip',
+                  size: validZip.length,
+                  digest: `sha256:${'f'.repeat(64)}`,
+                  browser_download_url:
+                    'https://github.com/JefferyL1ang/agy-token-monitor/releases/download/v0.9.9/agy-token-monitor-v0.9.9.zip',
+                },
+              ],
+            }),
+            { status: 200 },
+          );
+        }
+        if (url.includes('/releases/download/')) {
+          return new Response(validZip, { status: 200 });
+        }
+        return new Response('not found', { status: 404 });
+      },
+    });
+    await noFallbackUpdater.checkForUpdatesNow();
+    const digestMismatchRes = await noFallbackUpdater.applyLatestUpdate();
+    assert.equal(digestMismatchRes.ok, false);
+    assert.equal(digestMismatchRes.reason, 'integrity_failed');
+    assert.equal(cdnRequestsOn200Fail, 0, 'Must NOT fall back to CDN when primary ZIP returns 200 OK');
+    assert.equal(
+      JSON.parse(readFileSync(join(pluginRootNoFallback, 'plugin.json'), 'utf-8')).version,
+      '0.2.8',
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invariants, and annotation balance', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = join(testDir, '..');
+  const paneDir = join(repoRoot, 'sidecars', 'monitor_pane');
+
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+  const stylesCss = readFileSync(join(paneDir, 'styles.css'), 'utf-8');
+  const indexHtml = readFileSync(join(paneDir, 'index.html'), 'utf-8');
+  const mainSource = readFileSync(join(paneDir, 'main.mjs'), 'utf-8');
+  const netProxySource = readFileSync(join(paneDir, 'net_proxy.mjs'), 'utf-8');
+  const parserSource = readFileSync(join(paneDir, 'parser.mjs'), 'utf-8');
+  const pricingSyncSource = readFileSync(join(paneDir, 'pricing_sync.mjs'), 'utf-8');
+  const releaseUpdaterSource = readFileSync(join(paneDir, 'release_updater.mjs'), 'utf-8');
+  const readmeMd = readFileSync(join(repoRoot, 'README.md'), 'utf-8');
+  const skillMd = readFileSync(join(repoRoot, 'skills', 'token-monitor', 'SKILL.md'), 'utf-8');
+  const selfSource = readFileSync(fileURLToPath(import.meta.url), 'utf-8');
+
+  // CSS toast tones and Zero-CLS .roll-col preserved
+  const stylesNoComments = stylesCss.replace(/\/\*[\s\S]*?\*\//g, '');
+  const rollColMatch = stylesNoComments.match(/(?:^|\n)\s*\.roll-col\s*\{([^}]*)\}/);
+  assert.ok(rollColMatch, 'styles.css must preserve .roll-col');
+  assert.match(rollColMatch[1], /display\s*:\s*inline-grid\b/);
+
+  const warnToastMatch = stylesNoComments.match(/(?:^|\n)\s*\.toast-banner\.is-warn\s*\{([^}]*)\}/);
+  assert.ok(warnToastMatch, 'styles.css must define .toast-banner.is-warn');
+  assert.match(warnToastMatch[1], /--tm-amber\b/);
+
+  const errToastMatch = stylesNoComments.match(/(?:^|\n)\s*\.toast-banner\.is-error\s*\{([^}]*)\}/);
+  assert.ok(errToastMatch, 'styles.css must define .toast-banner.is-error');
+  assert.match(errToastMatch[1], /--tm-rose\b/);
+
+  // I18N zh/en parity + v0.2.8 update diagnostic keys
+  const i18nStart = appSource.indexOf('const I18N = {');
+  assert.ok(i18nStart >= 0, 'I18N object should exist in app.js');
+  const i18nMatch = appSource
+    .slice(i18nStart)
+    .match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(i18nMatch, 'Both zh and en blocks should be extractable from I18N');
+
+  const extractEntries = (block) => {
+    const map = new Map();
+    for (const match of block.matchAll(/^\s*'([^']+)'\s*:\s*'((?:\\.|[^'\\])*)'/gm)) {
+      map.set(match[1], match[2]);
+    }
+    return map;
+  };
+  const zhEntries = extractEntries(i18nMatch[1]);
+  const enEntries = extractEntries(i18nMatch[2]);
+  assert.deepEqual([...zhEntries.keys()].sort(), [...enEntries.keys()].sort());
+
+  for (const key of ['update.errTimeout', 'update.errRateLimit', 'update.errNetwork']) {
+    assert.ok(zhEntries.has(key) && zhEntries.get(key).length > 0, `I18N.zh must define ${key}`);
+    assert.ok(enEntries.has(key) && enEntries.get(key).length > 0, `I18N.en must define ${key}`);
+  }
+
+  const extractPlaceholders = (str) => [...str.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
+  for (const [key, zhVal] of zhEntries.entries()) {
+    assert.deepEqual(
+      extractPlaceholders(zhVal),
+      extractPlaceholders(enEntries.get(key)),
+      `Placeholder mismatch for I18N key "${key}"`,
+    );
+  }
+
+  // Zero unsafe DOM APIs in app.js
+  assert.equal(/\b(?:innerHTML|outerHTML|insertAdjacentHTML|document\.write)\b/.test(appSource), false);
+
+  // Zero banned strings across all files including net_proxy.mjs & release_updater.mjs
+  const bannedTerm = '\u6c34\u4f4d';
+  const legacyUiTerm = '\u5728\u5f79\u6a21\u578b';
+  const legacyDocPhrase = 'Dedicated ' + 'Gemini 3.1 Pro';
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['app.js', appSource],
+    ['main.mjs', mainSource],
+    ['net_proxy.mjs', netProxySource],
+    ['parser.mjs', parserSource],
+    ['pricing_sync.mjs', pricingSyncSource],
+    ['release_updater.mjs', releaseUpdaterSource],
+    ['README.md', readmeMd],
+    ['SKILL.md', skillMd],
+    ['tests/parser.test.mjs', selfSource],
+  ]) {
+    assert.equal(src.includes(bannedTerm), false, `${label} must not contain banned term`);
+  }
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['I18N.zh', i18nMatch[1]],
+    ['README.md', readmeMd],
+    ['SKILL.md', skillMd],
+  ]) {
+    assert.equal(src.includes(legacyUiTerm), false, `${label} must not contain legacy active-model term`);
+  }
+  assert.equal(readmeMd.includes(legacyDocPhrase), false);
+  assert.equal(skillMd.includes(legacyDocPhrase), false);
+
+  // Balanced code-modification annotations across all modified files
+  const modBeginMarker = '[' + 'MODIFIED BEGIN]';
+  const modEndMarker = '[' + 'MODIFIED END]';
+  for (const [label, src] of [
+    ['net_proxy.mjs', netProxySource],
+    ['main.mjs', mainSource],
+    ['release_updater.mjs', releaseUpdaterSource],
+    ['styles.css', stylesCss],
+    ['app.js', appSource],
+    ['tests/parser.test.mjs', selfSource],
+  ]) {
+    let depth = 0;
+    let minDepth = 0;
+    let begins = 0;
+    let ends = 0;
+    for (const line of src.split(/\r?\n/)) {
+      if (line.includes(modBeginMarker)) {
+        depth += 1;
+        begins += 1;
+      }
+      if (line.includes(modEndMarker)) {
+        depth -= 1;
+        ends += 1;
+        if (depth < minDepth) minDepth = depth;
+      }
+    }
+    assert.ok(begins > 0, `${label} must contain modification annotations`);
+    assert.equal(begins, ends, `${label} begin/end annotation count mismatch`);
+    assert.equal(depth, 0, `${label} unclosed modification annotation (depth=${depth})`);
+    assert.equal(minDepth, 0, `${label} unmatched end annotation (minDepth=${minDepth})`);
+  }
+
+  // SQLite read-only invariant and strict JSON manifest validation
+  assert.match(parserSource, /new\s+DatabaseSync\([^)]*\{\s*readOnly:\s*true\s*,\s*timeout:\s*2500\s*\}/);
+  const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
+  const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
+  const sidecarJson = JSON.parse(readFileSync(join(paneDir, 'sidecar.json'), 'utf-8'));
+  assert.equal(pluginJson.version, '0.2.8');
+  assert.equal(packageJson.version, '0.2.8');
+  assert.ok(sidecarJson && typeof sidecarJson === 'object');
+});
+
+test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showToast tone/ARIA/timer, and renderUpdateCheckStatus', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const appPath = join(testDir, '..', 'sidecars', 'monitor_pane', 'app.js');
+  const appSource = readFileSync(appPath, 'utf-8');
+
+  const iifeCloseIdx = appSource.lastIndexOf('})();');
+  assert.ok(iifeCloseIdx > 0, 'app.js must end with IIFE closing })();');
+
+  const instrumentedSource =
+    appSource.slice(0, iifeCloseIdx) +
+    `\n  globalThis.__tmV028Exports = {\n` +
+    `    state,\n` +
+    `    t,\n` +
+    `    showToast,\n` +
+    `    formatUpdateErrorMessage,\n` +
+    `    getCurrentAppVersion,\n` +
+    `    renderUpdateCheckStatus,\n` +
+    `  };\n` +
+    appSource.slice(iifeCloseIdx);
+
+  class FakeNode {
+    constructor() {
+      this.parentNode = null;
+      this.childNodes = [];
+    }
+  }
+
+  class FakeTextNode extends FakeNode {
+    constructor(text) {
+      super();
+      this.nodeType = 3;
+      this._text = String(text ?? '');
+    }
+    get textContent() {
+      return this._text;
+    }
+    set textContent(v) {
+      this._text = String(v ?? '');
+    }
+  }
+
+  class FakeElement extends FakeNode {
+    constructor(tagName, namespaceURI = 'http://www.w3.org/1999/xhtml') {
+      super();
+      this.nodeType = 1;
+      this.tagName = String(tagName || 'div').toUpperCase();
+      this.namespaceURI = namespaceURI;
+      this._classSet = new Set();
+      this.attributes = new Map();
+      this.listeners = new Map();
+      this.dataset = {};
+      this.title = '';
+      this.disabled = false;
+      this.style = {
+        cssText: '',
+        setProperty(name, val) {
+          this[name] = String(val);
+        },
+        getPropertyValue(name) {
+          return this[name] ?? '';
+        },
+      };
+      this.classList = {
+        add: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.add(part);
+            }
+          }
+        },
+        remove: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.delete(part);
+            }
+          }
+        },
+        contains: (tok) => this._classSet.has(String(tok || '')),
+      };
+    }
+
+    get className() {
+      return [...this._classSet].join(' ');
+    }
+    set className(val) {
+      this._classSet.clear();
+      for (const part of String(val || '').trim().split(/\s+/)) {
+        if (part) this._classSet.add(part);
+      }
+    }
+
+    get textContent() {
+      return this.childNodes.map((n) => n.textContent).join('');
+    }
+    set textContent(val) {
+      for (const c of this.childNodes) c.parentNode = null;
+      this.childNodes = [];
+      const str = val === null || val === undefined ? '' : String(val);
+      if (str !== '') {
+        const tn = new FakeTextNode(str);
+        tn.parentNode = this;
+        this.childNodes.push(tn);
+      }
+    }
+
+    setAttribute(name, val) {
+      this.attributes.set(String(name), String(val));
+    }
+    getAttribute(name) {
+      const k = String(name);
+      return this.attributes.has(k) ? this.attributes.get(k) : null;
+    }
+    removeAttribute(name) {
+      this.attributes.delete(String(name));
+    }
+    appendChild(child) {
+      child.parentNode = this;
+      this.childNodes.push(child);
+      return child;
+    }
+    remove() {
+      this.parentNode = null;
+    }
+  }
+
+  const elementsById = new Map();
+  const rootHtml = new FakeElement('html');
+  const rootBody = new FakeElement('body');
+  rootHtml.appendChild(rootBody);
+
+  const fakeDocument = {
+    readyState: 'loading',
+    hidden: false,
+    documentElement: rootHtml,
+    body: rootBody,
+    createElement: (tag) => new FakeElement(tag),
+    createElementNS: (ns, tag) => new FakeElement(tag, ns),
+    createTextNode: (text) => new FakeTextNode(text),
+    getElementById(id) {
+      const key = String(id);
+      if (!elementsById.has(key)) {
+        const elem = new FakeElement('div');
+        elem.setAttribute('id', key);
+        rootBody.appendChild(elem);
+        elementsById.set(key, elem);
+      }
+      return elementsById.get(key);
+    },
+    querySelectorAll: () => [],
+    addEventListener: () => {},
+  };
+
+  let nextTimerId = 1;
+  const scheduledTimeouts = [];
+  const pendingTimeouts = new Map();
+  const fakeSetTimeout = (fn, ms = 0) => {
+    const id = nextTimerId++;
+    const delay = Number(ms) || 0;
+    scheduledTimeouts.push(delay);
+    pendingTimeouts.set(id, { id, fn, ms: delay });
+    return id;
+  };
+  const fakeClearTimeout = (id) => {
+    pendingTimeouts.delete(id);
+  };
+  const flushTimeouts = (maxDelayMs = Infinity) => {
+    for (const [id, entry] of [...pendingTimeouts.entries()]) {
+      if (entry.ms <= maxDelayMs) {
+        pendingTimeouts.delete(id);
+        entry.fn();
+      }
+    }
+  };
+
+  const sandbox = {
+    Node: FakeNode,
+    document: fakeDocument,
+    window: {
+      addEventListener: () => {},
+      matchMedia: () => ({ matches: false }),
+      sidecar: { conversationId: 'conv-vm-v028' },
+      location: { reload: () => {} },
+    },
+    navigator: { clipboard: { writeText: async () => {} } },
+    MutationObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+    getComputedStyle: () => ({ color: 'rgb(246, 247, 249)' }),
+    AbortController,
+    fetch: async () => ({ ok: true, status: 200, json: async () => ({ ok: true }) }),
+    requestAnimationFrame: (cb) => fakeSetTimeout(cb, 16),
+    setTimeout: fakeSetTimeout,
+    clearTimeout: fakeClearTimeout,
+    setInterval: () => nextTimerId++,
+    clearInterval: () => {},
+    console,
+    URLSearchParams,
+    Intl,
+  };
+  sandbox.globalThis = sandbox;
+
+  vm.runInNewContext(instrumentedSource, sandbox);
+  const exports = sandbox.__tmV028Exports;
+  assert.ok(exports, 'VM execution must expose __tmV028Exports');
+
+  assert.equal(exports.getCurrentAppVersion(), '0.2.8');
+
+  // 1. formatUpdateErrorMessage in zh & en
+  exports.state.lang = 'zh';
+  assert.equal(
+    exports.formatUpdateErrorMessage('The operation was aborted due to timeout', 'timeout'),
+    exports.t('update.errTimeout'),
+  );
+  assert.equal(
+    exports.formatUpdateErrorMessage('Release check HTTP 403', 'rate_limit'),
+    exports.t('update.errRateLimit'),
+  );
+  assert.equal(
+    exports.formatUpdateErrorMessage('fetch failed', 'network'),
+    exports.t('update.errNetwork'),
+  );
+
+  exports.state.lang = 'en';
+  assert.equal(
+    exports.formatUpdateErrorMessage('The operation was aborted due to timeout', 'timeout'),
+    exports.t('update.errTimeout'),
+  );
+  assert.equal(
+    exports.formatUpdateErrorMessage('Release check HTTP 429', 'rate_limit'),
+    exports.t('update.errRateLimit'),
+  );
+  assert.equal(
+    exports.formatUpdateErrorMessage('connect ECONNREFUSED', ''),
+    exports.t('update.errNetwork'),
+  );
+
+  // 2. showToast tones, ARIA roles, and 4200ms vs 2600ms timeouts
+  const banner = fakeDocument.getElementById('toast-banner');
+
+  scheduledTimeouts.length = 0;
+  exports.showToast('Update check failed', 'error');
+  assert.equal(banner.className, 'toast-banner is-error');
+  assert.equal(banner.getAttribute('role'), 'alert');
+  assert.equal(banner.textContent, 'Update check failed');
+  assert.equal(scheduledTimeouts[scheduledTimeouts.length - 1], 4200);
+  flushTimeouts(2600);
+  assert.equal(banner.classList.contains('hidden'), false, 'error toast must stay visible at 2600ms');
+  flushTimeouts(4200);
+  assert.equal(banner.classList.contains('hidden'), true, 'error toast must hide at 4200ms');
+
+  scheduledTimeouts.length = 0;
+  exports.showToast('Sync warning', 'warn');
+  assert.equal(banner.className, 'toast-banner is-warn');
+  assert.equal(banner.getAttribute('role'), 'status');
+  assert.equal(scheduledTimeouts[scheduledTimeouts.length - 1], 4200);
+
+  scheduledTimeouts.length = 0;
+  exports.showToast('Saved');
+  assert.equal(banner.className, 'toast-banner');
+  assert.equal(banner.getAttribute('role'), 'status');
+  assert.equal(scheduledTimeouts[scheduledTimeouts.length - 1], 2600);
+
+  // 3. renderUpdateCheckStatus keeps is-offline error status even when lastCheckedAtMs is non-null
+  const statusEl = fakeDocument.getElementById('update-version-status');
+  exports.state.updateChecking = false;
+  exports.state.updateApplying = false;
+  exports.state.activeUpdateStatus = {
+    currentVersion: '0.2.8',
+    hasUpdate: false,
+    lastCheckedAtMs: Date.now() - 60_000,
+    error: 'The operation was aborted due to timeout',
+    errorCode: 'timeout',
+  };
+
+  exports.state.lang = 'en';
+  exports.renderUpdateCheckStatus();
+  assert.equal(statusEl.classList.contains('is-offline'), true);
+  assert.equal(statusEl.textContent, exports.t('settings.verCheckError', { cur: '0.2.8' }));
+  assert.equal(statusEl.title.includes(exports.t('update.errTimeout')), true);
+
+  exports.state.lang = 'zh';
+  exports.renderUpdateCheckStatus();
+  assert.equal(statusEl.classList.contains('is-offline'), true);
+  assert.equal(statusEl.textContent, exports.t('settings.verCheckError', { cur: '0.2.8' }));
+  assert.equal(statusEl.title.includes(exports.t('update.errTimeout')), true);
+
+  // Clearing error restores up-to-date state
+  exports.state.activeUpdateStatus.error = '';
+  exports.state.activeUpdateStatus.errorCode = '';
+  exports.renderUpdateCheckStatus();
+  assert.equal(statusEl.classList.contains('is-offline'), false);
+  assert.equal(statusEl.textContent, exports.t('settings.verUpToDate', { cur: '0.2.8' }));
+
+  pendingTimeouts.clear();
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-18 10:34:16
 // ============================================================================
