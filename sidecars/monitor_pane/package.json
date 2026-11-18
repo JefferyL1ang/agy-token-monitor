@@ -1,6 +1,6 @@
 {
   "name": "monitor_pane",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "type": "module",
-  "description": "Token & Context Monitor sidecar (v0.2.8 beta)"
+  "description": "Token & Context Monitor sidecar (v0.2.9 beta)"
 }

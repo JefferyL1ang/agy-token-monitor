@@ -393,8 +393,73 @@ Description: Add accessible release-notes preview & one-click hot-update dialog 
 <!-- ============================================================================
 [MODIFIED END] 2026-11-17 18:55:00
 ============================================================================ -->
+
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-18 11:39:00
+Description: Add accessible session checkout receipt preview & PNG export dialog (#receipt-modal) and load /receipt.js before /app.js.
+============================================================================ -->
+    <div
+      id="receipt-modal"
+      class="update-modal-backdrop receipt-modal-backdrop hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="receipt-modal-title"
+    >
+      <div class="update-modal-card receipt-modal-card">
+        <div class="update-modal-head">
+          <div class="update-modal-title-group">
+            <div class="update-modal-title-row">
+              <h2 id="receipt-modal-title" class="update-modal-title" data-i18n="receipt.modalTitle">会话结账票根</h2>
+            </div>
+            <div class="update-modal-date muted-hint" data-i18n="receipt.modalHint">可右键图片或使用下方按钮复制 / 保存</div>
+          </div>
+          <button
+            id="btn-receipt-close"
+            type="button"
+            class="update-close-btn"
+            aria-label="关闭票根预览"
+            title="关闭票根预览"
+            data-i18n-aria-label="receipt.closeTip"
+            data-i18n-title="receipt.closeTip"
+          >×</button>
+        </div>
+        <div class="receipt-toolbar">
+          <div
+            id="receipt-scope-group"
+            class="seg-toggle"
+            role="group"
+            aria-label="票根统计范围"
+            data-i18n-aria-label="receipt.scopeAria"
+          >
+            <button id="btn-receipt-scope-today" type="button" class="seg-btn active" data-i18n="receipt.scopeToday">今日收工</button>
+            <button id="btn-receipt-scope-all" type="button" class="seg-btn" data-i18n="receipt.scopeAll">全程累计</button>
+          </div>
+          <div
+            id="receipt-detail-group"
+            class="seg-toggle"
+            role="group"
+            aria-label="票根明细模式"
+            data-i18n-aria-label="receipt.detailAria"
+          >
+            <button id="btn-receipt-mode-compact" type="button" class="seg-btn active" data-i18n="receipt.modeCompact">精简</button>
+            <button id="btn-receipt-mode-full" type="button" class="seg-btn" data-i18n="receipt.modeFull">完整</button>
+          </div>
+        </div>
+        <div id="receipt-preview-wrap" class="receipt-preview-wrap">
+          <img id="receipt-preview-img" class="receipt-preview-img" alt="">
+        </div>
+        <div class="update-modal-footer">
+          <button id="btn-receipt-save" type="button" class="btn-secondary" data-i18n="receipt.saveBtn">↓ 保存 PNG</button>
+          <button id="btn-receipt-copy" type="button" class="btn-primary" data-i18n="receipt.copyBtn">复制小票图片</button>
+        </div>
+      </div>
+    </div>
   </div>
 
+  <script src="/receipt.js"></script>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-18 11:39:00
+============================================================================ -->
   <script src="/app.js"></script>
 </body>
 </html>

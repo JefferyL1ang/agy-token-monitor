@@ -16,9 +16,13 @@
 - **Context Window Monitor & One-Click `/compact`**:
   - Shows current context usage (`input + cache read`) with configurable alert and max window thresholds.
   - Includes a **`⚡ Compact`** button in the Context card header that copies `/compact` to the clipboard so you can compress long conversations at the right time.
-- **Session Cost, Total Tokens & Subscription ROI**:
+- **Session Cost, Total Tokens, Checkout Receipt & Subscription ROI**:
   - Breaks down uncached input, cache read, output tokens, and total token consumption per session. Main conversations let you toggle between **With Subagents** and **Main Only**; when inspecting an individual subagent or swarm worker directly, Equivalent Cost stays isolated to that worker's own steps (**Subagent Only**) without pulling in parent or sibling usage, and model breakdown tables support clickable **Total** and **Cost** column sorting.
+  - Includes a one-click **`🧾 Checkout`** button on the Equivalent Cost card that renders a high-DPI thermal-style **Session Receipt** (`PNG`) via `receipt.js` for instant clipboard copy or file download — complete with **Today / All-Time** scope and **Compact / Full** itemization switches, merged active session duration, primary model, subagent & compaction counts, and adaptive **EN / ZH** language and **USD / CNY** currency formatting.
   - Automatically detects your monthly plan from models used over the past 14 days (`Jio AI Pro`, `Google AI Pro`, `Ultra 5x`, `Ultra 20x`, or manual `Free` / custom fee) and compares API equivalent cost across `USD` and `CNY`.
+- **Subagent & Swarm Activity Tracking (Top-5 Active Folding)**:
+  - Prioritizes active workers (`Generating` and `Tools` first, then most recently updated) and folds large subagent or swarm rosters to the **Top 5** most recently active entries by default, with one-click expansion into a **`400px` scrollable** list that preserves scroll position across live updates.
+  - Displays each worker's relative last-active time alongside an **`● Ended`** badge for terminated subagents and killed swarm workers.
 - **Daily Official Model & Pricing Sync**:
   - Syncs model lists, token pricing, and `USD / CNY` exchange rates once per day when opened (`ai.google.dev`, `models.dev`, and ECB reference FX rates), caching results locally with a `↻ Sync Now` button and offline fallback.
   - Custom per-model price edits (`*`) and manual FX rate locks always take priority over auto-synced defaults, and clicking any row in the rate table loads that model for quick editing.
@@ -41,7 +45,7 @@
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.2.8.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.2.9.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -86,6 +90,7 @@ agy-token-monitor/
 │       ├── main.mjs                   # Sidecar HTTP server & file watcher
 │       ├── index.html                 # Panel HTML
 │       ├── styles.css                 # Theme-adaptive styles
+│       ├── receipt.js                 # High-DPI Canvas session receipt renderer
 │       └── app.js                     # Frontend UI logic
 └── tests/
     └── parser.test.mjs                # Unit & standalone API tests
@@ -119,9 +124,13 @@ node --test tests/parser.test.mjs
 - **上下文占用监控与一键 `/compact`**：
   - 直观显示当前对话上下文占用、缓存命中率及上下文增长最快的 Top 5 步骤。
   - 卡片右上角提供 **`⚡ 压缩 /compact`** 按钮，点击即可复制 `/compact` 命令，方便在上下文接近上限时快速压缩。
-- **会话费用、总 Token 消耗与订阅对比**：
+- **会话费用、总 Token 消耗、一键收工票根与订阅对比**：
   - 统计单次会话的未缓存输入、缓存读取、累计输出与**总 Token 消耗**：主对话可在「含子代理」与「仅主对话」间切换，直接查看单个子代理或 Swarm Worker 时会自动切换为「子代理独立计费」，仅统计该节点自身用量而不混入主对话或兄弟节点；模型用量明细表支持点击 **总计** 和 **费用** 列头升降序排列。
+  - 等效花费卡片提供一键 **`🧾 结账`** 按钮，基于 `receipt.js` 渲染高清账单式**收工票根（`PNG`）**并支持一键复制图片或保存本地；内置 **今日收工 / 全程累计** 统计范围与 **精简 / 完整** 明细模式切换，自动汇总有效会话时长、主力模型、子代理数、压缩次数及分项费用，并随当前界面自适应 **中 / 英** 文案与 **USD / CNY** 币种。
   - 支持 `USD` / `CNY` 折算，基于近 14 天实际使用的模型自动识别订阅方案（`Jio AI Pro`、`Google AI Pro`、`Ultra 5x`、`Ultra 20x`），也支持手动选择 `Free` 或自定义月费进行回本对比。
+- **子代理与 Swarm 动态排序及 Top-5 折叠**：
+  - 按活跃优先级（生成中、工具调用中优先，其次按最近更新时间倒序）排列子代理与 Swarm Worker；超过 5 个节点时默认折叠展示最近活跃的 **Top 5**，支持一键展开为 **`400px` 可滚动列表**并在实时刷新时保持滚动位置。
+  - 每行显示节点相对活跃时间，并对已终止的子代理及已销毁（killed）的 Swarm Worker 明确标注 **`● 已结束`** 状态徽章。
 - **每日同步官方模型、价格与汇率**：
   - 每天首次打开面板时自动同步现役模型单价与实时 `USD / CNY` 汇率（`ai.google.dev`、`models.dev` 及欧洲央行参考汇率），支持离线缓存回退与 **`↻ 立即同步`** 按钮。
   - 手动修改过的模型单价（带 `*` 标记）与手动固定汇率始终优先于自动同步值；展开下方费率表后可直接点击任意模型行切换编辑。
@@ -144,7 +153,7 @@ node --test tests/parser.test.mjs
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.8.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.2.9.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 
@@ -189,6 +198,7 @@ agy-token-monitor/
 │       ├── main.mjs                   # Sidecar HTTP 服务与文件监听
 │       ├── index.html                 # 面板页面结构
 │       ├── styles.css                 # 自适应主题样式
+│       ├── receipt.js                 # 高清会话结账收工票根渲染模块
 │       └── app.js                     # 前端交互逻辑
 └── tests/
     └── parser.test.mjs                # 单元测试与独立接口测试

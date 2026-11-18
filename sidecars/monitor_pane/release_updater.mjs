@@ -715,14 +715,14 @@ function persistUpdateCache(stateDir, cachePath, cache) {
  */
 export function createReleaseUpdater(options = {}) {
 // ============================================================================
-// [MODIFIED BEGIN] 2026-11-18 10:23:31
-// Description: Update default initialVersion fallback to 0.2.8, accept fallback
+// [MODIFIED BEGIN] 2026-11-18 11:42:30
+// Description: Update default initialVersion fallback to 0.2.9, accept fallback
 // channel URLs, and compute backward-compatible enableFallbackChannels flag.
 // ============================================================================
   const {
     stateDir = '',
     pluginRoot = '',
-    currentVersion: initialVersion = '0.2.8',
+    currentVersion: initialVersion = '0.2.9',
     fetchImpl = globalThis.fetch,
     nowFn = Date.now,
     releaseApiUrl = process.env.RELEASE_UPDATE_API_URL || DEFAULT_RELEASE_API_URL,
@@ -749,9 +749,9 @@ export function createReleaseUpdater(options = {}) {
     .filter(Boolean);
 
   let currentVersion =
-    typeof initialVersion === 'string' && initialVersion.trim() ? initialVersion.trim() : '0.2.8';
+    typeof initialVersion === 'string' && initialVersion.trim() ? initialVersion.trim() : '0.2.9';
 // ============================================================================
-// [MODIFIED END] 2026-11-18 10:23:31
+// [MODIFIED END] 2026-11-18 11:42:30
 // ============================================================================
   const effectiveAllowLoopback = Boolean(
     allowLoopbackDownload || isLoopbackUrlPrefix(releaseApiUrl),

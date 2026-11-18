@@ -809,6 +809,55 @@ Description: Lock Tab 1 card headers, conversation strip, hero value row, and su
   font-weight: 600;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-18 11:39:30
+Description: Add Zero-CLS .hero-value-row.has-action layout and pill-styled .checkout-btn for session receipt trigger in Equivalent Cost card.
+============================================================================ */
+.hero-value-row.has-action {
+  align-items: center;
+  justify-content: space-between;
+  min-height: 29px;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.hero-value-row.has-action .hero-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkout-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  border: 1px solid color-mix(in srgb, var(--tm-cyan) 36%, var(--tm-border));
+  background: color-mix(in srgb, var(--tm-cyan) 10%, var(--tm-card));
+  color: var(--tm-cyan);
+  font-family: var(--tm-sans);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.checkout-btn:hover {
+  background: color-mix(in srgb, var(--tm-cyan) 18%, var(--tm-card));
+  border-color: color-mix(in srgb, var(--tm-cyan) 56%, var(--tm-border));
+}
+
+.checkout-btn:active {
+  transform: scale(0.97);
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-18 11:39:30
+============================================================================ */
+
 .sub-stats {
   display: flex;
   flex-wrap: wrap;
@@ -1406,6 +1455,78 @@ Description: Upgrade cache hit/miss segment transitions to 320ms cubic-bezier ea
   align-items: center;
   gap: 5px;
 }
+
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-18 11:39:30
+Description: Add Top-5 active subagent/swarm folding header, 400px scrollable expanded container, dashed toggle footer, relative time, and Ended status styles.
+============================================================================ */
+.children-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.children-head .section-subhead {
+  margin-bottom: 0;
+}
+
+.children-list.is-expanded {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
+  overscroll-behavior: contain;
+}
+
+.children-toggle-bar {
+  margin-top: 6px;
+  width: 100%;
+  padding: 5px 10px;
+  border-radius: var(--r-md);
+  border: 1px dashed var(--tm-border);
+  background: var(--tm-subtle);
+  color: var(--tm-muted-fg);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+
+.children-toggle-bar:hover {
+  color: var(--tm-cyan);
+  border-color: color-mix(in srgb, var(--tm-cyan) 42%, var(--tm-border));
+  background: var(--tm-hover);
+}
+
+.child-top-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.child-rel-time {
+  font-size: 10.5px;
+  color: var(--tm-muted-fg);
+}
+
+.child-status.ENDED {
+  color: var(--tm-muted-fg);
+}
+
+.child-row.is-ended {
+  opacity: 0.86;
+  transition: opacity 0.15s ease;
+}
+
+.child-row.is-ended:hover {
+  opacity: 1;
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-18 11:39:30
+============================================================================ */
 
 .table-scroll {
   width: 100%;
@@ -2652,6 +2773,66 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 18:55:45
+============================================================================ */
+
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-18 11:39:30
+Description: Add #receipt-modal toolbar, scrollable thermal-receipt preview container, and responsive Aux Pane footer layout sharing .update-modal-* design tokens.
+============================================================================ */
+.receipt-modal-card {
+  max-width: 440px;
+  max-height: min(88vh, 680px);
+}
+
+.receipt-toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--tm-border);
+  background: color-mix(in srgb, var(--tm-subtle) 45%, var(--tm-card));
+}
+
+.receipt-preview-wrap {
+  flex: 1 1 auto;
+  min-height: 160px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: var(--tm-bg);
+}
+
+.receipt-preview-img {
+  display: block;
+  width: 100%;
+  max-width: 380px;
+  height: auto;
+  border-radius: var(--r-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  user-select: auto;
+}
+
+@media (max-width: 360px) {
+  .receipt-toolbar,
+  .receipt-preview-wrap {
+    padding-left: 11px;
+    padding-right: 11px;
+  }
+
+  .receipt-modal-card .update-modal-footer .btn-secondary,
+  .receipt-modal-card .update-modal-footer .btn-primary {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-18 11:39:30
 ============================================================================ */
 
 /* ============================================================================

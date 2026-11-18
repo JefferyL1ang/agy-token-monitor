@@ -1629,14 +1629,23 @@ export function parseTranscript(convId, paths) {
 
     if (type === 'PLANNER_RESPONSE') {
       let toolCalls = Array.isArray(raw.tool_calls) ? raw.tool_calls : [];
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Load full tool_calls from transcript_full.jsonl for truncated
+// manage_subagents steps alongside invoke_subagent so kill actions are preserved.
+// ============================================================================
       const hasSubagentCall = toolCalls.some((tc) => tc?.name === 'invoke_subagent');
-      if (hasSubagentCall && trunc.includes('tool_calls')) {
+      const hasManageSubagentsCall = toolCalls.some((tc) => tc?.name === 'manage_subagents');
+      if ((hasSubagentCall || hasManageSubagentsCall) && trunc.includes('tool_calls')) {
         const fullStep = loadFullStep(i, stepIndex);
         if (fullStep && Array.isArray(fullStep.tool_calls)) {
           toolCalls = fullStep.tool_calls;
         }
       }
       lastPlannerHadSubagent = hasSubagentCall;
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-16 22:04:00
@@ -2619,14 +2628,26 @@ export function computeContext(parsed, prefs = DEFAULT_PREFS) {
 // ============================================================================
   const tokenIndices = [];
   let lastCompactionIdx = -1;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Count own completed COMPACTION_SUMMARY steps as compactionsCount
+// and expose compactionsCount on both return paths of computeContext().
+// ============================================================================
+  let compactionsCount = 0;
   for (let i = 0; i < steps.length; i++) {
     if (steps[i].type === 'PLANNER_RESPONSE' && steps[i].hasTokenTelemetry) {
       tokenIndices.push(i);
     }
     if (steps[i].type === 'COMPACTION_SUMMARY' && steps[i].status === 'DONE') {
       lastCompactionIdx = i;
+      if (!steps[i].isClonedFromParent) {
+        compactionsCount += 1;
+      }
     }
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
 
   if (tokenIndices.length === 0) {
     return {
@@ -2645,6 +2666,14 @@ export function computeContext(parsed, prefs = DEFAULT_PREFS) {
       compactedPendingTurn: false,
       compactedPreTotal: 0,
       compactionSummaryTokens: 0,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Include compactionsCount on empty-telemetry context return.
+// ============================================================================
+      compactionsCount,
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
     };
   }
 
@@ -2732,6 +2761,14 @@ export function computeContext(parsed, prefs = DEFAULT_PREFS) {
     compactionSummaryTokens,
 // ============================================================================
 // [MODIFIED END] 2026-11-17 16:09:30
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Expose compactionsCount on normal computeContext() return.
+// ============================================================================
+    compactionsCount,
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
 // ============================================================================
   };
 }
@@ -2922,71 +2959,164 @@ function parseSubagentSpecsFromCall(tc) {
   return [args];
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Track subagent spawnOrder, invokedAtMs, and manage_subagents
+// kill/kill_all actions; expose Swarm phase/desired_state KILLED & lastSeq;
+// add computeChildUpdatedAtMs() and sortChildrenByActivity().
+// ============================================================================
+function parseManageSubagentsTargetIds(rawIds) {
+  if (Array.isArray(rawIds)) {
+    return rawIds
+      .map((item) => unquote(item).trim().toLowerCase())
+      .filter(Boolean);
+  }
+  if (typeof rawIds === 'string' && rawIds.trim()) {
+    const trimmed = rawIds.trim();
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((item) => unquote(item).trim().toLowerCase())
+          .filter(Boolean);
+      }
+      if (typeof parsed === 'string' && parsed.trim()) {
+        return [parsed.trim().toLowerCase()];
+      }
+    } catch {
+      // Fallback to whitespace/comma splitting when rawIds is not JSON.
+    }
+    return trimmed
+      .split(/[\s,]+/)
+      .map((item) => unquote(item).trim().toLowerCase())
+      .filter(Boolean);
+  }
+  return [];
+}
+
 function extractSubagentCallDescriptors(parsed, modelByStepIdx) {
   const steps = parsed?.steps || [];
   const out = [];
+  const spawnedEntries = [];
+  const explicitlyKilledIds = new Set();
+  let nextSpawnOrder = 0;
 
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     if (step.type !== 'PLANNER_RESPONSE') continue;
     const calls = Array.isArray(step.tool_calls) ? step.tool_calls : [];
     const subIndices = [];
+    const manageCalls = [];
     for (let c = 0; c < calls.length; c++) {
       if (calls[c]?.name === 'invoke_subagent') subIndices.push(c);
-    }
-    if (subIndices.length === 0) continue;
-
-    const generics = [];
-    for (let j = i + 1; j < steps.length; j++) {
-      if (steps[j].type === 'PLANNER_RESPONSE' || steps[j].type === 'USER_INPUT') break;
-      if (steps[j].type === 'GENERIC') generics.push(steps[j]);
+      else if (calls[c]?.name === 'manage_subagents') manageCalls.push(calls[c]);
     }
 
-    const parentModel = modelByStepIdx.get(step.step_index) || 'Auto';
-    for (const callIdx of subIndices) {
-      const tc = calls[callIdx];
-      const specs = parseSubagentSpecsFromCall(tc);
-      const summaryLabel = unquote(tc.args?.toolSummary || tc.args?.toolAction || '').replace(
-        /^Spawn\s+/i,
-        '',
-      );
-
-      const targetGenerics = generics[callIdx] !== undefined ? [generics[callIdx]] : generics;
-      const foundIds = [];
-      for (const g of targetGenerics) {
-        for (const id of g.uuids || []) {
-          if (!foundIds.includes(id)) foundIds.push(id);
-        }
+    if (subIndices.length > 0) {
+      const generics = [];
+      for (let j = i + 1; j < steps.length; j++) {
+        if (steps[j].type === 'PLANNER_RESPONSE' || steps[j].type === 'USER_INPUT') break;
+        if (steps[j].type === 'GENERIC') generics.push(steps[j]);
       }
-      if (foundIds.length === 0 && subIndices.length === 1 && targetGenerics !== generics) {
-        for (const g of generics) {
+
+      const rawInvokedMs = step.completedAtMs ?? step.createdAtMs ?? null;
+      const invokedAtMs =
+        Number.isFinite(rawInvokedMs) &&
+        rawInvokedMs >= MIN_VALID_TS_MS &&
+        rawInvokedMs <= MAX_VALID_TS_MS
+          ? rawInvokedMs
+          : null;
+      const parentModel = modelByStepIdx.get(step.step_index) || 'Auto';
+
+      for (const callIdx of subIndices) {
+        const tc = calls[callIdx];
+        const specs = parseSubagentSpecsFromCall(tc);
+        const summaryLabel = unquote(tc.args?.toolSummary || tc.args?.toolAction || '').replace(
+          /^Spawn\s+/i,
+          '',
+        );
+
+        const targetGenerics = generics[callIdx] !== undefined ? [generics[callIdx]] : generics;
+        const foundIds = [];
+        for (const g of targetGenerics) {
           for (const id of g.uuids || []) {
             if (!foundIds.includes(id)) foundIds.push(id);
           }
         }
-      }
+        if (foundIds.length === 0 && subIndices.length === 1 && targetGenerics !== generics) {
+          for (const g of generics) {
+            for (const id of g.uuids || []) {
+              if (!foundIds.includes(id)) foundIds.push(id);
+            }
+          }
+        }
 
-      foundIds.forEach((childId, idx) => {
-        const spec = specs[idx] || specs[0] || {};
-        const rawModel = unquote(spec.Model || spec.model || '');
-        const resolvedModel =
-          !rawModel || rawModel.toLowerCase() === 'inherit'
-            ? parentModel
-            : normalizeModelId(rawModel);
-        const rawName = unquote(spec.Name || spec.SubagentName || spec.Type || spec.name || '');
-        const rawRole = unquote(spec.Role || spec.role || spec.Type || '');
-        out.push({
-          conversationId: childId,
-          kind: 'subagent',
-          name: rawName || summaryLabel || childId.slice(0, 8),
-          role: rawRole || 'subagent',
-          defaultModel: resolvedModel,
+        foundIds.forEach((childId, idx) => {
+          const spec = specs[idx] || specs[0] || {};
+          const rawModel = unquote(spec.Model || spec.model || '');
+          const resolvedModel =
+            !rawModel || rawModel.toLowerCase() === 'inherit'
+              ? parentModel
+              : normalizeModelId(rawModel);
+          const rawName = unquote(spec.Name || spec.SubagentName || spec.Type || spec.name || '');
+          const rawRole = unquote(spec.Role || spec.role || spec.Type || '');
+          const desc = {
+            conversationId: childId,
+            kind: 'subagent',
+            name: rawName || summaryLabel || childId.slice(0, 8),
+            role: rawRole || 'subagent',
+            defaultModel: resolvedModel,
+            killed: false,
+            spawnOrder: nextSpawnOrder++,
+            invokedAtMs,
+          };
+          out.push(desc);
+          spawnedEntries.push({ desc, stepIdx: i });
         });
-      });
+      }
+    }
+
+    for (const tc of manageCalls) {
+      const args = tc?.args && typeof tc.args === 'object' ? tc.args : {};
+      const action = unquote(args.Action ?? args.action ?? '').trim().toLowerCase();
+      if (action === 'kill') {
+        const targetIds = parseManageSubagentsTargetIds(
+          args.ConversationIds ?? args.conversationIds,
+        );
+        for (const tid of targetIds) {
+          explicitlyKilledIds.add(tid);
+        }
+        if (targetIds.length > 0) {
+          const targetSet = new Set(targetIds);
+          for (const entry of spawnedEntries) {
+            if (targetSet.has(entry.desc.conversationId.toLowerCase())) {
+              entry.desc.killed = true;
+            }
+          }
+        }
+      } else if (action === 'kill_all') {
+        for (const entry of spawnedEntries) {
+          if (entry.stepIdx < i) {
+            entry.desc.killed = true;
+          }
+        }
+      }
     }
   }
+
+  if (explicitlyKilledIds.size > 0) {
+    for (const desc of out) {
+      if (explicitlyKilledIds.has(desc.conversationId.toLowerCase())) {
+        desc.killed = true;
+      }
+    }
+  }
+
   return out;
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
 
 /**
  * Discovers subagents and swarm members for a conversation, avoiding cycles.
@@ -3018,21 +3148,135 @@ export function resolveChildrenAndSwarm(convId, parsed, modelByStepIdx, appDataD
       const key = mId.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Detect killed Swarm workers via member.killed, phase === 'KILLED',
+// or desired_state === 'KILLED', and capture lastSeq and spawnOrder.
+// ============================================================================
+      const phaseStr = String(member?.phase || '').toUpperCase();
+      const desiredStr = String(member?.desired_state || '').toUpperCase();
       directDescriptors.push({
         conversationId: mId,
         kind: 'swarm',
         name: memberName,
-        role: typeof member.role === 'string' && member.role ? member.role : 'worker',
+        role: typeof member?.role === 'string' && member.role ? member.role : 'worker',
         defaultModel: normalizeModelId(
-          member.model || member.applied_model || member.desired_model || 'Auto',
+          member?.model || member?.applied_model || member?.desired_model || 'Auto',
         ),
-        killed: Boolean(member.killed),
+        killed: Boolean(member?.killed || phaseStr === 'KILLED' || desiredStr === 'KILLED'),
+        lastSeq: Math.max(
+          Number(member?.last_read_seq) || 0,
+          Number(member?.last_nudged_seq) || 0,
+          Number(member?.wait_since) || 0,
+        ),
+        spawnOrder: directDescriptors.length,
+        invokedAtMs: null,
       });
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
     }
   }
 
   return { swarmInfo, directDescriptors };
 }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Compute child last-activity timestamp from own non-cloned steps,
+// live generatingSinceMs, statMtimeMs, and parent invocation fallback, and sort
+// children by live execution tier then most-recent activity.
+// ============================================================================
+function findLastClonedStepIdx(steps) {
+  let lastCloned = -1;
+  for (let i = 0; i < steps.length; i++) {
+    if (steps[i]?.isClonedFromParent) {
+      lastCloned = i;
+    }
+  }
+  return lastCloned;
+}
+
+function computeChildUpdatedAtMs(childParsed, childLive, isKilled, fallbackMs = null) {
+  const childSteps = childParsed?.steps || [];
+  const lastClonedIdx = findLastClonedStepIdx(childSteps);
+  let maxOwnStepMs = 0;
+  for (let i = 0; i < childSteps.length; i++) {
+    const s = childSteps[i];
+    if (!s || s.isClonedFromParent || i <= lastClonedIdx) continue;
+    const candidates = [
+      s.completedAtMs,
+      s.genericCompletedAtMs,
+      s.genericCreatedAtMs,
+      s.createdAtMs,
+    ];
+    for (const ts of candidates) {
+      if (Number.isFinite(ts) && ts >= MIN_VALID_TS_MS && ts <= MAX_VALID_TS_MS && ts > maxOwnStepMs) {
+        maxOwnStepMs = ts;
+      }
+    }
+  }
+
+  const statMs =
+    Number.isFinite(childParsed?.statMtimeMs) &&
+    childParsed.statMtimeMs >= MIN_VALID_TS_MS &&
+    childParsed.statMtimeMs <= MAX_VALID_TS_MS
+      ? childParsed.statMtimeMs
+      : 0;
+  const genMs =
+    !isKilled &&
+    Number.isFinite(childLive?.generatingSinceMs) &&
+    childLive.generatingSinceMs >= MIN_VALID_TS_MS &&
+    childLive.generatingSinceMs <= MAX_VALID_TS_MS
+      ? childLive.generatingSinceMs
+      : 0;
+
+  if (!isKilled && (childLive?.status === 'GENERATING' || childLive?.status === 'RUNNING_TOOLS')) {
+    return Math.max(maxOwnStepMs, genMs, statMs) || null;
+  }
+  if (maxOwnStepMs > 0) return maxOwnStepMs;
+  if (statMs > 0) return statMs;
+  return Number.isFinite(fallbackMs) &&
+    fallbackMs >= MIN_VALID_TS_MS &&
+    fallbackMs <= MAX_VALID_TS_MS
+    ? fallbackMs
+    : null;
+}
+
+function getChildActivityTierRank(ch) {
+  if (!ch?.killed && ch?.status === 'GENERATING') return 0;
+  if (!ch?.killed && ch?.status === 'RUNNING_TOOLS') return 1;
+  return 2;
+}
+
+/**
+ * Sorts child subagent/swarm entries by live activity tier first, then most recent activity.
+ */
+export function sortChildrenByActivity(list) {
+  if (!Array.isArray(list)) return [];
+  const target = Object.isFrozen(list) ? [...list] : list;
+  return target.sort((a, b) => {
+    const tierDiff = getChildActivityTierRank(a) - getChildActivityTierRank(b);
+    if (tierDiff !== 0) return tierDiff;
+
+    const updDiff = (Number(b?.updatedAtMs) || 0) - (Number(a?.updatedAtMs) || 0);
+    if (updDiff !== 0) return updDiff;
+
+    const seqDiff = (Number(b?._lastSeq) || 0) - (Number(a?._lastSeq) || 0);
+    if (seqDiff !== 0) return seqDiff;
+
+    const spawnDiff = (Number(b?._spawnOrder) || 0) - (Number(a?._spawnOrder) || 0);
+    if (spawnDiff !== 0) return spawnDiff;
+
+    const nameCmp = String(a?.name || '').localeCompare(String(b?.name || ''));
+    if (nameCmp !== 0) return nameCmp;
+
+    return String(a?.conversationId || '').localeCompare(String(b?.conversationId || ''));
+  });
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
 
 /**
  * Metadata store backed primarily by local `conversation_summaries.db` (read-only),
@@ -3284,6 +3528,320 @@ function findSubagentParentHint(convId, appDataDirs, visited = new Set()) {
 // [MODIFIED END] 2026-11-17 21:28:27
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Add computeMergedActiveDurationMs() and receipt accumulation/
+// finalization helpers for Today and All-Time session checkout receipts.
+// ============================================================================
+/**
+ * Merges overlapping or nearby timestamp intervals (gap <= maxGapMs) into total active ms.
+ */
+export function computeMergedActiveDurationMs(intervals, maxGapMs = 30 * 60 * 1000) {
+  if (!Array.isArray(intervals) || intervals.length === 0) return 0;
+  const gapLimit =
+    Number.isFinite(Number(maxGapMs)) && Number(maxGapMs) >= 0
+      ? Number(maxGapMs)
+      : 30 * 60 * 1000;
+  const valid = [];
+  for (const item of intervals) {
+    const rawStart = Array.isArray(item) ? item[0] : item?.start;
+    const rawEnd = Array.isArray(item) ? item[1] : item?.end;
+    const s = Number(rawStart);
+    if (!Number.isFinite(s) || s < MIN_VALID_TS_MS || s > MAX_VALID_TS_MS) continue;
+    const rawE = Number(rawEnd);
+    const e = Number.isFinite(rawE) && rawE >= s && rawE <= MAX_VALID_TS_MS ? rawE : s;
+    valid.push([s, e]);
+  }
+  if (valid.length === 0) return 0;
+
+  valid.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+  let totalMs = 0;
+  let curS = valid[0][0];
+  let curE = valid[0][1];
+  for (let i = 1; i < valid.length; i++) {
+    const [s, e] = valid[i];
+    if (s - curE <= gapLimit) {
+      if (e > curE) curE = e;
+    } else {
+      totalMs += curE - curS;
+      curS = s;
+      curE = e;
+    }
+  }
+  totalMs += curE - curS;
+  return Math.max(0, totalMs);
+}
+
+function createReceiptScopeState() {
+  return {
+    seenBotIds: new Set(),
+    intervals: [],
+    compactionsCount: 0,
+    main: emptyBucket(),
+    childrenById: new Map(), // convIdLower -> { meta, bucket }
+    byModelMap: new Map(),
+  };
+}
+
+function addStepIntoReceiptState(state, step, model, pricing, stepCost, childMeta) {
+  if (step.botId) {
+    if (state.seenBotIds.has(step.botId)) return;
+    state.seenBotIds.add(step.botId);
+  }
+
+  let targetBucket = state.main;
+  if (childMeta) {
+    const childKey = childMeta.conversationId.toLowerCase();
+    let childEntry = state.childrenById.get(childKey);
+    if (!childEntry) {
+      childEntry = {
+        meta: {
+          conversationId: childMeta.conversationId,
+          kind: childMeta.kind,
+          name: childMeta.name,
+          role: childMeta.role,
+          model: childMeta.model,
+        },
+        bucket: emptyBucket(),
+      };
+      state.childrenById.set(childKey, childEntry);
+    }
+    targetBucket = childEntry.bucket;
+  }
+
+  const inTok = Number(step.input_tokens) || 0;
+  const cacheTok = Number(step.cache_read_tokens) || 0;
+  const outTok = Number(step.output_tokens) || 0;
+
+  targetBucket.stepsCount += 1;
+  targetBucket.inputUncachedTokens += inTok;
+  targetBucket.cacheReadTokens += cacheTok;
+  targetBucket.outputTokens += outTok;
+  targetBucket.costActual += stepCost.costActual;
+  targetBucket.costUncachedBaseline += stepCost.costUncachedBaseline;
+  targetBucket.costSavedByCache += stepCost.costSavedByCache;
+
+  let modelEntry = state.byModelMap.get(model);
+  if (!modelEntry) {
+    modelEntry = {
+      model,
+      profileId: pricing.profileId,
+      profileLabel: pricing.profileLabel,
+      totalTokens: 0,
+      costActual: 0,
+    };
+    state.byModelMap.set(model, modelEntry);
+  }
+  modelEntry.totalTokens += inTok + cacheTok + outTok;
+  modelEntry.costActual += stepCost.costActual;
+}
+
+function addBucketInto(dst, src) {
+  dst.stepsCount += src.stepsCount || 0;
+  dst.inputUncachedTokens += src.inputUncachedTokens || 0;
+  dst.cacheReadTokens += src.cacheReadTokens || 0;
+  dst.outputTokens += src.outputTokens || 0;
+  dst.costActual += src.costActual || 0;
+  dst.costUncachedBaseline += src.costUncachedBaseline || 0;
+  dst.costSavedByCache += src.costSavedByCache || 0;
+}
+
+function accumulateReceiptConversation(
+  convParsed,
+  convModelMap,
+  prefs,
+  todayDate,
+  todayStartMs,
+  todayEndMs,
+  allState,
+  todayState,
+  childMeta = null,
+) {
+  const steps = convParsed?.steps || [];
+  if (steps.length === 0) return;
+
+  const lastClonedIdx = findLastClonedStepIdx(steps);
+  const fallbackConvMs =
+    Number.isFinite(convParsed?.statMtimeMs) &&
+    convParsed.statMtimeMs >= MIN_VALID_TS_MS &&
+    convParsed.statMtimeMs <= MAX_VALID_TS_MS
+      ? convParsed.statMtimeMs
+      : null;
+
+  let hasAnyDatedBillable = false;
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i];
+    if (!s || s.isClonedFromParent || i <= lastClonedIdx) continue;
+    if (
+      isBillableTokenStep(s) &&
+      Number.isFinite(s.createdAtMs) &&
+      s.createdAtMs >= MIN_VALID_TS_MS &&
+      s.createdAtMs <= MAX_VALID_TS_MS
+    ) {
+      hasAnyDatedBillable = true;
+      break;
+    }
+  }
+
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    if (!step || step.isClonedFromParent || i <= lastClonedIdx) continue;
+
+    const rawStart = step.createdAtMs ?? step.genericCreatedAtMs ?? null;
+    if (
+      Number.isFinite(rawStart) &&
+      rawStart >= MIN_VALID_TS_MS &&
+      rawStart <= MAX_VALID_TS_MS
+    ) {
+      const tStart = rawStart;
+      const tEndCandidate =
+        step.completedAtMs ?? step.genericCompletedAtMs ?? step.genericCreatedAtMs ?? tStart;
+      const tEnd =
+        Number.isFinite(tEndCandidate) &&
+        tEndCandidate >= tStart &&
+        tEndCandidate <= MAX_VALID_TS_MS
+          ? tEndCandidate
+          : tStart;
+
+      allState.intervals.push([tStart, tEnd]);
+
+      const startIsToday = formatLocalDate(tStart) === todayDate;
+      const endIsToday = tEnd !== tStart ? formatLocalDate(tEnd) === todayDate : startIsToday;
+      if (startIsToday) {
+        const clampedEnd = Math.min(tEnd, todayEndMs);
+        todayState.intervals.push([tStart, Math.max(tStart, clampedEnd)]);
+      } else if (endIsToday) {
+        const clampedStart = Math.max(tStart, todayStartMs);
+        todayState.intervals.push([clampedStart, Math.max(clampedStart, tEnd)]);
+      }
+    }
+
+    if (!childMeta && step.type === 'COMPACTION_SUMMARY' && step.status === 'DONE') {
+      allState.compactionsCount += 1;
+      const compMs =
+        Number.isFinite(step.createdAtMs) &&
+        step.createdAtMs >= MIN_VALID_TS_MS &&
+        step.createdAtMs <= MAX_VALID_TS_MS
+          ? step.createdAtMs
+          : !hasAnyDatedBillable
+            ? fallbackConvMs
+            : null;
+      if (compMs !== null && formatLocalDate(compMs) === todayDate) {
+        todayState.compactionsCount += 1;
+      }
+    }
+
+    if (!isBillableTokenStep(step)) continue;
+
+    const model = normalizeModelId(step.dbModel || convModelMap?.get?.(step.step_index) || 'Auto');
+    const pricing = resolveModelPricing(model, prefs);
+    const stepCost = computeStepCost(step, prefs, model);
+    const stepMs =
+      Number.isFinite(step.createdAtMs) &&
+      step.createdAtMs >= MIN_VALID_TS_MS &&
+      step.createdAtMs <= MAX_VALID_TS_MS
+        ? step.createdAtMs
+        : !hasAnyDatedBillable
+          ? fallbackConvMs
+          : null;
+    const isTodayStep = stepMs !== null && formatLocalDate(stepMs) === todayDate;
+
+    addStepIntoReceiptState(allState, step, model, pricing, stepCost, childMeta);
+    if (isTodayStep) {
+      addStepIntoReceiptState(todayState, step, model, pricing, stepCost, childMeta);
+    }
+  }
+}
+
+function finalizeReceiptScope(scope, state, todayDate, activeModel, effectivePrefs, totalChildrenCount) {
+  let startedAtMs = null;
+  let endedAtMs = null;
+  for (let i = 0; i < state.intervals.length; i++) {
+    const [s, e] = state.intervals[i];
+    if (startedAtMs === null || s < startedAtMs) startedAtMs = s;
+    if (endedAtMs === null || e > endedAtMs) endedAtMs = e;
+  }
+
+  const main = finalizeBucket(state.main);
+  const activeChildrenList = [];
+  for (const { meta, bucket } of state.childrenById.values()) {
+    finalizeBucket(bucket);
+    if (bucket.stepsCount > 0 || bucket.totalTokens > 0 || bucket.costActual > 0) {
+      activeChildrenList.push({
+        ...meta,
+        ...bucket,
+      });
+    }
+  }
+  activeChildrenList.sort(
+    (a, b) =>
+      b.costActual - a.costActual ||
+      b.totalTokens - a.totalTokens ||
+      String(a.name || '').localeCompare(String(b.name || '')) ||
+      String(a.conversationId || '').localeCompare(String(b.conversationId || '')),
+  );
+
+  const childrenSubtotal = emptyBucket();
+  for (const ch of activeChildrenList) {
+    addBucketInto(childrenSubtotal, ch);
+  }
+  finalizeBucket(childrenSubtotal);
+
+  const grandTotal = emptyBucket();
+  addBucketInto(grandTotal, main);
+  addBucketInto(grandTotal, childrenSubtotal);
+  finalizeBucket(grandTotal);
+
+  let primaryModel = null;
+  if (state.byModelMap.size > 0) {
+    const sortedModels = [...state.byModelMap.values()].sort(
+      (a, b) =>
+        b.costActual - a.costActual ||
+        b.totalTokens - a.totalTokens ||
+        String(a.model || '').localeCompare(String(b.model || '')),
+    );
+    const top = sortedModels[0];
+    primaryModel = {
+      model: top.model,
+      profileId: top.profileId,
+      profileLabel: top.profileLabel,
+    };
+  } else {
+    const fallbackModel = normalizeModelId(activeModel || 'Auto');
+    const fallbackPricing = resolveModelPricing(fallbackModel, effectivePrefs);
+    primaryModel = {
+      model: fallbackModel,
+      profileId: fallbackPricing.profileId,
+      profileLabel: fallbackPricing.profileLabel,
+    };
+  }
+
+  return {
+    scope,
+    hasData: grandTotal.stepsCount > 0 || grandTotal.totalTokens > 0,
+    startDate: startedAtMs ? formatLocalDate(startedAtMs) : todayDate,
+    endDate: endedAtMs
+      ? formatLocalDate(endedAtMs)
+      : startedAtMs
+        ? formatLocalDate(startedAtMs)
+        : todayDate,
+    startedAtMs,
+    endedAtMs,
+    activeDurationMs: computeMergedActiveDurationMs(state.intervals, 30 * 60 * 1000),
+    compactionsCount: state.compactionsCount,
+    primaryModel,
+    subagentsCount: scope === 'today' ? activeChildrenList.length : totalChildrenCount,
+    main,
+    children: activeChildrenList,
+    childrenSubtotal,
+    grandTotal,
+  };
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
+
 /**
  * Analyzes a conversation and its subagent/swarm descendants cleanly without cycles.
  */
@@ -3403,6 +3961,33 @@ export function analyzeConversation(convId, options = {}) {
   );
   finalizeBucket(mainOnly);
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Initialize Today and All-Time receipt scope states and accumulate
+// main conversation steps with exact botId fork-deduplication.
+// ============================================================================
+  const nowMs = Number.isFinite(Number(options.nowMs)) ? Number(options.nowMs) : Date.now();
+  const todayDate = formatLocalDate(nowMs);
+  const { y: ty, m: tm, d: td } = parseLocalDateParts(todayDate);
+  const todayStartMs = new Date(ty, tm - 1, td, 0, 0, 0, 0).getTime();
+  const todayEndMs = new Date(ty, tm - 1, td, 23, 59, 59, 999).getTime();
+  const allReceiptState = createReceiptScopeState();
+  const todayReceiptState = createReceiptScopeState();
+  accumulateReceiptConversation(
+    parsed,
+    modelByStepIdx,
+    effectivePrefs,
+    todayDate,
+    todayStartMs,
+    todayEndMs,
+    allReceiptState,
+    todayReceiptState,
+    null,
+  );
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
+
   const children = [];
   const childEtagParts = [];
   const visited = new Set([convId.toLowerCase()]);
@@ -3423,6 +4008,13 @@ export function analyzeConversation(convId, options = {}) {
       const childPaths = resolveConversationPaths(desc.conversationId, appDataDirs);
       const childParsed = childPaths ? parseTranscript(desc.conversationId, childPaths) : null;
       if (!childParsed) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Include missing-child killed state in childEtagParts and attach
+// killed, updatedAtMs, and temporary sort keys on missing-transcript children.
+// ============================================================================
+        const isMissingKilled = Boolean(desc.killed);
+        childEtagParts.push(`${desc.conversationId}:missing:${isMissingKilled ? 1 : 0}`);
         children.push({
           conversationId: desc.conversationId,
           kind: desc.kind,
@@ -3430,16 +4022,32 @@ export function analyzeConversation(convId, options = {}) {
           role: desc.role,
           model: normalizeModelId(desc.defaultModel || 'Auto'),
           status: 'IDLE',
+          killed: isMissingKilled,
+          updatedAtMs: computeChildUpdatedAtMs(null, null, isMissingKilled, desc.invokedAtMs),
           generatingSinceMs: null,
           contextTotal: 0,
           latestTokPerSec: null,
           outputTokens: 0,
           costActual: 0,
+          _lastSeq: desc.lastSeq || 0,
+          _spawnOrder: desc.spawnOrder ?? 0,
         });
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
         continue;
       }
 
-      childEtagParts.push(`${desc.conversationId}:${childParsed.cacheKey}`);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Include child killed state in childEtagParts so killing a worker
+// or subagent immediately invalidates the /api/snapshot ETag.
+// ============================================================================
+      const isChildKilled = Boolean(desc.killed);
+      childEtagParts.push(`${desc.conversationId}:${childParsed.cacheKey}:${isChildKilled ? 1 : 0}`);
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
       const childTimeline = resolveModelTimeline(childParsed, desc.defaultModel || 'Auto');
       localObservedProfiles.add(resolveModelProfile(childTimeline.activeModel, runtimeCatalog).id);
       const childLive = computeLiveStatus(childParsed);
@@ -3482,25 +4090,92 @@ export function analyzeConversation(convId, options = {}) {
 // [MODIFIED END] 2026-11-16 22:04:00
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Accumulate descendant receipt telemetry and expose killed,
+// updatedAtMs, and temporary activity sort keys on child entries.
+// ============================================================================
+      accumulateReceiptConversation(
+        childParsed,
+        childTimeline.modelByStepIdx,
+        effectivePrefs,
+        todayDate,
+        todayStartMs,
+        todayEndMs,
+        allReceiptState,
+        todayReceiptState,
+        {
+          conversationId: desc.conversationId,
+          kind: desc.kind,
+          name: desc.name,
+          role: desc.role,
+          model: childTimeline.activeModel,
+        },
+      );
+
       children.push({
         conversationId: desc.conversationId,
         kind: desc.kind,
         name: desc.name,
         role: desc.role,
         model: childTimeline.activeModel,
-        status: desc.killed ? 'IDLE' : childLive.status,
-        generatingSinceMs: desc.killed ? null : childLive.generatingSinceMs,
+        status: isChildKilled ? 'IDLE' : childLive.status,
+        killed: isChildKilled,
+        updatedAtMs: computeChildUpdatedAtMs(
+          childParsed,
+          childLive,
+          isChildKilled,
+          desc.invokedAtMs,
+        ),
+        generatingSinceMs: isChildKilled ? null : childLive.generatingSinceMs,
         contextTotal: childContext.currentTotal,
         latestTokPerSec: childSpeed.latestStepTokPerSec,
         outputTokens: childBucket.outputTokens,
         costActual: childBucket.costActual,
+        _lastSeq: desc.lastSeq || 0,
+        _spawnOrder: desc.spawnOrder ?? 0,
       });
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
 
       collectDescendants(childParsed, childTimeline.modelByStepIdx, depth + 1);
     }
   }
 
   collectDescendants(parsed, modelByStepIdx, 0);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Sort children by live activity tier and recency, strip internal
+// sort keys, and finalize Today and All-Time checkout receipt payloads.
+// ============================================================================
+  sortChildrenByActivity(children);
+  for (const ch of children) {
+    delete ch._lastSeq;
+    delete ch._spawnOrder;
+  }
+  const receipt = {
+    todayDate,
+    today: finalizeReceiptScope(
+      'today',
+      todayReceiptState,
+      todayDate,
+      activeModel,
+      effectivePrefs,
+      children.length,
+    ),
+    all: finalizeReceiptScope(
+      'all',
+      allReceiptState,
+      todayDate,
+      activeModel,
+      effectivePrefs,
+      children.length,
+    ),
+  };
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
   finalizeBucket(withChildren);
 
 // ============================================================================
@@ -3616,6 +4291,14 @@ export function analyzeConversation(convId, options = {}) {
       byModel,
       mainOnlyByModel,
     },
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:14
+// Description: Expose Today + All-Time checkout receipt payload on analyzeConversation().
+// ============================================================================
+    receipt,
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:14
+// ============================================================================
     children,
     _etagPart: `${parsed.cacheKey}|${childEtagParts.join(',')}|${isChildSession ? `${childKind}:${parentConversationId}` : ''}`,
     _activeWatchIds: activeWatchIds,

@@ -122,6 +122,14 @@ import {
 // ============================================================================
 // [MODIFIED END] 2026-11-17 16:08:26
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:58:45
+// Description: Import computeMergedActiveDurationMs and sortChildrenByActivity for v0.2.9 active-duration merging and subagent/swarm activity sorting tests.
+// ============================================================================
+  computeMergedActiveDurationMs,
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:58:45
+// ============================================================================
   computeSpeed,
   computeStepCost,
   computeSubscriptionComparison,
@@ -152,6 +160,14 @@ import {
   scoreModelPerformance,
 // ============================================================================
 // [MODIFIED END] 2026-11-17 15:15:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:58:45
+// Description: Import sortChildrenByActivity for v0.2.9 Top-5 recent-active child ordering tests.
+// ============================================================================
+  sortChildrenByActivity,
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:58:45
 // ============================================================================
   summarizeGlobalAndRecent,
 } from '../sidecars/monitor_pane/parser.mjs';
@@ -5797,11 +5813,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 // [MODIFIED BEGIN] 2026-11-18 10:33:22
 // Description: Bump current manifest version assertion from 0.2.7 to 0.2.8.
 // ============================================================================
-  // Manifests bumped to 0.2.8 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:58:45
+// Description: Bump current manifest version assertion from 0.2.8 to 0.2.9.
+// ============================================================================
+  // Manifests bumped to 0.2.9 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.2.8');
-  assert.equal(packageJson.version, '0.2.8');
+  assert.equal(pluginJson.version, '0.2.9');
+  assert.equal(packageJson.version, '0.2.9');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:58:45
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:33:22
 // ============================================================================
@@ -6020,16 +6043,25 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
 // [MODIFIED BEGIN] 2026-11-18 10:33:22
 // Description: Bump current manifest, fallback version, and documentation assertions from 0.2.7 to 0.2.8.
 // ============================================================================
-  // Version & docs consistency for current v0.2.8 release
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:58:45
+// Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.2.8 to 0.2.9.
+// ============================================================================
+  // Version & docs consistency for current v0.2.9 release
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.2.8');
-  assert.equal(packageJson.version, '0.2.8');
-  assert.equal(pluginJson.description.includes('v0.2.8 beta'), true);
-  assert.equal(packageJson.description.includes('v0.2.8 beta'), true);
-  assert.equal(mainSource.includes("return '0.2.8'"), true);
-  assert.equal(skillMd.includes('# Token Monitor (v0.2.8 Beta)'), true);
-  assert.equal(readmeMd.includes('agy-token-monitor-v0.2.8.zip'), true);
+  assert.equal(pluginJson.version, '0.2.9');
+  assert.equal(packageJson.version, '0.2.9');
+  assert.equal(pluginJson.description.includes('v0.2.9 beta'), true);
+  assert.equal(packageJson.description.includes('v0.2.9 beta'), true);
+  assert.equal(mainSource.includes("return '0.2.9'"), true);
+  assert.equal(releaseUpdaterSource.includes(": '0.2.9'"), true);
+  assert.equal(appSource.includes("'0.2.9'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.2.9 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.2.9.zip'), true);
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:58:45
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:33:22
 // ============================================================================
@@ -7018,7 +7050,14 @@ test('v0.2.8 createSystemProxyManager lifecycle, TTL cache, restore-before-set o
     const snapRes = await fetch(`${base}/api/snapshot`);
     assert.equal(snapRes.status, 200);
     const snap = await snapRes.json();
-    assert.equal(snap.appVersion, '0.2.8');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:58:45
+// Description: Update standalone /api/snapshot appVersion assertion to 0.2.9.
+// ============================================================================
+    assert.equal(snap.appVersion, '0.2.9');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:58:45
+// ============================================================================
 
     const checkRes = await fetch(`${base}/api/check-update`, {
       method: 'POST',
@@ -7550,8 +7589,15 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
   const sidecarJson = JSON.parse(readFileSync(join(paneDir, 'sidecar.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.2.8');
-  assert.equal(packageJson.version, '0.2.8');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:58:45
+// Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.2.9.
+// ============================================================================
+  assert.equal(pluginJson.version, '0.2.9');
+  assert.equal(packageJson.version, '0.2.9');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:58:45
+// ============================================================================
   assert.ok(sidecarJson && typeof sidecarJson === 'object');
 });
 
@@ -7761,7 +7807,14 @@ test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showTo
   const exports = sandbox.__tmV028Exports;
   assert.ok(exports, 'VM execution must expose __tmV028Exports');
 
-  assert.equal(exports.getCurrentAppVersion(), '0.2.8');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:58:45
+// Description: Update getCurrentAppVersion fallback assertion to 0.2.9.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.2.9');
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:58:45
+// ============================================================================
 
   // 1. formatUpdateErrorMessage in zh & en
   exports.state.lang = 'zh';
@@ -7853,4 +7906,2158 @@ test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showTo
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:34:16
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 12:01:00
+// Description: Add comprehensive v0.2.9 unit, standalone HTTP, static hygiene, and
+// headless Node VM tests for sortChildrenByActivity, Swarm + manage_subagents
+// killed detection & ETag invalidation, computeMergedActiveDurationMs, compactionsCount,
+// dual-scope receipt (today + all) with fork-deduplication parity, receipt.js
+// Canvas renderer + /receipt.js route, Top-5 children folding + 400px scroll
+// preservation, and #receipt-modal workflow.
+// ============================================================================
+test('v0.2.9 backend sortChildrenByActivity, Swarm + manage_subagents killed detection, updatedAtMs, and ETag invalidation', () => {
+  clearParserCache();
+
+  // 1. Direct unit tests for sortChildrenByActivity:
+  // Tier 0 (GENERATING, !killed) -> Tier 1 (RUNNING_TOOLS, !killed) -> Tier 2 (IDLE or killed),
+  // sorted strictly by updatedAtMs descending within each tier (with _lastSeq, _spawnOrder, name tie-breakers).
+  assert.deepEqual(sortChildrenByActivity(null), []);
+  const frozenSample = Object.freeze([
+    { conversationId: 'c-audit', name: 'audit', status: 'IDLE', killed: true, updatedAtMs: 1000 },
+    { conversationId: 'c-ship', name: 'v028ship', status: 'IDLE', killed: false, updatedAtMs: 8000 },
+    { conversationId: 'c-killed-gen', name: 'killedGen', status: 'GENERATING', killed: true, updatedAtMs: 6000 },
+    { conversationId: 'c-tools-old', name: 'toolsOld', status: 'RUNNING_TOOLS', killed: false, updatedAtMs: 3000 },
+    { conversationId: 'c-gen-old', name: 'genOld', status: 'GENERATING', killed: false, updatedAtMs: 4000 },
+    { conversationId: 'c-tools-new', name: 'toolsNew', status: 'RUNNING_TOOLS', killed: false, updatedAtMs: 9000 },
+    { conversationId: 'c-gen-new', name: 'genNew', status: 'GENERATING', killed: false, updatedAtMs: 5000 },
+    { conversationId: 'c-seq-low', name: 'seqLow', status: 'IDLE', killed: false, updatedAtMs: 2000, _lastSeq: 80, _spawnOrder: 5 },
+    { conversationId: 'c-seq-high', name: 'seqHigh', status: 'IDLE', killed: false, updatedAtMs: 2000, _lastSeq: 120, _spawnOrder: 1 },
+  ]);
+  const sortedFrozen = sortChildrenByActivity(frozenSample);
+  assert.deepEqual(
+    sortedFrozen.map((c) => c.name),
+    [
+      'genNew',
+      'genOld',
+      'toolsNew',
+      'toolsOld',
+      'v028ship',
+      'killedGen',
+      'seqHigh',
+      'seqLow',
+      'audit',
+    ],
+  );
+  // Explicitly verify old killed 'audit' sinks below newer 'v028ship'
+  assert.ok(
+    sortedFrozen.findIndex((c) => c.name === 'v028ship') <
+      sortedFrozen.findIndex((c) => c.name === 'audit'),
+    'Newer v028ship must rank above old killed audit',
+  );
+
+  // 2. analyzeConversation() on a Swarm coordinator (members.json killed, phase: KILLED, desired_state: KILLED, active workers) + ETag invalidation
+  const { root, appData } = makeTempEnv();
+  try {
+    const baseMs = Date.parse('2026-11-18T02:00:00Z');
+    const coordId = '02900000-0000-4000-8000-000000000001';
+    const wGenId = '02900000-0000-4000-8000-000000000002';
+    const wToolsId = '02900000-0000-4000-8000-000000000003';
+    const wShipId = '02900000-0000-4000-8000-000000000004';
+    const wPhaseKilledId = '02900000-0000-4000-8000-000000000005';
+    const wAuditId = '02900000-0000-4000-8000-000000000006';
+    const wDesiredKilledId = '02900000-0000-4000-8000-000000000007'; // intentionally missing transcript
+
+    const initialMembers = {
+      title: 'v0.2.9 Swarm Killed & Activity Test',
+      members: {
+        coordinator: { conversation_id: coordId, role: 'coordinator', model: 'gemini-4-argon' },
+        audit: {
+          conversation_id: wAuditId,
+          role: 'worker',
+          model: 'gemini-3.8-flash',
+          killed: true,
+          last_read_seq: 12,
+        },
+        wPhaseKilled: {
+          conversation_id: wPhaseKilledId,
+          role: 'worker',
+          model: 'gemini-3.8-flash',
+          phase: 'KILLED',
+        },
+        wDesiredKilled: {
+          conversation_id: wDesiredKilledId,
+          role: 'worker',
+          model: 'gemini-3.8-flash',
+          desired_state: 'KILLED',
+        },
+        v028ship: {
+          conversation_id: wShipId,
+          role: 'worker',
+          model: 'gemini-4-carbon',
+          killed: false,
+          state: 'waiting',
+          last_read_seq: 99,
+        },
+        wTools: {
+          conversation_id: wToolsId,
+          role: 'worker',
+          model: 'gemini-4-carbon',
+          state: 'working',
+        },
+        wGen: {
+          conversation_id: wGenId,
+          role: 'worker',
+          model: 'gemini-4-argon',
+          state: 'working',
+        },
+      },
+    };
+
+    writeConversation(appData, coordId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs).toISOString(),
+          content: '<USER_REQUEST>Coordinate v0.2.9 swarm</USER_REQUEST>',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: new Date(baseMs + 2000).toISOString(),
+          input_tokens: 5000,
+          cache_read_tokens: 1000,
+          output_tokens: 400,
+        },
+      ],
+      members: initialMembers,
+      mtimeMs: baseMs + 2000,
+    });
+
+    // wGen: ends on USER_INPUT -> GENERATING
+    writeConversation(appData, wGenId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs + 90_000).toISOString(),
+          content: 'Generate tests',
+        },
+      ],
+      mtimeMs: baseMs + 90_000,
+    });
+
+    // wTools: ends on PLANNER_RESPONSE with pending tool_calls -> RUNNING_TOOLS
+    writeConversation(appData, wToolsId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs + 75_000).toISOString(),
+          content: 'Run checks',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: new Date(baseMs + 80_000).toISOString(),
+          input_tokens: 3000,
+          cache_read_tokens: 0,
+          output_tokens: 200,
+          tool_calls: [{ name: 'run_command', args: { toolSummary: 'Run test suite' } }],
+        },
+      ],
+      mtimeMs: baseMs + 80_000,
+    });
+
+    // v028ship: active waiting worker, IDLE, newer updatedAtMs (baseMs + 70_000)
+    writeConversation(appData, wShipId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs + 68_000).toISOString(),
+          content: 'Ship release',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: new Date(baseMs + 70_000).toISOString(),
+          input_tokens: 4000,
+          cache_read_tokens: 2000,
+          output_tokens: 300,
+        },
+      ],
+      mtimeMs: baseMs + 70_000,
+    });
+
+    // wPhaseKilled: phase === 'KILLED', even though transcript ends on USER_INPUT -> must report status === 'IDLE' and killed === true
+    writeConversation(appData, wPhaseKilledId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs + 60_000).toISOString(),
+          content: 'Aborted worker',
+        },
+      ],
+      mtimeMs: baseMs + 60_000,
+    });
+
+    // audit: killed === true, older updatedAtMs (baseMs + 20_000)
+    writeConversation(appData, wAuditId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs + 18_000).toISOString(),
+          content: 'Old audit',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: new Date(baseMs + 20_000).toISOString(),
+          input_tokens: 2000,
+          cache_read_tokens: 0,
+          output_tokens: 150,
+        },
+      ],
+      mtimeMs: baseMs + 20_000,
+    });
+
+    const swarmRes1 = analyzeConversation(coordId, {
+      appDataDirs: [appData],
+      disableAgentApi: true,
+    });
+    assert.equal(swarmRes1.children.length, 6);
+    assert.deepEqual(
+      swarmRes1.children.map((c) => c.name),
+      ['wGen', 'wTools', 'v028ship', 'wPhaseKilled', 'audit', 'wDesiredKilled'],
+    );
+
+    const byName1 = new Map(swarmRes1.children.map((c) => [c.name, c]));
+    assert.equal(byName1.get('wGen').status, 'GENERATING');
+    assert.equal(byName1.get('wGen').killed, false);
+    assert.equal(byName1.get('wGen').updatedAtMs, baseMs + 90_000);
+
+    assert.equal(byName1.get('wTools').status, 'RUNNING_TOOLS');
+    assert.equal(byName1.get('wTools').killed, false);
+    assert.equal(byName1.get('wTools').updatedAtMs, baseMs + 80_000);
+
+    assert.equal(byName1.get('v028ship').status, 'IDLE');
+    assert.equal(byName1.get('v028ship').killed, false);
+    assert.equal(byName1.get('v028ship').updatedAtMs, baseMs + 70_000);
+
+    // Backward compatibility: killed workers expose status === 'IDLE' and generatingSinceMs === null
+    assert.equal(byName1.get('wPhaseKilled').status, 'IDLE');
+    assert.equal(byName1.get('wPhaseKilled').killed, true);
+    assert.equal(byName1.get('wPhaseKilled').generatingSinceMs, null);
+    assert.equal(byName1.get('wPhaseKilled').updatedAtMs, baseMs + 60_000);
+
+    assert.equal(byName1.get('audit').status, 'IDLE');
+    assert.equal(byName1.get('audit').killed, true);
+    assert.equal(byName1.get('audit').updatedAtMs, baseMs + 20_000);
+
+    assert.equal(byName1.get('wDesiredKilled').status, 'IDLE');
+    assert.equal(byName1.get('wDesiredKilled').killed, true);
+    assert.equal(byName1.get('wDesiredKilled').updatedAtMs, null);
+
+    for (const ch of swarmRes1.children) {
+      assert.equal('_lastSeq' in ch, false, 'Internal _lastSeq key must be stripped');
+      assert.equal('_spawnOrder' in ch, false, 'Internal _spawnOrder key must be stripped');
+    }
+
+    // Flip v028ship to killed: true in members.json without modifying any transcript -> _etagPart MUST change immediately!
+    const etagBeforeKill = swarmRes1._etagPart;
+    assert.equal(etagBeforeKill.includes(`${wShipId}:`), true);
+    assert.equal(etagBeforeKill.includes(`${wDesiredKilledId}:missing:1`), true);
+
+    const updatedMembers = JSON.parse(JSON.stringify(initialMembers));
+    updatedMembers.members.v028ship.killed = true;
+    writeFileSync(
+      join(appData, 'brain', coordId, '.system_generated', 'swarm', 'members.json'),
+      JSON.stringify(updatedMembers, null, 2),
+      'utf-8',
+    );
+
+    const swarmRes2 = analyzeConversation(coordId, {
+      appDataDirs: [appData],
+      disableAgentApi: true,
+    });
+    assert.notEqual(
+      swarmRes2._etagPart,
+      etagBeforeKill,
+      '_etagPart must invalidate when members.json flips a worker to killed: true',
+    );
+    const shipAfter = swarmRes2.children.find((c) => c.name === 'v028ship');
+    assert.equal(shipAfter.killed, true);
+    assert.equal(shipAfter.status, 'IDLE');
+
+    // 3. analyzeConversation() on a parent session calling manage_subagents (kill & kill_all, including truncated tool_calls)
+    const subParentId = '02910000-0000-4000-8000-000000000001';
+    const sub1Id = '02910000-0000-4000-8000-000000000011';
+    const sub2Id = '02910000-0000-4000-8000-000000000012';
+    const sub3Id = '02910000-0000-4000-8000-000000000013';
+    const sub4Id = '02910000-0000-4000-8000-000000000014';
+    const sub5Id = '02910000-0000-4000-8000-000000000015'; // alive, missing transcript -> fallback invokedAtMs
+
+    const compactParentSteps = [
+      {
+        step_index: 0,
+        type: 'USER_INPUT',
+        status: 'DONE',
+        created_at: new Date(baseMs + 1000).toISOString(),
+        content: '<USER_REQUEST>Spawn subagents</USER_REQUEST>',
+      },
+      {
+        step_index: 1,
+        type: 'PLANNER_RESPONSE',
+        status: 'DONE',
+        created_at: new Date(baseMs + 5000).toISOString(),
+        input_tokens: 2000,
+        cache_read_tokens: 0,
+        output_tokens: 100,
+        tool_calls: [
+          {
+            name: 'invoke_subagent',
+            args: {
+              Subagents: [
+                { Name: 'subOne', Model: 'gemini-3.8-flash' },
+                { Name: 'subTwo', Model: 'gemini-3.8-flash' },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        step_index: 2,
+        type: 'GENERIC',
+        status: 'DONE',
+        created_at: new Date(baseMs + 6000).toISOString(),
+        content: `Spawned ${sub1Id} and ${sub2Id}`,
+      },
+      {
+        step_index: 3,
+        type: 'PLANNER_RESPONSE',
+        status: 'DONE',
+        created_at: new Date(baseMs + 25_000).toISOString(),
+        input_tokens: 2500,
+        cache_read_tokens: 1500,
+        output_tokens: 80,
+        tool_calls: [
+          {
+            name: 'manage_subagents',
+            args: { Action: 'kill_all' },
+          },
+        ],
+      },
+      {
+        step_index: 4,
+        type: 'GENERIC',
+        status: 'DONE',
+        created_at: new Date(baseMs + 26_000).toISOString(),
+        content: 'Killed all active subagents',
+      },
+      {
+        step_index: 5,
+        type: 'PLANNER_RESPONSE',
+        status: 'DONE',
+        created_at: new Date(baseMs + 55_000).toISOString(),
+        input_tokens: 3000,
+        cache_read_tokens: 2000,
+        output_tokens: 120,
+        tool_calls: [
+          {
+            name: 'invoke_subagent',
+            args: {
+              Subagents: [
+                { Name: 'subThree', Model: 'gemini-4-carbon' },
+                { Name: 'subFour', Model: 'gemini-4-carbon' },
+                { Name: 'subFiveAlive', Model: 'gemini-4-argon' },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        step_index: 6,
+        type: 'GENERIC',
+        status: 'DONE',
+        created_at: new Date(baseMs + 56_000).toISOString(),
+        content: `Spawned ${sub3Id}, ${sub4Id}, and ${sub5Id}`,
+      },
+      {
+        step_index: 7,
+        type: 'PLANNER_RESPONSE',
+        status: 'DONE',
+        created_at: new Date(baseMs + 85_000).toISOString(),
+        input_tokens: 3500,
+        cache_read_tokens: 2500,
+        output_tokens: 90,
+        truncated_fields: ['tool_calls'],
+        tool_calls: [{ name: 'manage_subagents', args: {} }],
+      },
+      {
+        step_index: 8,
+        type: 'GENERIC',
+        status: 'DONE',
+        created_at: new Date(baseMs + 86_000).toISOString(),
+        content: 'Killed selected subagents',
+      },
+    ];
+
+    const fullParentSteps = compactParentSteps.map((s) =>
+      s.step_index === 7
+        ? {
+            ...s,
+            truncated_fields: undefined,
+            tool_calls: [
+              {
+                name: 'manage_subagents',
+                args: { Action: 'kill', ConversationIds: JSON.stringify([sub3Id]) },
+              },
+              {
+                name: 'manage_subagents',
+                args: { action: 'kill', conversationIds: [sub4Id] },
+              },
+            ],
+          }
+        : s,
+    );
+
+    writeConversation(appData, subParentId, {
+      compactLines: compactParentSteps,
+      fullLines: fullParentSteps,
+      mtimeMs: baseMs + 86_000,
+    });
+
+    for (const [cid, offsetMs, endsGenerating] of [
+      [sub1Id, 15_000, false],
+      [sub2Id, 22_000, false],
+      [sub3Id, 72_000, true],
+      [sub4Id, 78_000, false],
+    ]) {
+      writeConversation(appData, cid, {
+        compactLines: endsGenerating
+          ? [
+              {
+                step_index: 0,
+                type: 'USER_INPUT',
+                status: 'DONE',
+                created_at: new Date(baseMs + offsetMs).toISOString(),
+                content: 'Still had pending prompt before kill',
+              },
+            ]
+          : [
+              {
+                step_index: 0,
+                type: 'USER_INPUT',
+                status: 'DONE',
+                created_at: new Date(baseMs + offsetMs - 1000).toISOString(),
+                content: 'Subagent task',
+              },
+              {
+                step_index: 1,
+                type: 'PLANNER_RESPONSE',
+                status: 'DONE',
+                created_at: new Date(baseMs + offsetMs).toISOString(),
+                input_tokens: 1200,
+                cache_read_tokens: 0,
+                output_tokens: 100,
+              },
+            ],
+        mtimeMs: baseMs + offsetMs,
+      });
+    }
+
+    const subParentRes = analyzeConversation(subParentId, {
+      appDataDirs: [appData],
+      disableAgentApi: true,
+    });
+    assert.equal(subParentRes.children.length, 5);
+    const subMap = new Map(subParentRes.children.map((c) => [c.name, c]));
+
+    // subOne & subTwo killed via kill_all (stepIdx < 3)
+    assert.equal(subMap.get('subOne').killed, true);
+    assert.equal(subMap.get('subOne').status, 'IDLE');
+    assert.equal(subMap.get('subTwo').killed, true);
+    assert.equal(subMap.get('subTwo').status, 'IDLE');
+
+    // subThree & subFour killed via manage_subagents kill recovered from transcript_full.jsonl; subFiveAlive survives!
+    assert.equal(subMap.get('subThree').killed, true);
+    assert.equal(subMap.get('subThree').status, 'IDLE');
+    assert.equal(subMap.get('subThree').generatingSinceMs, null);
+    assert.equal(subMap.get('subFour').killed, true);
+    assert.equal(subMap.get('subFour').status, 'IDLE');
+
+    assert.equal(subMap.get('subFiveAlive').killed, false);
+    assert.equal(subMap.get('subFiveAlive').status, 'IDLE');
+    assert.equal(subMap.get('subFiveAlive').updatedAtMs, baseMs + 55_000);
+    assert.equal(subParentRes._etagPart.includes(`${sub5Id}:missing:0`), true);
+    assert.equal(subParentRes._etagPart.includes(':1'), true);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.2.9 computeMergedActiveDurationMs, compactionsCount, and dual-scope receipt (today + all) with fork-deduplication parity', () => {
+  clearParserCache();
+
+  // 1. Direct unit tests for computeMergedActiveDurationMs (<= 30m gap merged, 2h break excluded, unsorted & overlapping intervals)
+  assert.equal(computeMergedActiveDurationMs([]), 0);
+  assert.equal(computeMergedActiveDurationMs(null), 0);
+
+  const B = new Date(2026, 10, 18, 9, 0, 0, 0).getTime();
+  const MIN = 60_000;
+  const intervals = [
+    // Afternoon block after a 2h (120m > 30m) idle break — unsorted + overlapping + object form
+    { start: B + 190 * MIN, end: B + 205 * MIN },
+    [B + 185 * MIN, B + 195 * MIN],
+    // Morning block: [0, 10], [15, 25] (5m gap), and [55, 65] (exact 30m gap!) -> merges to [0, 65] = 65m
+    [B + 55 * MIN, B + 65 * MIN],
+    [B + 15 * MIN, B + 25 * MIN],
+    [B + 0 * MIN, B + 10 * MIN],
+  ];
+  // Expected: 65m morning + 20m ([185m, 205m]) afternoon = 85m (2h break from 65m..185m excluded!)
+  assert.equal(computeMergedActiveDurationMs(intervals), 85 * MIN);
+
+  // 2. Multi-day SQLite conversation (yesterday + today with 2 today COMPACTION_SUMMARY steps, 8 workers, and fork deduplication)
+  const { root, appData } = makeTempEnv();
+  try {
+    const convsDir = join(appData, 'conversations');
+    mkdirSync(convsDir, { recursive: true });
+
+    const parentId = '02920000-0000-4000-8000-000000000001';
+    const workerIds = Array.from({ length: 8 }, (_, idx) =>
+      `02920000-0000-4000-8000-00000000010${idx + 1}`,
+    );
+
+    const yTime = (h, m) => new Date(2026, 10, 17, h, m, 0, 0).getTime(); // 2026-11-17 local
+    const tTime = (h, m) => new Date(2026, 10, 18, h, m, 0, 0).getTime(); // 2026-11-18 local
+    const nowMs = tTime(16, 30);
+
+    function writeDbSteps(dbPath, stepSpecs) {
+      const db = new DatabaseSync(dbPath);
+      db.exec(`
+        CREATE TABLE gen_metadata (idx INTEGER PRIMARY KEY, data BLOB, size INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INTEGER NOT NULL DEFAULT 0, status INTEGER NOT NULL DEFAULT 0, metadata BLOB);
+      `);
+      const insGen = db.prepare('INSERT INTO gen_metadata (idx, data, size) VALUES (?, ?, ?)');
+      const insStep = db.prepare(
+        'INSERT INTO steps (idx, step_type, status, metadata) VALUES (?, ?, ?, ?)',
+      );
+
+      stepSpecs.forEach((spec, genIdx) => {
+        const usageBuf = encodeTokenUsage({
+          enumId: spec.enumId ?? 1419,
+          input: spec.input,
+          cacheRead: spec.cacheRead,
+          output: spec.output,
+          botId: spec.botId,
+        });
+        if ((spec.stepType ?? 15) !== 23) {
+          const genInner = Buffer.concat([
+            encodeBytesField(4, usageBuf),
+            encodeBytesField(19, spec.rawModel || 'gemini-4-argon-high'),
+            encodeBytesField(20, encodeGenKv('cascade_id', spec.originCascadeId)),
+            encodeBytesField(21, spec.displayModel || 'Gemini 4 Argon (High)'),
+          ]);
+          const genTop = Buffer.concat([
+            encodeBytesField(1, genInner),
+            encodeBytesField(2, encodeVarint(spec.stepIdx)),
+          ]);
+          insGen.run(genIdx, genTop, genTop.length);
+        }
+
+        const metaBuf = Buffer.concat([
+          encodeBytesField(1, encodeTimestampMs(spec.createdMs)),
+          encodeBytesField(7, encodeTimestampMs(spec.completedMs)),
+          encodeBytesField(9, usageBuf),
+          encodeBytesField(
+            20,
+            encodeStepField20({
+              stepIdx: spec.stepIdx,
+              genIdx,
+              originCascadeId: spec.originCascadeId,
+            }),
+          ),
+        ]);
+        insStep.run(spec.stepIdx, spec.stepType ?? 15, 3, metaBuf);
+      });
+      db.close();
+    }
+
+    // Parent steps:
+    // - Yesterday (2026-11-17): 1 planner step (10:00..10:05) + 1 COMPACTION_SUMMARY (10:20..10:21) -> 21m merged
+    // - Today (2026-11-18):
+    //   Morning: 09:00..09:10 + COMPACTION_SUMMARY #1 at 09:25..09:26 -> 26m merged
+    //   2h+ idle break (09:26 -> 11:30)
+    //   Afternoon: 11:30..11:40 + COMPACTION_SUMMARY #2 at 11:45..11:46 (extended to 11:50 by w1 -> 20m merged)
+    const parentSteps = [
+      {
+        stepIdx: 1,
+        stepType: 15,
+        originCascadeId: parentId,
+        botId: 'bot-main-y1',
+        input: 20_000,
+        cacheRead: 10_000,
+        output: 4_000,
+        createdMs: yTime(10, 0),
+        completedMs: yTime(10, 5),
+      },
+      {
+        stepIdx: 2,
+        stepType: 23, // COMPACTION_SUMMARY (yesterday)
+        originCascadeId: parentId,
+        botId: 'bot-comp-y1',
+        input: 30_000,
+        cacheRead: 0,
+        output: 1_500,
+        createdMs: yTime(10, 20),
+        completedMs: yTime(10, 21),
+      },
+      {
+        stepIdx: 3,
+        stepType: 15,
+        originCascadeId: parentId,
+        botId: 'bot-main-t1',
+        input: 12_000,
+        cacheRead: 8_000,
+        output: 3_000,
+        createdMs: tTime(9, 0),
+        completedMs: tTime(9, 10),
+      },
+      {
+        stepIdx: 4,
+        stepType: 23, // COMPACTION_SUMMARY #1 today
+        originCascadeId: parentId,
+        botId: 'bot-comp-t1',
+        input: 20_000,
+        cacheRead: 0,
+        output: 1_000,
+        createdMs: tTime(9, 25),
+        completedMs: tTime(9, 26),
+      },
+      {
+        stepIdx: 5,
+        stepType: 15,
+        originCascadeId: parentId,
+        botId: 'bot-main-t2',
+        input: 15_000,
+        cacheRead: 25_000,
+        output: 5_000,
+        createdMs: tTime(11, 30),
+        completedMs: tTime(11, 40),
+      },
+      {
+        stepIdx: 6,
+        stepType: 23, // COMPACTION_SUMMARY #2 today
+        originCascadeId: parentId,
+        botId: 'bot-comp-t2',
+        input: 40_000,
+        cacheRead: 0,
+        output: 1_200,
+        createdMs: tTime(11, 45),
+        completedMs: tTime(11, 46),
+      },
+    ];
+    writeDbSteps(join(convsDir, `${parentId}.db`), parentSteps);
+
+    // Worker 1 (w1): forked from coordinator (clones parentSteps[0..2] with originCascadeId: parentId) + own today step extending afternoon to 11:50
+    writeDbSteps(join(convsDir, `${workerIds[0]}.db`), [
+      ...parentSteps.slice(0, 3),
+      {
+        stepIdx: 10,
+        stepType: 15,
+        originCascadeId: workerIds[0],
+        botId: 'bot-w1-own',
+        input: 18_000,
+        cacheRead: 12_000,
+        output: 4_000,
+        createdMs: tTime(11, 35),
+        completedMs: tTime(11, 50),
+      },
+    ]);
+
+    // Worker 2 (w2): includes a duplicate botId ('bot-w1-own') shared with w1 + its own unique today step ('bot-w2-own')
+    writeDbSteps(join(convsDir, `${workerIds[1]}.db`), [
+      {
+        stepIdx: 1,
+        stepType: 15,
+        originCascadeId: workerIds[1],
+        botId: 'bot-w1-own', // duplicate botId across workers -> must be deduplicated in both withChildren and receipt!
+        input: 18_000,
+        cacheRead: 12_000,
+        output: 4_000,
+        createdMs: tTime(11, 36),
+        completedMs: tTime(11, 38),
+      },
+      {
+        stepIdx: 2,
+        stepType: 15,
+        originCascadeId: workerIds[1],
+        botId: 'bot-w2-own',
+        input: 10_000,
+        cacheRead: 5_000,
+        output: 2_500,
+        createdMs: tTime(11, 38),
+        completedMs: tTime(11, 44),
+      },
+    ]);
+
+    // Workers 3..7 (indices 2..6): active today within 11:32..11:48
+    for (let idx = 2; idx <= 6; idx += 1) {
+      writeDbSteps(join(convsDir, `${workerIds[idx]}.db`), [
+        {
+          stepIdx: 1,
+          stepType: 15,
+          originCascadeId: workerIds[idx],
+          botId: `bot-w${idx + 1}-own`,
+          rawModel: 'gemini-3.8-flash',
+          displayModel: 'Gemini 3.8 Flash',
+          enumId: 1669,
+          input: 4_000 + idx * 1000,
+          cacheRead: 2_000,
+          output: 800 + idx * 100,
+          createdMs: tTime(11, 32 + idx),
+          completedMs: tTime(11, 36 + idx),
+        },
+      ]);
+    }
+
+    // Worker 8 (index 7): active ONLY yesterday (2026-11-17 10:05..10:15, inside yesterday's 10:00..10:21 window)
+    writeDbSteps(join(convsDir, `${workerIds[7]}.db`), [
+      {
+        stepIdx: 1,
+        stepType: 15,
+        originCascadeId: workerIds[7],
+        botId: 'bot-w8-yesterday',
+        rawModel: 'gemini-3.8-flash',
+        displayModel: 'Gemini 3.8 Flash',
+        enumId: 1669,
+        input: 9_000,
+        cacheRead: 3_000,
+        output: 1_000,
+        createdMs: yTime(10, 5),
+        completedMs: yTime(10, 15),
+      },
+    ]);
+
+    const membersObj = {
+      title: 'Multi-Day Receipt Swarm',
+      members: {
+        coordinator: { conversation_id: parentId, role: 'coordinator', model: 'gemini-4-argon' },
+      },
+    };
+    workerIds.forEach((wid, idx) => {
+      membersObj.members[`worker${idx + 1}`] = {
+        conversation_id: wid,
+        role: 'worker',
+        model: idx <= 1 ? 'gemini-4-argon' : 'gemini-3.8-flash',
+      };
+    });
+    const swarmDir = join(appData, 'brain', parentId, '.system_generated', 'swarm');
+    mkdirSync(swarmDir, { recursive: true });
+    writeFileSync(join(swarmDir, 'members.json'), JSON.stringify(membersObj, null, 2), 'utf-8');
+
+    const res = analyzeConversation(parentId, {
+      nowMs,
+      appDataDirs: [appData],
+      disableAgentApi: true,
+      prefs: { ...DEFAULT_PREFS, currency: 'CNY', cnyRate: 7.25 },
+    });
+
+    assert.equal(res.children.length, 8);
+    assert.equal(res.context.compactionsCount, 3, 'Context compactionsCount must reflect 1 yesterday + 2 today');
+    assert.equal(res.receipt.todayDate, '2026-11-18');
+
+    // Exact fork-deduplication parity between receipt.all.grandTotal and totals.withChildren!
+    assert.equal(res.receipt.all.grandTotal.totalTokens, res.totals.withChildren.totalTokens);
+    assert.ok(
+      Math.abs(res.receipt.all.grandTotal.costActual - res.totals.withChildren.costActual) < 1e-9,
+      `Expected cost parity, got receipt=${res.receipt.all.grandTotal.costActual} vs withChildren=${res.totals.withChildren.costActual}`,
+    );
+    assert.equal(res.receipt.all.grandTotal.stepsCount, res.totals.withChildren.stepsCount);
+
+    // All-time scope checks
+    assert.equal(res.receipt.all.startDate, '2026-11-17');
+    assert.equal(res.receipt.all.endDate, '2026-11-18');
+    assert.equal(res.receipt.all.compactionsCount, 3);
+    assert.equal(res.receipt.all.subagentsCount, 8);
+    assert.equal(res.receipt.all.children.length, 8);
+    assert.equal(res.receipt.all.activeDurationMs, (21 + 26 + 20) * MIN); // 67m total
+
+    // Today scope checks: strictly today's steps, 2 compactions, 7 active today workers (excluding worker8), 46m active duration
+    assert.equal(res.receipt.today.hasData, true);
+    assert.equal(res.receipt.today.startDate, '2026-11-18');
+    assert.equal(res.receipt.today.endDate, '2026-11-18');
+    assert.equal(res.receipt.today.compactionsCount, 2);
+    assert.equal(res.receipt.today.subagentsCount, 7);
+    assert.equal(res.receipt.today.children.length, 7);
+    assert.equal(res.receipt.today.children.some((c) => c.name === 'worker8'), false);
+    assert.equal(res.receipt.today.main.stepsCount, 4); // stepIdx 3, 4, 5, 6 today
+    assert.equal(res.receipt.today.activeDurationMs, (26 + 20) * MIN); // 46m today (excludes 2h break & yesterday)
+    assert.ok(res.receipt.today.grandTotal.totalTokens < res.receipt.all.grandTotal.totalTokens);
+
+    // Isolated child inspection: subagentsCount === 0 and children.length === 0, cloned parent steps excluded
+    const childRes = analyzeConversation(workerIds[0], {
+      nowMs,
+      appDataDirs: [appData],
+      disableAgentApi: true,
+    });
+    assert.equal(childRes.isChildSession, true);
+    assert.equal(childRes.receipt.today.subagentsCount, 0);
+    assert.equal(childRes.receipt.today.children.length, 0);
+    assert.equal(childRes.receipt.all.subagentsCount, 0);
+    assert.equal(childRes.receipt.all.children.length, 0);
+    assert.equal(childRes.receipt.all.main.stepsCount, 1);
+    assert.equal(childRes.receipt.all.grandTotal.totalTokens, 34_000);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.2.9 receipt.js VM unit tests (view-model, formatting, mock canvas, PNG blob) and standalone GET /receipt.js HTTP route', async () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const paneDir = join(testDir, '..', 'sidecars', 'monitor_pane');
+  const receiptPath = join(paneDir, 'receipt.js');
+  const mainPath = join(paneDir, 'main.mjs');
+  const receiptSource = readFileSync(receiptPath, 'utf-8');
+
+  // 1. Evaluate receipt.js in Node vm
+  const vmSandbox = {
+    Blob,
+    Buffer,
+    Uint8Array,
+    Math,
+    Date,
+    Number,
+    String,
+    Array,
+    Object,
+    Promise,
+  };
+  vmSandbox.window = vmSandbox;
+  vmSandbox.globalThis = vmSandbox;
+  vm.runInNewContext(receiptSource, vmSandbox);
+
+  const api = vmSandbox.TokenMonitorReceipt;
+  assert.ok(api, 'receipt.js must attach TokenMonitorReceipt to global root');
+  assert.equal(api.fmtReceiptTokens(128640), '128,640');
+  assert.equal(api.fmtReceiptTokens(0), '0');
+  assert.equal(api.fmtReceiptTokens(-42), '0');
+  assert.equal(api.fmtReceiptCost(2.31, 'CNY'), '¥2.31');
+  assert.equal(api.fmtReceiptCost(0.0042, 'CNY'), '¥0.0042');
+  assert.equal(api.fmtReceiptCost(0.005, 'CNY'), '¥0.005');
+  assert.equal(api.fmtReceiptCost(0, 'USD'), '$0.00');
+  assert.equal(api.fmtReceiptCost(1250.5, 'USD'), '$1,250.50');
+
+  const eightChildren = Array.from({ length: 8 }, (_, idx) => ({
+    conversationId: `02930000-0000-4000-8000-00000000000${idx + 1}`,
+    kind: 'swarm',
+    name: `worker${idx + 1}`,
+    role: 'worker',
+    totalTokens: (8 - idx) * 10_000,
+    costActual: Number(((8 - idx) * 0.25).toFixed(2)),
+    stepsCount: 3,
+  }));
+  const childSumTok = eightChildren.reduce((s, c) => s + c.totalTokens, 0); // 360,000
+  const childSumCost = eightChildren.reduce((s, c) => s + c.costActual, 0); // 9.00
+
+  const sampleCurrent = {
+    conversationId: '02930000-0000-4000-8000-000000000000',
+    title: 'MMDCT Control Optimization',
+    activeModel: 'gemini-4-argon',
+    isChildSession: false,
+    receipt: {
+      todayDate: '2026-11-18',
+      today: {
+        scope: 'today',
+        hasData: true,
+        startDate: '2026-11-18',
+        endDate: '2026-11-18',
+        startedAtMs: new Date(2026, 10, 18, 9, 5, 0).getTime(),
+        endedAtMs: new Date(2026, 10, 18, 11, 50, 0).getTime(),
+        activeDurationMs: 46 * 60_000,
+        compactionsCount: 2,
+        primaryModel: {
+          model: 'gemini-4-argon',
+          profileId: 'gemini-4-argon',
+          profileLabel: 'Gemini 4 Argon (高推理)',
+        },
+        subagentsCount: 8,
+        main: { totalTokens: 128_640, costActual: 2.31, stepsCount: 6 },
+        children: eightChildren,
+        childrenSubtotal: { totalTokens: childSumTok, costActual: childSumCost },
+        grandTotal: { totalTokens: 128_640 + childSumTok, costActual: 2.31 + childSumCost, stepsCount: 30 },
+      },
+      all: {
+        scope: 'all',
+        hasData: true,
+        startDate: '2026-11-17',
+        endDate: '2026-11-18',
+        startedAtMs: new Date(2026, 10, 17, 10, 0, 0).getTime(),
+        endedAtMs: new Date(2026, 10, 18, 11, 50, 0).getTime(),
+        activeDurationMs: 135 * 60_000,
+        compactionsCount: 4,
+        primaryModel: {
+          model: 'gemini-4-argon',
+          profileId: 'gemini-4-argon',
+          profileLabel: 'Gemini 4 Argon (High)',
+        },
+        subagentsCount: 8,
+        main: { totalTokens: 250_000, costActual: 4.5, stepsCount: 12 },
+        children: eightChildren,
+        childrenSubtotal: { totalTokens: childSumTok, costActual: childSumCost },
+        grandTotal: { totalTokens: 250_000 + childSumTok, costActual: 4.5 + childSumCost, stepsCount: 36 },
+      },
+    },
+  };
+
+  // zh / CNY / today / compact (8 children -> top 5 + 其余 3 位子代理 + 子代理小计)
+  const vmZhCompact = api.buildReceiptViewModel(
+    sampleCurrent,
+    { currency: 'CNY' },
+    { lang: 'zh', scope: 'today', detailMode: 'compact', sessionTitle: sampleCurrent.title },
+  );
+  assert.equal(vmZhCompact.title, '收工票根');
+  assert.equal(vmZhCompact.currency, 'CNY');
+  assert.equal(vmZhCompact.items.length, 7); // 1 main + 5 top children + 1 others
+  assert.equal(vmZhCompact.items[0].label, '主代理');
+  assert.equal(vmZhCompact.items[0].tokensText, '128,640');
+  assert.equal(vmZhCompact.items[0].costText, '¥2.31');
+  assert.equal(vmZhCompact.items[6].kind, 'others');
+  assert.equal(vmZhCompact.items[6].label, '其余 3 位子代理');
+  assert.equal(vmZhCompact.subtotalRow.label, '子代理小计');
+  assert.equal(vmZhCompact.totalRow.label, '会话合计');
+  assert.equal(vmZhCompact.serialCode, 'AGY-1118-046');
+  assert.equal(vmZhCompact.suggestedFilename, 'AGY-1118-046.png');
+  assert.equal(vmZhCompact.metaRows.find((r) => r.key === 'primaryModel').value, 'Gemini 4 Argon');
+
+  // en / USD / all / compact (8 children -> top 5 + '+3 Others' + 'Subagents Subtotal')
+  const vmEnCompact = api.buildReceiptViewModel(
+    sampleCurrent,
+    { currency: 'USD' },
+    { lang: 'en', scope: 'all', detailMode: 'compact', sessionTitle: sampleCurrent.title },
+  );
+  assert.equal(vmEnCompact.title.toUpperCase(), 'SESSION RECEIPT');
+  assert.equal(vmEnCompact.currency, 'USD');
+  assert.equal(vmEnCompact.items.length, 7);
+  assert.equal(vmEnCompact.items[0].label, 'Main Agent');
+  assert.equal(vmEnCompact.items[6].label, '+3 Others');
+  assert.equal(vmEnCompact.subtotalRow.label, 'Subagents Subtotal');
+  assert.equal(vmEnCompact.totalRow.label, 'Session Total');
+  assert.equal(vmEnCompact.serialCode, 'AGY-1118-135');
+  assert.match(vmEnCompact.metaRows.find((r) => r.key === 'date').value, /2026\.11\.17 - 11\.18/);
+
+  // full mode: all 8 children listed individually (1 main + 8 children = 9 items, no 'others')
+  const vmZhFull = api.buildReceiptViewModel(
+    sampleCurrent,
+    { currency: 'CNY' },
+    { lang: 'zh', scope: 'today', detailMode: 'full', sessionTitle: sampleCurrent.title },
+  );
+  assert.equal(vmZhFull.items.length, 9);
+  assert.equal(vmZhFull.items.some((i) => i.kind === 'others'), false);
+  assert.ok(vmZhFull.subtotalRow);
+
+  // 0 children -> subtotalRow === null
+  const zeroChildrenCurrent = {
+    ...sampleCurrent,
+    receipt: {
+      todayDate: '2026-11-18',
+      today: {
+        ...sampleCurrent.receipt.today,
+        subagentsCount: 0,
+        children: [],
+        childrenSubtotal: { totalTokens: 0, costActual: 0 },
+        grandTotal: { totalTokens: 128_640, costActual: 2.31, stepsCount: 6 },
+      },
+    },
+  };
+  const vmZeroChildren = api.buildReceiptViewModel(
+    zeroChildrenCurrent,
+    { currency: 'USD' },
+    { lang: 'en', scope: 'today', detailMode: 'compact' },
+  );
+  assert.equal(vmZeroChildren.items.length, 1);
+  assert.equal(vmZeroChildren.subtotalRow, null);
+
+  // renderReceiptCanvas + canvasToBlob with injected mock canvas
+  const drawnTexts = [];
+  function createMockCanvas(w, h) {
+    const ctx = {
+      font: '',
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 1,
+      textAlign: 'left',
+      textBaseline: 'alphabetic',
+      shadowColor: '',
+      shadowBlur: 0,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      letterSpacing: '0px',
+      save() {},
+      restore() {},
+      scale() {},
+      beginPath() {},
+      moveTo() {},
+      lineTo() {},
+      stroke() {},
+      fillRect() {},
+      strokeRect() {},
+      setLineDash() {},
+      createLinearGradient() {
+        return { addColorStop() {} };
+      },
+      measureText(str) {
+        return { width: String(str || '').length * 7 };
+      },
+      fillText(str) {
+        drawnTexts.push(String(str));
+      },
+    };
+    return {
+      width: w,
+      height: h,
+      getContext(kind) {
+        return kind === '2d' ? ctx : null;
+      },
+      toDataURL(mime = 'image/png') {
+        const b64 = Buffer.from(`MOCK_PNG:${this.width}x${this.height}`).toString('base64');
+        return `data:${mime};base64,${b64}`;
+      },
+    };
+  }
+
+  const renderedCanvas = api.renderReceiptCanvas(vmZhCompact, {
+    scale: 3,
+    createCanvas: createMockCanvas,
+  });
+  assert.equal(renderedCanvas.width, 1260);
+  assert.ok(renderedCanvas.height > 1500);
+  for (const expectedText of [
+    '收工票根',
+    'agy-token-monitor',
+    '主代理',
+    '其余 3 位子代理',
+    '子代理小计',
+    '会话合计',
+    'AGY-1118-046',
+  ]) {
+    assert.equal(
+      drawnTexts.some((t) => t.includes(expectedText)),
+      true,
+      `Canvas must draw "${expectedText}"`,
+    );
+  }
+
+  // Test canvasToBlob via toDataURL fallback AND via direct canvas.toBlob
+  const fallbackBlob = await api.canvasToBlob(renderedCanvas);
+  assert.equal(fallbackBlob.type, 'image/png');
+  assert.ok(fallbackBlob.size > 0);
+
+  const directBlobCanvas = {
+    toBlob(cb, mime) {
+      cb(new Blob([Buffer.from('DIRECT_PNG_BYTES')], { type: mime || 'image/png' }));
+    },
+  };
+  const directBlob = await api.canvasToBlob(directBlobCanvas);
+  assert.equal(directBlob.type, 'image/png');
+  assert.equal(directBlob.size, 'DIRECT_PNG_BYTES'.length);
+
+  // 2. Verify standalone sidecar serves GET /receipt.js with HTTP 200 and TokenMonitorReceipt
+  const { root, appData } = makeTempEnv();
+  const port = await pickFetchSafeFreePort();
+  const stateDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'data');
+  mkdirSync(stateDir, { recursive: true });
+  const fakeHome = join(root, 'fake_home');
+  mkdirSync(fakeHome, { recursive: true });
+
+  const sdkCandidates = [
+    process.env.SIDECAR_SDK_PATH,
+    join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+    join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+  ].filter((p) => typeof p === 'string' && p.trim() && existsSync(p));
+
+  const env = {
+    ...process.env,
+    ANTIGRAVITY_EXECUTABLE_DATA_DIR: stateDir,
+    USERPROFILE: fakeHome,
+    HOME: fakeHome,
+    PRICING_SYNC_DISABLE_AUTO: '1',
+    RELEASE_UPDATE_DISABLE_AUTO: '1',
+    DISABLE_SYSTEM_PROXY_LOOKUP: '1',
+  };
+  if (sdkCandidates[0]) env.SIDECAR_SDK_PATH = sdkCandidates[0];
+
+  const child = spawn(process.execPath, [mainPath, '--standalone', String(port)], {
+    env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  try {
+    await new Promise((resolveReady, rejectReady) => {
+      if (child.exitCode !== null) {
+        rejectReady(new Error(`Sidecar exited prematurely (${child.exitCode})`));
+        return;
+      }
+      const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 5000);
+      let out = '';
+      child.stdout.on('data', (chunk) => {
+        out += chunk.toString();
+        if (out.includes(`[sidecar] listening on 127.0.0.1:${port}`)) {
+          clearTimeout(timer);
+          resolveReady();
+        }
+      });
+      child.stderr.on('data', (chunk) => {
+        out += chunk.toString();
+      });
+      child.once('exit', (code) => {
+        clearTimeout(timer);
+        rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+      });
+    });
+
+    const receiptHttpRes = await fetch(`http://127.0.0.1:${port}/receipt.js`);
+    assert.equal(receiptHttpRes.status, 200);
+    assert.match(receiptHttpRes.headers.get('content-type') || '', /javascript/i);
+    const receiptBody = await receiptHttpRes.text();
+    assert.equal(receiptBody.includes('TokenMonitorReceipt'), true);
+    assert.equal(receiptBody.includes('renderReceiptCanvas'), true);
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill();
+      await new Promise((r) => {
+        if (child.exitCode !== null || child.signalCode !== null) return r();
+        const t = setTimeout(r, 3000);
+        child.once('exit', () => {
+          clearTimeout(t);
+          r();
+        });
+      });
+    }
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-term zero tolerance, and balanced annotations', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = join(testDir, '..');
+  const paneDir = join(repoRoot, 'sidecars', 'monitor_pane');
+
+  const indexHtml = readFileSync(join(paneDir, 'index.html'), 'utf-8');
+  const stylesCss = readFileSync(join(paneDir, 'styles.css'), 'utf-8');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+  const receiptSource = readFileSync(join(paneDir, 'receipt.js'), 'utf-8');
+  const mainSource = readFileSync(join(paneDir, 'main.mjs'), 'utf-8');
+  const netProxySource = readFileSync(join(paneDir, 'net_proxy.mjs'), 'utf-8');
+  const parserSource = readFileSync(join(paneDir, 'parser.mjs'), 'utf-8');
+  const pricingSyncSource = readFileSync(join(paneDir, 'pricing_sync.mjs'), 'utf-8');
+  const releaseUpdaterSource = readFileSync(join(paneDir, 'release_updater.mjs'), 'utf-8');
+  const syncPluginPs1 = readFileSync(join(repoRoot, 'scripts', 'sync-plugin.ps1'), 'utf-8');
+  const readmeMd = readFileSync(join(repoRoot, 'README.md'), 'utf-8');
+  const skillMd = readFileSync(join(repoRoot, 'skills', 'token-monitor', 'SKILL.md'), 'utf-8');
+  const pluginJsonRaw = readFileSync(join(repoRoot, 'plugin.json'), 'utf-8');
+  const packageJsonRaw = readFileSync(join(paneDir, 'package.json'), 'utf-8');
+  const sidecarJsonRaw = readFileSync(join(paneDir, 'sidecar.json'), 'utf-8');
+  const selfSource = readFileSync(fileURLToPath(import.meta.url), 'utf-8');
+
+  // 1. index.html script ordering & #receipt-modal elements
+  const receiptScriptIdx = indexHtml.indexOf('<script src="/receipt.js"></script>');
+  const appScriptIdx = indexHtml.indexOf('<script src="/app.js"></script>');
+  assert.ok(receiptScriptIdx > 0, 'index.html must include <script src="/receipt.js"></script>');
+  assert.ok(receiptScriptIdx < appScriptIdx, '/receipt.js must load before /app.js');
+  for (const requiredId of [
+    'id="receipt-modal"',
+    'id="receipt-preview-img"',
+    'id="btn-receipt-scope-today"',
+    'id="btn-receipt-scope-all"',
+    'id="btn-receipt-mode-compact"',
+    'id="btn-receipt-mode-full"',
+    'id="btn-receipt-save"',
+    'id="btn-receipt-copy"',
+    'id="btn-receipt-close"',
+  ]) {
+    assert.equal(indexHtml.includes(requiredId), true, `index.html must contain ${requiredId}`);
+  }
+
+  // 2. styles.css v0.2.9 selectors & Zero-CLS .roll-col preserved
+  const stylesNoComments = stylesCss.replace(/\/\*[\s\S]*?\*\//g, '');
+  const expandedListMatch = stylesNoComments.match(
+    /(?:^|\n)\s*\.children-list\.is-expanded\s*\{([^}]*)\}/,
+  );
+  assert.ok(expandedListMatch, 'styles.css must define .children-list.is-expanded');
+  assert.match(expandedListMatch[1], /max-height\s*:\s*400px\b/);
+  assert.match(expandedListMatch[1], /overflow-y\s*:\s*auto\b/);
+
+  for (const selector of [
+    '.children-toggle-bar',
+    '.child-status.ENDED',
+    '.child-row.is-ended',
+    '.hero-value-row.has-action',
+    '.checkout-btn',
+    '.receipt-modal-card',
+    '.receipt-preview-img',
+  ]) {
+    assert.equal(stylesNoComments.includes(selector), true, `styles.css must define ${selector}`);
+  }
+  const rollColMatch = stylesNoComments.match(/(?:^|\n)\s*\.roll-col\s*\{([^}]*)\}/);
+  assert.ok(rollColMatch, 'styles.css must preserve .roll-col');
+  assert.match(rollColMatch[1], /display\s*:\s*inline-grid\b/);
+
+  // 3. 100% I18N.zh / I18N.en key & {placeholder} parity + v0.2.9 keys
+  const i18nStart = appSource.indexOf('const I18N = {');
+  assert.ok(i18nStart >= 0);
+  const i18nMatch = appSource
+    .slice(i18nStart)
+    .match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(i18nMatch, 'Both zh and en blocks must be extractable from I18N');
+
+  const extractEntries = (block) => {
+    const map = new Map();
+    for (const match of block.matchAll(/^\s*'([^']+)'\s*:\s*'((?:\\.|[^'\\])*)'/gm)) {
+      map.set(match[1], match[2]);
+    }
+    return map;
+  };
+  const zhEntries = extractEntries(i18nMatch[1]);
+  const enEntries = extractEntries(i18nMatch[2]);
+  assert.deepEqual([...zhEntries.keys()].sort(), [...enEntries.keys()].sort());
+
+  for (const key of [
+    'childrenModels.liveSubheadFolded',
+    'childrenModels.expandAll',
+    'childrenModels.collapse',
+    'childrenModels.expandMoreFooter',
+    'childrenModels.collapseFooter',
+    'childrenModels.childEnded',
+    'receipt.checkoutBtn',
+    'receipt.modalTitle',
+    'receipt.scopeToday',
+    'receipt.scopeAll',
+    'receipt.modeCompact',
+    'receipt.modeFull',
+    'receipt.saveBtn',
+    'receipt.copyBtn',
+  ]) {
+    assert.ok(zhEntries.has(key) && zhEntries.get(key).length > 0, `I18N.zh must define ${key}`);
+    assert.ok(enEntries.has(key) && enEntries.get(key).length > 0, `I18N.en must define ${key}`);
+  }
+
+  const extractPlaceholders = (str) =>
+    [...str.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
+  for (const [key, zhVal] of zhEntries.entries()) {
+    assert.deepEqual(
+      extractPlaceholders(zhVal),
+      extractPlaceholders(enEntries.get(key)),
+      `Placeholder mismatch for I18N key "${key}"`,
+    );
+  }
+
+  // 4. Zero unsafe DOM APIs across BOTH app.js and receipt.js
+  const unsafeDomRe = /\b(?:innerHTML|outerHTML|insertAdjacentHTML|document\.write)\b/;
+  assert.equal(unsafeDomRe.test(appSource), false, 'app.js must contain 0 unsafe DOM APIs');
+  assert.equal(unsafeDomRe.test(receiptSource), false, 'receipt.js must contain 0 unsafe DOM APIs');
+
+  // 5. Zero banned strings across ALL repo files
+  const bannedTerm = '\u6c34\u4f4d';
+  const legacyDocPhrase = 'Dedicated ' + 'Gemini 3.1 Pro';
+  const legacyUiTerm = '\u5728\u5f79\u6a21\u578b';
+
+  function listAllRepoFiles(dir) {
+    const found = [];
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === '.git' || entry.name === 'node_modules') continue;
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        found.push(...listAllRepoFiles(fullPath));
+      } else if (entry.isFile()) {
+        found.push(fullPath);
+      }
+    }
+    return found;
+  }
+
+  const allRepoFiles = listAllRepoFiles(repoRoot);
+  assert.ok(allRepoFiles.length >= 18, 'Repository file walk must discover all tracked files');
+  for (const filePath of allRepoFiles) {
+    const content = readFileSync(filePath, 'utf-8');
+    assert.equal(content.includes(bannedTerm), false, `${filePath} must not contain banned term`);
+    assert.equal(
+      content.includes(legacyDocPhrase),
+      false,
+      `${filePath} must not contain legacy doc phrase`,
+    );
+  }
+
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['receipt.js', receiptSource],
+    ['I18N.zh', i18nMatch[1]],
+    ['plugin.json', pluginJsonRaw],
+    ['package.json', packageJsonRaw],
+    ['sidecar.json', sidecarJsonRaw],
+    ['README.md', readmeMd],
+    ['SKILL.md', skillMd],
+  ]) {
+    assert.equal(src.includes(legacyUiTerm), false, `${label} must not contain legacy UI term`);
+  }
+
+  // 6. Balanced [MODIFIED BEGIN/END] annotations across all code files + createReleaseUpdater 0.2.9 default
+  const modBeginMarker = '[' + 'MODIFIED BEGIN]';
+  const modEndMarker = '[' + 'MODIFIED END]';
+  const annotatedTargets = [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['app.js', appSource],
+    ['receipt.js', receiptSource],
+    ['parser.mjs', parserSource],
+    ['main.mjs', mainSource],
+    ['net_proxy.mjs', netProxySource],
+    ['pricing_sync.mjs', pricingSyncSource],
+    ['release_updater.mjs', releaseUpdaterSource],
+    ['scripts/sync-plugin.ps1', syncPluginPs1],
+    ['tests/parser.test.mjs', selfSource],
+  ];
+  const maintainerScriptPath = join(repoRoot, 'maintainer', 'sync-github-about.ps1');
+  if (existsSync(maintainerScriptPath)) {
+    annotatedTargets.push(['maintainer/sync-github-about.ps1', readFileSync(maintainerScriptPath, 'utf-8')]);
+  }
+
+  for (const [label, src] of annotatedTargets) {
+    let depth = 0;
+    let minDepth = 0;
+    let begins = 0;
+    let ends = 0;
+    for (const line of src.split(/\r?\n/)) {
+      if (line.includes(modBeginMarker)) {
+        depth += 1;
+        begins += 1;
+      }
+      if (line.includes(modEndMarker)) {
+        depth -= 1;
+        ends += 1;
+        if (depth < minDepth) minDepth = depth;
+      }
+    }
+    assert.ok(begins > 0, `${label} must contain modification annotations`);
+    assert.equal(begins, ends, `${label} begin/end annotation count mismatch`);
+    assert.equal(depth, 0, `${label} unclosed modification annotation (depth=${depth})`);
+    assert.equal(minDepth, 0, `${label} unmatched end annotation (minDepth=${minDepth})`);
+  }
+
+  const defaultUpdater = createReleaseUpdater({ stateDir: '' });
+  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.2.9');
+});
+
+test('v0.2.9 headless Node VM integration: Top-5 children folding, 400px scroll preservation, Ended badge, and #receipt-modal workflow', async () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const paneDir = join(testDir, '..', 'sidecars', 'monitor_pane');
+  const receiptSource = readFileSync(join(paneDir, 'receipt.js'), 'utf-8');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+
+  const iifeCloseIdx = appSource.lastIndexOf('})();');
+  assert.ok(iifeCloseIdx > 0, 'app.js must end with IIFE closing })();');
+
+  const instrumentedApp =
+    appSource.slice(0, iifeCloseIdx) +
+    `\n  globalThis.__tmV029Exports = {\n` +
+    `    state,\n` +
+    `    t,\n` +
+    `    init,\n` +
+    `    renderCurrentTab,\n` +
+    `    renderCostCard,\n` +
+    `    renderChildrenAndModelsCard,\n` +
+    `    renderReceiptModal,\n` +
+    `    openReceiptModal,\n` +
+    `    closeReceiptModal,\n` +
+    `  };\n` +
+    appSource.slice(iifeCloseIdx);
+
+  class FakeNode {
+    constructor() {
+      this.parentNode = null;
+      this.childNodes = [];
+    }
+  }
+
+  class FakeTextNode extends FakeNode {
+    constructor(text) {
+      super();
+      this.nodeType = 3;
+      this._text = String(text ?? '');
+    }
+    get textContent() {
+      return this._text;
+    }
+    set textContent(v) {
+      this._text = String(v ?? '');
+    }
+  }
+
+  let fakeDocument = null;
+  let lastCanvasTexts = [];
+
+  function matchesSimpleSelector(elNode, selector) {
+    const s = selector.trim();
+    if (!s) return false;
+    if (s.startsWith('[') && s.endsWith(']')) {
+      const attrName = s.slice(1, -1).split('=')[0].trim();
+      if (attrName.startsWith('data-')) {
+        const camel = attrName
+          .slice(5)
+          .replace(/-([a-z])/g, (_, ch) => ch.toUpperCase());
+        return elNode.hasAttribute(attrName) || elNode.dataset[camel] !== undefined;
+      }
+      return elNode.hasAttribute(attrName);
+    }
+    if (s.startsWith('#')) {
+      return elNode.getAttribute('id') === s.slice(1);
+    }
+    if (s.startsWith('.')) {
+      const classes = s.slice(1).split('.').filter(Boolean);
+      return classes.every((cls) => elNode.classList.contains(cls));
+    }
+    const dotParts = s.split('.');
+    const tagPart = dotParts[0].toUpperCase();
+    if (tagPart && elNode.tagName !== tagPart) return false;
+    return dotParts.slice(1).every((cls) => elNode.classList.contains(cls));
+  }
+
+  class FakeElement extends FakeNode {
+    constructor(tagName, namespaceURI = 'http://www.w3.org/1999/xhtml') {
+      super();
+      this.nodeType = 1;
+      this.tagName = String(tagName || 'div').toUpperCase();
+      this.namespaceURI = namespaceURI;
+      this._classSet = new Set();
+      this.attributes = new Map();
+      this.listeners = new Map();
+      this.dataset = {};
+      this.title = '';
+      this.type = '';
+      this.role = '';
+      this.value = '';
+      this.src = '';
+      this.alt = '';
+      this.href = '';
+      this.download = '';
+      this.disabled = false;
+      this.checked = false;
+      this.scrollTop = 0;
+      this.scrollLeft = 0;
+      this.width = 0;
+      this.height = 0;
+      this._canvasTexts = [];
+      this.style = {
+        cssText: '',
+        setProperty(name, val) {
+          this[name] = String(val);
+        },
+        getPropertyValue(name) {
+          return this[name] ?? '';
+        },
+      };
+      this.classList = {
+        add: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.add(part);
+            }
+          }
+        },
+        remove: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.delete(part);
+            }
+          }
+        },
+        contains: (tok) => this._classSet.has(String(tok || '')),
+        toggle: (tok, force) => {
+          const key = String(tok || '');
+          const shouldAdd = force === undefined ? !this._classSet.has(key) : Boolean(force);
+          if (shouldAdd) this._classSet.add(key);
+          else this._classSet.delete(key);
+          return shouldAdd;
+        },
+      };
+    }
+
+    get className() {
+      return [...this._classSet].join(' ');
+    }
+    set className(val) {
+      this._classSet.clear();
+      for (const part of String(val || '').trim().split(/\s+/)) {
+        if (part) this._classSet.add(part);
+      }
+    }
+
+    get children() {
+      return this.childNodes.filter((n) => n instanceof FakeElement);
+    }
+    get childElementCount() {
+      return this.children.length;
+    }
+    get isConnected() {
+      let cur = this;
+      while (cur) {
+        if (cur === fakeDocument || cur === fakeDocument?.documentElement || cur === fakeDocument?.body) {
+          return true;
+        }
+        cur = cur.parentNode;
+      }
+      return false;
+    }
+
+    get textContent() {
+      return this.childNodes.map((n) => n.textContent).join('');
+    }
+    set textContent(val) {
+      for (const c of this.childNodes) c.parentNode = null;
+      this.childNodes = [];
+      const str = val === null || val === undefined ? '' : String(val);
+      if (str !== '') {
+        this.appendChild(new FakeTextNode(str));
+      }
+    }
+
+    setAttribute(name, val) {
+      const k = String(name);
+      const v = String(val);
+      if (k === 'class') {
+        this.className = v;
+        return;
+      }
+      if (k === 'title') this.title = v;
+      if (k === 'href') this.href = v;
+      if (k === 'download') this.download = v;
+      this.attributes.set(k, v);
+    }
+    getAttribute(name) {
+      const k = String(name);
+      if (k === 'class') return this.className;
+      return this.attributes.has(k) ? this.attributes.get(k) : null;
+    }
+    hasAttribute(name) {
+      const k = String(name);
+      if (k === 'class') return this._classSet.size > 0;
+      return this.attributes.has(k);
+    }
+    removeAttribute(name) {
+      const k = String(name);
+      if (k === 'class') {
+        this.className = '';
+        return;
+      }
+      this.attributes.delete(k);
+    }
+
+    appendChild(child) {
+      if (child.parentNode && child.parentNode !== this) {
+        const idx = child.parentNode.childNodes.indexOf(child);
+        if (idx >= 0) child.parentNode.childNodes.splice(idx, 1);
+      } else if (child.parentNode === this) {
+        const idx = this.childNodes.indexOf(child);
+        if (idx >= 0) this.childNodes.splice(idx, 1);
+      }
+      child.parentNode = this;
+      this.childNodes.push(child);
+      return child;
+    }
+
+    remove() {
+      if (this.parentNode) {
+        const idx = this.parentNode.childNodes.indexOf(this);
+        if (idx >= 0) this.parentNode.childNodes.splice(idx, 1);
+        this.parentNode = null;
+      }
+    }
+
+    replaceChildren(...nodes) {
+      for (const oldChild of this.childNodes) {
+        oldChild.parentNode = null;
+      }
+      this.childNodes = [];
+      for (const n of nodes) {
+        if (n === null || n === undefined) continue;
+        this.appendChild(typeof n === 'string' ? new FakeTextNode(n) : n);
+      }
+    }
+
+    addEventListener(type, fn) {
+      if (!this.listeners.has(type)) this.listeners.set(type, []);
+      this.listeners.get(type).push(fn);
+    }
+
+    click() {
+      const handlers = this.listeners.get('click') || [];
+      const evt = {
+        type: 'click',
+        target: this,
+        currentTarget: this,
+        preventDefault() {},
+        stopPropagation() {},
+      };
+      for (const fn of handlers) fn(evt);
+    }
+
+    focus() {
+      if (fakeDocument) fakeDocument.activeElement = this;
+    }
+
+    querySelectorAll(selector) {
+      const parts = String(selector || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      if (parts.length === 0) return [];
+
+      const findMatchingDescendants = (rootNode, simpleSel) => {
+        const out = [];
+        const visit = (n) => {
+          for (const child of n.children) {
+            if (matchesSimpleSelector(child, simpleSel)) out.push(child);
+            visit(child);
+          }
+        };
+        visit(rootNode);
+        return out;
+      };
+
+      let currentSet = [this];
+      for (const part of parts) {
+        const nextSet = [];
+        const seen = new Set();
+        for (const baseNode of currentSet) {
+          for (const m of findMatchingDescendants(baseNode, part)) {
+            if (!seen.has(m)) {
+              seen.add(m);
+              nextSet.push(m);
+            }
+          }
+        }
+        currentSet = nextSet;
+      }
+      return currentSet;
+    }
+
+    querySelector(selector) {
+      return this.querySelectorAll(selector)[0] || null;
+    }
+
+    getContext(kind) {
+      if (this.tagName !== 'CANVAS' || kind !== '2d') return null;
+      this._canvasTexts = [];
+      const targetArr = this._canvasTexts;
+      return {
+        font: '',
+        fillStyle: '',
+        strokeStyle: '',
+        lineWidth: 1,
+        textAlign: 'left',
+        textBaseline: 'alphabetic',
+        letterSpacing: '0px',
+        save() {},
+        restore() {},
+        scale() {},
+        beginPath() {},
+        moveTo() {},
+        lineTo() {},
+        stroke() {},
+        fillRect() {},
+        strokeRect() {},
+        setLineDash() {},
+        createLinearGradient() {
+          return { addColorStop() {} };
+        },
+        measureText(str) {
+          return { width: String(str || '').length * 7 };
+        },
+        fillText(str) {
+          targetArr.push(String(str));
+          lastCanvasTexts = targetArr;
+        },
+      };
+    }
+
+    toDataURL(mime = 'image/png') {
+      const summary = `${this.width}x${this.height}:${this._canvasTexts.join('|')}`;
+      const b64 = Buffer.from(summary, 'utf-8').toString('base64');
+      return `data:${mime};base64,${b64}`;
+    }
+  }
+
+  const elementsById = new Map();
+  const docListeners = new Map();
+  const rootHtml = new FakeElement('html');
+  const rootBody = new FakeElement('body');
+  rootHtml.appendChild(rootBody);
+
+  fakeDocument = {
+    readyState: 'loading',
+    hidden: false,
+    activeElement: null,
+    documentElement: rootHtml,
+    body: rootBody,
+    createElement: (tag) => new FakeElement(tag),
+    createElementNS: (ns, tag) => new FakeElement(tag, ns),
+    createTextNode: (text) => new FakeTextNode(text),
+    getElementById(id) {
+      const key = String(id);
+      const inTree = rootHtml.querySelector(`#${key}`);
+      if (inTree) return inTree;
+      if (!elementsById.has(key)) {
+        const elem = new FakeElement('div');
+        elem.setAttribute('id', key);
+        if (key === 'receipt-modal' || key === 'update-modal' || key === 'toast-banner') {
+          elem.classList.add('hidden');
+        }
+        rootBody.appendChild(elem);
+        elementsById.set(key, elem);
+      }
+      return elementsById.get(key);
+    },
+    querySelectorAll: (sel) => rootHtml.querySelectorAll(sel),
+    querySelector: (sel) => rootHtml.querySelector(sel),
+    addEventListener(type, fn) {
+      if (!docListeners.has(type)) docListeners.set(type, []);
+      docListeners.get(type).push(fn);
+    },
+    dispatchEvent(evt) {
+      for (const fn of docListeners.get(evt.type) || []) fn(evt);
+    },
+  };
+
+  const nowMs = Date.now();
+  const makeTwelveChildren = (extraOut = 0) =>
+    Array.from({ length: 12 }, (_, idx) => {
+      const isGen = idx === 0;
+      const isTools = idx === 1;
+      const isEndedTop = idx === 2; // in Top 5!
+      const isEndedFolded = idx >= 9; // folded in 6..12
+      const isKilled = isEndedTop || isEndedFolded;
+      return {
+        conversationId: `02940000-0000-4000-8000-0000000000${String(idx + 1).padStart(2, '0')}`,
+        kind: idx % 2 === 0 ? 'swarm' : 'subagent',
+        name: `member-${idx + 1}`,
+        role: 'worker',
+        model: idx < 4 ? 'gemini-4-argon' : 'gemini-3.8-flash',
+        status: isKilled ? 'IDLE' : isGen ? 'GENERATING' : isTools ? 'RUNNING_TOOLS' : 'IDLE',
+        killed: isKilled,
+        updatedAtMs: nowMs - (idx + 1) * 15_000,
+        generatingSinceMs: isGen ? nowMs - 15_000 : null,
+        contextTotal: 25_000 + idx * 1000,
+        latestTokPerSec: 85 + idx,
+        outputTokens: 1200 + idx * 100 + (idx === 0 ? extraOut : 0),
+        costActual: Number((0.15 + idx * 0.05 + (idx === 0 ? extraOut * 0.0001 : 0)).toFixed(4)),
+      };
+    });
+
+  const buildSnapshotPayload = (extraOut = 0) => {
+    const children = makeTwelveChildren(extraOut);
+    const receiptChildren = children.map((c) => ({
+      conversationId: c.conversationId,
+      kind: c.kind,
+      name: c.name,
+      role: c.role,
+      totalTokens: c.contextTotal + c.outputTokens,
+      costActual: c.costActual,
+      stepsCount: 3,
+    }));
+    const subTok = receiptChildren.reduce((s, c) => s + c.totalTokens, 0);
+    const subCost = receiptChildren.reduce((s, c) => s + c.costActual, 0);
+    return {
+      unchanged: false,
+      etag: `etag-${extraOut}`,
+      serverTimeMs: nowMs,
+      appVersion: '0.2.9',
+      bootId: 'boot-v029',
+      boundConversationId: '02940000-0000-4000-8000-000000000000',
+      prefs: { ...DEFAULT_PREFS, currency: 'CNY', cnyRate: 7.25, language: 'zh' },
+      pricingCatalog: buildEffectivePricingCatalog({
+        ...DEFAULT_PREFS,
+        currency: 'CNY',
+        cnyRate: 7.25,
+        language: 'zh',
+      }),
+      subscriptionCatalog: SUBSCRIPTION_CATALOG,
+      current: {
+        conversationId: '02940000-0000-4000-8000-000000000000',
+        title: 'v0.2.9 Coordinator Session',
+        workspace: 'f:/Other Items/agy-token-monitor',
+        activeModel: 'gemini-4-argon',
+        isChildSession: false,
+        status: 'IDLE',
+        generatingSinceMs: null,
+        speed: {
+          measuredStepsCount: 5,
+          latestStepTokPerSec: 92.4,
+          weightedAvgTokPerSec: 88.1,
+          peakTokPerSec: 110.2,
+          latestStepOutputTokens: 640,
+          latestStepDurationSec: 6.9,
+          recentSteps: [{ stepIndex: 1, tokPerSec: 92.4, outputTokens: 640 }],
+        },
+        context: {
+          currentTotal: 120_000,
+          latestInputUncached: 20_000,
+          latestCacheRead: 100_000,
+          latestCacheHitRatePct: 83.3,
+          latestNetDelta: 4_000,
+          softLimit: 400_000,
+          hardLimit: 500_000,
+          hardUsagePct: 24,
+          softUsagePct: 30,
+          usageLevel: 'HEALTHY',
+          compactionsCount: 2,
+          topSpikes: [],
+        },
+        subscription: {
+          planId: 'ultra_20x',
+          planLabel: 'Google AI Ultra 20x',
+          isAutoDetected: true,
+          monthlyFee: 1449.93,
+          mainOnlySharePct: 0.2,
+          withChildrenSharePct: 0.8,
+        },
+        totals: {
+          mainOnly: {
+            stepsCount: 5,
+            inputUncachedTokens: 40_000,
+            cacheReadTokens: 80_000,
+            outputTokens: 8_640,
+            totalTokens: 128_640,
+            cacheHitRatePct: 66.7,
+            costActual: 2.31,
+            costUncachedBaseline: 3.8,
+            costSavedByCache: 1.49,
+          },
+          withChildren: {
+            stepsCount: 41,
+            inputUncachedTokens: 200_000,
+            cacheReadTokens: 220_000,
+            outputTokens: 30_000 + extraOut,
+            totalTokens: 128_640 + subTok,
+            cacheHitRatePct: 52.4,
+            costActual: Number((2.31 + subCost).toFixed(4)),
+            costUncachedBaseline: 15.2,
+            costSavedByCache: 4.1,
+          },
+          byModel: [
+            {
+              model: 'gemini-4-argon',
+              profileId: 'gemini-4-argon',
+              profileLabel: 'Gemini 4 Argon',
+              rateDisplay: '$3/$0.3/$15',
+              stepsCount: 41,
+              inputUncachedTokens: 200_000,
+              cacheReadTokens: 220_000,
+              outputTokens: 30_000 + extraOut,
+              totalTokens: 128_640 + subTok,
+              costActual: Number((2.31 + subCost).toFixed(4)),
+            },
+          ],
+          mainOnlyByModel: [],
+        },
+        receipt: {
+          todayDate: '2026-11-18',
+          today: {
+            scope: 'today',
+            hasData: true,
+            startDate: '2026-11-18',
+            endDate: '2026-11-18',
+            startedAtMs: nowMs - 3600_000,
+            endedAtMs: nowMs - 60_000,
+            activeDurationMs: 42 * 60_000,
+            compactionsCount: 1,
+            primaryModel: {
+              model: 'gemini-4-argon',
+              profileId: 'gemini-4-argon',
+              profileLabel: 'Gemini 4 Argon',
+            },
+            subagentsCount: 12,
+            main: { totalTokens: 128_640, costActual: 2.31, stepsCount: 5 },
+            children: receiptChildren,
+            childrenSubtotal: { totalTokens: subTok, costActual: subCost },
+            grandTotal: {
+              totalTokens: 128_640 + subTok,
+              costActual: Number((2.31 + subCost).toFixed(4)),
+              stepsCount: 41,
+            },
+          },
+          all: {
+            scope: 'all',
+            hasData: true,
+            startDate: '2026-11-17',
+            endDate: '2026-11-18',
+            startedAtMs: nowMs - 90_000_000,
+            endedAtMs: nowMs - 60_000,
+            activeDurationMs: 125 * 60_000,
+            compactionsCount: 2,
+            primaryModel: {
+              model: 'gemini-4-argon',
+              profileId: 'gemini-4-argon',
+              profileLabel: 'Gemini 4 Argon',
+            },
+            subagentsCount: 12,
+            main: { totalTokens: 240_000, costActual: 5.12, stepsCount: 11 },
+            children: receiptChildren,
+            childrenSubtotal: { totalTokens: subTok, costActual: subCost },
+            grandTotal: {
+              totalTokens: 240_000 + subTok,
+              costActual: Number((5.12 + subCost).toFixed(4)),
+              stepsCount: 47,
+            },
+          },
+        },
+        children,
+      },
+      global: {
+        activeRangeKey: 'today',
+        periods: {
+          today: {
+            rangeKey: 'today',
+            label: '今日',
+            startDate: '2026-11-18',
+            endDate: '2026-11-18',
+            activeDaysCount: 1,
+            conversationsCount: 1,
+            archivedCount: 0,
+            stepsCount: 41,
+            inputUncachedTokens: 200_000,
+            cacheReadTokens: 220_000,
+            outputTokens: 30_000,
+            totalTokens: 450_000,
+            costActual: 8.5,
+            avgDailyCost: 8.5,
+            avgDailyTokens: 450_000,
+            trendGranularity: 'hour',
+            trend: [],
+            byModel: [],
+            subscription: {
+              planId: 'ultra_20x',
+              planLabel: 'Google AI Ultra 20x',
+              isAutoDetected: true,
+              monthlyFee: 1449.93,
+              proratedFee: 48.33,
+              proratedDays: 1,
+              tokenCost: 8.5,
+              netSavings: -39.83,
+              roiMultiplier: 0.18,
+              paybackPct: 17.6,
+              isPaidOff: false,
+            },
+          },
+        },
+        recentConversations: [],
+        ledgerSync: { syncing: false, pendingRebuildCount: 0 },
+      },
+    };
+  };
+
+  let currentMockSnap = buildSnapshotPayload(0);
+  const clipboardItemsWritten = [];
+  const createdObjectUrls = [];
+
+  const sandbox = {
+    Node: FakeNode,
+    Blob,
+    Buffer,
+    Uint8Array,
+    ClipboardItem: class FakeClipboardItem {
+      constructor(items) {
+        this.items = items;
+      }
+    },
+    URL: {
+      createObjectURL: (blob) => {
+        const u = `blob:mock/${createdObjectUrls.length + 1}:${blob?.size || 0}`;
+        createdObjectUrls.push(u);
+        return u;
+      },
+      revokeObjectURL: () => {},
+    },
+    sessionStorage: {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    },
+    document: fakeDocument,
+    window: null,
+    navigator: {
+      clipboard: {
+        writeText: async () => {},
+        write: async (items) => {
+          clipboardItemsWritten.push(...items);
+        },
+      },
+    },
+    MutationObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+    getComputedStyle: () => ({ color: 'rgb(246, 247, 249)' }),
+    AbortController,
+    fetch: async (url) => {
+      if (String(url).includes('/api/snapshot')) {
+        return { ok: true, status: 200, json: async () => currentMockSnap };
+      }
+      return { ok: true, status: 200, json: async () => ({ ok: true, prefs: currentMockSnap.prefs }) };
+    },
+    requestAnimationFrame: (cb) => {
+      cb();
+      return 1;
+    },
+    setTimeout: () => 1,
+    clearTimeout: () => {},
+    setInterval: () => 1,
+    clearInterval: () => {},
+    console,
+    URLSearchParams,
+    Intl,
+  };
+  sandbox.window = {
+    addEventListener: () => {},
+    matchMedia: () => ({ matches: false }),
+    sidecar: { conversationId: '02940000-0000-4000-8000-000000000000' },
+    location: { reload: () => {} },
+  };
+  sandbox.globalThis = sandbox;
+
+  // Load receipt.js first, attach TokenMonitorReceipt onto window, then load app.js
+  vm.runInNewContext(receiptSource, sandbox);
+  sandbox.window.TokenMonitorReceipt = sandbox.TokenMonitorReceipt;
+  vm.runInNewContext(instrumentedApp, sandbox);
+
+  const exports = sandbox.__tmV029Exports;
+  assert.ok(exports, 'VM execution must expose __tmV029Exports');
+
+  // Fire DOMContentLoaded -> binds all event listeners and runs initial pollSnapshot(true)
+  fakeDocument.dispatchEvent({ type: 'DOMContentLoaded' });
+  await new Promise((r) => setImmediate(r));
+
+  const cardChildren = fakeDocument.getElementById('card-children-models');
+  const cardCost = fakeDocument.getElementById('card-cost');
+
+  // --- Workflow 1: 12 children -> Top-5 collapsed -> Expand 12 -> 400px scrollTop=160 preserved across live update -> Collapse -> Ended badge & relative time ---
+  assert.equal(
+    cardChildren.querySelectorAll('.child-row').length,
+    5,
+    'Collapsed view must render exactly Top 5 .child-row items',
+  );
+  assert.equal(cardChildren.querySelector('.children-list.is-expanded'), null);
+
+  const topExpandBtn = cardChildren.querySelector('.children-head .mini-btn');
+  const bottomExpandBtn = cardChildren.querySelector('.children-toggle-bar');
+  assert.ok(topExpandBtn, 'Collapsed view with 12 children must render top expand button');
+  assert.ok(bottomExpandBtn, 'Collapsed view with 12 children must render bottom .children-toggle-bar');
+  assert.match(topExpandBtn.textContent, /12/);
+  assert.match(bottomExpandBtn.textContent, /7/);
+
+  // Verify killed: true child in zh renders .child-status.ENDED ('● 已结束') and relative time
+  const endedBadgesZh = cardChildren.querySelectorAll('.child-status.ENDED');
+  assert.ok(endedBadgesZh.length >= 1, 'Ended worker in Top 5 must render .child-status.ENDED');
+  assert.equal(endedBadgesZh[0].textContent, '● 已结束');
+  const relTimesZh = cardChildren.querySelectorAll('.child-rel-time');
+  assert.ok(relTimesZh.length === 5 && relTimesZh[0].textContent.length > 0, 'Each visible child must render relative time');
+
+  // Click expand -> all 12 items rendered inside .children-list.is-expanded
+  topExpandBtn.click();
+  assert.equal(cardChildren.querySelectorAll('.child-row').length, 12);
+  const expandedListBefore = cardChildren.querySelector('.children-list.is-expanded');
+  assert.ok(expandedListBefore, 'Expanded list must carry .is-expanded class');
+
+  // Scroll to 160px, then inject live snapshot update that mutates child metrics and forces DOM rebuild
+  expandedListBefore.scrollTop = 160;
+  currentMockSnap = buildSnapshotPayload(500);
+  exports.state.snapshot = currentMockSnap;
+  exports.renderCurrentTab(currentMockSnap);
+
+  const expandedListAfter = cardChildren.querySelector('.children-list.is-expanded');
+  assert.ok(expandedListAfter, 'Expanded list must remain expanded after live snapshot update');
+  assert.notEqual(expandedListAfter, expandedListBefore, 'Live update with changed tokens must replace list DOM');
+  assert.equal(expandedListAfter.scrollTop, 160, 'scrollTop === 160 must be preserved across live snapshot re-render');
+
+  // Click collapse footer -> back to 5 items
+  const collapseFooterBtn = cardChildren.querySelector('.children-toggle-bar');
+  assert.ok(collapseFooterBtn);
+  collapseFooterBtn.click();
+  assert.equal(cardChildren.querySelectorAll('.child-row').length, 5);
+  assert.equal(cardChildren.querySelector('.children-list.is-expanded'), null);
+
+  // --- Workflow 2: Click #btn-checkout -> #receipt-modal preview PNG, toggle today/all & compact/full, and re-render on #btn-lang-toggle ---
+  const receiptModal = fakeDocument.getElementById('receipt-modal');
+  const previewImg = fakeDocument.getElementById('receipt-preview-img');
+  const checkoutBtn = fakeDocument.getElementById('btn-checkout');
+  assert.ok(checkoutBtn, 'Equivalent Cost card must render #btn-checkout');
+  assert.ok(cardCost.querySelector('.hero-value-row.has-action'), 'Cost hero row must have .has-action');
+  assert.equal(receiptModal.classList.contains('hidden'), true);
+
+  checkoutBtn.click();
+  assert.equal(receiptModal.classList.contains('hidden'), false, '#receipt-modal must open on #btn-checkout click');
+  assert.equal(previewImg.src.startsWith('data:image/png;base64,'), true);
+  assert.equal(previewImg.alt, '收工票根');
+  assert.equal(lastCanvasTexts.includes('收工票根'), true);
+  assert.equal(lastCanvasTexts.some((s) => s.includes('其余 7 位子代理')), true);
+  const srcTodayCompactZh = previewImg.src;
+
+  // Toggle today -> all
+  const btnScopeAll = fakeDocument.getElementById('btn-receipt-scope-all');
+  const btnScopeToday = fakeDocument.getElementById('btn-receipt-scope-today');
+  btnScopeAll.click();
+  assert.equal(btnScopeAll.classList.contains('active'), true);
+  assert.equal(btnScopeToday.classList.contains('active'), false);
+  const srcAllCompactZh = previewImg.src;
+  assert.notEqual(srcAllCompactZh, srcTodayCompactZh, 'Switching today -> all must re-render PNG data URL');
+
+  // Toggle compact -> full (all 12 children listed, no 其余 row)
+  const btnModeFull = fakeDocument.getElementById('btn-receipt-mode-full');
+  btnModeFull.click();
+  assert.equal(btnModeFull.classList.contains('active'), true);
+  assert.equal(lastCanvasTexts.some((s) => s.includes('其余')), false);
+  const srcAllFullZh = previewImg.src;
+  assert.notEqual(srcAllFullZh, srcAllCompactZh, 'Switching compact -> full must re-render PNG data URL');
+
+  // Click #btn-lang-toggle -> switches UI to English ('● Ended' + relative time) AND immediately re-renders open receipt modal!
+  fakeDocument.getElementById('btn-lang-toggle').click();
+  assert.equal(exports.state.lang, 'en');
+  assert.equal(previewImg.alt, 'Session Receipt');
+  assert.notEqual(previewImg.src, srcAllFullZh, 'Language toggle must immediately re-render #receipt-preview-img');
+  assert.equal(lastCanvasTexts.includes('Session Receipt'), true);
+  assert.equal(lastCanvasTexts.includes('Session Total'), true);
+
+  const endedBadgesEn = cardChildren.querySelectorAll('.child-status.ENDED');
+  assert.ok(endedBadgesEn.length >= 1);
+  assert.equal(endedBadgesEn[0].textContent, '● Ended');
+  const relTimesEn = cardChildren.querySelectorAll('.child-rel-time');
+  assert.ok(relTimesEn.length === 5 && /ago|just now/i.test(relTimesEn[0].textContent));
+
+  // Verify copy & save buttons and Escape close
+  fakeDocument.getElementById('btn-receipt-copy').click();
+  fakeDocument.getElementById('btn-receipt-save').click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(clipboardItemsWritten.length, 1);
+  assert.equal(createdObjectUrls.length, 1);
+
+  fakeDocument.dispatchEvent({ key: 'Escape', type: 'keydown', preventDefault() {} });
+  assert.equal(receiptModal.classList.contains('hidden'), true, 'Escape must close #receipt-modal');
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-18 12:01:00
 // ============================================================================

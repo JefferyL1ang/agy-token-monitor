@@ -55,6 +55,14 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 21:28:45
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:40:30
+// Description: Add v0.2.9 collapsed subagent/swarm display limit constant.
+// ============================================================================
+  const MAX_COLLAPSED_CHILDREN = 5;
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:40:30
+// ============================================================================
 
   const state = {
     homeConvId: boundConvId,
@@ -154,6 +162,21 @@
     },
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:07:46
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:40:30
+// Description: Add v0.2.9 subagent/swarm folding & scroll preservation state and session checkout receipt modal state.
+// ============================================================================
+    childrenExpanded: false,
+    childrenScrollTop: 0,
+    receiptModalOpen: false,
+    receiptScope: 'today',
+    receiptDetailMode: 'compact',
+    lastReceiptCanvas: null,
+    lastReceiptVm: null,
+    lastReceiptDataSig: '',
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:40:30
 // ============================================================================
   };
 
@@ -516,6 +539,36 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:23:36
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:40:30
+// Description: Add v0.2.9 Top-5 subagent/swarm folding, Ended badge, and session checkout receipt modal i18n keys (zh).
+// ============================================================================
+      'childrenModels.liveSubheadFolded': 'Subagent / Swarm 实时状态 (近期活跃 {shown}/{total})',
+      'childrenModels.expandAll': '展开全部 ({count})',
+      'childrenModels.collapse': '收起',
+      'childrenModels.expandMoreFooter': '展开其余 {rest} 个成员（共 {total} 个）',
+      'childrenModels.collapseFooter': '收起列表（仅展示前 {shown} 个近期活跃）',
+      'childrenModels.childEnded': '● 已结束',
+      'receipt.checkoutBtn': '🧾 结账',
+      'receipt.checkoutTitle': '生成当前会话收工票根 (PNG)',
+      'receipt.modalTitle': '会话结账票根',
+      'receipt.modalHint': '可右键图片或使用下方按钮复制 / 保存',
+      'receipt.closeTip': '关闭票根预览',
+      'receipt.scopeAria': '票根统计范围',
+      'receipt.detailAria': '票根明细模式',
+      'receipt.scopeToday': '今日收工',
+      'receipt.scopeAll': '全程累计',
+      'receipt.modeCompact': '精简',
+      'receipt.modeFull': '完整',
+      'receipt.saveBtn': '↓ 保存 PNG',
+      'receipt.copyBtn': '复制小票图片',
+      'receipt.copiedToast': '✓ 小票图片已复制到剪贴板',
+      'receipt.copyFallbackToast': '当前环境限制剪贴板写图，请直接右键小票图片选择「复制图片」或点击保存 PNG',
+      'receipt.savedToast': '✓ 已保存小票 {name}',
+      'receipt.unavailableToast': '当前暂无可生成票根的会话数据',
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:40:30
+// ============================================================================
     },
     en: {
       'header.waiting': 'Waiting',
@@ -861,6 +914,36 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:23:36
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:40:30
+// Description: Add v0.2.9 Top-5 subagent/swarm folding, Ended badge, and session checkout receipt modal i18n keys (en).
+// ============================================================================
+      'childrenModels.liveSubheadFolded': 'Live Subagents / Swarm (Active {shown}/{total})',
+      'childrenModels.expandAll': 'Expand All ({count})',
+      'childrenModels.collapse': 'Collapse',
+      'childrenModels.expandMoreFooter': 'Show {rest} more ({total} total)',
+      'childrenModels.collapseFooter': 'Collapse (show top {shown} recent)',
+      'childrenModels.childEnded': '● Ended',
+      'receipt.checkoutBtn': '🧾 Checkout',
+      'receipt.checkoutTitle': 'Generate session checkout receipt (PNG)',
+      'receipt.modalTitle': 'Session Receipt',
+      'receipt.modalHint': 'Copy or save PNG receipt below',
+      'receipt.closeTip': 'Close receipt preview',
+      'receipt.scopeAria': 'Receipt time scope',
+      'receipt.detailAria': 'Receipt detail mode',
+      'receipt.scopeToday': 'Today',
+      'receipt.scopeAll': 'All-Time',
+      'receipt.modeCompact': 'Compact',
+      'receipt.modeFull': 'Full',
+      'receipt.saveBtn': '↓ Save PNG',
+      'receipt.copyBtn': 'Copy Receipt Image',
+      'receipt.copiedToast': '✓ Receipt image copied to clipboard',
+      'receipt.copyFallbackToast': 'Clipboard image write restricted — right-click the receipt image to Copy, or click Save PNG',
+      'receipt.savedToast': '✓ Saved receipt {name}',
+      'receipt.unavailableToast': 'No active session data available for receipt',
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:40:30
+// ============================================================================
     },
   };
 
@@ -1109,6 +1192,16 @@
     for (const key of barMetricMemory.keys()) {
       if (key.startsWith('cur:')) barMetricMemory.delete(key);
     }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:40:30
+// Description: Reset subagent/swarm folded state, scroll offset, and receipt memoization signature on session switch.
+// ============================================================================
+    state.childrenExpanded = false;
+    state.childrenScrollTop = 0;
+    state.lastReceiptDataSig = '';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:40:30
+// ============================================================================
     resetCardRenderSigs();
   }
 // ============================================================================
@@ -2323,6 +2416,16 @@
       setDrawerOpen(false);
       showToast(t('settings.savedToast'));
       await pollSnapshot(true);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:00
+// Description: Refresh open session receipt modal immediately after saving currency/FX/tariff settings.
+// ============================================================================
+      if (state.receiptModalOpen) {
+        renderReceiptModal();
+      }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:00
+// ============================================================================
     } catch (err) {
       feedback.textContent = t('settings.saveFailed', { msg: err.message });
       feedback.className = 'settings-feedback is-error';
@@ -2538,12 +2641,19 @@
   }
 
   function getCurrentAppVersion() {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:00
+// Description: Bump fallback app version to 0.2.9.
+// ============================================================================
     const raw =
       state.snapshot?.appVersion ||
       state.snapshot?.updateStatus?.currentVersion ||
       state.activeUpdateStatus?.currentVersion ||
-      '0.2.8';
-    return String(raw).trim().replace(/^[vV]/, '') || '0.2.8';
+      '0.2.9';
+    return String(raw).trim().replace(/^[vV]/, '') || '0.2.9';
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:00
+// ============================================================================
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:23:36
@@ -3167,6 +3277,175 @@
 // [MODIFIED END] 2026-11-17 18:58:00
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:00
+// Description: Implement v0.2.9 session checkout receipt modal (#receipt-modal) controller, flicker-free dirty signature check, synchronous ClipboardItem PNG copy, and PNG download.
+// ============================================================================
+  // ---------------- Session Checkout Receipt Modal ----------------
+  function computeReceiptDataSig(current, prefs) {
+    if (!current) return '';
+    const scopeObj =
+      state.receiptScope === 'today'
+        ? current.receipt?.today
+        : current.receipt?.all;
+    return JSON.stringify([
+      state.lang,
+      prefs?.currency || 'USD',
+      num(prefs?.cnyRate, 0),
+      state.receiptScope,
+      state.receiptDetailMode,
+      current.conversationId || '',
+      current.title || '',
+      isChildSessionView(current),
+      scopeObj
+        ? [
+            Boolean(scopeObj.hasData),
+            scopeObj.startDate || '',
+            scopeObj.endDate || '',
+            num(scopeObj.startedAtMs, 0),
+            num(scopeObj.endedAtMs, 0),
+            Math.round(num(scopeObj.activeDurationMs, 0) / 60000),
+            num(scopeObj.compactionsCount, 0),
+            scopeObj.primaryModel?.model || '',
+            scopeObj.primaryModel?.profileLabel || '',
+            num(scopeObj.subagentsCount, 0),
+            num(scopeObj.grandTotal?.stepsCount, 0),
+            num(scopeObj.grandTotal?.totalTokens, 0),
+            num(scopeObj.grandTotal?.costActual, 0),
+            Array.isArray(scopeObj.children) ? scopeObj.children.length : 0,
+          ]
+        : [
+            num(current.totals?.withChildren?.stepsCount, 0),
+            num(current.totals?.withChildren?.totalTokens, 0),
+            num(current.totals?.withChildren?.costActual, 0),
+            num(current.totals?.mainOnly?.stepsCount, 0),
+            num(current.totals?.mainOnly?.costActual, 0),
+            Array.isArray(current.children) ? current.children.length : 0,
+          ],
+    ]);
+  }
+
+  function renderReceiptModal() {
+    const current = state.snapshot?.current;
+    const receiptApi = window.TokenMonitorReceipt;
+    if (!current || !receiptApi) return false;
+
+    const btnToday = $('btn-receipt-scope-today');
+    const btnAll = $('btn-receipt-scope-all');
+    const btnCompact = $('btn-receipt-mode-compact');
+    const btnFull = $('btn-receipt-mode-full');
+
+    if (btnToday) btnToday.classList.toggle('active', state.receiptScope === 'today');
+    if (btnAll) btnAll.classList.toggle('active', state.receiptScope === 'all');
+    if (btnCompact) btnCompact.classList.toggle('active', state.receiptDetailMode === 'compact');
+    if (btnFull) btnFull.classList.toggle('active', state.receiptDetailMode === 'full');
+
+    const sessionTitle =
+      localizeConvTitle(current.title) ||
+      t('common.sessionPrefix', { id: shortId(current.conversationId) });
+    const isChildView = isChildSessionView(current);
+
+    const vm = receiptApi.buildReceiptViewModel(current, state.snapshot?.prefs, {
+      lang: state.lang,
+      scope: state.receiptScope,
+      detailMode: state.receiptDetailMode,
+      sessionTitle,
+      isChildView,
+    });
+    const canvas = receiptApi.renderReceiptCanvas(vm, { scale: 3 });
+
+    state.lastReceiptCanvas = canvas;
+    state.lastReceiptVm = vm;
+    state.lastReceiptDataSig = computeReceiptDataSig(current, state.snapshot?.prefs);
+
+    const imgEl = $('receipt-preview-img');
+    if (imgEl && canvas && typeof canvas.toDataURL === 'function') {
+      imgEl.src = canvas.toDataURL('image/png');
+      imgEl.alt = vm?.title || t('receipt.modalTitle');
+    }
+    return true;
+  }
+
+  function openReceiptModal() {
+    const current = state.snapshot?.current;
+    const receiptApi = window.TokenMonitorReceipt;
+    if (!current || !receiptApi) {
+      showToast(t('receipt.unavailableToast'), 'warn');
+      return;
+    }
+    state.receiptScope = current.receipt?.today?.hasData ? 'today' : 'all';
+    state.receiptModalOpen = true;
+    renderReceiptModal();
+    $('receipt-modal')?.classList.remove('hidden');
+    $('btn-receipt-copy')?.focus();
+  }
+
+  function closeReceiptModal() {
+    state.receiptModalOpen = false;
+    $('receipt-modal')?.classList.add('hidden');
+  }
+
+  async function handleCopyReceiptClick() {
+    const receiptApi = window.TokenMonitorReceipt;
+    const canvas = state.lastReceiptCanvas;
+    if (
+      !canvas ||
+      !receiptApi ||
+      typeof receiptApi.canvasToBlob !== 'function' ||
+      !navigator.clipboard ||
+      typeof navigator.clipboard.write !== 'function' ||
+      typeof ClipboardItem !== 'function'
+    ) {
+      showToast(t('receipt.copyFallbackToast'), 'warn');
+      return;
+    }
+
+    try {
+      const blobPromise = receiptApi.canvasToBlob(canvas);
+      let item;
+      try {
+        item = new ClipboardItem({ 'image/png': blobPromise });
+      } catch {
+        const resolvedBlob = await blobPromise;
+        item = new ClipboardItem({ 'image/png': resolvedBlob });
+      }
+      await navigator.clipboard.write([item]);
+      showToast(t('receipt.copiedToast'), 'ok');
+    } catch {
+      showToast(t('receipt.copyFallbackToast'), 'warn');
+    }
+  }
+
+  async function handleSaveReceiptClick() {
+    const receiptApi = window.TokenMonitorReceipt;
+    const canvas = state.lastReceiptCanvas;
+    if (!canvas || !receiptApi || typeof receiptApi.canvasToBlob !== 'function') return;
+
+    try {
+      const blob = await receiptApi.canvasToBlob(canvas);
+      if (!blob) return;
+      const filename = state.lastReceiptVm?.suggestedFilename || 'AGY-receipt.png';
+      const objUrl = URL.createObjectURL(blob);
+      const link = el('a', {
+        href: objUrl,
+        download: filename,
+        style: { display: 'none' },
+      });
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => {
+        URL.revokeObjectURL(objUrl);
+      }, 10000);
+      showToast(t('receipt.savedToast', { name: filename }), 'ok');
+    } catch (err) {
+      showToast(err?.message || 'Save failed', 'error');
+    }
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:00
+// ============================================================================
+
   // ---------------- Render Header & Stopwatch ----------------
   function formatStatusText(current) {
     if (!current) return t('header.waiting');
@@ -3493,9 +3772,24 @@
         ),
         headRight,
       ),
-      el('div', { className: 'hero-value-row tabular-nums' },
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:00
+// Description: Render Zero-CLS .hero-value-row.has-action with right-aligned #btn-checkout button in renderCostCard.
+// ============================================================================
+      el('div', { className: 'hero-value-row has-action tabular-nums' },
         renderRollingText('cur:cost:hero', fmtCost(costActual, currency), costActual, { className: 'hero-value' }),
+        el('button', {
+          id: 'btn-checkout',
+          type: 'button',
+          className: 'checkout-btn',
+          textContent: t('receipt.checkoutBtn'),
+          title: t('receipt.checkoutTitle'),
+          onClick: () => openReceiptModal(),
+        }),
       ),
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:00
+// ============================================================================
       el('div', { className: 'sub-stats tabular-nums is-single-line' },
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:07:46
@@ -3968,10 +4262,47 @@
 // [MODIFIED END] 2026-11-17 20:29:41
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:00
+// Description: Add sortChildrenForDisplay helper and upgrade renderChildrenAndModelsCard with Top-5 active folding, 400px scrollable expansion + scroll preservation, relative time, and Ended status badge.
+// ============================================================================
+  function getChildActivityTier(ch) {
+    if (!ch?.killed && ch?.status === 'GENERATING') return 0;
+    if (!ch?.killed && ch?.status === 'RUNNING_TOOLS') return 1;
+    return 2;
+  }
+
+  function sortChildrenForDisplay(children) {
+    if (!Array.isArray(children) || children.length <= 1) {
+      return Array.isArray(children) ? [...children] : [];
+    }
+    return children
+      .map((ch, idx) => ({ ch, idx }))
+      .sort((a, b) => {
+        const tierDiff = getChildActivityTier(a.ch) - getChildActivityTier(b.ch);
+        if (tierDiff !== 0) return tierDiff;
+        const timeDiff = num(b.ch?.updatedAtMs, 0) - num(a.ch?.updatedAtMs, 0);
+        if (timeDiff !== 0) return timeDiff;
+        return a.idx - b.idx;
+      })
+      .map((entry) => entry.ch);
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:00
+// ============================================================================
+
   function renderChildrenAndModelsCard(current, prefs) {
     const card = $('card-children-models');
     const currency = prefs?.currency || 'USD';
     const children = Array.isArray(current.children) ? current.children : [];
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:00
+// Description: Sort children by live activity tier + recency before memoization and rendering.
+// ============================================================================
+    const sortedChildren = sortChildrenForDisplay(children);
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 21:28:45
 // Description: Prefer isolated totals.mainOnlyByModel when inspecting a child session with no children.
@@ -3989,6 +4320,10 @@
 // [MODIFIED BEGIN] 2026-11-17 22:07:46
 // Description: Add dirty-signature memoization in renderChildrenAndModelsCard covering sort order, currency/FX, tokenUnit, children, and model breakdown rows.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:00
+// Description: Include childrenExpanded, killed flag, and formatted relative time in childrenModels dirty signature, and preserve expanded scroll offset across re-renders.
+// ============================================================================
     const sig = JSON.stringify([
       state.lang,
       state.tokenUnit,
@@ -3996,12 +4331,15 @@
       num(prefs?.cnyRate, 0),
       state.modelSortBy,
       state.modelSortDir,
+      Boolean(state.childrenExpanded),
       current.conversationId || '',
       isChildView,
-      children.map((ch) => [
+      sortedChildren.map((ch) => [
         ch?.conversationId || '',
         ch?.kind || '',
         ch?.status || '',
+        Boolean(ch?.killed),
+        ch?.updatedAtMs ? fmtRelTime(ch.updatedAtMs) : '',
         num(ch?.generatingSinceMs, 0),
         ch?.name || '',
         ch?.role || '',
@@ -4026,6 +4364,16 @@
     ]);
     if (card.childElementCount > 0 && state.cardRenderSigs.childrenModels === sig) return;
     state.cardRenderSigs.childrenModels = sig;
+
+    if (state.childrenExpanded) {
+      const prevList = card.querySelector('.children-list.is-expanded');
+      if (prevList) {
+        state.childrenScrollTop = prevList.scrollTop;
+      }
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:07:46
 // ============================================================================
@@ -4036,24 +4384,74 @@
           el('span', { className: 'card-title-dot' }),
           t('childrenModels.title'),
         ),
-        children.length > 0
+        sortedChildren.length > 0
           ? el('span', {
               className: 'muted-hint tabular-nums',
-              textContent: t('childrenModels.membersCount', { count: children.length }),
+              textContent: t('childrenModels.membersCount', { count: sortedChildren.length }),
             })
           : null,
       ),
     ];
 
-    if (children.length > 0) {
-      nodes.push(
-        el('div', { className: 'children-section' },
-          el('div', { className: 'section-subhead', textContent: t('childrenModels.liveSubhead') }),
-          el('div', { className: 'children-list' },
-            children.map((ch) => {
-              const kind = ch.kind === 'swarm' ? 'swarm' : 'subagent';
-              const status = ch.status || 'IDLE';
-              const statusSpan = el('span', {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:00
+// Description: Render Top-5 recent active subagent/swarm list with header/footer expand controls, 400px scrollable container, relative timestamps, and Ended badge.
+// ============================================================================
+    const canToggleChildren = sortedChildren.length > MAX_COLLAPSED_CHILDREN;
+    const isExpanded = canToggleChildren && Boolean(state.childrenExpanded);
+    const visibleChildren = isExpanded
+      ? sortedChildren
+      : sortedChildren.slice(0, MAX_COLLAPSED_CHILDREN);
+    const hiddenCount = Math.max(0, sortedChildren.length - MAX_COLLAPSED_CHILDREN);
+    let childrenListEl = null;
+
+    if (sortedChildren.length > 0) {
+      const handleToggleChildrenExpand = () => {
+        if (state.childrenExpanded) {
+          state.childrenExpanded = false;
+          state.childrenScrollTop = 0;
+        } else {
+          state.childrenExpanded = true;
+        }
+        const latestCurrent = state.snapshot?.current || current;
+        const latestPrefs = state.snapshot?.prefs || prefs;
+        renderChildrenAndModelsCard(latestCurrent, latestPrefs);
+      };
+
+      const subheadText = canToggleChildren && !isExpanded
+        ? t('childrenModels.liveSubheadFolded', {
+            shown: visibleChildren.length,
+            total: sortedChildren.length,
+          })
+        : t('childrenModels.liveSubhead');
+
+      const childrenHead = el('div', { className: 'children-head' },
+        el('div', { className: 'section-subhead', textContent: subheadText }),
+        canToggleChildren
+          ? el('button', {
+              type: 'button',
+              className: 'mini-btn',
+              textContent: isExpanded
+                ? t('childrenModels.collapse')
+                : t('childrenModels.expandAll', { count: sortedChildren.length }),
+              onClick: handleToggleChildrenExpand,
+            })
+          : null,
+      );
+
+      childrenListEl = el(
+        'div',
+        { className: isExpanded ? 'children-list is-expanded' : 'children-list' },
+        visibleChildren.map((ch) => {
+          const isKilled = Boolean(ch.killed);
+          const kind = ch.kind === 'swarm' ? 'swarm' : 'subagent';
+          const status = ch.status || 'IDLE';
+          const statusSpan = isKilled
+            ? el('span', {
+                className: 'child-status tabular-nums ENDED',
+                textContent: t('childrenModels.childEnded'),
+              })
+            : el('span', {
                 className: `child-status tabular-nums ${status}`,
                 textContent: status === 'GENERATING' && ch.generatingSinceMs
                   ? `⚡ ${fmtElapsed(ch.generatingSinceMs)}`
@@ -4063,61 +4461,110 @@
                       ? t('childrenModels.childRunning')
                       : t('childrenModels.childIdle'),
               });
-              if (status === 'GENERATING' && ch.generatingSinceMs) {
-                statusSpan.dataset.childSince = String(ch.generatingSinceMs);
-              }
+          if (!isKilled && status === 'GENERATING' && ch.generatingSinceMs) {
+            statusSpan.dataset.childSince = String(ch.generatingSinceMs);
+          }
 
-              return el('div', { className: 'child-row' },
-                el('div', { className: 'child-top' },
-                  el('div', { className: 'child-id-group' },
-                    el('span', { className: 'child-name', textContent: ch.name || shortId(ch.conversationId) }),
-                    el('span', { className: `kind-badge ${kind}`, textContent: kind === 'swarm' ? 'Swarm' : 'Subagent' }),
-                    ch.role && ch.role !== ch.name
-                      ? el('span', { className: 'muted-hint', textContent: ch.role })
-                      : null,
-                  ),
-                  statusSpan,
-                ),
-                el('div', { className: 'child-meta' },
-                  el('div', { className: 'child-stats tabular-nums' },
-                    el('span', { textContent: ch.model || 'Auto' }),
-                    el('span', { title: fmtInt(ch.contextTotal), textContent: `Ctx ${fmtTokens(ch.contextTotal)}` }),
-                    el('span', { textContent: `${fmtRate(ch.latestTokPerSec)} tok/s` }),
-                    el('span', { title: fmtInt(ch.outputTokens), textContent: `Out ${fmtTokens(ch.outputTokens)}` }),
-                    el('span', { textContent: fmtCost(ch.costActual, currency) }),
-                  ),
-                  el('div', { className: 'child-actions' },
-                    el('button', {
-                      type: 'button',
-                      className: 'mini-btn accent',
-                      textContent: t('childrenModels.inspectBtn'),
+          const updatedAtNum = Number(ch.updatedAtMs);
+          const hasValidUpdatedAt = Number.isFinite(updatedAtNum) && updatedAtNum > 0;
+          const relTime = hasValidUpdatedAt ? fmtRelTime(updatedAtNum) : '';
+          const topRight = el(
+            'div',
+            { className: 'child-top-right tabular-nums' },
+            relTime
+              ? el('span', {
+                  className: 'child-rel-time muted-hint',
+                  textContent: relTime,
+                  title: new Date(updatedAtNum).toLocaleString(),
+                })
+              : null,
+            statusSpan,
+          );
+
+          return el('div', { className: isKilled ? 'child-row is-ended' : 'child-row' },
+            el('div', { className: 'child-top' },
+              el('div', { className: 'child-id-group' },
+                el('span', { className: 'child-name', textContent: ch.name || shortId(ch.conversationId) }),
+                el('span', { className: `kind-badge ${kind}`, textContent: kind === 'swarm' ? 'Swarm' : 'Subagent' }),
+                ch.role && ch.role !== ch.name
+                  ? el('span', { className: 'muted-hint', textContent: ch.role })
+                  : null,
+              ),
+              topRight,
+            ),
+            el('div', { className: 'child-meta' },
+              el('div', { className: 'child-stats tabular-nums' },
+                el('span', { textContent: ch.model || 'Auto' }),
+                el('span', { title: fmtInt(ch.contextTotal), textContent: `Ctx ${fmtTokens(ch.contextTotal)}` }),
+                el('span', { textContent: `${fmtRate(ch.latestTokPerSec)} tok/s` }),
+                el('span', { title: fmtInt(ch.outputTokens), textContent: `Out ${fmtTokens(ch.outputTokens)}` }),
+                el('span', { textContent: fmtCost(ch.costActual, currency) }),
+              ),
+              el('div', { className: 'child-actions' },
+                el('button', {
+                  type: 'button',
+                  className: 'mini-btn accent',
+                  textContent: t('childrenModels.inspectBtn'),
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 21:28:45
 // Description: Record inspected child conversation ID in state.inspectedChildIds before switching view.
 // ============================================================================
-                      onClick: () => {
-                        const cid = String(ch.conversationId || '').toLowerCase();
-                        if (cid) state.inspectedChildIds.add(cid);
-                        selectConversation(ch.conversationId);
-                      },
+                  onClick: () => {
+                    const cid = String(ch.conversationId || '').toLowerCase();
+                    if (cid) state.inspectedChildIds.add(cid);
+                    selectConversation(ch.conversationId);
+                  },
 // ============================================================================
 // [MODIFIED END] 2026-11-17 21:28:45
 // ============================================================================
-                    }),
-                    el('button', {
-                      type: 'button',
-                      className: 'mini-btn',
-                      textContent: t('childrenModels.openChatBtn'),
-                      onClick: () => openConversationInHost(ch.conversationId),
-                    }),
-                  ),
-                ),
-              );
-            }),
-          ),
+                }),
+                el('button', {
+                  type: 'button',
+                  className: 'mini-btn',
+                  textContent: t('childrenModels.openChatBtn'),
+                  onClick: () => openConversationInHost(ch.conversationId),
+                }),
+              ),
+            ),
+          );
+        }),
+      );
+
+      if (isExpanded) {
+        childrenListEl.addEventListener(
+          'scroll',
+          () => {
+            state.childrenScrollTop = childrenListEl.scrollTop;
+          },
+          { passive: true },
+        );
+      }
+
+      const toggleFooter = canToggleChildren
+        ? el('button', {
+            type: 'button',
+            className: 'children-toggle-bar',
+            textContent: isExpanded
+              ? t('childrenModels.collapseFooter', { shown: MAX_COLLAPSED_CHILDREN })
+              : t('childrenModels.expandMoreFooter', {
+                  rest: hiddenCount,
+                  total: sortedChildren.length,
+                }),
+            onClick: handleToggleChildrenExpand,
+          })
+        : null;
+
+      nodes.push(
+        el('div', { className: 'children-section' },
+          childrenHead,
+          childrenListEl,
+          toggleFooter,
         ),
       );
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:15:00
 // ============================================================================
@@ -4203,6 +4650,16 @@
     // ============================================================================
 
     card.replaceChildren(...nodes);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:41:00
+// Description: Restore expanded subagent/swarm list scroll offset right after DOM replacement.
+// ============================================================================
+    if (isExpanded && childrenListEl) {
+      childrenListEl.scrollTop = state.childrenScrollTop;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:41:00
+// ============================================================================
   }
 
 // ============================================================================
@@ -5314,6 +5771,23 @@
         renderGlobalTab(data);
       }
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:43:00
+// Description: Sync open #receipt-modal on snapshot arrival only when receipt-relevant data signature changes to prevent flickering.
+// ============================================================================
+      if (state.receiptModalOpen) {
+        if (!data?.current) {
+          closeReceiptModal();
+        } else {
+          const nextReceiptSig = computeReceiptDataSig(data.current, data.prefs);
+          if (nextReceiptSig !== state.lastReceiptDataSig) {
+            renderReceiptModal();
+          }
+        }
+      }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:43:00
+// ============================================================================
+// ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 17:18:17
 // Description: Surface HTTP error details and 15s timeout cleanly in #error-banner
 // while ignoring switch-aborted requests, and schedule next serial poll in finally.
@@ -5452,6 +5926,16 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:00
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:43:00
+// Description: Re-render localized thermal receipt canvas immediately when toggling EN/ZH with #receipt-modal open.
+// ============================================================================
+      if (state.receiptModalOpen) {
+        renderReceiptModal();
+      }
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:43:00
+// ============================================================================
       patchPrefs({ language: state.lang });
     });
 
@@ -5568,6 +6052,52 @@
     renderUpdateCheckStatus();
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:00
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:43:00
+// Description: Bind #receipt-modal scope/detail switches, copy/save buttons, backdrop click, and Escape shortcut.
+// ============================================================================
+    $('btn-receipt-close')?.addEventListener('click', closeReceiptModal);
+    $('btn-receipt-scope-today')?.addEventListener('click', () => {
+      if (state.receiptScope !== 'today') {
+        state.receiptScope = 'today';
+        renderReceiptModal();
+      }
+    });
+    $('btn-receipt-scope-all')?.addEventListener('click', () => {
+      if (state.receiptScope !== 'all') {
+        state.receiptScope = 'all';
+        renderReceiptModal();
+      }
+    });
+    $('btn-receipt-mode-compact')?.addEventListener('click', () => {
+      if (state.receiptDetailMode !== 'compact') {
+        state.receiptDetailMode = 'compact';
+        renderReceiptModal();
+      }
+    });
+    $('btn-receipt-mode-full')?.addEventListener('click', () => {
+      if (state.receiptDetailMode !== 'full') {
+        state.receiptDetailMode = 'full';
+        renderReceiptModal();
+      }
+    });
+    $('btn-receipt-copy')?.addEventListener('click', handleCopyReceiptClick);
+    $('btn-receipt-save')?.addEventListener('click', handleSaveReceiptClick);
+    $('receipt-modal')?.addEventListener('click', (e) => {
+      if (e.target === $('receipt-modal')) {
+        closeReceiptModal();
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && state.receiptModalOpen) {
+        e.preventDefault();
+        closeReceiptModal();
+      }
+    });
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:43:00
 // ============================================================================
 
     document.addEventListener('visibilitychange', () => {

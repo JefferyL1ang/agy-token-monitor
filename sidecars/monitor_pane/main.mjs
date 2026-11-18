@@ -107,12 +107,12 @@ function readPluginVersion(rootDir) {
     // Fallback to default version below.
   }
 // ============================================================================
-// [MODIFIED BEGIN] 2026-11-18 10:23:20
-// Description: Update fallback plugin version string to 0.2.8.
+// [MODIFIED BEGIN] 2026-11-18 11:42:30
+// Description: Update fallback plugin version string to 0.2.9.
 // ============================================================================
-  return '0.2.8';
+  return '0.2.9';
 // ============================================================================
-// [MODIFIED END] 2026-11-18 10:23:20
+// [MODIFIED END] 2026-11-18 11:42:30
 // ============================================================================
 }
 
@@ -839,6 +839,14 @@ const app = new SidecarApp();
 app.page('/', () => readStaticAsset('index.html', 'text/html; charset=utf-8'));
 app.page('/styles.css', () => readStaticAsset('styles.css', 'text/css; charset=utf-8'));
 app.page('/app.js', () => readStaticAsset('app.js', 'application/javascript; charset=utf-8'));
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-18 11:42:30
+// Description: Register static asset route /receipt.js for Session Checkout Receipt Canvas renderer.
+// ============================================================================
+app.page('/receipt.js', () => readStaticAsset('receipt.js', 'application/javascript; charset=utf-8'));
+// ============================================================================
+// [MODIFIED END] 2026-11-18 11:42:30
+// ============================================================================
 
 // Live transcript watcher state
 const watchedConvIds = new Set();
