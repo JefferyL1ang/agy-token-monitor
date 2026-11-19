@@ -2243,14 +2243,22 @@
     const catalog = getCatalogList();
     const item = catalog.find((p) => p.id === profileId) || catalog[0];
     if (!item) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Update empty-catalog fallback rates to Gemini 4 flat 1M context
+// and 95% cache discount defaults (cachedPer1M: 0.1, longContextTier: false).
+// ============================================================================
       return {
         inputPer1M: 2,
-        cachedPer1M: 0.2,
+        cachedPer1M: 0.1,
         outputPer1M: 10,
-        longContextTier: true,
+        longContextTier: false,
         isOverridden: false,
-        defaultUsd: { inputPer1M: 2, cachedPer1M: 0.2, outputPer1M: 10, longContextTier: true },
+        defaultUsd: { inputPer1M: 2, cachedPer1M: 0.1, outputPer1M: 10, longContextTier: false },
       };
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
     }
     const ov = state.draftModelOverrides[item.id];
     return {

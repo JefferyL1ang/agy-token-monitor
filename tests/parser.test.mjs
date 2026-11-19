@@ -901,9 +901,14 @@ test('active per-model pricing (incl. Claude Opus/Sonnet 5.5), overrides, CNY co
     cache_read_tokens: 150000,
     output_tokens: 10000,
   };
-  // Gemini 4 Carbon <= 200k: (50k/1M)*2.0 + (150k/1M)*0.20 + (10k/1M)*10.0 = 0.10 + 0.03 + 0.10 = 0.23
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:26:51
+// Description: Update Gemini 4 Carbon cached rate (95% discount, $0.10/1M),
+// verify flat 1M context on Gemini 4 Carbon, and test >200k tier + override on Gemini 3.1 Pro.
+// ============================================================================
+  // Gemini 4 Carbon (2.0 / 0.10 / 10.0): (50k/1M)*2.0 + (150k/1M)*0.10 + (10k/1M)*10.0 = 0.10 + 0.015 + 0.10 = 0.215
   const carbonBase = computeStepCost(step200k, DEFAULT_PREFS, 'Gemini 4 Carbon (High)');
-  assert.ok(Math.abs(carbonBase.costActual - 0.23) < 1e-9);
+  assert.ok(Math.abs(carbonBase.costActual - 0.215) < 1e-9);
 
   // Claude Opus 5.5 (4.0 / 0.20 / 20.0, flat >200k): (50k/1M)*4 + (150k/1M)*0.2 + (10k/1M)*20 = 0.2 + 0.03 + 0.2 = 0.43
   const opusCost = computeStepCost(step200k, DEFAULT_PREFS, 'Claude Opus 5.5 (High)');
@@ -913,26 +918,34 @@ test('active per-model pricing (incl. Claude Opus/Sonnet 5.5), overrides, CNY co
   const sonnetCost = computeStepCost(step200k, DEFAULT_PREFS, 'Claude Sonnet 5.5 (High)');
   assert.ok(Math.abs(sonnetCost.costActual - 0.215) < 1e-9);
 
-  // Long-context tier (> 200k) on Gemini 4 Carbon triggers 2.0x input/cached and 1.5x output
+  // Gemini 4 Carbon is flat across 1M context (longContextTier: false):
+  // (100k/1M)*2.0 + (200k/1M)*0.10 + (10k/1M)*10.0 = 0.20 + 0.02 + 0.10 = 0.32
   const longStep = {
     input_tokens: 100000,
     cache_read_tokens: 200000,
     output_tokens: 10000,
   };
-  // (100k/1M)*4.0 + (200k/1M)*0.40 + (10k/1M)*15.0 = 0.40 + 0.08 + 0.15 = 0.63
   const carbonLong = computeStepCost(longStep, DEFAULT_PREFS, 'Gemini 4 Carbon (High)');
-  assert.ok(Math.abs(carbonLong.costActual - 0.63) < 1e-9);
+  assert.ok(Math.abs(carbonLong.costActual - 0.32) < 1e-9);
 
-  // Disabling longContextTier via modelOverrides on gemini-4-carbon
+  // Long-context tier (> 200k) on Gemini 3.1 Pro triggers 2.0x input/cached and 1.5x output:
+  // (100k/1M)*4.0 + (200k/1M)*0.40 + (10k/1M)*18.0 = 0.40 + 0.08 + 0.18 = 0.66
+  const gemini31Long = computeStepCost(longStep, DEFAULT_PREFS, 'Gemini 3.1 Pro (High)');
+  assert.ok(Math.abs(gemini31Long.costActual - 0.66) < 1e-9);
+
+  // Disabling longContextTier via modelOverrides on gemini-3.1-pro
   const noLongPrefs = {
     ...DEFAULT_PREFS,
     modelOverrides: {
-      'gemini-4-carbon': { inputPer1M: 2.0, cachedPer1M: 0.2, outputPer1M: 10.0, longContextTier: false },
+      'gemini-3.1-pro': { inputPer1M: 2.0, cachedPer1M: 0.2, outputPer1M: 12.0, longContextTier: false },
     },
   };
-  // (100k/1M)*2.0 + (200k/1M)*0.20 + (10k/1M)*10.0 = 0.20 + 0.04 + 0.10 = 0.34
-  const flatCarbon = computeStepCost(longStep, noLongPrefs, 'Gemini 4 Carbon (High)');
-  assert.ok(Math.abs(flatCarbon.costActual - 0.34) < 1e-9);
+  // (100k/1M)*2.0 + (200k/1M)*0.20 + (10k/1M)*12.0 = 0.20 + 0.04 + 0.12 = 0.36
+  const flat31Pro = computeStepCost(longStep, noLongPrefs, 'Gemini 3.1 Pro (High)');
+  assert.ok(Math.abs(flat31Pro.costActual - 0.36) < 1e-9);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:26:51
+// ============================================================================
 
   // CNY currency conversion scales by cnyRate
   const cnyPrefs = { ...DEFAULT_PREFS, currency: 'CNY', cnyRate: 7.25 };
@@ -3067,10 +3080,20 @@ test('pricing_sync unit tests: dual-channel merge, effective dates, non-chat fil
     assert.equal(preDecGoogle.profileRates['gemini-3.1-pro'].outputPer1M, 12.0);
     assert.equal(preDecGoogle.profileRates['gemini-3.1-pro'].longInputMultiplier, 2.0);
     assert.equal(preDecGoogle.profileRates['gemini-3.1-pro'].longOutputMultiplier, 1.5);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:26:51
+// Description: Assert Gemini 4 Carbon/Argon remain flat-context while Gemini 3.1 Pro keeps longContextTier=true.
+// ============================================================================
+    assert.equal(preDecGoogle.profileRates['gemini-3.1-pro'].longContextTier, true);
     assert.equal(preDecGoogle.profileRates['gemini-4-carbon'].inputPer1M, 2.0);
     assert.equal(preDecGoogle.profileRates['gemini-4-carbon'].outputPer1M, 10.0);
+    assert.equal(preDecGoogle.profileRates['gemini-4-carbon'].longContextTier, false);
     assert.equal(preDecGoogle.profileRates['gemini-4-argon'].inputPer1M, 2.0);
     assert.equal(preDecGoogle.profileRates['gemini-4-argon'].outputPer1M, 10.0);
+    assert.equal(preDecGoogle.profileRates['gemini-4-argon'].longContextTier, false);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:26:51
+// ============================================================================
     assert.equal(preDecGoogle.profileRates['gemini-3-8-flash'].inputPer1M, 0.7);
     assert.equal(preDecGoogle.profileRates['gemini-3-8-flash'].outputPer1M, 3.5);
     assert.equal(preDecGoogle.profileRates['gemini-3.8-flash-tts'], undefined);
@@ -14153,12 +14176,18 @@ test('v0.4.0-r2 Test 1: worker attribution, display-first normalization, Neon en
   assert.equal(resolveModelProfile('gemini-3-8-flash').id, 'gemini-3-8-flash');
   assert.equal(resolveModelProfile('Gemini Flash').id, 'gemini-3-8-flash');
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:26:51
+// Description: Update Gemini 4 Hydrogen 95% cache discount ($0.075/1M) and
+// flat 1M context (longContextTier=false) expectations in v0.4.0-r2 Test 1.
+// ============================================================================
   const pricing = resolveModelPricing('gemini-flash-worker-agy', DEFAULT_PREFS);
   assert.equal(pricing.profileId, 'gemini-4-hydrogen');
   assert.equal(pricing.profileLabel, 'Gemini 4 Hydrogen');
   assert.equal(pricing.usdInputPer1M, 1.5);
-  assert.equal(pricing.usdCachedPer1M, 0.15);
+  assert.equal(pricing.usdCachedPer1M, 0.075);
   assert.equal(pricing.usdOutputPer1M, 7.5);
+  assert.equal(pricing.longContextTier, false);
 
   // Bare worker raw slug keeps jio_pro subscription detection while normalized gemini-4-hydrogen detects pro
   assert.equal(detectSubscriptionPlanFromModels(['gemini-flash-worker-agy']), 'jio_pro');
@@ -14174,16 +14203,20 @@ test('v0.4.0-r2 Test 1: worker attribution, display-first normalization, Neon en
     assert.equal(resolveModelProfile('gemini-flash-worker-agy', runtimeCatalog).id, 'gemini-4-hydrogen');
     assert.equal(resolveModelProfile('Gemini Flash', runtimeCatalog).id, 'gemini-3-8-flash');
 
-    // Hypothetical unknown flash-worker slug (if unmapped) derives Hydrogen baseline ($1.5/$0.15/$7.5)
+    // Hypothetical unknown flash-worker slug (if unmapped) derives Hydrogen baseline ($1.5/$0.075/$7.5, flat context)
     const promotedCatalog = mgr.getRuntimeCatalog(['gemini-flash-worker@custom']);
     const promotedEntry = promotedCatalog.find((m) => m.id === 'gemini-flash-worker@custom');
     assert.ok(promotedEntry);
     assert.equal(promotedEntry.inputPer1M, 1.5);
-    assert.equal(promotedEntry.cachedPer1M, 0.15);
+    assert.equal(promotedEntry.cachedPer1M, 0.075);
     assert.equal(promotedEntry.outputPer1M, 7.5);
+    assert.equal(promotedEntry.longContextTier, false);
   } finally {
     rmSync(stateDir, { recursive: true, force: true });
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:26:51
+// ============================================================================
 
   // receipt.js, pixel_office.js, and app.js VM checks for bare gemini-flash-worker-agy
   const testDir = dirname(fileURLToPath(import.meta.url));
@@ -15637,4 +15670,875 @@ test('v0.4.0-r2 Test 5: 409600/512000 context limits, PREFS_SCHEMA_VERSION = 4 m
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:43:05
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:26:51
+// Description: Add test #71 verifying Gemini 4 flat-context 95% cache pricing,
+// app.js empty-catalog fallback, models.dev / LiteLLM 5% fallback without forced
+// >200k tier, Angular SPA <noscript><pre> Markdoc Google official parser across
+// pre/post Dec 1 & Jan 1 schedules, and non-destructive pricing_cache v1->v2 migration.
+// ============================================================================
+test('v0.4.0 Gemini 4 flat-context pricing, 95% cache discount, LiteLLM 5% fallback, Markdoc Google official parser (pre/post Dec 1 & Jan 1), and pricing_cache v1->v2 migration', async () => {
+  // (a) Built-in Catalog & 300k Flat Cost + app.js getEffectiveDraftUsd empty-catalog fallback
+  const byCatalogId = new Map(MODEL_PRICING_CATALOG.map((m) => [m.id, m]));
+  for (const [id, expIn, expCached, expOut] of [
+    ['gemini-4-carbon', 2.0, 0.1, 10.0],
+    ['gemini-4-argon', 2.0, 0.1, 10.0],
+    ['gemini-4-neon', 3.0, 0.15, 15.0],
+    ['gemini-4-hydrogen', 1.5, 0.075, 7.5],
+    ['auto', 2.0, 0.1, 10.0],
+  ]) {
+    const entry = byCatalogId.get(id);
+    assert.ok(entry, `Expected ${id} in MODEL_PRICING_CATALOG`);
+    assert.equal(entry.inputPer1M, expIn);
+    assert.equal(entry.cachedPer1M, expCached);
+    assert.equal(entry.outputPer1M, expOut);
+    assert.equal(entry.longContextTier, false);
+    assert.equal(entry.longInputMultiplier, 1.0);
+    assert.equal(entry.longOutputMultiplier, 1.0);
+  }
+  const g31Pro = byCatalogId.get('gemini-3.1-pro');
+  assert.ok(g31Pro);
+  assert.equal(g31Pro.inputPer1M, 2.0);
+  assert.equal(g31Pro.cachedPer1M, 0.2);
+  assert.equal(g31Pro.outputPer1M, 12.0);
+  assert.equal(g31Pro.longContextTier, true);
+  assert.equal(g31Pro.longInputMultiplier, 2.0);
+  assert.equal(g31Pro.longOutputMultiplier, 1.5);
+
+  const step300k = {
+    input_tokens: 100000,
+    cache_read_tokens: 200000,
+    output_tokens: 10000,
+  };
+  assert.ok(Math.abs(computeStepCost(step300k, DEFAULT_PREFS, 'gemini-4-carbon').costActual - 0.32) < 1e-9);
+  assert.ok(Math.abs(computeStepCost(step300k, DEFAULT_PREFS, 'gemini-4-argon').costActual - 0.32) < 1e-9);
+  assert.ok(Math.abs(computeStepCost(step300k, DEFAULT_PREFS, 'gemini-4-neon').costActual - 0.48) < 1e-9);
+  assert.ok(Math.abs(computeStepCost(step300k, DEFAULT_PREFS, 'gemini-4-hydrogen').costActual - 0.24) < 1e-9);
+  assert.ok(Math.abs(computeStepCost(step300k, DEFAULT_PREFS, 'Auto').costActual - 0.32) < 1e-9);
+  assert.ok(Math.abs(computeStepCost(step300k, DEFAULT_PREFS, 'gemini-3.1-pro').costActual - 0.66) < 1e-9);
+
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const paneDir = join(testDir, '..', 'sidecars', 'monitor_pane');
+  const receiptSource = readFileSync(join(paneDir, 'receipt.js'), 'utf-8');
+  const pixelOfficeSource = readFileSync(join(paneDir, 'pixel_office.js'), 'utf-8');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+  const dummyEl = () => ({
+    style: { setProperty() {}, getPropertyValue: () => '' },
+    classList: { add() {}, remove() {}, contains: () => false, toggle: () => false },
+    setAttribute() {},
+    getAttribute: () => null,
+    addEventListener() {},
+    appendChild() {},
+    remove() {},
+    scrollIntoView() {},
+    replaceChildren() {},
+    querySelectorAll: () => [],
+    querySelector: () => null,
+    dataset: {},
+    children: [],
+    childElementCount: 0,
+  });
+  const appSandbox = {
+    Blob,
+    Buffer,
+    Uint8Array,
+    Math,
+    Date,
+    Number,
+    String,
+    Array,
+    Object,
+    Promise,
+    Map,
+    Set,
+    RegExp,
+    JSON,
+    URLSearchParams,
+    Intl,
+    AbortController,
+    performance,
+    Node: class {},
+    innerWidth: 400,
+    devicePixelRatio: 2,
+    addEventListener: () => {},
+    matchMedia: () => ({ matches: false }),
+    sidecar: { conversationId: 'conv-g4-pricing-vm' },
+    location: { reload: () => {} },
+    sessionStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    navigator: { clipboard: { writeText: async () => {} } },
+    MutationObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+    getComputedStyle: () => ({ color: '#000', getPropertyValue: () => '' }),
+    fetch: async () => ({ ok: true, status: 200, json: async () => ({ unchanged: true }) }),
+    requestAnimationFrame: (cb) => {
+      cb();
+      return 1;
+    },
+    setTimeout: () => 1,
+    clearTimeout: () => {},
+    setInterval: () => 1,
+    clearInterval: () => {},
+    console,
+    document: {
+      readyState: 'loading',
+      hidden: false,
+      documentElement: dummyEl(),
+      body: dummyEl(),
+      createElement: dummyEl,
+      createElementNS: dummyEl,
+      createTextNode: (t) => ({ textContent: String(t ?? '') }),
+      getElementById: dummyEl,
+      querySelectorAll: () => [],
+      addEventListener() {},
+    },
+  };
+  appSandbox.document.defaultView = appSandbox;
+  appSandbox.window = appSandbox;
+  appSandbox.globalThis = appSandbox;
+  const iifeCloseIdx = appSource.lastIndexOf('})();');
+  assert.ok(iifeCloseIdx > 0);
+  const instrumentedApp =
+    appSource.slice(0, iifeCloseIdx) +
+    '\n  globalThis.__tmG4Fallback = { state, getEffectiveDraftUsd };\n' +
+    appSource.slice(iifeCloseIdx);
+  vm.runInNewContext(receiptSource, appSandbox);
+  vm.runInNewContext(pixelOfficeSource, appSandbox);
+  vm.runInNewContext(instrumentedApp, appSandbox);
+
+  appSandbox.__tmG4Fallback.state.snapshot = { pricingCatalog: [] };
+  const emptyDraft = appSandbox.__tmG4Fallback.getEffectiveDraftUsd('gemini-4-carbon');
+  assert.equal(emptyDraft.inputPer1M, 2);
+  assert.equal(emptyDraft.cachedPer1M, 0.1);
+  assert.equal(emptyDraft.outputPer1M, 10);
+  assert.equal(emptyDraft.longContextTier, false);
+  assert.deepEqual({ ...emptyDraft.defaultUsd }, {
+    inputPer1M: 2,
+    cachedPer1M: 0.1,
+    outputPer1M: 10,
+    longContextTier: false,
+  });
+
+  // (b) parseModelsDevCatalog & parseLiteLlmCatalog No-Force-longContextTier + 5% Cache Fallback
+  const modelsDevParsed = parseModelsDevCatalog({
+    google: {
+      models: {
+        'gemini-4-carbon': {
+          id: 'gemini-4-carbon',
+          name: 'Gemini 4 Carbon',
+          cost: { input: 2.0, cache_read: 0.1, output: 10.0 },
+        },
+        'gemini-4-argon': {
+          id: 'gemini-4-argon',
+          name: 'Gemini 4 Argon',
+          cost: { input: 2.0, cache_read: 0.1, output: 10.0 },
+        },
+        'gemini-4-neon': {
+          id: 'gemini-4-neon',
+          name: 'Gemini 4 Neon',
+          cost: { input: 3.0, cache_read: 0.15, output: 15.0 },
+        },
+        'gemini-4-hydrogen': {
+          id: 'gemini-4-hydrogen',
+          name: 'Gemini 4 Hydrogen',
+          cost: { input: 1.5, cache_read: 0.075, output: 7.5 },
+        },
+        'gemini-3.1-pro': {
+          id: 'gemini-3.1-pro',
+          name: 'Gemini 3.1 Pro',
+          cost: {
+            input: 2.0,
+            cache_read: 0.2,
+            output: 12.0,
+            context_over_200k: { input: 4.0, output: 18.0 },
+          },
+        },
+      },
+    },
+  });
+  for (const pid of ['gemini-4-carbon', 'gemini-4-argon', 'gemini-4-neon', 'gemini-4-hydrogen']) {
+    const rec = modelsDevParsed.profileRates[pid];
+    assert.ok(rec, `Expected ${pid} in models.dev profileRates`);
+    assert.equal(rec.longContextTier, false);
+    assert.equal(rec.longInputMultiplier, 1.0);
+    assert.equal(rec.longOutputMultiplier, 1.0);
+  }
+  assert.equal(modelsDevParsed.profileRates['gemini-3.1-pro'].longContextTier, true);
+  assert.equal(modelsDevParsed.profileRates['gemini-3.1-pro'].longInputMultiplier, 2.0);
+  assert.equal(modelsDevParsed.profileRates['gemini-3.1-pro'].longOutputMultiplier, 1.5);
+
+  const liteLlmParsed = parseLiteLlmCatalog({
+    'gemini/gemini-4-carbon': {
+      litellm_provider: 'gemini',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      output_cost_per_token: 10.0e-6,
+    },
+    'gemini/gemini-4-argon': {
+      litellm_provider: 'gemini',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      output_cost_per_token: 10.0e-6,
+    },
+    'gemini/gemini-4-neon': {
+      litellm_provider: 'gemini',
+      mode: 'chat',
+      input_cost_per_token: 3.0e-6,
+      output_cost_per_token: 15.0e-6,
+    },
+    'gemini/gemini-4-hydrogen': {
+      litellm_provider: 'gemini',
+      mode: 'chat',
+      input_cost_per_token: 1.5e-6,
+      output_cost_per_token: 7.5e-6,
+    },
+    'gemini/gemini-3-flash': {
+      litellm_provider: 'gemini',
+      mode: 'chat',
+      input_cost_per_token: 0.5e-6,
+      output_cost_per_token: 3.0e-6,
+    },
+    'vertex_ai/gemini-3.1-pro': {
+      litellm_provider: 'vertex_ai-language-models',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      cache_read_input_cost_per_token: 0.2e-6,
+      output_cost_per_token: 12.0e-6,
+      input_cost_per_token_above_200k_tokens: 4.0e-6,
+      output_cost_per_token_above_200k_tokens: 18.0e-6,
+    },
+  });
+  for (const [pid, expCached] of [
+    ['gemini-4-carbon', 0.1],
+    ['gemini-4-argon', 0.1],
+    ['gemini-4-neon', 0.15],
+    ['gemini-4-hydrogen', 0.075],
+  ]) {
+    const rec = liteLlmParsed.profileRates[pid];
+    assert.ok(rec, `Expected ${pid} in LiteLLM profileRates`);
+    assert.equal(rec.cachedPer1M, expCached);
+    assert.equal(rec.longContextTier, false);
+    assert.equal(rec.longInputMultiplier, 1.0);
+    assert.equal(rec.longOutputMultiplier, 1.0);
+  }
+  assert.equal(liteLlmParsed.upstreamPool['gemini-3-flash'].cachedPer1M, 0.05);
+  assert.equal(liteLlmParsed.upstreamPool['gemini-3-flash'].longContextTier, false);
+  assert.equal(liteLlmParsed.profileRates['gemini-3.1-pro'].longContextTier, true);
+  assert.equal(liteLlmParsed.profileRates['gemini-3.1-pro'].longInputMultiplier, 2.0);
+  assert.equal(liteLlmParsed.profileRates['gemini-3.1-pro'].longOutputMultiplier, 1.5);
+
+  // (c) parseGoogleOfficialPricingHtml Angular SPA <noscript><pre> Markdoc Fixture
+  const rawMarkdocSource = [
+    '# Gemini API Pricing',
+    '',
+    '## Gemini 4 Carbon {% id="gemini-4-carbon" %}',
+    '{% tabs %}',
+    '{% tab title="Standard" %}',
+    '{% table %}',
+    '* Feature',
+    '* Free Tier',
+    '* Paid Tier, per 1M tokens in USD',
+    '---',
+    '* Input price',
+    '* Free of charge',
+    '* $2.00 (through Nov 30, 2026)',
+    '$4.00 starting December 1, 2026',
+    '---',
+    '* Output price{% sup %}*{% /sup %}',
+    '* Free of charge',
+    '* $10.00 (through Nov 30, 2026)',
+    '$20.00 starting December 1, 2026',
+    '---',
+    '* Context caching',
+    '* Free of charge',
+    '* $0.10 (through Nov 30, 2026). $0.20 starting December 1, 2026',
+    '$0.50/$1.00 per hour (storage price)',
+    '{% /table %}',
+    '{% /tab %}',
+    '{% tab title="Batch" %}',
+    '{% table %}',
+    '* Input price',
+    '* Not available',
+    '* $1.00',
+    '---',
+    '* Output price',
+    '* Not available',
+    '* $5.00',
+    '{% /table %}',
+    '{% /tab %}',
+    '{% tab title="Flex" %}',
+    '{% table %}',
+    '* Input price',
+    '* Not available',
+    '* $1.20',
+    '---',
+    '* Output price',
+    '* Not available',
+    '* $6.00',
+    '{% /table %}',
+    '{% /tab %}',
+    '{% tab title="Priority" %}',
+    '{% table %}',
+    '* Input price',
+    '* Not available',
+    '* $6.00',
+    '---',
+    '* Output price',
+    '* Not available',
+    '* $30.00',
+    '{% /table %}',
+    '{% /tab %}',
+    '{% /tabs %}',
+    '',
+    '## Gemini 4 Argon',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:38:50
+// Description: Add live-observed Markdoc prose cross-reference link and
+// Contributor tab under Gemini 4 Argon to guard against heading/tab hijacking.
+// ============================================================================
+    '[Gemini 4 Carbon](https://ai.google.dev/gemini-api/docs/models#gemini-4-carbon) across complex coding, agentic,',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:38:50
+// ============================================================================
+    '{% tabs %}',
+    '{% tab title="Standard" %}',
+    '{% table %}',
+    '* Feature',
+    '* Free Tier',
+    '* Paid Tier, per 1M tokens in USD',
+    '---',
+    '* Input price',
+    '* Free of charge',
+    '* $2.00 (through November 30, 2026). $4.00 starting December 1, 2026',
+    '---',
+    '* Output price{% sup %}*{% /sup %}',
+    '* Free of charge',
+    '* $10.00 (through November 30, 2026). $20.00 starting December 1, 2026',
+    '---',
+    '* Context caching',
+    '* Free of charge',
+    '* Implicit caching only',
+    '$0.50/$1.00 per hour (storage price)',
+    '{% /table %}',
+    '{% /tab %}',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:38:50
+// Description: Add Contributor tab fixture under Gemini 4 Argon.
+// ============================================================================
+    '{% tab title="Contributor" %}',
+    '{% table %}',
+    '* Input price',
+    '* Not available',
+    '* $0.50',
+    '---',
+    '* Output price',
+    '* Not available',
+    '* $2.50',
+    '{% /table %}',
+    '{% /tab %}',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:38:50
+// ============================================================================
+    '{% tab title="Batch" %}',
+    '{% table %}',
+    '* Input price',
+    '* Not available',
+    '* $1.00',
+    '---',
+    '* Output price',
+    '* Not available',
+    '* $5.00',
+    '{% /table %}',
+    '{% /tab %}',
+    '{% /tabs %}',
+    '',
+    '## Gemini 4 Neon',
+    '{% tabs %}',
+    '{% tab title="Standard" %}',
+    '{% table %}',
+    '* Feature',
+    '* Free Tier',
+    '* Paid Tier, per 1M tokens in USD',
+    '---',
+    '* Input price',
+    '* Not available',
+    '* $3.00',
+    '---',
+    '* Output price{% sup %}*{% /sup %}',
+    '* Not available',
+    '* $15.00',
+    '---',
+    '* Context caching',
+    '* Not available',
+    '* $0.15',
+    '$0.50/$1.00 per hour (storage price)',
+    '{% /table %}',
+    '{% /tab %}',
+    '{% tab title="Priority" %}',
+    '{% table %}',
+    '* Input price',
+    '* Not available',
+    '* $9.00',
+    '---',
+    '* Output price',
+    '* Not available',
+    '* $45.00',
+    '{% /table %}',
+    '{% /tab %}',
+    '{% /tabs %}',
+    '',
+    '## Gemini 4 Hydrogen',
+    '{% tabs %}',
+    '{% tab title="Standard" %}',
+    '{% table %}',
+    '* Feature',
+    '* Free Tier',
+    '* Paid Tier, per 1M tokens in USD',
+    '---',
+    '* Input price',
+    '* Free of charge',
+    '* $1.50',
+    '---',
+    '* Output price',
+    '* Free of charge',
+    '* $7.50',
+    '---',
+    '* Context caching',
+    '* Free of charge',
+    '* Implicit caching only',
+    '$0.50/$1.00 per hour (storage price)',
+    '{% /table %}',
+    '{% /tab %}',
+    '{% tab title="Flex" %}',
+    '{% table %}',
+    '* Input price',
+    '* Not available',
+    '* $0.75',
+    '---',
+    '* Output price',
+    '* Not available',
+    '* $3.75',
+    '{% /table %}',
+    '{% /tab %}',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:38:50
+// Description: Add Contributor tab fixture under Gemini 4 Hydrogen.
+// ============================================================================
+    '{% tab title="Contributor" %}',
+    '{% table %}',
+    '* Input price',
+    '* Not available',
+    '* $0.40',
+    '---',
+    '* Output price',
+    '* Not available',
+    '* $2.00',
+    '{% /table %}',
+    '{% /tab %}',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:38:50
+// ============================================================================
+    '{% /tabs %}',
+    '',
+    '## Gemini 3.1 Pro Preview',
+    '{% tabs %}',
+    '{% tab title="Standard" %}',
+    '{% table %}',
+    '* Feature',
+    '* Free Tier',
+    '* Paid Tier, per 1M tokens in USD',
+    '---',
+    '* Input price',
+    '* Not available',
+    '* $2.00, prompts <= 200k tokens',
+    '$4.00, prompts > 200k tokens',
+    '---',
+    '* Output price{% sup %}*{% /sup %}',
+    '* Not available',
+    '* $12.00, prompts <= 200k tokens',
+    '$18.00, prompts > 200k tokens',
+    '---',
+    '* Context caching',
+    '* Not available',
+    '* $0.20, prompts <= 200k tokens',
+    '$0.40, prompts > 200k tokens',
+    '$4.50 / 1,000,000 tokens per hour (storage price)',
+    '{% /table %}',
+    '{% /tab %}',
+    '{% /tabs %}',
+    '',
+    '## Gemini 3.8 Flash',
+    '{% tabs %}',
+    '{% tab title="Standard" %}',
+    '{% table %}',
+    '* Feature',
+    '* Free Tier',
+    '* Paid Tier, per 1M tokens in USD',
+    '---',
+    '* Input price',
+    '* Free of charge',
+    '* $0.75 (through December 31, 2026). $1.50 starting January 1, 2027',
+    '---',
+    '* Output price{% sup %}*{% /sup %}',
+    '* Free of charge',
+    '* $3.75 (through December 31, 2026). $7.50 starting January 1, 2027',
+    '---',
+    '* Context caching',
+    '* Free of charge',
+    '* $0.075 (through December 31, 2026). $0.15 starting January 1, 2027',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:38:50
+// Description: Include scheduled slash-delimited storage price lines under Gemini 3.8 Flash.
+// ============================================================================
+    '$0.50 / 1,000,000 tokens per hour (storage price) through December 31, 2026.',
+    '$1.00 / 1,000,000 tokens per hour (storage price) starting January 1, 2027.',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:38:50
+// ============================================================================
+    '{% /table %}',
+    '{% /tab %}',
+    '{% tab title="Batch" %}',
+    '{% table %}',
+    '* Input price',
+    '* Not available',
+    '* $0.375',
+    '---',
+    '* Output price',
+    '* Not available',
+    '* $1.875',
+    '{% /table %}',
+    '{% /tab %}',
+    '{% /tabs %}',
+    '',
+    '## Gemini Nano Banana 2.1',
+    '{% table %}',
+    '* Input price',
+    '* Not available',
+    '* $99.00',
+    '---',
+    '* Output price',
+    '* Not available',
+    '* $99.00',
+    '{% /table %}',
+    '',
+    '## [Gemma 4](https://ai.google.dev/gemma)',
+    '{% table %}',
+    '* Input price',
+    '* Free of charge',
+    '* $88.00',
+    '---',
+    '* Output price',
+    '* Free of charge',
+    '* $88.00',
+    '{% /table %}',
+    '',
+    '## Pricing for tools',
+    '{% table %}',
+    '* Input price',
+    '* $77.00',
+    '---',
+    '* Output price',
+    '* $77.00',
+    '{% /table %}',
+    '',
+    '## Notes',
+    'Output price $66.00 for custom enterprise grounding.',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:38:50
+// Description: Add non-chat Image & TTS sections containing wrapped Markdoc prose
+// cross-reference links (Gemini 3.1 Pro., Gemini 3.8 Flash ... and be, Gemini 3.5 Flash-Lite rates.)
+// to verify explicit [H1..H6] headings suppress false plain-heading matches.
+// ============================================================================
+    '',
+    '## Gemini 3 Pro Image',
+    'See flagship reasoning rates for',
+    '[Gemini 3.1 Pro](https://ai.google.dev/gemini-api/docs/models#gemini-3.1-pro).',
+    '{% table %}',
+    '* Input price',
+    '* Not available',
+    '* $0.0011',
+    '---',
+    '* Context caching',
+    '* Not available',
+    '* $0.0001',
+    '---',
+    '* Output price',
+    '* Not available',
+    '* $0.134',
+    '{% /table %}',
+    '',
+    '## Gemini 2.5 Flash TTS',
+    'Compare audio generation with',
+    '[Gemini 3.8 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-3.8-flash) (`gemini-3.8-flash`) and be',
+    'sure to check',
+    '[Gemini 3.5 Flash-Lite](https://ai.google.dev/gemini-api/docs/pricing#lite) rates.',
+    '{% table %}',
+    '* Input price',
+    '* Not available',
+    '* $1.25, prompts <= 200k tokens',
+    '$2.50, prompts > 200k tokens',
+    '---',
+    '* Context caching',
+    '* Not available',
+    '* $0.125, prompts <= 200k tokens',
+    '$0.25, prompts > 200k tokens',
+    '---',
+    '* Output price',
+    '* Not available',
+    '* $10.00, prompts <= 200k tokens',
+    '$15.00, prompts > 200k tokens',
+    '{% /table %}',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:38:50
+// ============================================================================
+  ].join('\n');
+
+  const encodedMarkdoc = rawMarkdocSource
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+  assert.equal(encodedMarkdoc.includes('&quot;'), true);
+  assert.equal(encodedMarkdoc.includes('&lt;'), true);
+  assert.equal(encodedMarkdoc.includes('&gt;'), true);
+
+  const markdocSpaHtml = `<!doctype html><html><body><app-root></app-root><noscript><pre>${encodedMarkdoc}</pre></noscript></body></html>`;
+
+  const parsedNov = parseGoogleOfficialPricingHtml(markdocSpaHtml, Date.UTC(2026, 10, 19, 12, 0, 0));
+  assert.equal(parsedNov.models.length, 6);
+  for (const [pid, expIn, expCached, expOut, expLong, expInM, expOutM] of [
+    ['gemini-4-carbon', 2.0, 0.1, 10.0, false, 1.0, 1.0],
+    ['gemini-4-argon', 2.0, 0.1, 10.0, false, 1.0, 1.0],
+    ['gemini-4-neon', 3.0, 0.15, 15.0, false, 1.0, 1.0],
+    ['gemini-4-hydrogen', 1.5, 0.075, 7.5, false, 1.0, 1.0],
+    ['gemini-3.1-pro', 2.0, 0.2, 12.0, true, 2.0, 1.5],
+    ['gemini-3-8-flash', 0.75, 0.075, 3.75, false, 1.0, 1.0],
+  ]) {
+    const rec = parsedNov.profileRates[pid];
+    assert.ok(rec, `Expected ${pid} in Nov 2026 Markdoc parse`);
+    assert.equal(rec.inputPer1M, expIn, `${pid} input`);
+    assert.equal(rec.cachedPer1M, expCached, `${pid} cached`);
+    assert.equal(rec.outputPer1M, expOut, `${pid} output`);
+    assert.equal(rec.longContextTier, expLong, `${pid} longContextTier`);
+    assert.equal(rec.longInputMultiplier, expInM, `${pid} longInputMultiplier`);
+    assert.equal(rec.longOutputMultiplier, expOutM, `${pid} longOutputMultiplier`);
+  }
+
+  const parsedDec = parseGoogleOfficialPricingHtml(markdocSpaHtml, Date.UTC(2026, 11, 1, 0, 0, 0));
+  assert.equal(parsedDec.profileRates['gemini-4-carbon'].inputPer1M, 4.0);
+  assert.equal(parsedDec.profileRates['gemini-4-carbon'].cachedPer1M, 0.2);
+  assert.equal(parsedDec.profileRates['gemini-4-carbon'].outputPer1M, 20.0);
+  assert.equal(parsedDec.profileRates['gemini-4-carbon'].longContextTier, false);
+  assert.equal(parsedDec.profileRates['gemini-4-argon'].inputPer1M, 4.0);
+  assert.equal(parsedDec.profileRates['gemini-4-argon'].cachedPer1M, 0.2);
+  assert.equal(parsedDec.profileRates['gemini-4-argon'].outputPer1M, 20.0);
+  assert.equal(parsedDec.profileRates['gemini-4-argon'].longContextTier, false);
+  assert.equal(parsedDec.profileRates['gemini-4-neon'].inputPer1M, 3.0);
+  assert.equal(parsedDec.profileRates['gemini-4-hydrogen'].inputPer1M, 1.5);
+  assert.equal(parsedDec.profileRates['gemini-3-8-flash'].inputPer1M, 0.75);
+  assert.equal(parsedDec.profileRates['gemini-3-8-flash'].outputPer1M, 3.75);
+  assert.equal(parsedDec.profileRates['gemini-nano-banana-2.1'], undefined);
+  assert.equal(parsedDec.profileRates['gemma-4'], undefined);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:38:50
+// Description: Verify prose cross-reference links and non-chat Image/TTS sections emit zero bogus keys.
+// ============================================================================
+  assert.equal(parsedNov.profileRates['gemini-3.5-flash-lite-rates.'], undefined);
+  assert.equal(parsedNov.profileRates['gemini-3-pro-image'], undefined);
+  assert.equal(parsedNov.profileRates['gemini-2.5-flash-tts'], undefined);
+  assert.equal(parsedDec.profileRates['gemini-3.5-flash-lite-rates.'], undefined);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:38:50
+// ============================================================================
+
+  const parsedJan = parseGoogleOfficialPricingHtml(markdocSpaHtml, Date.UTC(2027, 0, 1, 0, 0, 0));
+  assert.equal(parsedJan.profileRates['gemini-3-8-flash'].inputPer1M, 1.5);
+  assert.equal(parsedJan.profileRates['gemini-3-8-flash'].cachedPer1M, 0.15);
+  assert.equal(parsedJan.profileRates['gemini-3-8-flash'].outputPer1M, 7.5);
+  assert.equal(parsedJan.profileRates['gemini-3-8-flash'].longContextTier, false);
+
+  // (d) Non-destructive pricing_cache.json schemaVersion: 1 -> 2 Migration
+  const root = mkdtempSync(join(tmpdir(), 'tm-v040-cache-v1-v2-'));
+  const stateDir = join(root, 'state');
+  mkdirSync(stateDir, { recursive: true });
+  try {
+    const fixedNowMs = Date.now();
+    const todayLocal = formatLocalDate(fixedNowMs);
+    const legacyGroup = '\u5176\u4ed6\u5728\u5f79\u6a21\u578b';
+    const cacheFilePath = join(stateDir, 'pricing_cache.json');
+    writeFileSync(
+      cacheFilePath,
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          lastSyncLocalDate: todayLocal,
+          lastSyncAtMs: fixedNowMs - 60000,
+          lastAttemptAtMs: fixedNowMs,
+          status: 'ok',
+          sources: ['google-official', 'models.dev'],
+          error: '',
+          usdToCnyRate: 7.1234,
+          fxSource: 'frankfurter.dev',
+          fxLastSyncLocalDate: todayLocal,
+          fxAttemptLocalDate: todayLocal,
+          syncedRates: {
+            'gemini-4-carbon': {
+              inputPer1M: 2.0,
+              cachedPer1M: 0.1,
+              outputPer1M: 10.0,
+              longContextTier: true,
+              longInputMultiplier: 2,
+              longOutputMultiplier: 1.5,
+            },
+            'gemini-4-argon': {
+              inputPer1M: 2.0,
+              cachedPer1M: 0.1,
+              outputPer1M: 10.0,
+              longContextTier: true,
+              longInputMultiplier: 2,
+              longOutputMultiplier: 1.5,
+            },
+            'gemini-4-neon': {
+              inputPer1M: 3.0,
+              cachedPer1M: 0.15,
+              outputPer1M: 15.0,
+              longContextTier: true,
+              longInputMultiplier: 2,
+              longOutputMultiplier: 1.5,
+            },
+            'gemini-4-hydrogen': {
+              inputPer1M: 1.5,
+              cachedPer1M: 0.075,
+              outputPer1M: 7.5,
+              longContextTier: true,
+              longInputMultiplier: 2,
+              longOutputMultiplier: 1.5,
+            },
+          },
+          upstreamPool: {
+            'gemini-4-carbon': {
+              id: 'gemini-4-carbon',
+              label: 'Gemini 4 Carbon',
+              group: 'Gemini 系列',
+              inputPer1M: 2.0,
+              cachedPer1M: 0.1,
+              outputPer1M: 10.0,
+              longContextTier: true,
+              longInputMultiplier: 2,
+              longOutputMultiplier: 1.5,
+            },
+            'custom-legacy': {
+              id: 'custom-legacy',
+              label: 'Custom Legacy',
+              group: legacyGroup,
+              inputPer1M: 1.2,
+              cachedPer1M: 0.12,
+              outputPer1M: 4.8,
+              longContextTier: false,
+              longInputMultiplier: 1.0,
+              longOutputMultiplier: 1.0,
+            },
+          },
+          discoveredModels: [],
+        },
+        null,
+        2,
+      ),
+      'utf-8',
+    );
+
+    let syncFetchCalls = 0;
+    const mgr = createPricingSyncManager({
+      stateDir,
+      baseCatalog: MODEL_PRICING_CATALOG,
+      nowFn: () => fixedNowMs,
+      autoSyncDisabled: false,
+      fetchImpl: async (url) => {
+        syncFetchCalls += 1;
+        if (url.includes('frankfurter') || url.includes('er-api')) {
+          return { ok: true, status: 200, json: async () => ({ rates: { CNY: 7.1234 } }) };
+        }
+        if (url.includes('models.dev')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              google: {
+                models: {
+                  'gemini-4-carbon': {
+                    id: 'gemini-4-carbon',
+                    name: 'Gemini 4 Carbon',
+                    cost: { input: 2.0, cache_read: 0.1, output: 10.0 },
+                  },
+                },
+              },
+            }),
+          };
+        }
+        if (url.includes('litellm')) {
+          return { ok: false, status: 404, json: async () => ({}) };
+        }
+        return { ok: true, status: 200, text: async () => markdocSpaHtml };
+      },
+    });
+
+    assert.equal(mgr.getSyncedCnyRate(), 7.1234);
+    assert.equal(mgr.getPublicStatus().usdToCnyRate, 7.1234);
+    assert.equal(mgr.getPublicStatus().fxSource, 'frankfurter.dev');
+
+    const migratedCatalog = mgr.getRuntimeCatalog(['custom-legacy']);
+    for (const pid of ['gemini-4-carbon', 'gemini-4-argon', 'gemini-4-neon', 'gemini-4-hydrogen']) {
+      const entry = migratedCatalog.find((m) => m.id === pid);
+      assert.ok(entry, `Expected ${pid} in migrated runtime catalog`);
+      assert.equal(entry.longContextTier, false);
+      assert.equal(entry.longInputMultiplier, 1.0);
+      assert.equal(entry.longOutputMultiplier, 1.0);
+    }
+    const customLegacy = migratedCatalog.find((m) => m.id === 'custom-legacy');
+    assert.ok(customLegacy, 'Expected custom-legacy promoted from migrated upstreamPool');
+    assert.equal(customLegacy.group, '其他现役模型');
+
+    // Verify upstreamPool['gemini-4-carbon'] was also sanitized during v1->v2 cache load
+    const poolOnlyMgr = createPricingSyncManager({
+      stateDir,
+      baseCatalog: [MODEL_PRICING_CATALOG.at(-1)],
+      nowFn: () => fixedNowMs,
+      autoSyncDisabled: true,
+    });
+    const promotedG4Carbon = poolOnlyMgr
+      .getRuntimeCatalog(['gemini-4-carbon'])
+      .find((m) => m.id === 'gemini-4-carbon');
+    assert.ok(promotedG4Carbon);
+    assert.equal(promotedG4Carbon.longContextTier, false);
+    assert.equal(promotedG4Carbon.longInputMultiplier, 1.0);
+    assert.equal(promotedG4Carbon.longOutputMultiplier, 1.0);
+
+    let syncSettledResolve;
+    const syncSettled = new Promise((r) => {
+      syncSettledResolve = r;
+    });
+    const triggeredImmediate = mgr.maybeTriggerDailySync(['custom-legacy'], (res) => {
+      syncSettledResolve(res);
+    });
+    assert.equal(triggeredImmediate, true);
+    const syncRes = await syncSettled;
+    assert.equal(syncRes.ok, true);
+    assert.ok(syncFetchCalls > 0);
+
+    const persistedCache = JSON.parse(readFileSync(cacheFilePath, 'utf-8'));
+    assert.equal(persistedCache.schemaVersion, 2);
+    assert.equal(persistedCache.lastSyncLocalDate, todayLocal);
+    assert.equal(persistedCache.usdToCnyRate, 7.1234);
+    assert.equal(persistedCache.syncedRates['gemini-4-carbon'].longContextTier, false);
+    assert.equal(persistedCache.syncedRates['gemini-4-carbon'].longInputMultiplier, 1.0);
+    assert.equal(persistedCache.syncedRates['gemini-4-carbon'].longOutputMultiplier, 1.0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:26:51
 // ============================================================================

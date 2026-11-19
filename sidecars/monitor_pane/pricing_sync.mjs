@@ -32,9 +32,17 @@ const DEFAULT_FX_FALLBACK_URL = 'https://open.er-api.com/v6/latest/USD';
 // [MODIFIED END] 2026-11-17 15:43:00
 // ============================================================================
 
-const FETCH_TIMEOUT_MS = 4500;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Raise FETCH_TIMEOUT_MS to 8000ms for Google Markdoc fetches and
+// bump CACHE_SCHEMA_VERSION to 2 for non-destructive Gemini 4 cache migration.
+// ============================================================================
+const FETCH_TIMEOUT_MS = 8000;
 const RETRY_COOLDOWN_MS = 15 * 60 * 1000;
-const CACHE_SCHEMA_VERSION = 1;
+const CACHE_SCHEMA_VERSION = 2;
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
 
 const NON_CHAT_MODEL_RE =
   /embed|tts|speech|audio|imagen|image|veo|video|live|realtime|robotics|learnlm|gemma|moderation|transcribe|whisper|computer-use|aqa|bison|gecko|gemini-1\.[05]|2\.0-flash-lite/i;
@@ -169,9 +177,15 @@ function validateAndNormalizeRates({
   if (!Number.isFinite(inp) || inp <= 0 || inp > 500) return null;
   if (!Number.isFinite(out) || out <= 0 || out > 2000) return null;
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Default missing Gemini 4 cachedPer1M to 5% (95% cache discount)
+// and stop forcing longContextTier=true on Gemini models without >200k pricing.
+// ============================================================================
   let cached;
   if (cachedPer1M === undefined || cachedPer1M === null || cachedPer1M === '') {
-    cached = isGemini ? Number((inp * 0.1).toFixed(4)) : inp;
+    const geminiCacheFactor = /^gemini[\s_-]*4\b/i.test(modelId) ? 0.05 : 0.1;
+    cached = isGemini ? Number((inp * geminiCacheFactor).toFixed(4)) : inp;
   } else {
     cached = roundPrice(cachedPer1M);
   }
@@ -180,10 +194,10 @@ function validateAndNormalizeRates({
   const hasLongInput = Number.isFinite(Number(longInputPer1M)) && Number(longInputPer1M) > inp;
   const hasLongOutput = Number.isFinite(Number(longOutputPer1M)) && Number(longOutputPer1M) > out;
 
-  let tier = Boolean(longContextTier || hasLongInput || hasLongOutput);
-  if (!tier && isGemini && !/flash|lite/i.test(modelId)) {
-    tier = true;
-  }
+  const tier = Boolean(longContextTier || hasLongInput || hasLongOutput);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
 
   let inMult =
     Number.isFinite(Number(longInputMultiplier)) && Number(longInputMultiplier) > 0
@@ -541,6 +555,164 @@ function parseMonthDayYearUtcMs(monthStr, dayStr, yearStr) {
 }
 
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Add extractLinesFromGoogleMarkdoc() to parse Google's Angular
+// SPA <noscript><pre> Markdoc pricing source (headings, tabs, and {% table %}).
+// ============================================================================
+function extractLinesFromGoogleMarkdoc(rawHtml) {
+  if (typeof rawHtml !== 'string' || !rawHtml.trim()) return null;
+
+  const hasMarkdocDoc = (text) =>
+    /\{%\s*table\b[^%]*%\}/i.test(text) && /#{2,6}\s+Gemini\b/i.test(text);
+
+  let markdocText = null;
+  const noscriptRe = /<noscript\b[^>]*>\s*<pre[^>]*>([\s\S]*?)<\/pre>\s*<\/noscript>/gi;
+  let match;
+  while ((match = noscriptRe.exec(rawHtml)) !== null) {
+    const decoded = decodeHtmlEntities(match[1]);
+    if (hasMarkdocDoc(decoded)) {
+      markdocText = decoded;
+      break;
+    }
+  }
+
+  if (!markdocText) {
+    const decodedFull = decodeHtmlEntities(rawHtml);
+    if (hasMarkdocDoc(decodedFull)) {
+      markdocText = decodedFull;
+    }
+  }
+  if (!markdocText) return null;
+
+  const cleanMarkdocInline = (str) =>
+    String(str || '')
+      .replace(/\{%\s*sup\s*%\}[\s\S]*?\{%\s*\/\s*sup\s*%\}/gi, '')
+      .replace(/\{%(?:(?!%\}).)*%\}/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+  const cleanMarkdocCell = (rawCell) =>
+    cleanMarkdocInline(rawCell)
+      .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+      .replace(/`([^`\n]+)`/g, '$1')
+      .replace(/^[*`\s]+|[*`\s]+$/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const outLines = [];
+  let inTable = false;
+  let tableLines = [];
+
+  const flushTable = () => {
+    if (tableLines.length === 0) return;
+    const rows = [];
+    let currentRow = [];
+    for (const tLine of tableLines) {
+      if (/^\s*---+\s*$/.test(tLine)) {
+        if (currentRow.length > 0) {
+          rows.push(currentRow);
+          currentRow = [];
+        }
+      } else {
+        currentRow.push(tLine);
+      }
+    }
+    if (currentRow.length > 0) {
+      rows.push(currentRow);
+    }
+
+    for (const rowLines of rows) {
+      const rawCells = [];
+      for (const rLine of rowLines) {
+        const cellStart = /^\s*\*\s+(.*)$/.exec(rLine);
+        if (cellStart) {
+          rawCells.push(cellStart[1]);
+        } else if (/^\s*\*\s*$/.test(rLine)) {
+          rawCells.push('');
+        } else {
+          const trimmed = rLine.trim();
+          if (trimmed && !trimmed.startsWith('{%') && rawCells.length > 0) {
+            rawCells[rawCells.length - 1] = `${rawCells[rawCells.length - 1]}; ${trimmed}`;
+          }
+        }
+      }
+      if (rawCells.length === 0) continue;
+      const cleanedCells = rawCells.map(cleanMarkdocCell);
+      if (
+        /^feature$/i.test(cleanedCells[0] || '') ||
+        /^free\s+tier$/i.test(cleanedCells[1] || '')
+      ) {
+        continue;
+      }
+      const nonEmptyCells = cleanedCells.filter(Boolean);
+      if (nonEmptyCells.length > 0) {
+        outLines.push(nonEmptyCells.join(' | '));
+      }
+    }
+    tableLines = [];
+  };
+
+  for (const rawLine of markdocText.split(/\r?\n/)) {
+    if (inTable) {
+      if (/^\s*\{%\s*\/\s*table\s*%\}\s*$/i.test(rawLine)) {
+        flushTable();
+        inTable = false;
+      } else {
+        tableLines.push(rawLine);
+      }
+      continue;
+    }
+
+    if (/^\s*\{%\s*table\b[^%]*%\}\s*$/i.test(rawLine)) {
+      inTable = true;
+      tableLines = [];
+      continue;
+    }
+
+    const headingMatch = /^\s*(#{1,6})\s+(.+?)\s*$/.exec(rawLine);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      const cleanedHeading = headingMatch[2]
+        .replace(/\s*\{%(?:(?!%\}).)*%\}\s*/g, ' ')
+        .replace(/\s*\{#[^}]*\}\s*/g, ' ')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (cleanedHeading) {
+        outLines.push(`[H${level}] ${cleanedHeading}`);
+      }
+      continue;
+    }
+
+    const tabMatch = /^\s*\{%\s*tab\b[^%]*\btitle=["']([^"']+)["'][^%]*%\}\s*$/i.exec(rawLine);
+    if (tabMatch) {
+      const tabTitle = tabMatch[1].trim();
+      if (tabTitle) outLines.push(tabTitle);
+      continue;
+    }
+
+    if (/^\s*\{%(?:(?!%\}).)*%\}\s*$/.test(rawLine)) {
+      continue;
+    }
+
+    const plain = cleanMarkdocInline(rawLine)
+      .replace(/[ \t]+/g, ' ')
+      .trim();
+    if (plain) {
+      outLines.push(plain);
+    }
+  }
+
+  if (inTable) {
+    flushTable();
+  }
+
+  return outLines;
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
+
+// ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:55:00
 // Description: Keep multi-line <tr> table cells on one logical line with `; `
 // breaks and decode HTML entities ONLY after all HTML tag stripping completes
@@ -548,6 +720,17 @@ function parseMonthDayYearUtcMs(monthStr, dayStr, yearStr) {
 // ============================================================================
 function extractLinesFromGoogleHtml(html) {
   if (typeof html !== 'string' || !html.trim()) return [];
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Prefer Markdoc <noscript><pre> extraction before traditional HTML stripping.
+// ============================================================================
+  const markdocLines = extractLinesFromGoogleMarkdoc(html);
+  if (Array.isArray(markdocLines) && markdocLines.length > 0) {
+    return markdocLines;
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
   let text = html
     .replace(/<!--[\s\S]*?-->/g, ' ')
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
@@ -599,7 +782,20 @@ function extractLinesFromGoogleHtml(html) {
 // ============================================================================
 
 function mapGoogleHeadingToModelInfo(rawHeading) {
-  const withoutTag = rawHeading.replace(/^\[H[1-6]\]\s*/, '').replace(/^#{1,6}\s*/, '').trim();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Strip Markdoc attributes and markdown links from headings before matching.
+// ============================================================================
+  const withoutTag = rawHeading
+    .replace(/^\[H[1-6]\]\s*/, '')
+    .replace(/^#{1,6}\s*/, '')
+    .replace(/\{%(?:(?!%\}).)*%\}/g, ' ')
+    .replace(/\{#[^}]*\}/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .trim();
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
   const stripped = withoutTag
     .replace(/\s*\([^)]*\)\s*/g, ' ')
     .replace(/\s*[-—–:]\s*(?:Paid|Free|Standard|Pricing|Interactive).*$/i, '')
@@ -808,19 +1004,34 @@ function splitEffectiveDateClauses(line) {
 
   // Split around `;`, `|`, ` / `, or immediately after `through/until/before <Month Day, Year>)`
   // or between an introductory price clause and a following `$X starting <Date>` clause.
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Allow period after through/until/before dates when splitting effective-date clauses.
+// ============================================================================
   const throughSplitRe = new RegExp(
-    `(\\b(?:through|until|before|thru)\\s+(?:${MONTH_PATTERN})\\s+\\d{1,2},?\\s+\\d{4}\\)?)[,;\\s]+`,
+    `(\\b(?:through|until|before|thru)\\s+(?:${MONTH_PATTERN})\\s+\\d{1,2},?\\s+\\d{4}\\)?)[.,;\\s]+`,
     'gi',
   );
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
   let prepared = line.replace(throughSplitRe, '$1\u0000');
   prepared = prepared.replace(
     /(\$\s*\d+(?:\.\d+)?(?:\s*\([^)]*\))?(?:\s*(?:introductory|promo(?:tional)?|preview|current))?)\s*(?:,|—|–)\s*(?=\$\s*\d+(?:\.\d+)?\s+(?:\([^)]*\)\s*)?starting\b)/gi,
     '$1\u0000',
   );
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:35:17
+// Description: Only split on " / " when followed by a new price/date/metric clause
+// so unit dividers like "$0.50 / 1,000,000 tokens per hour (storage price)" stay intact.
+// ============================================================================
   const rawParts = prepared
-    .split(/\u0000|[;|]|\s+\/\s+|,\s*(?=starting\s+)/i)
+    .split(/\u0000|[;|]|\s+\/\s+(?=\$|\b(?:starting|through|until|before|thru|input|output|cached|context)\b)|,\s*(?=starting\s+)/i)
     .map((s) => s.trim())
     .filter(Boolean);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:35:17
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:53:00
@@ -878,16 +1089,30 @@ function parseGoogleModelBlock(lines, nowMs) {
     const line = rawLine.replace(/^\[H[1-6]\]\s*/, '').trim();
     if (!line) continue;
 
-    if (/^(?:batch(?:\s+api)?(?:\s+pricing)?)$/i.test(line)) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Skip Batch, Flex, and Priority tabs so they never overwrite Standard prices.
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:35:17
+// Description: Include Contributor tabs (and API/tier variants) in skipped non-Standard tabs.
+// ============================================================================
+    if (/^(?:batch|flex|priority|contributor)(?:\s+(?:api|tier))?(?:\s+pricing)?$/i.test(line)) {
       inBatchSection = true;
       blockInheritedMetric = null;
       continue;
     }
-    if (/^(?:standard(?:\s+pricing)?|interactive|paid\s+tier)$/i.test(line)) {
+    if (/^(?:standard|interactive|paid\s+tier)(?:\s+(?:api|tier))?(?:\s+pricing)?$/i.test(line)) {
       inBatchSection = false;
       blockInheritedMetric = null;
       continue;
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:35:17
+// ============================================================================
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
     if (inBatchSection) continue;
     if (/\b(?:credit|trial|billing|free\s+tier\s+limit)\b/i.test(line)) {
       blockInheritedMetric = null;
@@ -980,6 +1205,12 @@ export function parseGoogleOfficialPricingHtml(html, nowMs = Date.now()) {
   const lines = extractLinesFromGoogleHtml(html);
   const blocks = [];
   let current = null;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:35:17
+// Description: Disable un-tagged plainHeading heuristic when explicit [H1..H6]
+// headings exist so wrapped prose cross-reference links never trigger headings.
+// ============================================================================
+  const hasExplicitHeadings = lines.some((l) => /^\[H[1-6]\]/.test(l));
 
   for (const line of lines) {
     const isTagHeading = /^\[H[1-6]\]/.test(line);
@@ -987,9 +1218,13 @@ export function parseGoogleOfficialPricingHtml(html, nowMs = Date.now()) {
     const looksLikeHeading =
       isTagHeading ||
       (/^#{1,6}\s+/.test(plainHeading)) ||
-      (plainHeading.length <= 56 &&
+      (!hasExplicitHeadings &&
+        plainHeading.length <= 56 &&
         !/\$/.test(plainHeading) &&
         /^Gemini\s+\d+(?:\.\d+)?\s+[A-Za-z]/i.test(plainHeading));
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:35:17
+// ============================================================================
 
     if (looksLikeHeading) {
       const modelInfo = mapGoogleHeadingToModelInfo(line);
@@ -1002,7 +1237,16 @@ export function parseGoogleOfficialPricingHtml(html, nowMs = Date.now()) {
         blocks.push(current);
         continue;
       }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Reset current block on unmatched [H1]/[H2] non-tier headings so
+// trailing tool/agent/Gemma/Nano sections never bleed into previous chat model.
+// ============================================================================
       if (
+        (/^\[H[12]\]/.test(line) &&
+          !/^(?:standard|batch|flex|priority|interactive|paid\s+tier)(?:\s+(?:api|pricing))?$/i.test(
+            plainHeading,
+          )) ||
         (isTagHeading &&
           /^(?:related\s+guides|what'?s\s+next|faq|rate\s+limits|billing|terms)/i.test(
             plainHeading,
@@ -1012,6 +1256,9 @@ export function parseGoogleOfficialPricingHtml(html, nowMs = Date.now()) {
         current = null;
         continue;
       }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
     }
 
     if (current) {
@@ -1128,17 +1375,36 @@ function deriveFamilyBaseline(slug) {
 // Description: Map gemini-flash-worker slugs to Hydrogen baseline ($1.5/$0.15/$7.5)
 // before checking generic flash/lite patterns.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Update Hydrogen baseline to 95% cache / flat 1M context and
+// add Gemini 4 Neon baseline ($3.0/$0.15/$15.0, flat 1M context).
+// ============================================================================
     if (/hydrogen|gemini[\s_-]*flash[\s_-]*worker/i.test(s)) {
       return {
         group: 'Gemini 系列',
         inputPer1M: 1.5,
-        cachedPer1M: 0.15,
+        cachedPer1M: 0.075,
         outputPer1M: 7.5,
-        longContextTier: true,
-        longInputMultiplier: 2.0,
-        longOutputMultiplier: 1.5,
+        longContextTier: false,
+        longInputMultiplier: 1.0,
+        longOutputMultiplier: 1.0,
       };
     }
+    if (/\bneon\b|gemini[\s_-]*4[\s_-]*neon/i.test(s)) {
+      return {
+        group: 'Gemini 系列',
+        inputPer1M: 3.0,
+        cachedPer1M: 0.15,
+        outputPer1M: 15.0,
+        longContextTier: false,
+        longInputMultiplier: 1.0,
+        longOutputMultiplier: 1.0,
+      };
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
     if (/flash|lite/i.test(s)) {
       return {
         group: 'Gemini 系列',
@@ -1152,6 +1418,24 @@ function deriveFamilyBaseline(slug) {
     }
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:30:19
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Add Gemini 4 flat 1M / 95% cache baseline ahead of older Gemini 2/3 Pro baseline.
+// ============================================================================
+    if (/^gemini[\s_-]*4\b/i.test(s)) {
+      return {
+        group: 'Gemini 系列',
+        inputPer1M: 2.0,
+        cachedPer1M: 0.1,
+        outputPer1M: 10.0,
+        longContextTier: false,
+        longInputMultiplier: 1.0,
+        longOutputMultiplier: 1.0,
+      };
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
 // ============================================================================
     return {
       group: 'Gemini 系列',
@@ -1262,9 +1546,40 @@ function loadPricingCache(cachePath) {
   if (!cachePath || !existsSync(cachePath)) return fallback;
   try {
     const raw = JSON.parse(readFileSync(cachePath, 'utf-8'));
-    if (!raw || typeof raw !== 'object' || raw.schemaVersion !== CACHE_SCHEMA_VERSION) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Accept schemaVersion 1 -> 2 non-destructive migration, preserving
+// upstreamPool/discoveredModels/FX while stripping legacy Gemini 4 >200k flags.
+// ============================================================================
+    if (
+      !raw ||
+      typeof raw !== 'object' ||
+      (raw.schemaVersion !== CACHE_SCHEMA_VERSION && raw.schemaVersion !== 1)
+    ) {
       return fallback;
     }
+    const isV1Migration = raw.schemaVersion === 1;
+    const gemini4KeyRe = /^gemini[\s_-]*4\b/i;
+    const sanitizeGemini4CacheEntry = (key, item) => {
+      if (
+        !isV1Migration ||
+        !item ||
+        typeof item !== 'object' ||
+        Array.isArray(item) ||
+        (!gemini4KeyRe.test(key) && !gemini4KeyRe.test(String(item.id || '')))
+      ) {
+        return item;
+      }
+      return {
+        ...item,
+        longContextTier: false,
+        longInputMultiplier: 1,
+        longOutputMultiplier: 1,
+      };
+    };
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
     const rawFx = Number(raw.usdToCnyRate);
     const validFx = Number.isFinite(rawFx) && rawFx >= 1.0 && rawFx <= 50.0 ? Number(rawFx.toFixed(4)) : null;
 // ============================================================================
@@ -1279,10 +1594,18 @@ function loadPricingCache(cachePath) {
     const upstreamPool = {};
     for (const [key, item] of Object.entries(rawUpstreamPool)) {
       if (item && typeof item === 'object' && !Array.isArray(item)) {
-        upstreamPool[key] =
+        const normalized =
           typeof item.group === 'string'
             ? { ...item, group: normalizeModelGroupName(item.group) }
             : item;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Strip legacy >200k flags on Gemini 4 upstreamPool entries during v1->v2 migration.
+// ============================================================================
+        upstreamPool[key] = sanitizeGemini4CacheEntry(key, normalized);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
       } else {
         upstreamPool[key] = item;
       }
@@ -1290,13 +1613,43 @@ function loadPricingCache(cachePath) {
 // ============================================================================
 // [MODIFIED END] 2026-11-17 21:28:27
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Strip legacy >200k flags on Gemini 4 syncedRates entries and
+// reset pricing sync dates on v1->v2 migration to trigger a fresh sync.
+// ============================================================================
+    const rawSyncedRates =
+      raw.syncedRates && typeof raw.syncedRates === 'object' && !Array.isArray(raw.syncedRates)
+        ? raw.syncedRates
+        : {};
+    const syncedRates = {};
+    for (const [key, item] of Object.entries(rawSyncedRates)) {
+      syncedRates[key] = sanitizeGemini4CacheEntry(key, item);
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
     return {
       schemaVersion: CACHE_SCHEMA_VERSION,
-      lastSyncLocalDate: typeof raw.lastSyncLocalDate === 'string' ? raw.lastSyncLocalDate : '',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Reset lastSyncLocalDate and lastAttemptAtMs on v1->v2 migration
+// while preserving FX dates and migrated syncedRates.
+// ============================================================================
+      lastSyncLocalDate: isV1Migration
+        ? ''
+        : typeof raw.lastSyncLocalDate === 'string'
+          ? raw.lastSyncLocalDate
+          : '',
       lastSyncAtMs: Number.isFinite(Number(raw.lastSyncAtMs)) ? Number(raw.lastSyncAtMs) : null,
-      lastAttemptAtMs: Number.isFinite(Number(raw.lastAttemptAtMs))
-        ? Number(raw.lastAttemptAtMs)
-        : null,
+      lastAttemptAtMs: isV1Migration
+        ? null
+        : Number.isFinite(Number(raw.lastAttemptAtMs))
+          ? Number(raw.lastAttemptAtMs)
+          : null,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
       status:
         typeof raw.status === 'string' && ['idle', 'ok', 'cached', 'offline'].includes(raw.status)
           ? raw.status
@@ -1309,10 +1662,14 @@ function loadPricingCache(cachePath) {
       fxSource: typeof raw.fxSource === 'string' ? raw.fxSource : '',
       fxLastSyncLocalDate: typeof raw.fxLastSyncLocalDate === 'string' ? raw.fxLastSyncLocalDate : '',
       fxAttemptLocalDate: typeof raw.fxAttemptLocalDate === 'string' ? raw.fxAttemptLocalDate : '',
-      syncedRates:
-        raw.syncedRates && typeof raw.syncedRates === 'object' && !Array.isArray(raw.syncedRates)
-          ? raw.syncedRates
-          : {},
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Return sanitized syncedRates from loadPricingCache().
+// ============================================================================
+      syncedRates,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 21:28:27
 // Description: Persist normalized upstreamPool map from loadPricingCache().
@@ -1593,10 +1950,15 @@ export function createPricingSyncManager({
         carbonRates && Number.isFinite(Number(carbonRates.inputPer1M))
           ? Number(carbonRates.inputPer1M)
           : autoBase?.inputPer1M ?? 2.0,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Align autoEntry fallback rates with Gemini 4 Standard Paid Tier
+// (cachedPer1M: 0.1, longContextTier: false, 1.0x multipliers).
+// ============================================================================
       cachedPer1M:
         carbonRates && Number.isFinite(Number(carbonRates.cachedPer1M))
           ? Number(carbonRates.cachedPer1M)
-          : autoBase?.cachedPer1M ?? 0.2,
+          : autoBase?.cachedPer1M ?? 0.1,
       outputPer1M:
         carbonRates && Number.isFinite(Number(carbonRates.outputPer1M))
           ? Number(carbonRates.outputPer1M)
@@ -1604,15 +1966,18 @@ export function createPricingSyncManager({
       longContextTier:
         carbonRates && typeof carbonRates.longContextTier === 'boolean'
           ? carbonRates.longContextTier
-          : autoBase?.longContextTier ?? true,
+          : autoBase?.longContextTier ?? false,
       longInputMultiplier:
         carbonRates && Number.isFinite(Number(carbonRates.longInputMultiplier))
           ? Number(carbonRates.longInputMultiplier)
-          : autoBase?.longInputMultiplier ?? 2.0,
+          : autoBase?.longInputMultiplier ?? 1.0,
       longOutputMultiplier:
         carbonRates && Number.isFinite(Number(carbonRates.longOutputMultiplier))
           ? Number(carbonRates.longOutputMultiplier)
-          : autoBase?.longOutputMultiplier ?? 1.5,
+          : autoBase?.longOutputMultiplier ?? 1.0,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
       pattern: null,
     };
 
@@ -1819,8 +2184,17 @@ export function createPricingSyncManager({
         cachedPer1M: candidate.cachedPer1M,
         outputPer1M: candidate.outputPer1M,
         longContextTier: Boolean(candidate.longContextTier),
-        longInputMultiplier: Number(candidate.longInputMultiplier) || 2.0,
-        longOutputMultiplier: Number(candidate.longOutputMultiplier) || 1.5,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Default discovered long-context multipliers based on candidate.longContextTier.
+// ============================================================================
+        longInputMultiplier:
+          Number(candidate.longInputMultiplier) || (candidate.longContextTier ? 2.0 : 1.0),
+        longOutputMultiplier:
+          Number(candidate.longOutputMultiplier) || (candidate.longContextTier ? 1.5 : 1.0),
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
         patternStr,
       });
     };

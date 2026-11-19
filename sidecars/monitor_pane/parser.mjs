@@ -116,11 +116,19 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     label: 'Gemini 4 Carbon',
     hint: '含 High/Med/Low · Orchestrator (Carbon)',
     inputPer1M: 2.0,
-    cachedPer1M: 0.2,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Update gemini-4-carbon built-in offline rates to Google
+// Standard Paid Tier (95% cache discount, 1M flat unified context).
+// ============================================================================
+    cachedPer1M: 0.1,
     outputPer1M: 10.0,
-    longContextTier: true,
-    longInputMultiplier: 2.0,
-    longOutputMultiplier: 1.5,
+    longContextTier: false,
+    longInputMultiplier: 1.0,
+    longOutputMultiplier: 1.0,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 11:47:54
 // Description: Tighten gemini-4-carbon pattern so gemini-pro-orchestrator-neon
@@ -134,12 +142,20 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     group: 'Gemini 系列',
     label: 'Gemini 4 Neon',
     hint: '含 High/Med/Low · Orchestrator (Neon)',
-    inputPer1M: 2.0,
-    cachedPer1M: 0.2,
-    outputPer1M: 10.0,
-    longContextTier: true,
-    longInputMultiplier: 2.0,
-    longOutputMultiplier: 1.5,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Update gemini-4-neon built-in offline rates to Google Standard
+// Paid Tier ($3.0 / $0.15 / $15.0, 95% cache discount, 1M flat unified context).
+// ============================================================================
+    inputPer1M: 3.0,
+    cachedPer1M: 0.15,
+    outputPer1M: 15.0,
+    longContextTier: false,
+    longInputMultiplier: 1.0,
+    longOutputMultiplier: 1.0,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
     pattern: /gemini[\s_-]*4[\s_-]*neon|orchestrator[\s(-]*neon|gemini-pro-orchestrator-neon/i,
   }),
 // ============================================================================
@@ -151,11 +167,19 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     label: 'Gemini 4 Argon',
     hint: '含 High/Med/Low · Orchestrator (Argon)',
     inputPer1M: 2.0,
-    cachedPer1M: 0.2,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Update gemini-4-argon built-in offline rates to Google
+// Standard Paid Tier (95% cache discount, 1M flat unified context).
+// ============================================================================
+    cachedPer1M: 0.1,
     outputPer1M: 10.0,
-    longContextTier: true,
-    longInputMultiplier: 2.0,
-    longOutputMultiplier: 1.5,
+    longContextTier: false,
+    longInputMultiplier: 1.0,
+    longOutputMultiplier: 1.0,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
     pattern: /gemini[\s-]*4[\s-]*argon|orchestrator[\s(-]*argon|gemini-pro-orchestrator-argon/i,
   }),
 // ============================================================================
@@ -169,11 +193,19 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     label: 'Gemini 4 Hydrogen',
     hint: '含 XHigh/High/Med/Low · Orchestrator Worker',
     inputPer1M: 1.5,
-    cachedPer1M: 0.15,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Update gemini-4-hydrogen built-in offline rates to Google
+// Standard Paid Tier (95% cache discount, 1M flat unified context).
+// ============================================================================
+    cachedPer1M: 0.075,
     outputPer1M: 7.5,
-    longContextTier: true,
-    longInputMultiplier: 2.0,
-    longOutputMultiplier: 1.5,
+    longContextTier: false,
+    longInputMultiplier: 1.0,
+    longOutputMultiplier: 1.0,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
     pattern: /gemini[\s_-]*4[\s_-]*hydrogen|gemini-flash-worker/i,
   }),
   Object.freeze({
@@ -261,11 +293,19 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     label: 'Auto (默认)',
     hint: '未显式指定模型时使用',
     inputPer1M: 2.0,
-    cachedPer1M: 0.2,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 14:20:16
+// Description: Update auto fallback profile rates to match Gemini 4 Standard
+// Paid Tier (95% cache discount, 1M flat unified context).
+// ============================================================================
+    cachedPer1M: 0.1,
     outputPer1M: 10.0,
-    longContextTier: true,
-    longInputMultiplier: 2.0,
-    longOutputMultiplier: 1.5,
+    longContextTier: false,
+    longInputMultiplier: 1.0,
+    longOutputMultiplier: 1.0,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 14:20:16
+// ============================================================================
     pattern: null,
   }),
 ]);
