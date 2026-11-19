@@ -35,7 +35,15 @@ const UTF8_DECODER = new TextDecoder('utf-8');
 // Description: Bump LEDGER_SCHEMA_VERSION to 4 so v3 ledgers rebuild with
 // gemini-pro-default mapped to canonical gemini-3.1-pro.
 // ============================================================================
-export const LEDGER_SCHEMA_VERSION = 4;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:30:45
+// Description: Bump LEDGER_SCHEMA_VERSION to 5 so v4 ledgers rebuild cleanly
+// separating 11/16+ Gemini 4 Hydrogen (Orchestrator) from 11/13-14 Gemini Flash.
+// ============================================================================
+export const LEDGER_SCHEMA_VERSION = 5;
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:30:45
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:13:00
 // ============================================================================
@@ -62,10 +70,37 @@ const SEEDED_ENUM_ENTRIES = [
   [1427, 'gemini-4-carbon'],
   [1525, 'gemini-4-hydrogen'],
   [1528, 'gemini-4-hydrogen'],
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:30:55
+// Description: Seed additional live-observed Gemini 4 Neon enum IDs (1532, 1533)
+// and keep immutable SEEDED_ENUM_MAP for rawDbModel enum fallback lookups.
+// ============================================================================
+  [1532, 'gemini-4-neon'],
+  [1533, 'gemini-4-neon'],
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:30:55
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Seed observed Gemini 4 Neon and Orchestrator (Neon) enum IDs (1535, 1537).
+// ============================================================================
+  [1535, 'gemini-4-neon'],
+  [1537, 'gemini-pro-orchestrator-neon'],
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
   [1667, 'gemini-pro-orchestrator'],
   [1669, 'gemini-flash-worker-agy'],
 ];
 const SEEDED_ENUM_IDS = new Set(SEEDED_ENUM_ENTRIES.map(([k]) => k));
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:30:55
+// Description: Preserve immutable seeded enum -> raw slug map before display overrides.
+// ============================================================================
+const SEEDED_ENUM_MAP = new Map(SEEDED_ENUM_ENTRIES);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:30:55
+// ============================================================================
 export const MODEL_ENUM_MAP = new Map(SEEDED_ENUM_ENTRIES);
 
 export const MODEL_PRICING_CATALOG = Object.freeze([
@@ -86,9 +121,30 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     longContextTier: true,
     longInputMultiplier: 2.0,
     longOutputMultiplier: 1.5,
-    pattern: /gemini[\s-]*4[\s-]*carbon|orchestrator[\s(-]*carbon|gemini-pro-orchestrator(?!-argon)/i,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Tighten gemini-4-carbon pattern so gemini-pro-orchestrator-neon
+// is never hijacked into Carbon, and add first-class gemini-4-neon profile.
+// ============================================================================
+    pattern: /gemini[\s-]*4[\s-]*carbon|orchestrator[\s(-]*carbon|gemini-pro-orchestrator(?=$|[\s)]|-carbon(?=$|[-_\s]))/i,
     fallbackPattern: /^gemini[\s-]*pro$|gemini[\s-]*[23](?!\.?1[\s_-]*pro).*pro|^pro$/i,
   }),
+  Object.freeze({
+    id: 'gemini-4-neon',
+    group: 'Gemini 系列',
+    label: 'Gemini 4 Neon',
+    hint: '含 High/Med/Low · Orchestrator (Neon)',
+    inputPer1M: 2.0,
+    cachedPer1M: 0.2,
+    outputPer1M: 10.0,
+    longContextTier: true,
+    longInputMultiplier: 2.0,
+    longOutputMultiplier: 1.5,
+    pattern: /gemini[\s_-]*4[\s_-]*neon|orchestrator[\s(-]*neon|gemini-pro-orchestrator-neon/i,
+  }),
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
   Object.freeze({
     id: 'gemini-4-argon',
     group: 'Gemini 系列',
@@ -102,18 +158,23 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     longOutputMultiplier: 1.5,
     pattern: /gemini[\s-]*4[\s-]*argon|orchestrator[\s(-]*argon|gemini-pro-orchestrator-argon/i,
   }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:31:00
+// Description: Move gemini-flash-worker pattern from gemini-3-8-flash into
+// gemini-4-hydrogen with Orchestrator Worker hint.
+// ============================================================================
   Object.freeze({
     id: 'gemini-4-hydrogen',
     group: 'Gemini 系列',
     label: 'Gemini 4 Hydrogen',
-    hint: '含 XHigh/High/Med/Low',
+    hint: '含 XHigh/High/Med/Low · Orchestrator Worker',
     inputPer1M: 1.5,
     cachedPer1M: 0.15,
     outputPer1M: 7.5,
     longContextTier: true,
     longInputMultiplier: 2.0,
     longOutputMultiplier: 1.5,
-    pattern: /gemini[\s-]*4[\s-]*hydrogen/i,
+    pattern: /gemini[\s_-]*4[\s_-]*hydrogen|gemini-flash-worker/i,
   }),
   Object.freeze({
     id: 'gemini-3.1-pro',
@@ -139,9 +200,12 @@ export const MODEL_PRICING_CATALOG = Object.freeze([
     longContextTier: false,
     longInputMultiplier: 2.0,
     longOutputMultiplier: 1.5,
-    pattern: /gemini[\s_-]*3\.?8[\s_-]*flash|gemini-flash-worker/i,
+    pattern: /gemini[\s_-]*3\.?8[\s_-]*flash/i,
     fallbackPattern: /gemini.*flash|^flash(?:_lite)?$/i,
   }),
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:31:00
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 15:15:00
 // ============================================================================
@@ -251,8 +315,15 @@ export const VALID_MODEL_SORT_DIRS = Object.freeze(['desc', 'asc']);
 // ============================================================================
 
 export const DEFAULT_PREFS = Object.freeze({
-  softContextLimit: 400000,
-  hardContextLimit: 500000,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:31:10
+// Description: Update default context limits to 409600 / 512000.
+// ============================================================================
+  softContextLimit: 409600,
+  hardContextLimit: 512000,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:31:10
+// ============================================================================
   currency: 'USD',
   cnyRate: 7.25,
   cnyRateMode: 'auto',
@@ -277,6 +348,14 @@ export const DEFAULT_PREFS = Object.freeze({
   modelSortDir: 'desc',
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:29:19
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Add pixelOfficeCollapsed default preference to DEFAULT_PREFS.
+// ============================================================================
+  pixelOfficeCollapsed: false,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
 // ============================================================================
   modelOverrides: Object.freeze({}),
 });
@@ -327,6 +406,47 @@ function setSubagentDescCache(parentConvId, entry) {
 // [MODIFIED END] 2026-11-17 17:19:56
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:31:20
+// Description: Extract normalizeExplicitDisplayName() and check fallbackDisplay
+// first for gemini-flash-worker slugs before returning tier-stripped slug.
+// ============================================================================
+function normalizeExplicitDisplayName(candidate) {
+  if (!candidate || AUTO_UNKNOWN_RE.test(candidate)) return '';
+  if (
+    candidate === 'gemini-pro-default' ||
+    /^gemini[\s_-]*pro[\s_-]*default$/i.test(candidate) ||
+    /gemini[\s_-]*3\.?1[\s_-]*pro/i.test(candidate)
+  ) {
+    return 'gemini-3.1-pro';
+  }
+  if (/orchestrator\s*\(\s*argon\s*\)/i.test(candidate)) return 'gemini-pro-orchestrator-argon';
+  if (/orchestrator\s*\(\s*carbon\s*\)/i.test(candidate)) return 'gemini-pro-orchestrator';
+  if (/orchestrator\s*\(\s*neon\s*\)/i.test(candidate)) return 'gemini-pro-orchestrator-neon';
+  if (/gemini[\s-]*4[\s-]*argon/i.test(candidate)) return 'gemini-4-argon';
+  if (/gemini[\s-]*4[\s-]*carbon/i.test(candidate)) return 'gemini-4-carbon';
+  if (/gemini[\s-]*4[\s-]*neon/i.test(candidate)) return 'gemini-4-neon';
+  if (/gemini[\s-]*4[\s-]*hydrogen/i.test(candidate)) return 'gemini-4-hydrogen';
+  if (
+    /gemini[\s-]*3\.?8[\s-]*flash|^gemini\s+flash(?:\s*\((?:x?high|med(?:ium)?|low|thinking|nothinking)\))?$|^flash(?:_lite)?$/i.test(
+      candidate,
+    )
+  ) {
+    return 'gemini-3.8-flash';
+  }
+  if (/^pro$/i.test(candidate)) return 'gemini-pro';
+  if (/claude[\s-]*opus[\s-]*4[\s.-]*6/i.test(candidate)) return 'claude-opus-4-6';
+  if (/claude[\s-]*opus/i.test(candidate)) return 'claude-opus-5-5';
+  if (/claude[\s-]*sonnet[\s-]*5[\s.-]*5|claude[\s-]*sonnet|claude[\s-]*haiku/i.test(candidate)) {
+    return 'claude-sonnet-5-5';
+  }
+  if (/gpt[\s-]*oss/i.test(candidate)) return 'gpt-oss-120b';
+  return '';
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:31:20
+// ============================================================================
+
 /**
  * Normalizes backend model slugs and UI display names into canonical tier-free raw model IDs.
  * Preserves backend variant/worker slugs (e.g. gemini-3.8-flash-n, gemini-flash-worker-agy,
@@ -334,10 +454,24 @@ function setSubagentDescCache(parentConvId, entry) {
  */
 export function normalizeModelId(rawModel, fallbackDisplay = '') {
   const raw = typeof rawModel === 'string' ? rawModel.trim() : '';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:31:20
+// Description: Check fallbackDisplay explicit display rules first when raw
+// or stripped slug matches gemini-flash-worker.
+// ============================================================================
+  const fb = typeof fallbackDisplay === 'string' ? fallbackDisplay.trim() : '';
+  const isFlashWorkerRaw = /^gemini[\s_-]*flash[\s_-]*worker/i.test(raw);
   if (raw && !/\s/.test(raw) && raw.includes('-') && !AUTO_UNKNOWN_RE.test(raw)) {
     let slug = raw.toLowerCase();
     while (TIER_SUFFIX_RE.test(slug)) {
       slug = slug.replace(TIER_SUFFIX_RE, '');
+    }
+    if (isFlashWorkerRaw || /^gemini[\s_-]*flash[\s_-]*worker/i.test(slug)) {
+      if (fb && !AUTO_UNKNOWN_RE.test(fb)) {
+        const explicit = normalizeExplicitDisplayName(fb);
+        if (explicit) return explicit;
+      }
+      return slug || 'Auto';
     }
     if (
       slug === 'gemini-pro-default' ||
@@ -349,7 +483,21 @@ export function normalizeModelId(rawModel, fallbackDisplay = '') {
     return slug || 'Auto';
   }
 
-  const fb = typeof fallbackDisplay === 'string' ? fallbackDisplay.trim() : '';
+  if (isFlashWorkerRaw) {
+    if (fb && !AUTO_UNKNOWN_RE.test(fb)) {
+      const explicit = normalizeExplicitDisplayName(fb);
+      if (explicit) return explicit;
+    }
+    let slug = raw.toLowerCase().replace(/[\s_]+/g, '-');
+    while (TIER_SUFFIX_RE.test(slug)) {
+      slug = slug.replace(TIER_SUFFIX_RE, '');
+    }
+    return slug || 'Auto';
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:31:20
+// ============================================================================
+
   const candidate = fb && !AUTO_UNKNOWN_RE.test(fb) ? fb : raw;
   if (!candidate || AUTO_UNKNOWN_RE.test(candidate)) {
     return 'Auto';
@@ -366,30 +514,15 @@ export function normalizeModelId(rawModel, fallbackDisplay = '') {
 // [MODIFIED END] 2026-11-17 10:13:00
 // ============================================================================
 
-  if (/orchestrator\s*\(\s*argon\s*\)/i.test(candidate)) return 'gemini-pro-orchestrator-argon';
-  if (/orchestrator\s*\(\s*carbon\s*\)/i.test(candidate)) return 'gemini-pro-orchestrator';
-  if (/gemini[\s-]*4[\s-]*argon/i.test(candidate)) return 'gemini-4-argon';
-  if (/gemini[\s-]*4[\s-]*carbon/i.test(candidate)) return 'gemini-4-carbon';
-  if (/gemini[\s-]*4[\s-]*hydrogen/i.test(candidate)) return 'gemini-4-hydrogen';
-  if (/gemini[\s-]*3\.?8[\s-]*flash|^gemini\s+flash$|^flash(?:_lite)?$/i.test(candidate)) {
-    return 'gemini-3.8-flash';
-  }
 // ============================================================================
-// [MODIFIED BEGIN] 2026-11-17 20:29:19
-// Description: Map generic subagent 'Pro' label to 'gemini-pro' instead of
-// 'gemini-4-carbon' so pricing keeps $2/$0.20/$10 via fallbackPattern without
-// falsely triggering Ultra 5x subscription detection.
+// [MODIFIED BEGIN] 2026-11-19 13:31:20
+// Description: Delegate explicit display-name matching to shared normalizeExplicitDisplayName().
 // ============================================================================
-  if (/^pro$/i.test(candidate)) return 'gemini-pro';
+  const explicitCandidate = normalizeExplicitDisplayName(candidate);
+  if (explicitCandidate) return explicitCandidate;
 // ============================================================================
-// [MODIFIED END] 2026-11-17 20:29:19
+// [MODIFIED END] 2026-11-19 13:31:20
 // ============================================================================
-  if (/claude[\s-]*opus[\s-]*4[\s.-]*6/i.test(candidate)) return 'claude-opus-4-6';
-  if (/claude[\s-]*opus/i.test(candidate)) return 'claude-opus-5-5';
-  if (/claude[\s-]*sonnet[\s-]*5[\s.-]*5|claude[\s-]*sonnet|claude[\s-]*haiku/i.test(candidate)) {
-    return 'claude-sonnet-5-5';
-  }
-  if (/gpt[\s-]*oss/i.test(candidate)) return 'gpt-oss-120b';
 
   let cleaned = candidate
     .replace(/\s*\([^)]*\)\s*$/g, '')
@@ -812,6 +945,19 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
 // ============================================================================
     const convIdLower = convId.toLowerCase();
     const convEnumMap = new Map(MODEL_ENUM_MAP);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:31:50
+// Description: Track raw backend enum slugs separately from display-overridden
+// convEnumMap so genEntry.rawDbModel preserves raw model slugs.
+// ============================================================================
+    const convRawEnumMap = new Map(SEEDED_ENUM_MAP);
+    const resolveRawEnumSlug = (enumId) =>
+      enumId !== null
+        ? convRawEnumMap.get(enumId) || SEEDED_ENUM_MAP.get(enumId) || convEnumMap.get(enumId) || ''
+        : '';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:31:50
+// ============================================================================
     const genByIdx = new Map();
     const stepIdxToGen = new Map();
 
@@ -881,6 +1027,14 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
       }
 
       if (modelEnumId !== null && rawModelId) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:31:55
+// Description: Record rawModelId before display override on convRawEnumMap and genEntry.rawDbModel.
+// ============================================================================
+        convRawEnumMap.set(modelEnumId, rawModelId);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:31:55
+// ============================================================================
         const normFromRaw = normalizeModelId(rawModelId, displayModel);
         if (normFromRaw && normFromRaw !== 'Auto') {
           convEnumMap.set(modelEnumId, normFromRaw);
@@ -894,12 +1048,28 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
         rawModelId || (modelEnumId !== null ? convEnumMap.get(modelEnumId) : ''),
         displayModel,
       );
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:31:55
+// Description: Preserve rawDbModel on genEntry before display override.
+// ============================================================================
+      const rawDbModel = rawModelId || resolveRawEnumSlug(modelEnumId);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:31:55
+// ============================================================================
 
       const genEntry = {
         genIdx: Number(row.idx),
         stepIndices,
         modelEnumId,
         rawModelId,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:31:55
+// Description: Attach rawDbModel field onto genEntry.
+// ============================================================================
+        rawDbModel,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:31:55
+// ============================================================================
         displayModel,
         normalizedModel,
         inputTokens,
@@ -927,6 +1097,14 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
     const createdAtByStepIdx = new Map();
     const originCascadeByStepIdx = new Map();
     let lastSeenDbModel = '';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:32:15
+// Description: Track lastSeenRawDbModel for step fallback raw slug retention.
+// ============================================================================
+    let lastSeenRawDbModel = '';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:32:15
+// ============================================================================
 
     for (const row of stepRows) {
       const stepIndex = Number(row.idx);
@@ -1012,6 +1190,21 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
         if (dbModel && dbModel !== 'Auto') {
           lastSeenDbModel = dbModel;
         }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:32:20
+// Description: Preserve rawDbModel on plannerStep before display override.
+// ============================================================================
+        const rawDbModel =
+          genEntry?.rawDbModel ||
+          genEntry?.rawModelId ||
+          resolveRawEnumSlug(enumId) ||
+          lastSeenRawDbModel;
+        if (rawDbModel && !AUTO_UNKNOWN_RE.test(rawDbModel)) {
+          lastSeenRawDbModel = rawDbModel;
+        }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:32:20
+// ============================================================================
 
         if (
           completedAtMs === null &&
@@ -1041,6 +1234,14 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
           cache_read_tokens: cacheReadTokens,
           output_tokens: outputTokens,
           dbModel,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:32:20
+// Description: Attach rawDbModel to synthesized plannerStep.
+// ============================================================================
+          rawDbModel,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:32:20
+// ============================================================================
           botId,
           originCascadeId,
           isClonedFromParent,
@@ -1063,6 +1264,17 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
           if (dbModel && dbModel !== 'Auto') {
             lastSeenDbModel = dbModel;
           }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:32:20
+// Description: Preserve rawDbModel on compaction step.
+// ============================================================================
+          const rawDbModel = resolveRawEnumSlug(enumId) || lastSeenRawDbModel;
+          if (rawDbModel && !AUTO_UNKNOWN_RE.test(rawDbModel)) {
+            lastSeenRawDbModel = rawDbModel;
+          }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:32:20
+// ============================================================================
           const botId = usage9?.botId || '';
           const originCascadeId = field20?.originCascadeId || '';
           const isClonedFromParent = Boolean(
@@ -1081,6 +1293,14 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
             cache_read_tokens: cacheReadTokens,
             output_tokens: outputTokens,
             dbModel,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:32:20
+// Description: Attach rawDbModel to synthesized compStep.
+// ============================================================================
+            rawDbModel,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:32:20
+// ============================================================================
             botId,
             originCascadeId,
             isClonedFromParent,
@@ -1183,6 +1403,18 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
         genEntry.normalizedModel && genEntry.normalizedModel !== 'Auto'
           ? genEntry.normalizedModel
           : normalizeModelId(lastSeenDbModel);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:32:30
+// Description: Preserve rawDbModel on orphan compaction steps.
+// ============================================================================
+      const rawDbModel =
+        genEntry.rawDbModel ||
+        genEntry.rawModelId ||
+        resolveRawEnumSlug(genEntry.modelEnumId) ||
+        lastSeenRawDbModel;
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:32:30
+// ============================================================================
       const syntheticIdx =
         genEntry.stepIndices.length > 0 ? genEntry.stepIndices[0] : -1000 - genEntry.genIdx;
       const orphanStep = {
@@ -1205,6 +1437,14 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
         cache_read_tokens: genEntry.cacheReadTokens,
         output_tokens: genEntry.outputTokens,
         dbModel,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:32:30
+// Description: Attach rawDbModel onto orphanStep.
+// ============================================================================
+        rawDbModel,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:32:30
+// ============================================================================
         botId,
         originCascadeId,
         isClonedFromParent,
@@ -1763,6 +2003,14 @@ export function parseTranscript(convId, paths) {
       if (pos !== undefined && steps[pos].type === 'PLANNER_RESPONSE') {
         const target = steps[pos];
         target.dbModel = dbPlanner.dbModel;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:32:30
+// Description: Copy rawDbModel from SQLite planner telemetry onto merged step.
+// ============================================================================
+        target.rawDbModel = dbPlanner.rawDbModel || '';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:32:30
+// ============================================================================
         target.botId = dbPlanner.botId || '';
         target.originCascadeId = dbPlanner.originCascadeId || '';
         target.isClonedFromParent = Boolean(dbPlanner.isClonedFromParent);
@@ -2065,6 +2313,14 @@ export function scoreModelPerformance(item) {
     let sub = 50;
     if (/(?:^|[^a-z0-9])ultra(?=$|[^a-z0-9])/i.test(s)) sub = 95;
     else if (/(?:^|[^a-z0-9])carbon(?=$|[^a-z0-9])/i.test(s)) sub = 90;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Score Gemini 4 Neon at sub = 85 between Carbon (90) and Argon (80).
+// ============================================================================
+    else if (/(?:^|[^a-z0-9])neon(?=$|[^a-z0-9])/i.test(s)) sub = 85;
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
     else if (/(?:^|[^a-z0-9])argon(?=$|[^a-z0-9])/i.test(s)) sub = 80;
     else if (/(?:^|[^a-z0-9])pro(?=$|[^a-z0-9])/i.test(s)) sub = 70;
     else if (/(?:^|[^a-z0-9])hydrogen(?=$|[^a-z0-9])/i.test(s)) sub = 60;
@@ -2297,8 +2553,15 @@ export function buildEffectivePricingCatalog(prefs = DEFAULT_PREFS, runtimeCatal
 // delegating for backward compatibility.
 // ============================================================================
 const ULTRA_RAW_MODEL_RE = /^(?:gemini-4-carbon(?:-|$)|gemini-pro-orchestrator$)/i;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Include gemini-4-neon and gemini-pro-orchestrator-neon in PAID_PRO_RAW_MODEL_RE.
+// ============================================================================
 const PAID_PRO_RAW_MODEL_RE =
-  /^(?:gemini-4-argon(?:-|$)|gemini-pro-orchestrator-argon$|gemini-4-hydrogen(?:-|$)|gemini-3\.1-pro(?:-|$)|claude-(?:opus|sonnet)-5[-.]5(?:-|$))/i;
+  /^(?:gemini-4-neon(?:-|$)|gemini-pro-orchestrator-neon$|gemini-4-argon(?:-|$)|gemini-pro-orchestrator-argon$|gemini-4-hydrogen(?:-|$)|gemini-3\.1-pro(?:-|$)|claude-(?:opus|sonnet)-5[-.]5(?:-|$))/i;
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
 
 /**
  * Infers subscription plan ID from observed normalized/raw model slugs.
@@ -2464,21 +2727,55 @@ export function computeStepCost(step, prefs = DEFAULT_PREFS, modelName = 'Auto')
 /**
  * Resolves normalized model timeline across steps (preferring SQLite `step.dbModel`).
  */
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:32:45
+// Description: Track activeRawModel alongside activeModel and modelByStepIdx
+// in resolveModelTimeline().
+// ============================================================================
 export function resolveModelTimeline(parsed, defaultModel = 'Auto') {
   let currentModel = normalizeModelId(defaultModel);
+  let currentRawModel =
+    typeof defaultModel === 'string' &&
+    defaultModel.trim() &&
+    !AUTO_UNKNOWN_RE.test(defaultModel.trim())
+      ? defaultModel.trim()
+      : currentModel;
+  if (AUTO_UNKNOWN_RE.test(currentRawModel)) currentRawModel = currentModel;
   const modelByStepIdx = new Map();
   for (const step of parsed?.steps || []) {
     if (step.type === 'USER_INPUT' && step.modelChange) {
       currentModel = normalizeModelId(step.modelChange);
+      currentRawModel = currentModel;
     } else if (step.type === 'PLANNER_RESPONSE' || step.type === 'COMPACTION_SUMMARY') {
-      if (step.dbModel && step.dbModel !== 'Auto') {
+      const hasRaw =
+        typeof step.rawDbModel === 'string' &&
+        step.rawDbModel.trim() &&
+        !AUTO_UNKNOWN_RE.test(step.rawDbModel.trim());
+      const hasDb =
+        typeof step.dbModel === 'string' &&
+        step.dbModel.trim() &&
+        step.dbModel !== 'Auto' &&
+        !AUTO_UNKNOWN_RE.test(step.dbModel.trim());
+      if (hasDb) {
         currentModel = normalizeModelId(step.dbModel);
+      }
+      if (hasRaw) {
+        currentRawModel = step.rawDbModel.trim();
+      } else if (hasDb) {
+        currentRawModel = step.dbModel.trim();
       }
       modelByStepIdx.set(step.step_index, currentModel);
     }
   }
-  return { activeModel: currentModel, modelByStepIdx };
+  return {
+    activeModel: currentModel,
+    activeRawModel: currentRawModel || currentModel,
+    modelByStepIdx,
+  };
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:32:45
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-16 22:04:00
@@ -2820,6 +3117,22 @@ function isBillableTokenStep(step) {
 }
 
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:33:00
+// Description: Merge byModel rows by canonical profileId/label (keeping unknown
+// models separate) while accumulating underlying raw slugs and step models.
+// ============================================================================
+function resolveByModelMergeIdentity(pricing, modelName) {
+  const isKnown = Boolean(pricing?.profileId && pricing.profileId !== 'auto');
+  return {
+    mergeKey: isKnown ? pricing.profileId : modelName,
+    mergedLabel: isKnown ? pricing.profileLabel : modelName,
+  };
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:33:00
+// ============================================================================
+
+// ============================================================================
 // [MODIFIED BEGIN] 2026-11-16 22:04:00
 // Description: Skip cloned parent steps (isClonedFromParent) and deduplicate by
 // botId when accumulating conversation and descendant token/cost buckets.
@@ -2861,13 +3174,23 @@ function accumulateStepsInto(
     bucket.costSavedByCache += costSavedByCache;
 
     if (byModelMap) {
-      let entry = byModelMap.get(model);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:33:00
+// Description: Accumulate Tab 1 byModel rows under canonical profile key/label
+// and track _rawModels / _stepModels Sets.
+// ============================================================================
+      const { mergeKey, mergedLabel } = resolveByModelMergeIdentity(pricing, model);
+      const rawSlug =
+        (typeof step.rawDbModel === 'string' && step.rawDbModel.trim()) || model;
+      let entry = byModelMap.get(mergeKey);
       if (!entry) {
         entry = {
-          model,
+          model: mergedLabel,
           profileId: pricing.profileId,
           profileLabel: pricing.profileLabel,
           rateDisplay: formatRateSummary(pricing),
+          _rawModels: new Set(),
+          _stepModels: new Set(),
           stepsCount: 0,
           inputUncachedTokens: 0,
           cacheReadTokens: 0,
@@ -2875,8 +3198,17 @@ function accumulateStepsInto(
           totalTokens: 0,
           costActual: 0,
         };
-        byModelMap.set(model, entry);
+        byModelMap.set(mergeKey, entry);
       }
+      if (rawSlug && !AUTO_UNKNOWN_RE.test(rawSlug)) {
+        entry._rawModels.add(rawSlug);
+      }
+      if (model && !AUTO_UNKNOWN_RE.test(model)) {
+        entry._stepModels.add(model);
+      }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:33:00
+// ============================================================================
       entry.stepsCount += 1;
       entry.inputUncachedTokens += step.input_tokens;
       entry.cacheReadTokens += step.cache_read_tokens;
@@ -3242,6 +3574,47 @@ function computeChildUpdatedAtMs(childParsed, childLive, isKilled, fallbackMs = 
     ? fallbackMs
     : null;
 }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:33:30
+// Description: Add computeChildCreatedAtMs() to resolve earliest valid child
+// creation timestamp for round-scoped Pixel Office filtering.
+// ============================================================================
+function isValidTimestampMs(ms) {
+  return Number.isFinite(ms) && ms >= MIN_VALID_TS_MS && ms <= MAX_VALID_TS_MS;
+}
+
+function computeChildCreatedAtMs(childParsed, fallbackMs = null, updatedAtMs = null) {
+  const candidates = [];
+  if (isValidTimestampMs(fallbackMs)) {
+    candidates.push(fallbackMs);
+  }
+  const childSteps = childParsed?.steps || [];
+  const lastClonedIdx = findLastClonedStepIdx(childSteps);
+  for (let i = 0; i < childSteps.length; i++) {
+    const s = childSteps[i];
+    if (!s || s.isClonedFromParent || i <= lastClonedIdx) continue;
+    if (isValidTimestampMs(s.createdAtMs)) {
+      candidates.push(s.createdAtMs);
+      break;
+    }
+  }
+  if (isValidTimestampMs(updatedAtMs)) {
+    candidates.push(updatedAtMs);
+  }
+  if (candidates.length === 0) {
+    for (const s of childSteps) {
+      if (s && isValidTimestampMs(s.createdAtMs)) {
+        candidates.push(s.createdAtMs);
+        break;
+      }
+    }
+  }
+  return candidates.length > 0 ? Math.min(...candidates) : null;
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:33:30
+// ============================================================================
 
 function getChildActivityTierRank(ch) {
   if (!ch?.killed && ch?.status === 'GENERATING') return 0;
@@ -3861,6 +4234,26 @@ export function analyzeConversation(convId, options = {}) {
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:40:00
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:34:00
+// Description: Add resolveLabel() helper to map normalized model IDs to
+// canonical profile labels via runtimeCatalog.
+// ============================================================================
+  const resolveLabel = (modelId, rawSlug = '') => {
+    const candidate = typeof modelId === 'string' ? modelId.trim() : '';
+    if (!candidate || AUTO_UNKNOWN_RE.test(candidate)) return 'Auto';
+    const profile = resolveModelProfile(candidate, runtimeCatalog);
+    if (profile && profile.id !== 'auto') return profile.label;
+    const raw = typeof rawSlug === 'string' ? rawSlug.trim() : '';
+    if (raw && raw !== candidate && !AUTO_UNKNOWN_RE.test(raw)) {
+      const rawProfile = resolveModelProfile(raw, runtimeCatalog);
+      if (rawProfile && rawProfile.id !== 'auto') return rawProfile.label;
+    }
+    return candidate;
+  };
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:34:00
+// ============================================================================
   const appDataDirs = discoverAppDataDirs(options);
   const paths = resolveConversationPaths(convId, appDataDirs);
   if (!paths) return null;
@@ -3902,7 +4295,14 @@ export function analyzeConversation(convId, options = {}) {
     }
   }
 
-  const { activeModel, modelByStepIdx } = resolveModelTimeline(parsed, defaultModel);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:34:05
+// Description: Capture activeRawModel from resolveModelTimeline().
+// ============================================================================
+  const { activeModel, activeRawModel, modelByStepIdx } = resolveModelTimeline(parsed, defaultModel);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:34:05
+// ============================================================================
   const live = computeLiveStatus(parsed);
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:13:00
@@ -4014,17 +4414,52 @@ export function analyzeConversation(convId, options = {}) {
 // killed, updatedAtMs, and temporary sort keys on missing-transcript children.
 // ============================================================================
         const isMissingKilled = Boolean(desc.killed);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:34:15
+// Description: Expose rawModel, modelLabel, and createdAtMs on missing-transcript
+// child entries for Scheme A attribution and round-scoped Pixel Office filtering.
+// ============================================================================
+        const missingModel = normalizeModelId(desc.defaultModel || 'Auto');
+        const missingRawModel =
+          (typeof desc.rawDefaultModel === 'string' && desc.rawDefaultModel.trim()) ||
+          missingModel ||
+          'Auto';
+        const missingUpdatedAtMs = computeChildUpdatedAtMs(
+          null,
+          null,
+          isMissingKilled,
+          desc.invokedAtMs,
+        );
+        const missingCreatedAtMs = computeChildCreatedAtMs(
+          null,
+          desc.invokedAtMs,
+          missingUpdatedAtMs,
+        );
         childEtagParts.push(`${desc.conversationId}:missing:${isMissingKilled ? 1 : 0}`);
         children.push({
           conversationId: desc.conversationId,
           kind: desc.kind,
           name: desc.name,
           role: desc.role,
-          model: normalizeModelId(desc.defaultModel || 'Auto'),
+          model: missingModel,
+          rawModel: missingRawModel,
+          modelLabel: resolveLabel(missingModel, missingRawModel),
           status: 'IDLE',
           killed: isMissingKilled,
-          updatedAtMs: computeChildUpdatedAtMs(null, null, isMissingKilled, desc.invokedAtMs),
+          createdAtMs: missingCreatedAtMs,
+          updatedAtMs: missingUpdatedAtMs,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:34:15
+// ============================================================================
           generatingSinceMs: null,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Include empty activeToolLabel on missing-transcript child entries.
+// ============================================================================
+          activeToolLabel: '',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
           contextTotal: 0,
           latestTokPerSec: null,
           outputTokens: 0,
@@ -4113,21 +4548,48 @@ export function analyzeConversation(convId, options = {}) {
         },
       );
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:34:20
+// Description: Expose rawModel, modelLabel, and createdAtMs on parsed child
+// entries for Scheme A attribution and round-scoped Pixel Office filtering.
+// ============================================================================
+      const childUpdatedAtMs = computeChildUpdatedAtMs(
+        childParsed,
+        childLive,
+        isChildKilled,
+        desc.invokedAtMs,
+      );
+      const childCreatedAtMs = computeChildCreatedAtMs(
+        childParsed,
+        desc.invokedAtMs,
+        childUpdatedAtMs,
+      );
+      const childRawModel = childTimeline.activeRawModel || childTimeline.activeModel || 'Auto';
+
       children.push({
         conversationId: desc.conversationId,
         kind: desc.kind,
         name: desc.name,
         role: desc.role,
         model: childTimeline.activeModel,
+        rawModel: childRawModel,
+        modelLabel: resolveLabel(childTimeline.activeModel, childRawModel),
         status: isChildKilled ? 'IDLE' : childLive.status,
         killed: isChildKilled,
-        updatedAtMs: computeChildUpdatedAtMs(
-          childParsed,
-          childLive,
-          isChildKilled,
-          desc.invokedAtMs,
-        ),
+        createdAtMs: childCreatedAtMs,
+        updatedAtMs: childUpdatedAtMs,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:34:20
+// ============================================================================
         generatingSinceMs: isChildKilled ? null : childLive.generatingSinceMs,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Expose live activeToolLabel on child conversation entries (empty when killed).
+// ============================================================================
+        activeToolLabel: isChildKilled ? '' : (childLive.activeToolLabel || ''),
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
         contextTotal: childContext.currentTotal,
         latestTokPerSec: childSpeed.latestStepTokPerSec,
         outputTokens: childBucket.outputTokens,
@@ -4184,13 +4646,22 @@ export function analyzeConversation(convId, options = {}) {
 // detect isChildSession/childKind/parentConversationId across all 3 sources,
 // and expose them on analyzeConversation().
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:34:25
+// Description: Serialize rawModels onto byModel/mainOnlyByModel rows and strip
+// internal _rawModels/_stepModels Sets.
+// ============================================================================
   const formatByModelList = (modelMap) =>
     [...modelMap.values()]
-      .map((entry) => ({
+      .map(({ _rawModels, _stepModels, ...entry }) => ({
         ...entry,
+        rawModels: [...(_rawModels || [])].filter((x) => x && !AUTO_UNKNOWN_RE.test(x)).sort(),
         totalTokens: entry.inputUncachedTokens + entry.cacheReadTokens + entry.outputTokens,
       }))
       .sort((a, b) => b.costActual - a.costActual || b.totalTokens - a.totalTokens);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:34:25
+// ============================================================================
   const byModel = formatByModelList(byModelMap);
   const mainOnlyByModel = formatByModelList(mainOnlyByModelMap);
 // ============================================================================
@@ -4208,7 +4679,18 @@ export function analyzeConversation(convId, options = {}) {
     if (nm && !AUTO_UNKNOWN_RE.test(nm)) localRawModels.add(nm);
   };
   addLocalSubscriptionModel(activeModel);
-  for (const modelKey of byModelMap.keys()) addLocalSubscriptionModel(modelKey);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:34:25
+// Description: Collect underlying _stepModels from merged byModelMap entries
+// instead of merged profileId keys so fallback profiles (e.g. gemini-pro)
+// never falsely trigger higher subscription tiers.
+// ============================================================================
+  for (const entry of byModelMap.values()) {
+    for (const sm of entry._stepModels || []) addLocalSubscriptionModel(sm);
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:34:25
+// ============================================================================
   for (const child of children) addLocalSubscriptionModel(child?.model);
 
   const subModels =
@@ -4269,12 +4751,27 @@ export function analyzeConversation(convId, options = {}) {
   });
 
   const activeWatchIds = [convId, ...children.map((c) => c.conversationId)];
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:34:30
+// Description: Compute ascending userTurnTimestampsMs and expose
+// activeModelLabel, activeRawModel, and userTurnTimestampsMs on analyzeConversation().
+// ============================================================================
+  const userTurnTimestampsMs = parsed.steps
+    .filter((s) => s?.type === 'USER_INPUT' && isValidTimestampMs(s.createdAtMs))
+    .map((s) => s.createdAtMs)
+    .sort((a, b) => a - b);
 
   return {
     conversationId: convId,
     title,
     workspace: metaWorkspace,
     activeModel,
+    activeModelLabel: resolveLabel(activeModel, activeRawModel),
+    activeRawModel: activeRawModel || activeModel,
+    userTurnTimestampsMs,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:34:30
+// ============================================================================
     isChildSession,
     childKind,
     parentConversationId,
@@ -4384,6 +4881,27 @@ function addDatedStepToDays(days, stepMs, stepModel, step, threshold) {
     defineOwnModelBucket(days[dateKey].byModel, stepModel);
   }
   addStepToRawCounts(days[dateKey].byModel[stepModel], step, threshold);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:35:00
+// Description: Record underlying rawDbModel slugs on daily ledger byModel
+// buckets so Tab 2 preserves rawModels across canonical profile merges.
+// ============================================================================
+  const rawSlug =
+    typeof step?.rawDbModel === 'string' && step.rawDbModel.trim()
+      ? step.rawDbModel.trim()
+      : stepModel;
+  if (rawSlug && !AUTO_UNKNOWN_RE.test(rawSlug)) {
+    const modelBucket = days[dateKey].byModel[stepModel];
+    if (!Array.isArray(modelBucket.rawModels)) {
+      modelBucket.rawModels = [];
+    }
+    if (!modelBucket.rawModels.includes(rawSlug)) {
+      modelBucket.rawModels.push(rawSlug);
+    }
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:35:00
+// ============================================================================
 
   if (!Object.hasOwn(days[dateKey].hours, hourKey)) {
     days[dateKey].hours[hourKey] = {};
@@ -4966,6 +5484,14 @@ export function createUsageLedger(initialData = null) {
                 createdAtMs: step.createdAtMs,
                 fallbackMs: c.updatedAtMs,
                 model: stepModel,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:35:05
+// Description: Preserve rawDbModel on cloned inherited steps for recovered parents.
+// ============================================================================
+                rawDbModel: step.rawDbModel || '',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:35:05
+// ============================================================================
                 input_tokens: step.input_tokens,
                 cache_read_tokens: step.cache_read_tokens,
                 output_tokens: step.output_tokens,
@@ -5220,21 +5746,41 @@ function buildPeriodSummary({
         dBucket.outputTokens += rawOut;
         dBucket.costActual += priced.costActual;
 
-        let mEntry = byModelMap.get(modelName);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:35:10
+// Description: Merge Tab 2 period byModel rows by canonical profileId/label
+// (keeping unknown models separate) and accumulate underlying rawModels.
+// ============================================================================
+        const { mergeKey, mergedLabel } = resolveByModelMergeIdentity(pricing, modelName);
+
+        let mEntry = byModelMap.get(mergeKey);
         if (!mEntry) {
           mEntry = {
-            model: modelName,
+            model: mergedLabel,
             profileId: pricing.profileId,
             profileLabel: pricing.profileLabel,
             rateDisplay: formatRateSummary(pricing),
+            _rawModels: new Set(),
             convIds: new Set(),
             inputTokens: 0,
             cacheReadTokens: 0,
             outputTokens: 0,
             costActual: 0,
           };
-          byModelMap.set(modelName, mEntry);
+          byModelMap.set(mergeKey, mEntry);
         }
+        if (Array.isArray(raw?.rawModels) && raw.rawModels.length > 0) {
+          for (const rm of raw.rawModels) {
+            if (typeof rm === 'string' && rm && !AUTO_UNKNOWN_RE.test(rm)) {
+              mEntry._rawModels.add(rm);
+            }
+          }
+        } else if (rawModelName && !AUTO_UNKNOWN_RE.test(rawModelName)) {
+          mEntry._rawModels.add(rawModelName);
+        }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:35:10
+// ============================================================================
         mEntry.convIds.add(convId);
         mEntry.inputTokens += rawIn;
         mEntry.cacheReadTokens += rawCache;
@@ -5385,12 +5931,17 @@ function buildPeriodSummary({
   const costSavedPct =
     costUncachedBaseline > 0 ? (costSavedByCache / costUncachedBaseline) * 100 : 0;
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:35:15
+// Description: Serialize sorted non-Auto rawModels onto Tab 2 periods.*.byModel rows.
+// ============================================================================
   const byModel = [...byModelMap.values()]
     .map((m) => ({
       model: m.model,
       profileId: m.profileId,
       profileLabel: m.profileLabel,
       rateDisplay: m.rateDisplay,
+      rawModels: [...m._rawModels].filter((x) => x && !AUTO_UNKNOWN_RE.test(x)).sort(),
       conversationsCount: m.convIds.size,
       inputTokens: m.inputTokens,
       cacheReadTokens: m.cacheReadTokens,
@@ -5399,6 +5950,9 @@ function buildPeriodSummary({
       costActual: m.costActual,
     }))
     .sort((a, b) => b.costActual - a.costActual || b.totalTokens - a.totalTokens);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:35:15
+// ============================================================================
 
   convSummaries.sort((a, b) => b.costActual - a.costActual || b.totalTokens - a.totalTokens);
   const topConversations = convSummaries.slice(0, 20);

@@ -260,6 +260,14 @@ function mapBaseProfileMatches(upstreamPool, gptOssBest) {
   };
 
   assignIfPresent('gemini-4-argon', ['gemini-4-argon']);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Map gemini-4-neon upstream rates in mapBaseProfileMatches.
+// ============================================================================
+  assignIfPresent('gemini-4-neon', ['gemini-4-neon']);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
   assignIfPresent('gemini-3.1-pro', [
     'gemini-3.1-pro',
     'gemini-3.1-pro-preview',
@@ -625,6 +633,16 @@ function mapGoogleHeadingToModelInfo(rawHeading) {
   if (/^Gemini\s+4\s+Argon\b/i.test(cleanLabel)) {
     profileId = 'gemini-4-argon';
     canonicalLabel = 'Gemini 4 Argon';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Classify Gemini 4 Neon heading into gemini-4-neon profile.
+// ============================================================================
+  } else if (/^Gemini\s+4\s+Neon\b/i.test(cleanLabel)) {
+    profileId = 'gemini-4-neon';
+    canonicalLabel = 'Gemini 4 Neon';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
   } else if (/^Gemini\s+3\.?1\s+Pro\b/i.test(cleanLabel)) {
     profileId = 'gemini-3.1-pro';
     canonicalLabel = 'Gemini 3.1 Pro';
@@ -1050,16 +1068,32 @@ export function parseGoogleOfficialPricingHtml(html, nowMs = Date.now()) {
 // ============================================================================
 const EXPLICIT_BASE_ALIAS_PATTERNS = new Map([
   ['gemini-4-argon', /^(?:gemini[\s_-]*4[\s_-]*argon(?:$|[-_\s])|gemini-pro-orchestrator-argon$)/i],
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Add explicit alias pattern for gemini-4-neon and gemini-pro-orchestrator-neon.
+// ============================================================================
+  ['gemini-4-neon', /^(?:gemini[\s_-]*4[\s_-]*neon(?:$|[-_\s])|gemini-pro-orchestrator-neon$)/i],
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
   ['gemini-3.1-pro', /^(?:gemini[\s_-]*3\.?1[\s_-]*pro(?:$|[-_\s])|gemini-pro-default$)/i],
   [
     'gemini-4-carbon',
     /^(?:gemini[\s_-]*4[\s_-]*carbon(?:$|[-_\s])|gemini-pro-orchestrator$|gemini[\s_-]*(?:2(?:\.\d+)?|3(?:\.0)?)[\s_-]*pro(?:$|[-_\s])|gemini[\s_-]*pro$|pro$)/i,
   ],
-  ['gemini-4-hydrogen', /^gemini[\s_-]*4[\s_-]*hydrogen(?:$|[-_\s])/i],
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:30:19
+// Description: Move gemini-flash-worker explicit alias pattern from
+// gemini-3-8-flash into gemini-4-hydrogen.
+// ============================================================================
+  ['gemini-4-hydrogen', /^(?:gemini[\s_-]*4[\s_-]*hydrogen(?:$|[-_\s])|gemini[\s_-]*flash[\s_-]*worker(?:[-_][a-z0-9]+)*$)/i],
   [
     'gemini-3-8-flash',
-    /^(?:gemini[\s_-]*3\.?8[\s_-]*flash(?:$|[-_\s])|gemini[\s_-]*flash(?:[-_](?:worker|lite|latest)(?:[-_][a-z0-9]+)?)?$|flash(?:_lite)?$|gemini[\s_-]*(?:2(?:\.\d+)?|3(?:\.0)?)[\s_-]*flash(?:$|[-_\s]))/i,
+    /^(?:gemini[\s_-]*3\.?8[\s_-]*flash(?:$|[-_\s])|gemini[\s_-]*flash(?:[-_](?:lite|latest)(?:[-_][a-z0-9]+)?)?$|flash(?:_lite)?$|gemini[\s_-]*(?:2(?:\.\d+)?|3(?:\.0)?)[\s_-]*flash(?:$|[-_\s]))/i,
   ],
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:30:19
+// ============================================================================
   ['claude-opus-5-5', /^claude[\s_-]*opus/i],
   ['claude-sonnet-5-5', /^claude[\s_-]*(?:sonnet|haiku)/i],
   ['gpt-oss-120b', /^gpt[\s_-]*oss/i],
@@ -1089,6 +1123,22 @@ function matchesBaseCatalog(slug, baseCatalog) {
 function deriveFamilyBaseline(slug) {
   const s = String(slug || '').toLowerCase();
   if (s.startsWith('gemini')) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:30:19
+// Description: Map gemini-flash-worker slugs to Hydrogen baseline ($1.5/$0.15/$7.5)
+// before checking generic flash/lite patterns.
+// ============================================================================
+    if (/hydrogen|gemini[\s_-]*flash[\s_-]*worker/i.test(s)) {
+      return {
+        group: 'Gemini 系列',
+        inputPer1M: 1.5,
+        cachedPer1M: 0.15,
+        outputPer1M: 7.5,
+        longContextTier: true,
+        longInputMultiplier: 2.0,
+        longOutputMultiplier: 1.5,
+      };
+    }
     if (/flash|lite/i.test(s)) {
       return {
         group: 'Gemini 系列',
@@ -1100,17 +1150,9 @@ function deriveFamilyBaseline(slug) {
         longOutputMultiplier: 1.0,
       };
     }
-    if (/hydrogen/i.test(s)) {
-      return {
-        group: 'Gemini 系列',
-        inputPer1M: 1.5,
-        cachedPer1M: 0.15,
-        outputPer1M: 7.5,
-        longContextTier: true,
-        longInputMultiplier: 2.0,
-        longOutputMultiplier: 1.5,
-      };
-    }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:30:19
+// ============================================================================
     return {
       group: 'Gemini 系列',
       inputPer1M: 2.0,

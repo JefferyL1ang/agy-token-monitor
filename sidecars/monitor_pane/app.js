@@ -159,6 +159,14 @@
       context: '',
       cache: '',
       childrenModels: '',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Add pixelOffice dirty-signature field to state.cardRenderSigs.
+// ============================================================================
+      pixelOffice: '',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
     },
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:07:46
@@ -185,6 +193,26 @@
 // ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:40:30
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Add in-panel Pixel Office runtime, selection, timer, and canvas state fields.
+// ============================================================================
+    pixelOfficeCollapsed: false,
+    pixelOfficeSelectedKey: '',
+    pixelOfficeTick: 0,
+    pixelOfficeTimer: null,
+    pixelOfficeIntervalMs: 0,
+    pixelOfficeHitBoxes: [],
+    pixelOfficeModel: null,
+    pixelOfficeCanvas: null,
+    pixelOfficeInspectorCanvas: null,
+    pixelOfficeLogicalWidth: 380,
+    pixelOfficeLogicalHeight: 0,
+    pixelOfficeLastCurrent: null,
+    pixelOfficeLastPrefs: null,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
 // ============================================================================
   };
 
@@ -526,12 +554,19 @@
       'update.closeTip': '仅收起，保留顶栏提示按钮',
       'update.skipBtn': '跳过此版本',
       'update.skipToast': '已跳过 {tag}，将在下个新版本发布时再提醒',
-      'update.confirmBtn': '立即热更新',
-      'update.confirmApplying': '热更新中…',
-      'update.downloading': '正在下载并校验 SHA-256...',
-      'update.restarting': '正在重启服务并刷新界面...',
-      'update.applyFailed': '热更新未完成: {msg}',
-      'update.updatedToast': '✓ 已热更新至 v{ver}',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Switch update flow messages to plain-language wording (zh).
+// ============================================================================
+      'update.confirmBtn': '立即更新',
+      'update.confirmApplying': '正在更新…',
+      'update.downloading': '正在下载更新包并校验完整性...',
+      'update.restarting': '正在应用更新并刷新面板...',
+      'update.applyFailed': '更新未完成：{msg}',
+      'update.updatedToast': '✓ 已更新至 v{ver}',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
       'update.fallbackLink': '前往 GitHub Release 手动下载',
       'update.emptyNotes': '暂无详细更新说明，可前往 GitHub Release 查看详情。',
 // ============================================================================
@@ -542,7 +577,14 @@
 // Description: Add localized update timeout, rate-limit, and network diagnostic keys (zh).
 // ============================================================================
       'update.errTimeout': '连接更新源超时，请检查网络或系统代理设置',
-      'update.errRateLimit': 'GitHub API 请求受限 (HTTP 403/429)，请稍后重试',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Use plain-language wording for update server rate-limit error (zh).
+// ============================================================================
+      'update.errRateLimit': '更新服务器访问过于频繁，请稍后再试',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
       'update.errNetwork': '无法连接更新服务器，请检查网络或代理设置',
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:23:36
@@ -592,6 +634,38 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:40:30
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Add Pixel Office bilingual i18n keys (zh).
+// ============================================================================
+      'pixelOffice.title': '像素工位',
+      'pixelOffice.slotsMainOnly': '1 主工位',
+      'pixelOffice.slotsCount': '1 主 + {count} 子',
+      'pixelOffice.overflowPill': '+{count}',
+      'pixelOffice.overflowTitle': '另有 {count} 个成员未入驻工位，点击展开完整子代理列表',
+      'pixelOffice.collapse': '收起',
+      'pixelOffice.expand': '展开',
+      'pixelOffice.clickHint': '点击工位猫咪查看实时状态与快速跳转',
+      'pixelOffice.mainRole': '主代理',
+      'pixelOffice.kindMain': '主对话',
+      'pixelOffice.kindSwarm': 'Swarm',
+      'pixelOffice.kindSubagent': 'Subagent',
+      'pixelOffice.statusGenerating': '⚡ 生成中',
+      'pixelOffice.statusTools': '🔧 执行工具',
+      'pixelOffice.statusToolsLabel': '🔧 {tool}',
+      'pixelOffice.statusIdle': '● 待命中',
+      'pixelOffice.statusEnded': '● 已结束',
+      'pixelOffice.closeInspector': '关闭工位详情',
+      'pixelOffice.backToMain': '返回当前对话',
+      'pixelOffice.inspectBtn': '监控详情',
+      'pixelOffice.openChatBtn': '打开会话',
+      'pixelOffice.statCtx': 'Ctx',
+      'pixelOffice.statSpeed': '速度',
+      'pixelOffice.statOut': '输出',
+      'pixelOffice.statCost': '费用',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
     },
     en: {
       'header.waiting': 'Waiting',
@@ -599,7 +673,14 @@
       'header.tools': '🔧 Tools',
       'header.idle': '● Idle',
       'header.currentModel': 'Current Model',
-      'header.modelTitle': 'Model: {model}',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:28:17
+// Description: Align English header model tooltip prefix with header.currentModel (Current Model).
+// ============================================================================
+      'header.modelTitle': 'Current Model: {model}',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:28:17
+// ============================================================================
       'header.settingsLabel': 'Pricing & Context Settings',
       'header.nonboundRegion': 'Non-bound conversation notice',
       'header.viewingDefault': 'Viewing another session',
@@ -916,12 +997,19 @@
       'update.closeTip': 'Dismiss dialog (keep header update pill)',
       'update.skipBtn': 'Skip Version',
       'update.skipToast': 'Skipped {tag} — will notify on the next release',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Switch update flow messages to plain-language wording (en).
+// ============================================================================
       'update.confirmBtn': 'Update Now',
       'update.confirmApplying': 'Updating…',
-      'update.downloading': 'Downloading & verifying SHA-256...',
-      'update.restarting': 'Restarting sidecar & reloading...',
-      'update.applyFailed': 'Hot update failed: {msg}',
+      'update.downloading': 'Downloading & verifying update package...',
+      'update.restarting': 'Applying update & reloading panel...',
+      'update.applyFailed': 'Update failed: {msg}',
       'update.updatedToast': '✓ Updated to v{ver}',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
       'update.fallbackLink': 'Download on GitHub Releases',
       'update.emptyNotes': 'No release notes provided. View details on GitHub Releases.',
 // ============================================================================
@@ -932,7 +1020,14 @@
 // Description: Add localized update timeout, rate-limit, and network diagnostic keys (en).
 // ============================================================================
       'update.errTimeout': 'Connection timed out — please check your network or system proxy',
-      'update.errRateLimit': 'GitHub API rate limit reached (HTTP 403/429) — please try again later',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Use plain-language wording for update server rate-limit error (en).
+// ============================================================================
+      'update.errRateLimit': 'Update server is temporarily busy — please try again shortly',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
       'update.errNetwork': 'Unable to reach update server — please check your network or proxy',
 // ============================================================================
 // [MODIFIED END] 2026-11-18 10:23:36
@@ -981,6 +1076,38 @@
 // ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:40:30
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Add Pixel Office bilingual i18n keys (en).
+// ============================================================================
+      'pixelOffice.title': 'Pixel Office',
+      'pixelOffice.slotsMainOnly': '1 Main',
+      'pixelOffice.slotsCount': '1 Main + {count} Sub',
+      'pixelOffice.overflowPill': '+{count}',
+      'pixelOffice.overflowTitle': '{count} more members — click to expand full Subagents list',
+      'pixelOffice.collapse': 'Collapse',
+      'pixelOffice.expand': 'Expand',
+      'pixelOffice.clickHint': 'Click any cat workstation to inspect & jump',
+      'pixelOffice.mainRole': 'Main',
+      'pixelOffice.kindMain': 'Main',
+      'pixelOffice.kindSwarm': 'Swarm',
+      'pixelOffice.kindSubagent': 'Subagent',
+      'pixelOffice.statusGenerating': '⚡ Generating',
+      'pixelOffice.statusTools': '🔧 Running Tools',
+      'pixelOffice.statusToolsLabel': '🔧 {tool}',
+      'pixelOffice.statusIdle': '● Idle',
+      'pixelOffice.statusEnded': '● Ended',
+      'pixelOffice.closeInspector': 'Close workstation inspector',
+      'pixelOffice.backToMain': 'Back to Current',
+      'pixelOffice.inspectBtn': 'Inspect',
+      'pixelOffice.openChatBtn': 'Open Chat',
+      'pixelOffice.statCtx': 'Ctx',
+      'pixelOffice.statSpeed': 'Speed',
+      'pixelOffice.statOut': 'Out',
+      'pixelOffice.statCost': 'Cost',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
 // ============================================================================
     },
   };
@@ -1046,6 +1173,14 @@
 // [MODIFIED END] 2026-11-17 11:35:00
 // ============================================================================
     'gemini-4-carbon': { label: 'Gemini 4 Carbon', hint: 'High/Med/Low · Orchestrator (Carbon)' },
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Add Gemini 4 Neon English model profile metadata entry.
+// ============================================================================
+    'gemini-4-neon': { label: 'Gemini 4 Neon', hint: 'High/Med/Low · Orchestrator (Neon)' },
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
     'gemini-4-hydrogen': { label: 'Gemini 4 Hydrogen', hint: 'XHigh/High/Med/Low' },
     'gemini-3-8-flash': { label: 'Gemini 3.8 Flash', hint: 'High/Med/Low · Subagent Flash' },
     'claude-opus-5-5': { label: 'Claude Opus 5.5', hint: '5.5 / 4.6 · High/Med/Low' },
@@ -1137,6 +1272,14 @@
       const theme = lum < 0.5 ? 'dark' : 'light';
       if (document.documentElement.dataset.theme !== theme) {
         document.documentElement.dataset.theme = theme;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Repaint Pixel Office canvas immediately when host theme toggles light/dark.
+// ============================================================================
+        drawPixelOfficeFrame();
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
       }
     }
   }
@@ -1229,6 +1372,14 @@
     state.cardRenderSigs.context = '';
     state.cardRenderSigs.cache = '';
     state.cardRenderSigs.childrenModels = '';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Reset Pixel Office dirty signature inside resetCardRenderSigs().
+// ============================================================================
+    state.cardRenderSigs.pixelOffice = '';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
   }
 
   function clearCurrentSessionMotionMemory() {
@@ -1747,6 +1898,14 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 21:28:45
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Clear Pixel Office inspector selection when switching conversations.
+// ============================================================================
+      state.pixelOfficeSelectedKey = '';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
       state.convEpoch += 1;
       if (state.pollTimer) {
         clearTimeout(state.pollTimer);
@@ -1843,6 +2002,14 @@
       let sub = 50;
       if (/(?:^|[^a-z0-9])ultra(?=$|[^a-z0-9])/i.test(s)) sub = 95;
       else if (/(?:^|[^a-z0-9])carbon(?=$|[^a-z0-9])/i.test(s)) sub = 90;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Rank Gemini 4 Neon between Carbon and Argon in scoreModelPerformance.
+// ============================================================================
+      else if (/(?:^|[^a-z0-9])neon(?=$|[^a-z0-9])/i.test(s)) sub = 85;
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
       else if (/(?:^|[^a-z0-9])argon(?=$|[^a-z0-9])/i.test(s)) sub = 80;
       else if (/(?:^|[^a-z0-9])pro(?=$|[^a-z0-9])/i.test(s)) sub = 70;
       else if (/(?:^|[^a-z0-9])hydrogen(?=$|[^a-z0-9])/i.test(s)) sub = 60;
@@ -1922,9 +2089,24 @@
 // [MODIFIED END] 2026-11-17 11:35:00
 // ============================================================================
     if (/argon/.test(s)) return 'gemini-4-argon';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Map Neon and Orchestrator (Neon) slugs to gemini-4-neon before Carbon fallback.
+// ============================================================================
+    if (/neon/.test(s)) return 'gemini-4-neon';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:28:17
+// Description: Map gemini-flash-worker and Hydrogen (Orchestrator) to gemini-4-hydrogen before Carbon/Flash fallbacks.
+// ============================================================================
+    if (/hydrogen|gemini[\s_-]*flash[\s_-]*worker/i.test(s)) return 'gemini-4-hydrogen';
     if (/carbon|orchestrator|gemini[\s-]*(?:[23][\w.-]*[\s-]*)?pro|^pro$/.test(s)) return 'gemini-4-carbon';
-    if (/hydrogen/.test(s)) return 'gemini-4-hydrogen';
     if (/flash/.test(s)) return 'gemini-3-8-flash';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:28:17
+// ============================================================================
     if (/claude[\s-]*opus/.test(s)) return 'claude-opus-5-5';
     if (/claude[\s-]*(?:sonnet|haiku)/.test(s)) return 'claude-sonnet-5-5';
     if (/gpt[\s-]*oss/.test(s)) return 'gpt-oss-120b';
@@ -1960,6 +2142,17 @@
     if (!isCurr) {
       syncTrendScrollPosition();
     }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Redraw Pixel Office on returning to Current tab and sync animation loop across tab switches.
+// ============================================================================
+    if (isCurr) {
+      drawPixelOfficeFrame();
+    }
+    syncPixelOfficeLoop();
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
   }
 
   function resetResyncConfirm() {
@@ -2290,8 +2483,17 @@
 
   function populateSettingsForm(prefs) {
     if (!prefs) return;
-    $('pref-soft-limit').value = num(prefs.softContextLimit, 400000);
-    $('pref-hard-limit').value = num(prefs.hardContextLimit, 500000);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:28:17
+// Description: Update default soft/hard context limit fallbacks in populateSettingsForm to 409600 / 512000.
+// ============================================================================
+    const rawSoft = Number(prefs.softContextLimit);
+    const rawHard = Number(prefs.hardContextLimit);
+    $('pref-soft-limit').value = Number.isFinite(rawSoft) && rawSoft > 0 ? rawSoft : 409600;
+    $('pref-hard-limit').value = Number.isFinite(rawHard) && rawHard > 0 ? rawHard : 512000;
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:28:17
+// ============================================================================
     const unitSelect = $('pref-token-unit');
     if (unitSelect) {
       unitSelect.value = VALID_TOKEN_UNITS.includes(prefs.tokenUnit) ? prefs.tokenUnit : 'auto';
@@ -2719,12 +2921,19 @@
 // [MODIFIED BEGIN] 2026-11-18 16:36:52
 // Description: Bump fallback app version from 0.3.1 to 0.3.2.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Bump fallback app version from 0.3.2 to 0.4.0.
+// ============================================================================
     const raw =
       state.snapshot?.appVersion ||
       state.snapshot?.updateStatus?.currentVersion ||
       state.activeUpdateStatus?.currentVersion ||
-      '0.3.2';
-    return String(raw).trim().replace(/^[vV]/, '') || '0.3.2';
+      '0.4.0';
+    return String(raw).trim().replace(/^[vV]/, '') || '0.4.0';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:36:52
 // ============================================================================
@@ -2823,15 +3032,22 @@
     );
     const chosenLines = matchedSec ? matchedSec.lines : allLines;
 
-    // Strip trailing/embedded Installation / 安装方式 sections and horizontal rules
+    // Strip trailing/embedded Installation / Checksum / Technical Details sections, SHA-256 lines, and horizontal rules
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Strip checksum/verification/technical sections and standalone SHA-256 lines from release notes, and parse inline code/link tokens nested inside **bold** markdown.
+// ============================================================================
     const filtered = [];
     let skippingInstallLevel = 0;
+    const skipHeadingRe = /^(?:installation|install\b|安装方式|安装说明|安装指南|安装$|package\s+checksum|archive\s+checksum|checksum|verification|technical\s+details|发布包校验|文件校验|校验信息|验证情况|技术细节)/i;
+    const shaLabelRe = /^\s*(?:[-*•]\s*)?(?:\*\*)?(?:archive\s+|压缩包\s*)?sha-?256(?:\*\*)?\s*[:：]/i;
+    const shaHexRe = /^\s*(?:[-*•]\s*)?`?[0-9a-f]{64}`?\s*$/i;
     for (const line of chosenLines) {
       const hMatch = line.match(/^(#{1,4})\s+(.+?)\s*$/);
       if (hMatch) {
         const level = hMatch[1].length;
         const hTitle = hMatch[2].trim();
-        if (/^(?:installation|install\b|安装方式|安装说明|安装指南|安装$)/i.test(hTitle)) {
+        if (skipHeadingRe.test(hTitle)) {
           skippingInstallLevel = level;
           continue;
         }
@@ -2841,16 +3057,17 @@
       }
       if (skippingInstallLevel > 0) continue;
       if (/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line)) continue;
+      if (shaLabelRe.test(line) || shaHexRe.test(line)) continue;
       filtered.push(line);
     }
 
     return filtered;
   }
 
-  function parseInlineMarkdownTokens(lineText) {
-    const raw = String(lineText || '');
+  function parseCodeAndLinkTokens(segment) {
+    const raw = String(segment || '');
     const parts = [];
-    const tokenRe = /\*\*([^*]+)\*\*|`([^`]+)`|\[([^\]]+)\]\([^)]+\)/g;
+    const tokenRe = /`([^`]+)`|\[([^\]]+)\]\([^)]+\)/g;
     let lastIdx = 0;
     let match;
     while ((match = tokenRe.exec(raw)) !== null) {
@@ -2858,11 +3075,9 @@
         parts.push(raw.slice(lastIdx, match.index));
       }
       if (match[1] !== undefined) {
-        parts.push(el('strong', { textContent: match[1] }));
+        parts.push(el('code', { className: 'update-notes-code', textContent: match[1] }));
       } else if (match[2] !== undefined) {
-        parts.push(el('code', { className: 'update-notes-code', textContent: match[2] }));
-      } else if (match[3] !== undefined) {
-        parts.push(match[3]);
+        parts.push(match[2]);
       }
       lastIdx = tokenRe.lastIndex;
     }
@@ -2871,6 +3086,28 @@
     }
     return parts.length > 0 ? parts : [raw];
   }
+
+  function parseInlineMarkdownTokens(lineText) {
+    const raw = String(lineText || '');
+    const parts = [];
+    const boldRe = /\*\*([^*]+)\*\*/g;
+    let lastIdx = 0;
+    let match;
+    while ((match = boldRe.exec(raw)) !== null) {
+      if (match.index > lastIdx) {
+        parts.push(...parseCodeAndLinkTokens(raw.slice(lastIdx, match.index)));
+      }
+      parts.push(el('strong', null, parseCodeAndLinkTokens(match[1])));
+      lastIdx = boldRe.lastIndex;
+    }
+    if (lastIdx < raw.length) {
+      parts.push(...parseCodeAndLinkTokens(raw.slice(lastIdx)));
+    }
+    return parts.length > 0 ? parts : [raw];
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
 
   function renderReleaseNotesDom(container, markdownText, lang) {
     if (!container) return;
@@ -3269,10 +3506,17 @@
 
   async function waitForRestartedSidecar(prevBootId, targetVersion) {
     const cleanTarget = String(targetVersion || '').trim().replace(/^[vV]/, '');
-    for (let attempt = 0; attempt < 30; attempt += 1) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Increase sidecar restart polling budget (45 attempts x 3500ms timeout) for high-load restarts.
+// ============================================================================
+    for (let attempt = 0; attempt < 45; attempt += 1) {
       await sleepMs(400);
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 2500);
+      const timer = setTimeout(() => ctrl.abort(), 3500);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
       try {
         const res = await apiFetch(
           `/api/snapshot?conv=${encodeURIComponent(selectedConv)}&etag=`,
@@ -3616,6 +3860,64 @@
     return t('header.idle');
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:28:17
+// Description: Add Scheme A canonical model formatters (formatHeaderModelDisplay, formatModelBreakdownRowDisplay) and show activeRawModel in #model-pill tooltip.
+// ============================================================================
+  function formatHeaderModelDisplay(current) {
+    if (!current || typeof current !== 'object') return '—';
+    const explicitLabel = String(current.activeModelLabel || '').trim();
+    if (explicitLabel) {
+      if (/^auto(?:\s*[（(].*)?$/i.test(explicitLabel)) {
+        return state.lang === 'en' ? 'Auto' : 'Auto (默认)';
+      }
+      return explicitLabel;
+    }
+    const rawActive = String(current.activeModel || '').trim();
+    if (!rawActive) return '—';
+    if (/^auto(?:\s*[（(].*)?$/i.test(rawActive) || /^unknown$/i.test(rawActive)) {
+      return state.lang === 'en' ? 'Auto' : 'Auto (默认)';
+    }
+    const profId = matchProfileIdForModel(rawActive);
+    if (profId && profId !== 'auto') {
+      const enMeta = MODEL_PROFILE_EN[profId];
+      if (enMeta?.label) return enMeta.label;
+      const catalogItem = getCatalogList().find((item) => item.id === profId);
+      if (catalogItem?.label) return catalogItem.label;
+    }
+    return rawActive;
+  }
+
+  function formatModelBreakdownRowDisplay(row) {
+    const rawModelText = String(row?.model || '').trim() || 'Auto';
+    const isAutoRow =
+      (row?.profileId === 'auto' || !row?.profileId) &&
+      /^auto(?:\s*[（(]|$)/i.test(rawModelText);
+    const displayModel = isAutoRow
+      ? (state.lang === 'en' ? 'Auto' : 'Auto (默认)')
+      : rawModelText;
+    const rawSlugs = Array.isArray(row?.rawModels)
+      ? row.rawModels.map((s) => String(s || '').trim()).filter(Boolean)
+      : [];
+    const rawSummary = rawSlugs.length > 0 ? rawSlugs.join(', ') : displayModel;
+    const tipModel =
+      rawSlugs.length > 0 && rawSummary.toLowerCase() !== displayModel.toLowerCase()
+        ? `${displayModel} (${rawSummary})`
+        : displayModel;
+    const profLabel =
+      state.lang === 'en' && row?.profileId && MODEL_PROFILE_EN[row.profileId]
+        ? MODEL_PROFILE_EN[row.profileId].label
+        : row?.profileLabel;
+    const title = profLabel
+      ? t('childrenModels.rateTip', {
+          model: tipModel,
+          profile: profLabel,
+          rate: row?.rateDisplay || '',
+        })
+      : tipModel;
+    return { displayModel, title };
+  }
+
   function renderHeader(snap) {
     const current = snap?.current || null;
     const statusPill = $('status-pill');
@@ -3633,11 +3935,23 @@
     statusPill.title = nextText;
     state.lastStopwatchText = nextText;
 
-    const modelName = current?.activeModel || '—';
-    modelText.textContent = modelName;
-    $('model-pill').title = modelName !== '—'
-      ? t('header.modelTitle', { model: modelName })
-      : t('header.currentModel');
+    const displayName = formatHeaderModelDisplay(current);
+    const rawModel = String(current?.activeRawModel || current?.activeModel || '').trim();
+    modelText.textContent = displayName;
+    if (displayName !== '—') {
+      const showRaw = Boolean(
+        rawModel &&
+        rawModel.toLowerCase() !== displayName.toLowerCase() &&
+        !(/^auto$/i.test(rawModel) && /^auto(?:\s*[（(]|$)/i.test(displayName)),
+      );
+      const titleModel = showRaw ? `${displayName} (${rawModel})` : displayName;
+      $('model-pill').title = t('header.modelTitle', { model: titleModel });
+    } else {
+      $('model-pill').title = t('header.currentModel');
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:28:17
+// ============================================================================
 
     // Non-bound conversation banner
     const banner = $('nonbound-banner');
@@ -3992,14 +4306,23 @@
     const card = $('card-context');
     const ctx = current.context || {};
     const currentTotal = num(ctx.currentTotal, 0);
-    const softLimit = Math.max(1, num(ctx.softLimit, 400000));
-    const hardLimit = Math.max(1, num(ctx.hardLimit, 500000));
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:28:17
+// Description: Update renderContextCard default soft/hard limits to 409600 / 512000 and align empty usageLevel fallback.
+// ============================================================================
+    const rawSoft = Number(ctx.softLimit);
+    const rawHard = Number(ctx.hardLimit);
+    const softLimit = Number.isFinite(rawSoft) && rawSoft > 0 ? rawSoft : 409600;
+    const hardLimit = Number.isFinite(rawHard) && rawHard > 0 ? rawHard : 512000;
     const hardPct = num(ctx.hardUsagePct, (currentTotal / hardLimit) * 100);
     const softPct = num(ctx.softUsagePct, (currentTotal / softLimit) * 100);
     const rawLevel = ctx.usageLevel;
     const level = ['HEALTHY', 'WARNING', 'CRITICAL'].includes(rawLevel)
       ? rawLevel
-      : 'HEALTHY';
+      : (currentTotal >= hardLimit ? 'CRITICAL' : currentTotal >= softLimit ? 'WARNING' : 'HEALTHY');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:28:17
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 22:07:46
@@ -4505,6 +4828,14 @@
         row?.model || '',
         row?.profileId || '',
         row?.profileLabel || '',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:28:17
+// Description: Include merged row.rawModels in childrenModels dirty signature.
+// ============================================================================
+        Array.isArray(row?.rawModels) ? row.rawModels.join(',') : '',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:28:17
+// ============================================================================
         row?.rateDisplay || '',
         num(row?.stepsCount, 0),
         num(row?.inputUncachedTokens, 0),
@@ -4764,20 +5095,15 @@
                 ),
               ),
               el('tbody', null,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:28:17
+// Description: Format Tab 1 byModel canonical model display and merged rawModels tooltip.
+// ============================================================================
                 sortedByModel.map((row) => {
-                  const profLabel = state.lang === 'en' && row.profileId && MODEL_PROFILE_EN[row.profileId]
-                    ? MODEL_PROFILE_EN[row.profileId].label
-                    : row.profileLabel;
-                  const rateTip = profLabel
-                    ? t('childrenModels.rateTip', {
-                        model: row.model || 'Auto',
-                        profile: profLabel,
-                        rate: row.rateDisplay || '',
-                      })
-                    : row.model || 'Auto';
+                  const { displayModel, title: rateTip } = formatModelBreakdownRowDisplay(row);
                   const totalTok = getTab1TotalTokens(row);
                   return el('tr', null,
-                    el('td', { className: 'model-cell', title: rateTip, textContent: row.model || 'Auto' }),
+                    el('td', { className: 'model-cell', title: rateTip, textContent: displayModel }),
                     el('td', { className: 'num', textContent: fmtInt(row.stepsCount) }),
                     el('td', { className: 'num', title: fmtInt(row.inputUncachedTokens), textContent: fmtTokens(row.inputUncachedTokens) }),
                     el('td', { className: 'num', title: fmtInt(row.cacheReadTokens), textContent: fmtTokens(row.cacheReadTokens) }),
@@ -4786,6 +5112,9 @@
                     el('td', { className: 'num', textContent: fmtCost(row.costActual, currency) }),
                   );
                 }),
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:28:17
+// ============================================================================
               ),
             ),
           )
@@ -4813,6 +5142,514 @@
 // [MODIFIED END] 2026-11-18 11:41:00
 // ============================================================================
   }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Integrate in-panel Pixel Office renderer, hit-test inspector, collapse toggle, and adaptive zero-idle-CPU animation loop.
+// ============================================================================
+  function stopPixelOfficeLoop() {
+    if (state.pixelOfficeTimer) {
+      clearInterval(state.pixelOfficeTimer);
+      state.pixelOfficeTimer = null;
+    }
+    state.pixelOfficeIntervalMs = 0;
+  }
+
+  function getPixelOfficeCanvasCssWidth(canvas) {
+    const wrap = canvas?.parentElement;
+    const wrapRectW = typeof wrap?.getBoundingClientRect === 'function'
+      ? Number(wrap.getBoundingClientRect()?.width)
+      : 0;
+    const canvasRectW = typeof canvas?.getBoundingClientRect === 'function'
+      ? Number(canvas.getBoundingClientRect()?.width)
+      : 0;
+    const cardEl = $('card-pixel-office');
+    const cardW = Number(cardEl?.clientWidth) > 24 ? Number(cardEl.clientWidth) - 24 : 0;
+    const rawW =
+      wrapRectW > 40 ? wrapRectW :
+      Number(wrap?.clientWidth) > 40 ? Number(wrap.clientWidth) :
+      canvasRectW > 40 ? canvasRectW :
+      Number(canvas?.clientWidth) > 40 ? Number(canvas.clientWidth) :
+      cardW > 40 ? cardW :
+      (typeof window !== 'undefined' && Number(window.innerWidth) > 40
+        ? Math.max(256, Math.min(900, Number(window.innerWidth) - 48))
+        : 380);
+    return Math.max(240, Math.min(920, Math.round(rawW)));
+  }
+
+  function drawPixelOfficeFrame() {
+    const api = window.TokenMonitorPixelOffice;
+    const canvas = state.pixelOfficeCanvas;
+    const officeModel = state.pixelOfficeModel;
+    if (!api || !canvas || !officeModel || state.pixelOfficeCollapsed) return;
+
+    const dark = Boolean(api.detectDarkTheme(document));
+    const cssWidth = getPixelOfficeCanvasCssWidth(canvas);
+    const rawDpr = typeof window !== 'undefined' ? Number(window.devicePixelRatio) : 1;
+    const dpr = Number.isFinite(rawDpr) && rawDpr >= 1 ? Math.min(3, rawDpr) : 1;
+
+    const res = api.renderOfficeCanvas(canvas, officeModel, {
+      tick: state.pixelOfficeTick,
+      selectedKey: state.pixelOfficeSelectedKey,
+      lang: state.lang,
+      dark,
+      cssWidth,
+      dpr,
+    });
+    state.pixelOfficeHitBoxes = Array.isArray(res?.hitBoxes) ? res.hitBoxes : [];
+    state.pixelOfficeLogicalWidth = Number(res?.logicalWidth) || cssWidth;
+    state.pixelOfficeLogicalHeight = Number(res?.logicalHeight) || 0;
+
+    if (state.pixelOfficeInspectorCanvas && state.pixelOfficeSelectedKey) {
+      const selectedSlot = officeModel.slots.find((s) => s.key === state.pixelOfficeSelectedKey) || null;
+      if (selectedSlot) {
+        api.renderInspectorPortrait(state.pixelOfficeInspectorCanvas, selectedSlot, {
+          tick: state.pixelOfficeTick,
+          dark,
+        });
+      }
+    }
+  }
+
+  function syncPixelOfficeLoop() {
+    const shouldRun = Boolean(
+      !document.hidden &&
+      state.activeTab === 'current' &&
+      !state.pixelOfficeCollapsed &&
+      state.snapshot?.current &&
+      state.pixelOfficeCanvas &&
+      window.TokenMonitorPixelOffice,
+    );
+    if (!shouldRun) {
+      stopPixelOfficeLoop();
+      return;
+    }
+    const nextMs = state.pixelOfficeModel?.hasActive ? 110 : 500;
+    if (state.pixelOfficeTimer && state.pixelOfficeIntervalMs === nextMs) {
+      return;
+    }
+    stopPixelOfficeLoop();
+    state.pixelOfficeIntervalMs = nextMs;
+    state.pixelOfficeTimer = setInterval(() => {
+      if (document.hidden || state.activeTab !== 'current' || state.pixelOfficeCollapsed) {
+        stopPixelOfficeLoop();
+        return;
+      }
+      state.pixelOfficeTick = (state.pixelOfficeTick + 1) & 0x7fffffff;
+      drawPixelOfficeFrame();
+    }, nextMs);
+  }
+
+  function expandChildrenFromPixelOffice() {
+    state.childrenExpanded = true;
+    const latestCurrent = state.snapshot?.current || state.pixelOfficeLastCurrent;
+    const latestPrefs = state.snapshot?.prefs || state.pixelOfficeLastPrefs;
+    if (latestCurrent) {
+      renderChildrenAndModelsCard(latestCurrent, latestPrefs);
+    }
+    const childrenCard = $('card-children-models');
+    if (childrenCard && typeof childrenCard.scrollIntoView === 'function') {
+      childrenCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function createPixelOfficeCanvas() {
+    const canvas = el('canvas', {
+      className: 'pixel-office-canvas',
+      title: t('pixelOffice.clickHint'),
+      'aria-label': t('pixelOffice.title'),
+    });
+    canvas.addEventListener('click', (e) => {
+      const api = window.TokenMonitorPixelOffice;
+      if (!api || !Array.isArray(state.pixelOfficeHitBoxes) || state.pixelOfficeHitBoxes.length === 0) {
+        return;
+      }
+      const rect = typeof canvas.getBoundingClientRect === 'function'
+        ? canvas.getBoundingClientRect()
+        : { left: 0, top: 0, width: 0, height: 0 };
+      const rawX = num(e?.clientX, 0) - num(rect?.left, 0);
+      const rawY = num(e?.clientY, 0) - num(rect?.top, 0);
+      const scaleX = rect?.width > 0 && state.pixelOfficeLogicalWidth > 0
+        ? state.pixelOfficeLogicalWidth / rect.width
+        : 1;
+      const scaleY = rect?.height > 0 && state.pixelOfficeLogicalHeight > 0
+        ? state.pixelOfficeLogicalHeight / rect.height
+        : 1;
+      const hit = api.hitTest(state.pixelOfficeHitBoxes, rawX * scaleX, rawY * scaleY);
+      if (!hit) return;
+      if (hit.type === 'slot') {
+        state.pixelOfficeSelectedKey = hit.key === state.pixelOfficeSelectedKey ? '' : hit.key;
+        const latestCurrent = state.snapshot?.current || state.pixelOfficeLastCurrent;
+        const latestPrefs = state.snapshot?.prefs || state.pixelOfficeLastPrefs;
+        if (latestCurrent) {
+          renderPixelOfficeCard(latestCurrent, latestPrefs);
+        } else {
+          drawPixelOfficeFrame();
+        }
+      } else if (hit.type === 'overflow') {
+        expandChildrenFromPixelOffice();
+      }
+    });
+    return canvas;
+  }
+
+  function buildPixelInspector(slot, current, prefs, api) {
+    const isChildView = isChildSessionView(current);
+    const displayName = slot.isMain
+      ? (localizeConvTitle(slot.name || current.title) || t('common.sessionPrefix', { id: shortId(slot.conversationId || current.conversationId) }))
+      : (slot.name || shortId(slot.conversationId));
+
+    const kindClass = slot.isMain
+      ? (isChildView ? (current?.childKind === 'swarm' ? 'kind-badge swarm' : 'kind-badge') : 'kind-badge main')
+      : (slot.kind === 'swarm' ? 'kind-badge swarm' : 'kind-badge');
+    const kindLabel = slot.isMain
+      ? (isChildView ? (current?.childKind === 'swarm' ? t('pixelOffice.kindSwarm') : t('pixelOffice.kindSubagent')) : t('pixelOffice.kindMain'))
+      : (slot.kind === 'swarm' ? t('pixelOffice.kindSwarm') : t('pixelOffice.kindSubagent'));
+
+    const showRole = Boolean(
+      !slot.isMain &&
+      slot.role &&
+      slot.role !== slot.name &&
+      slot.role.toLowerCase() !== kindLabel.toLowerCase(),
+    );
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:28:17
+// Description: Clean up Pixel Inspector to show only canonical model pill (no cat nickname, no .pixel-inspector-trait) while preserving raw slug in .pixel-inspector-model.
+// ============================================================================
+    const arch = slot.archetype || api.resolveCatArchetype(slot.modelLabel || slot.model || slot.rawModel);
+    const fallbackProfileId =
+      !slot.modelLabel && !arch?.modelNameEn && !arch?.modelNameZh && slot.model
+        ? matchProfileIdForModel(slot.model)
+        : '';
+    const rawPillLabel = String(
+      slot.modelLabel ||
+      (state.lang === 'en' ? arch?.modelNameEn : arch?.modelNameZh) ||
+      (fallbackProfileId && fallbackProfileId !== 'auto' ? MODEL_PROFILE_EN[fallbackProfileId]?.label : '') ||
+      slot.model ||
+      'Auto',
+    ).trim() || 'Auto';
+    const modelPillLabel = /^auto(?:\s*[（(].*)?$/i.test(rawPillLabel)
+      ? (state.lang === 'en' ? (arch?.modelNameEn || 'Auto') : (arch?.modelNameZh || 'Auto (默认)'))
+      : rawPillLabel;
+    const rawSlug = slot.rawModel || slot.model || 'Auto';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:28:17
+// ============================================================================
+
+    let statusText = t('pixelOffice.statusIdle');
+    let statusClass = 'is-idle';
+    if (slot.killed || slot.status === 'ENDED') {
+      statusText = t('pixelOffice.statusEnded');
+      statusClass = 'is-ended';
+    } else if (slot.status === 'GENERATING') {
+      statusText = t('pixelOffice.statusGenerating');
+      statusClass = 'is-generating';
+    } else if (slot.status === 'RUNNING_TOOLS') {
+      statusText = slot.activeToolLabel
+        ? t('pixelOffice.statusToolsLabel', { tool: slot.activeToolLabel })
+        : t('pixelOffice.statusTools');
+      statusClass = 'is-tools';
+    }
+
+    const portraitCanvas = el('canvas', {
+      className: 'pixel-inspector-portrait',
+      width: 96,
+      height: 96,
+      'aria-hidden': 'true',
+    });
+    portraitCanvas.width = 96;
+    portraitCanvas.height = 96;
+
+    const currency = prefs?.currency || 'USD';
+    const statsRow = el('div', { className: 'pixel-inspector-stats tabular-nums' },
+      el('div', { className: 'pixel-inspector-stat', title: fmtInt(slot.contextTotal) },
+        el('span', { className: 'pixel-inspector-stat-label', textContent: t('pixelOffice.statCtx') }),
+        el('span', { className: 'pixel-inspector-stat-val', textContent: fmtTokens(slot.contextTotal) }),
+      ),
+      el('div', { className: 'pixel-inspector-stat' },
+        el('span', { className: 'pixel-inspector-stat-label', textContent: t('pixelOffice.statSpeed') }),
+        el('span', { className: 'pixel-inspector-stat-val', textContent: `${fmtRate(slot.tokPerSec)} tok/s` }),
+      ),
+      el('div', { className: 'pixel-inspector-stat', title: fmtInt(slot.outputTokens) },
+        el('span', { className: 'pixel-inspector-stat-label', textContent: t('pixelOffice.statOut') }),
+        el('span', { className: 'pixel-inspector-stat-val', textContent: fmtTokens(slot.outputTokens) }),
+      ),
+      el('div', { className: 'pixel-inspector-stat' },
+        el('span', { className: 'pixel-inspector-stat-label', textContent: t('pixelOffice.statCost') }),
+        el('span', { className: 'pixel-inspector-stat-val', textContent: fmtCost(slot.costActual, currency) }),
+      ),
+    );
+
+    const actions = [];
+    if (!slot.isMain && slot.conversationId) {
+      actions.push(
+        el('button', {
+          type: 'button',
+          className: 'mini-btn accent',
+          textContent: t('pixelOffice.inspectBtn'),
+          onClick: () => {
+            const cid = String(slot.conversationId || '').toLowerCase();
+            if (cid) state.inspectedChildIds.add(cid);
+            selectConversation(slot.conversationId);
+          },
+        }),
+        el('button', {
+          type: 'button',
+          className: 'mini-btn',
+          textContent: t('pixelOffice.openChatBtn'),
+          onClick: () => openConversationInHost(slot.conversationId),
+        }),
+      );
+    } else if (slot.isMain && isChildView && state.homeConvId) {
+      actions.push(
+        el('button', {
+          type: 'button',
+          className: 'mini-btn accent',
+          textContent: t('pixelOffice.backToMain'),
+          onClick: () => {
+            if (state.homeConvId !== selectedConv) {
+              clearCurrentSessionMotionMemory();
+            }
+            selectConversation(state.homeConvId);
+          },
+        }),
+      );
+    }
+
+    const inspectorEl = el('div', { className: 'pixel-inspector', role: 'region', 'aria-label': displayName },
+      el('div', { className: 'pixel-inspector-top' },
+        portraitCanvas,
+        el('div', { className: 'pixel-inspector-main' },
+          el('div', { className: 'pixel-inspector-head' },
+            el('div', { className: 'pixel-inspector-title-row' },
+              el('span', { className: 'pixel-inspector-name', textContent: displayName, title: displayName }),
+              el('span', { className: kindClass, textContent: kindLabel }),
+              showRole ? el('span', { className: 'muted-hint', textContent: slot.role }) : null,
+            ),
+            el('button', {
+              type: 'button',
+              className: 'pixel-inspector-close',
+              textContent: '×',
+              'aria-label': t('pixelOffice.closeInspector'),
+              title: t('pixelOffice.closeInspector'),
+              onClick: () => {
+                state.pixelOfficeSelectedKey = '';
+                const latestCurrent = state.snapshot?.current || current;
+                const latestPrefs = state.snapshot?.prefs || prefs;
+                renderPixelOfficeCard(latestCurrent, latestPrefs);
+              },
+            }),
+          ),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:28:17
+// Description: Render canonical model pill only (omit .pixel-inspector-trait) and display rawSlug in .pixel-inspector-model.
+// ============================================================================
+          el('div', { className: 'pixel-inspector-persona-row' },
+            el('span', { className: 'pixel-inspector-persona-badge', title: modelPillLabel },
+              el('span', {
+                className: 'pixel-inspector-persona-dot',
+                style: arch?.dot ? { backgroundColor: arch.dot } : null,
+              }),
+              el('span', { textContent: modelPillLabel }),
+            ),
+          ),
+          el('div', { className: 'pixel-inspector-status-row' },
+            el('span', { className: `pixel-inspector-status ${statusClass}`, textContent: statusText, title: statusText }),
+            el('span', { className: 'pixel-inspector-model', textContent: rawSlug, title: rawSlug }),
+          ),
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:28:17
+// ============================================================================
+        ),
+      ),
+      statsRow,
+      actions.length > 0 ? el('div', { className: 'pixel-inspector-actions' }, actions) : null,
+    );
+
+    return { inspectorEl, portraitCanvas };
+  }
+
+  function renderPixelOfficeCard(current, prefs) {
+    const card = $('card-pixel-office');
+    if (!card) return;
+    const api = window.TokenMonitorPixelOffice;
+    if (!api || !current) {
+      card.classList.add('hidden');
+      state.pixelOfficeModel = null;
+      state.pixelOfficeHitBoxes = [];
+      state.pixelOfficeCanvas = null;
+      state.pixelOfficeInspectorCanvas = null;
+      state.pixelOfficeLastCurrent = null;
+      state.pixelOfficeLastPrefs = null;
+      stopPixelOfficeLoop();
+      return;
+    }
+
+    state.pixelOfficeLastCurrent = current;
+    state.pixelOfficeLastPrefs = prefs;
+    card.classList.remove('hidden');
+    const collapsed = Boolean(state.pixelOfficeCollapsed);
+    card.classList.toggle('is-collapsed', collapsed);
+
+    const children = Array.isArray(current.children) ? current.children : [];
+    const sortedChildren = sortChildrenForDisplay(children);
+    const officeModel = api.buildOfficeModel(current, sortedChildren, state.lang);
+    state.pixelOfficeModel = officeModel;
+
+    if (
+      state.pixelOfficeSelectedKey &&
+      !officeModel.slots.some((s) => s.key === state.pixelOfficeSelectedKey)
+    ) {
+      state.pixelOfficeSelectedKey = '';
+    }
+    const selectedSlot = state.pixelOfficeSelectedKey
+      ? (officeModel.slots.find((s) => s.key === state.pixelOfficeSelectedKey) || null)
+      : null;
+
+    const currency = prefs?.currency || 'USD';
+    const isChildView = isChildSessionView(current);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:28:17
+// Description: Expand pixelOffice dirty signature with userTurnTimestampsMs, activeModelLabel/activeRawModel, and child createdAtMs/rawModel/modelLabel fields for deterministic round/model re-rendering.
+// ============================================================================
+    const userTurnCount = Array.isArray(current.userTurnTimestampsMs) ? current.userTurnTimestampsMs.length : 0;
+    const latestUserTurnMs = userTurnCount > 0 ? num(current.userTurnTimestampsMs[userTurnCount - 1], 0) : 0;
+    const sig = JSON.stringify([
+      state.lang,
+      currency,
+      state.tokenUnit,
+      num(prefs?.cnyRate, 0),
+      collapsed,
+      state.pixelOfficeSelectedKey || '',
+      current.conversationId || '',
+      isChildView,
+      Boolean(state.homeConvId),
+      userTurnCount,
+      latestUserTurnMs,
+      current.activeModel || '',
+      current.activeModelLabel || '',
+      current.activeRawModel || '',
+      officeModel.overflowCount,
+      officeModel.totalChildren,
+      sortedChildren.map((ch) => [
+        ch?.conversationId || '',
+        num(ch?.createdAtMs, 0),
+        ch?.rawModel || '',
+        ch?.modelLabel || '',
+        ch?.model || '',
+        ch?.status || '',
+        Boolean(ch?.killed),
+      ]),
+      officeModel.slots.map((s) => [
+        s.key,
+        Boolean(s.isMain),
+        s.conversationId || '',
+        s.name || '',
+        s.role || '',
+        s.kind || '',
+        s.status || '',
+        Boolean(s.killed),
+        s.model || '',
+        s.modelLabel || '',
+        s.rawModel || '',
+        s.archetype?.id || '',
+        s.activeToolLabel || '',
+        num(s.tokPerSec, 0),
+        num(s.contextTotal, 0),
+        num(s.outputTokens, 0),
+        num(s.costActual, 0),
+      ]),
+    ]);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:28:17
+// ============================================================================
+    if (card.childElementCount > 0 && state.cardRenderSigs.pixelOffice === sig) {
+      syncPixelOfficeLoop();
+      return;
+    }
+    state.cardRenderSigs.pixelOffice = sig;
+
+    const subSlotsCount = Math.max(0, officeModel.slots.length - 1);
+    const countLabel = subSlotsCount > 0
+      ? t('pixelOffice.slotsCount', { count: subSlotsCount })
+      : t('pixelOffice.slotsMainOnly');
+
+    const overflowBadge = officeModel.overflowCount > 0
+      ? el('button', {
+          type: 'button',
+          className: 'pixel-office-overflow-badge tabular-nums',
+          textContent: t('pixelOffice.overflowPill', { count: officeModel.overflowCount }),
+          title: t('pixelOffice.overflowTitle', { count: officeModel.overflowCount }),
+          onClick: expandChildrenFromPixelOffice,
+        })
+      : null;
+
+    const toggleBtn = el('button', {
+      id: 'btn-pixel-office-toggle',
+      type: 'button',
+      className: 'mini-btn pixel-office-toggle-btn',
+      'aria-expanded': String(!collapsed),
+      textContent: collapsed ? t('pixelOffice.expand') : t('pixelOffice.collapse'),
+      onClick: () => {
+        state.pixelOfficeCollapsed = !state.pixelOfficeCollapsed;
+        if (state.snapshot?.prefs) {
+          state.snapshot.prefs.pixelOfficeCollapsed = state.pixelOfficeCollapsed;
+        }
+        state.cardRenderSigs.pixelOffice = '';
+        const latestCurrent = state.snapshot?.current || current;
+        const latestPrefs = state.snapshot?.prefs || prefs;
+        renderPixelOfficeCard(latestCurrent, latestPrefs);
+        patchPrefs({ pixelOfficeCollapsed: state.pixelOfficeCollapsed });
+      },
+    });
+
+    const headEl = el('div', { className: 'card-head' },
+      el('div', { className: 'card-title' },
+        el('span', { className: 'card-title-dot' }),
+        t('pixelOffice.title'),
+      ),
+      el('div', { className: 'pixel-office-head-right' },
+        el('span', { className: 'pixel-office-count tabular-nums', textContent: countLabel }),
+        overflowBadge,
+        toggleBtn,
+      ),
+    );
+
+    if (collapsed) {
+      state.pixelOfficeCanvas = null;
+      state.pixelOfficeInspectorCanvas = null;
+      state.pixelOfficeHitBoxes = [];
+      card.replaceChildren(headEl);
+      stopPixelOfficeLoop();
+      return;
+    }
+
+    const canvasEl = state.pixelOfficeCanvas || createPixelOfficeCanvas();
+    canvasEl.title = t('pixelOffice.clickHint');
+    canvasEl.setAttribute('aria-label', t('pixelOffice.title'));
+    state.pixelOfficeCanvas = canvasEl;
+
+    let bodyFooter = el('div', { className: 'pixel-office-hint', textContent: t('pixelOffice.clickHint') });
+    if (selectedSlot) {
+      const built = buildPixelInspector(selectedSlot, current, prefs, api);
+      state.pixelOfficeInspectorCanvas = built.portraitCanvas;
+      bodyFooter = built.inspectorEl;
+    } else {
+      state.pixelOfficeInspectorCanvas = null;
+    }
+
+    card.replaceChildren(
+      headEl,
+      el('div', { className: 'pixel-office-canvas-wrap' }, canvasEl),
+      bodyFooter,
+    );
+    drawPixelOfficeFrame();
+    syncPixelOfficeLoop();
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:15:00
@@ -4844,6 +5681,20 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:07:46
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Clear Pixel Office canvas/model references and stop animation timer when no active session exists.
+// ============================================================================
+      state.pixelOfficeModel = null;
+      state.pixelOfficeHitBoxes = [];
+      state.pixelOfficeCanvas = null;
+      state.pixelOfficeInspectorCanvas = null;
+      state.pixelOfficeLastCurrent = null;
+      state.pixelOfficeLastPrefs = null;
+      stopPixelOfficeLoop();
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
       emptyEl.classList.remove('hidden');
       contentEl.classList.add('hidden');
       return;
@@ -4860,6 +5711,14 @@
     $('conv-workspace').textContent = wsBase;
     $('conv-workspace').title = current.workspace || '';
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Render in-panel Pixel Office card right below #conv-strip in renderCurrentTab.
+// ============================================================================
+    renderPixelOfficeCard(current, snap.prefs);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
     renderSpeedCard(current);
     renderCostCard(current, snap.prefs);
     renderContextCard(current);
@@ -5545,20 +6404,15 @@
                 ),
               ),
               el('tbody', null,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:28:17
+// Description: Format Tab 2 byModel canonical model display and merged rawModels tooltip.
+// ============================================================================
                 sortedPeriodByModel.map((row) => {
-                  const profLabel = state.lang === 'en' && row.profileId && MODEL_PROFILE_EN[row.profileId]
-                    ? MODEL_PROFILE_EN[row.profileId].label
-                    : row.profileLabel;
-                  const rateTip = profLabel
-                    ? t('childrenModels.rateTip', {
-                        model: row.model || 'Auto',
-                        profile: profLabel,
-                        rate: row.rateDisplay || '',
-                      })
-                    : row.model || 'Auto';
+                  const { displayModel, title: rateTip } = formatModelBreakdownRowDisplay(row);
                   const totalTok = getTab2TotalTokens(row);
                   return el('tr', null,
-                    el('td', { className: 'model-cell', title: rateTip, textContent: row.model || 'Auto' }),
+                    el('td', { className: 'model-cell', title: rateTip, textContent: displayModel }),
                     el('td', { className: 'num', textContent: fmtInt(row.conversationsCount) }),
                     el('td', { className: 'num', title: fmtInt(row.inputTokens), textContent: fmtTokens(row.inputTokens) }),
                     el('td', { className: 'num', title: fmtInt(row.cacheReadTokens), textContent: fmtTokens(row.cacheReadTokens) }),
@@ -5567,6 +6421,9 @@
                     el('td', { className: 'num', textContent: fmtCostCompact(row.costActual, currency) }),
                   );
                 }),
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:28:17
+// ============================================================================
               ),
             ),
           )
@@ -5869,6 +6726,16 @@
           : 'desc';
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:29:41
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Sync persisted pixelOfficeCollapsed preference from snapshot inside pendingPrefSaves guard.
+// ============================================================================
+        if (typeof data.prefs.pixelOfficeCollapsed === 'boolean') {
+          state.pixelOfficeCollapsed = data.prefs.pixelOfficeCollapsed;
+        }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
 // ============================================================================
       }
 // ============================================================================
@@ -6269,8 +7136,30 @@
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         tickLiveStopwatch();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Redraw Pixel Office on visibility restore and pause/resume loop cleanly, plus debounced resize redraw.
+// ============================================================================
+        drawPixelOfficeFrame();
       }
+      syncPixelOfficeLoop();
     });
+
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      let pixelOfficeResizeTimer = null;
+      window.addEventListener('resize', () => {
+        if (pixelOfficeResizeTimer) clearTimeout(pixelOfficeResizeTimer);
+        pixelOfficeResizeTimer = setTimeout(() => {
+          pixelOfficeResizeTimer = null;
+          if (!document.hidden && state.activeTab === 'current' && !state.pixelOfficeCollapsed) {
+            drawPixelOfficeFrame();
+          }
+        }, 90);
+      });
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 17:18:17

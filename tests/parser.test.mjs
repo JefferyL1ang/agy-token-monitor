@@ -236,6 +236,16 @@ import {
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:38:33
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Import DEFAULT_OS_LOOKUP_TIMEOUT_MS and isTransientLookupError
+// for v0.4.0 high-CPU system proxy anti-flap tests.
+// ============================================================================
+  DEFAULT_OS_LOOKUP_TIMEOUT_MS,
+  isTransientLookupError,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
   normalizeHttpProxyUrl,
   redactProxyUrl,
   ensureLoopbackNoProxy,
@@ -682,8 +692,17 @@ test('<USER_SETTINGS_CHANGE> timeline and transcript_full.jsonl fallback + stat 
 
     const res = analyzeConversation(convId, { appDataDirs: [appData], disableAgentApi: true });
     assert.equal(res.activeModel, 'gemini-2.5-pro');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Assert Scheme A canonical byModel labels and rawModels preservation.
+// ============================================================================
     const byModelNames = res.totals.byModel.map((m) => m.model).sort();
-    assert.deepEqual(byModelNames, ['gemini-2.5-pro', 'gemini-3.8-flash']);
+    assert.deepEqual(byModelNames, ['Gemini 3.8 Flash', 'Gemini 4 Carbon']);
+    const rawModelsFlat = res.totals.byModel.flatMap((m) => m.rawModels || []).sort();
+    assert.deepEqual(rawModelsFlat, ['gemini-2.5-pro', 'gemini-3.8-flash']);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
 
     // Verify stat-based caching returns exact same parsed reference when unchanged
     const paths = resolveConversationPaths(convId, [appData]);
@@ -769,20 +788,24 @@ test('context threshold levels (usageLevel & watermarkLevel alias) and top 5 spi
 // Description: Update context threshold assertions for v0.2.2 defaults
 // (400k WARNING, 460k CRITICAL, 500k max window) and verify DEFAULT_PREFS.
 // ============================================================================
-    assert.equal(DEFAULT_PREFS.softContextLimit, 400000);
-    assert.equal(DEFAULT_PREFS.hardContextLimit, 500000);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Update default context limits to 409600/512000 and critical threshold to 471040 (92%).
+// ============================================================================
+    assert.equal(DEFAULT_PREFS.softContextLimit, 409600);
+    assert.equal(DEFAULT_PREFS.hardContextLimit, 512000);
     assert.equal(DEFAULT_PREFS.tokenUnit, 'auto');
     assert.equal(DEFAULT_PREFS.language, 'zh');
     assert.deepEqual([...VALID_TOKEN_UNITS], ['auto', 'wan_yi', 'exact', 'm']);
     assert.deepEqual([...VALID_LANGUAGES], ['zh', 'en']);
 
-    // HEALTHY (< 400k)
+    // HEALTHY (< 409.6k)
     writeConversation(appData, convId, { compactLines: makeLines(150000) });
     const h = analyzeConversation(convId, { appDataDirs: [appData], disableAgentApi: true });
     assert.equal(h.context.usageLevel, 'HEALTHY');
     assert.equal(h.context.watermarkLevel, 'HEALTHY');
-    assert.equal(h.context.softLimit, 400000);
-    assert.equal(h.context.hardLimit, 500000);
+    assert.equal(h.context.softLimit, 409600);
+    assert.equal(h.context.hardLimit, 512000);
     assert.equal(h.context.currentTotal, 150000);
     assert.equal(h.context.latestCacheHitRatePct, 40);
     assert.equal(h.context.latestNetDelta, 80000);
@@ -791,15 +814,15 @@ test('context threshold levels (usageLevel & watermarkLevel alias) and top 5 spi
     assert.equal(h.context.topSpikes[0].triggerSummary, 'Dump huge build log');
     assert.equal(h.context.topSpikes[1].triggerSummary, 'Read big1.ts');
 
-    // Still HEALTHY just below 400k
+    // Still HEALTHY just below 409,600
     writeConversation(appData, convId, {
-      compactLines: makeLines(399999),
+      compactLines: makeLines(409599),
       mtimeMs: Date.now() + 1000,
     });
     const hBorder = analyzeConversation(convId, { appDataDirs: [appData], disableAgentApi: true });
     assert.equal(hBorder.context.usageLevel, 'HEALTHY');
 
-    // WARNING (>= 400k, < 460k)
+    // WARNING (>= 409,600, < 471,040)
     writeConversation(appData, convId, {
       compactLines: makeLines(430000),
       mtimeMs: Date.now() + 2000,
@@ -808,15 +831,26 @@ test('context threshold levels (usageLevel & watermarkLevel alias) and top 5 spi
     assert.equal(w.context.usageLevel, 'WARNING');
     assert.equal(w.context.watermarkLevel, 'WARNING');
 
-    // CRITICAL (>= 460k, i.e. 92% of 500k)
+    // Still WARNING right below 471,040
     writeConversation(appData, convId, {
-      compactLines: makeLines(460000),
+      compactLines: makeLines(471039),
+      mtimeMs: Date.now() + 3000,
+    });
+    const wBorder = analyzeConversation(convId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.equal(wBorder.context.usageLevel, 'WARNING');
+
+    // CRITICAL (>= 471,040, i.e. Math.max(512000*0.92, 409600 + (512000-409600)*0.6))
+    writeConversation(appData, convId, {
+      compactLines: makeLines(471040),
       mtimeMs: Date.now() + 4000,
     });
     const c = analyzeConversation(convId, { appDataDirs: [appData], disableAgentApi: true });
     assert.equal(c.context.usageLevel, 'CRITICAL');
     assert.equal(c.context.watermarkLevel, 'CRITICAL');
     assert.equal(c.context.hardUsagePct, 92);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:15:00
 // ============================================================================
@@ -830,8 +864,16 @@ test('active per-model pricing (incl. Claude Opus/Sonnet 5.5), overrides, CNY co
 // [MODIFIED BEGIN] 2026-11-17 11:50:00
 // Description: Update expected catalog length to 9 with dedicated gemini-3.1-pro.
 // ============================================================================
-  assert.equal(MODEL_PRICING_CATALOG.length, 9);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Update expected catalog length to 10 with first-class gemini-4-neon.
+// ============================================================================
+  assert.equal(MODEL_PRICING_CATALOG.length, 10);
   assert.equal(resolveModelProfile('Gemini 3.1 Pro (High)').id, 'gemini-3.1-pro');
+  assert.equal(resolveModelProfile('Gemini 4 Neon (High)').id, 'gemini-4-neon');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:50:00
 // ============================================================================
@@ -841,7 +883,14 @@ test('active per-model pricing (incl. Claude Opus/Sonnet 5.5), overrides, CNY co
   assert.equal(resolveModelProfile('Orchestrator (Argon)').id, 'gemini-4-argon');
   assert.equal(resolveModelProfile('Gemini 4 Hydrogen (XHigh)').id, 'gemini-4-hydrogen');
   assert.equal(resolveModelProfile('Gemini 3.8 Flash (High)').id, 'gemini-3-8-flash');
-  assert.equal(resolveModelProfile('gemini-flash-worker-agy').id, 'gemini-3-8-flash');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Update bare gemini-flash-worker-agy profile resolution to gemini-4-hydrogen.
+// ============================================================================
+  assert.equal(resolveModelProfile('gemini-flash-worker-agy').id, 'gemini-4-hydrogen');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
   assert.equal(resolveModelProfile('Claude Opus 5.5 (High)').id, 'claude-opus-5-5');
   assert.equal(resolveModelProfile('Claude Sonnet 5.5 (Medium)').id, 'claude-sonnet-5-5');
   assert.equal(resolveModelProfile('GPT-OSS 120B (Medium)').id, 'gpt-oss-120b');
@@ -1291,8 +1340,15 @@ test('main.mjs --standalone serves /api/snapshot, etag caching, and /api/prefs p
 // Description: Verify default v0.2.2 prefs, invalid tokenUnit/language 400
 // rejection, and persistence of tokenUnit/language + prefsSchemaVersion = 2.
 // ============================================================================
-    assert.equal(snap.prefs.softContextLimit, 400000);
-    assert.equal(snap.prefs.hardContextLimit, 500000);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Assert initial 409600/512000 limits and prefsSchemaVersion === 4.
+// ============================================================================
+    assert.equal(snap.prefs.softContextLimit, 409600);
+    assert.equal(snap.prefs.hardContextLimit, 512000);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
     assert.equal(snap.prefs.tokenUnit, 'auto');
     assert.equal(snap.prefs.language, 'zh');
 
@@ -1316,7 +1372,7 @@ test('main.mjs --standalone serves /api/snapshot, etag caching, and /api/prefs p
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         softContextLimit: 10000,
-        hardContextLimit: 500000,
+        hardContextLimit: 512000,
         currency: 'CNY',
         cnyRate: 7.25,
         tokenUnit: 'wan_yi',
@@ -1344,7 +1400,14 @@ test('main.mjs --standalone serves /api/snapshot, etag caching, and /api/prefs p
 // [MODIFIED BEGIN] 2026-11-17 10:26:00
 // Description: Assert bumped prefsSchemaVersion === 3 in standalone prefs test.
 // ============================================================================
-    assert.equal(saved.prefsSchemaVersion, 3);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Assert bumped prefsSchemaVersion === 4 in standalone prefs test.
+// ============================================================================
+    assert.equal(saved.prefsSchemaVersion, 4);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:26:00
 // ============================================================================
@@ -1365,7 +1428,14 @@ test('main.mjs --standalone serves /api/snapshot, etag caching, and /api/prefs p
 // [MODIFIED BEGIN] 2026-11-17 11:50:00
 // Description: Update expected runtime pricingCatalog length to 9 (with gemini-3.1-pro).
 // ============================================================================
-    assert.equal(snap3.pricingCatalog.length, 9);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Update expected runtime pricingCatalog length to 10 (with gemini-4-neon).
+// ============================================================================
+    assert.equal(snap3.pricingCatalog.length, 10);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 11:50:00
 // ============================================================================
@@ -1576,7 +1646,17 @@ test('normalizeModelId strips thinking/effort tiers while preserving variant & w
   assert.equal(normalizeModelId('gemini-3.8-flash-tiered'), 'gemini-3.8-flash-tiered');
   assert.equal(normalizeModelId('gemini-4-argon-trial'), 'gemini-4-argon-trial');
   assert.equal(normalizeModelId('gemini-4-argon-b', 'Gemini 4 Argon (High)'), 'gemini-4-argon-b');
-  assert.equal(normalizeModelId('gemini-flash-worker-agy', 'Gemini 4 Hydrogen (Orchestrator)'), 'gemini-flash-worker-agy');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Assert display-first normalization for gemini-flash-worker-agy
+// (Hydrogen Orchestrator vs historical Gemini Flash vs empty fallback).
+// ============================================================================
+  assert.equal(normalizeModelId('gemini-flash-worker-agy', 'Gemini 4 Hydrogen (Orchestrator)'), 'gemini-4-hydrogen');
+  assert.equal(normalizeModelId('gemini-flash-worker-agy', 'Gemini Flash'), 'gemini-3.8-flash');
+  assert.equal(normalizeModelId('gemini-flash-worker-agy', ''), 'gemini-flash-worker-agy');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
   assert.equal(normalizeModelId('gemini-pro-orchestrator', 'Orchestrator (Carbon)'), 'gemini-pro-orchestrator');
   assert.equal(normalizeModelId('gemini-pro-orchestrator-argon', 'Orchestrator (Argon)'), 'gemini-pro-orchestrator-argon');
 // ============================================================================
@@ -1641,7 +1721,14 @@ test('normalizeModelId strips thinking/effort tiers while preserving variant & w
 // [MODIFIED END] 2026-11-17 11:50:00
 // ============================================================================
   assert.equal(resolveModelProfile('gemini-3.8-flash-n').id, 'gemini-3-8-flash');
-  assert.equal(resolveModelProfile('gemini-flash-worker-agy').id, 'gemini-3-8-flash');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Assert bare gemini-flash-worker-agy maps to gemini-4-hydrogen profile.
+// ============================================================================
+  assert.equal(resolveModelProfile('gemini-flash-worker-agy').id, 'gemini-4-hydrogen');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
   const opusCatalogEntry = MODEL_PRICING_CATALOG.find((p) => p.id === 'claude-opus-5-5');
   assert.equal(opusCatalogEntry.hint, '含 5.5 / 4.6 · High/Med/Low');
 });
@@ -1848,7 +1935,14 @@ test('SQLite conversations/<id>.db + conversation_summaries.db telemetry, compac
     assert.equal(rHybrid.totals.mainOnly.cacheReadTokens, 206000);
     assert.equal(rHybrid.totals.mainOnly.outputTokens, 5500);
     assert.equal(rHybrid.totals.byModel.length, 1);
-    assert.equal(rHybrid.totals.byModel[0].model, 'gemini-4-carbon');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Assert Scheme A canonical byModel labels, rawModels arrays, and
+// historical 11/13-14 Gemini Flash preservation when displayModel is Gemini Flash.
+// ============================================================================
+    assert.equal(rHybrid.totals.byModel[0].model, 'Gemini 4 Carbon');
+    assert.equal(rHybrid.totals.byModel[0].profileId, 'gemini-4-carbon');
+    assert.deepEqual(rHybrid.totals.byModel[0].rawModels, ['gemini-4-carbon', 'gemini-4-carbon-high']);
     assert.equal(rHybrid.totals.byModel[0].totalTokens, 119000 + 206000 + 5500);
 
     // Verify DB-only conversation works in Tab 1 without transcript.jsonl
@@ -1858,10 +1952,14 @@ test('SQLite conversations/<id>.db + conversation_summaries.db telemetry, compac
       disableAgentApi: true,
     });
     assert.ok(rDbOnly);
-    assert.equal(rDbOnly.activeModel, 'gemini-flash-worker-agy');
+    assert.equal(rDbOnly.activeModel, 'gemini-3.8-flash');
+    assert.equal(rDbOnly.activeRawModel, 'gemini-flash-worker-agy');
+    assert.equal(rDbOnly.activeModelLabel, 'Gemini 3.8 Flash');
     assert.equal(rDbOnly.title, 'WorkerSwarmAgent');
     assert.equal(rDbOnly.workspace, 'FiberBoard2026');
     // Verify enumId 1669 is NOT added to tokens: 8000 + 2000 + 400 = 10400
+    assert.equal(rDbOnly.totals.byModel[0].model, 'Gemini 3.8 Flash');
+    assert.deepEqual(rDbOnly.totals.byModel[0].rawModels, ['gemini-flash-worker-agy']);
     assert.equal(rDbOnly.totals.byModel[0].totalTokens, 10400);
 
     // Verify Tab 2 ledger discovers union of DB-only + hybrid, eliminates Auto, and computes totalTokens
@@ -1874,7 +1972,12 @@ test('SQLite conversations/<id>.db + conversation_summaries.db telemetry, compac
     assert.equal(global.periods.today.conversationsCount, 2);
     const modelsToday = global.periods.today.byModel.map((m) => m.model);
     assert.equal(modelsToday.includes('Auto'), false);
-    assert.deepEqual(modelsToday.sort(), ['gemini-4-carbon', 'gemini-flash-worker-agy']);
+    assert.deepEqual(modelsToday.sort(), ['Gemini 3.8 Flash', 'Gemini 4 Carbon']);
+    const flashToday = global.periods.today.byModel.find((m) => m.profileId === 'gemini-3-8-flash');
+    assert.deepEqual(flashToday?.rawModels, ['gemini-flash-worker-agy']);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
     for (const row of global.periods.today.byModel) {
       assert.equal(row.totalTokens, row.inputTokens + row.cacheReadTokens + row.outputTokens);
     }
@@ -1896,7 +1999,12 @@ test('SQLite conversations/<id>.db + conversation_summaries.db telemetry, compac
 // and add v0.2.2 tests for computeSpeed SQLite priority + activeModel scoping and
 // PREFS_SCHEMA_VERSION = 2 migration (preserving custom limits).
 // ============================================================================
-test('createUsageLedger auto-migrates stale v1/v2/v3 ledgers to v4 and normalizes enum 1016 to gemini-3.1-pro', () => {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Update ledger auto-migration test to LEDGER_SCHEMA_VERSION === 5
+// and Scheme A canonical byModel labels + rawModels.
+// ============================================================================
+test('createUsageLedger auto-migrates stale v1/v2/v3/v4 ledgers to v5 and normalizes enum 1016 to gemini-3.1-pro', () => {
   clearParserCache();
   const { root, appData } = makeTempEnv();
   try {
@@ -1971,9 +2079,9 @@ test('createUsageLedger auto-migrates stale v1/v2/v3 ledgers to v4 and normalize
       );
     db1016.close();
 
-    assert.equal(LEDGER_SCHEMA_VERSION, 4);
+    assert.equal(LEDGER_SCHEMA_VERSION, 5);
 
-    // 1) Stale v1 ledger auto-migrates to v4
+    // 1) Stale v1 ledger auto-migrates to v5
     const staleV1Data = {
       version: 1,
       threshold: 200000,
@@ -1995,11 +2103,11 @@ test('createUsageLedger auto-migrates stale v1/v2/v3 ledgers to v4 and normalize
       },
     };
     const migratedFromV1 = createUsageLedger(staleV1Data);
-    assert.equal(migratedFromV1.getData().version, 4);
+    assert.equal(migratedFromV1.getData().version, 5);
     assert.equal(migratedFromV1.isDirty(), true);
     assert.deepEqual(migratedFromV1.getData().conversations, {});
 
-    // 2) Stale v3 ledger carrying gemini-pro-default auto-migrates to v4 -> gemini-3.1-pro
+    // 2) Stale v3 ledger carrying gemini-pro-default auto-migrates to v5 -> Gemini 3.1 Pro
     const staleV3Data = {
       version: 3,
       threshold: 200000,
@@ -2042,14 +2150,19 @@ test('createUsageLedger auto-migrates stale v1/v2/v3 ledgers to v4 and normalize
     });
     assert.equal(global.periods.all.conversationsCount, 2);
     const modelsAll = global.periods.all.byModel.map((m) => m.model).sort();
-    assert.deepEqual(modelsAll, ['claude-opus-5-5', 'gemini-3.1-pro']);
+    assert.deepEqual(modelsAll, ['Claude Opus 5.5', 'Gemini 3.1 Pro']);
     assert.equal(modelsAll.includes('gemini-pro-default'), false);
-    const proRow = global.periods.all.byModel.find((m) => m.model === 'gemini-3.1-pro');
+    const proRow = global.periods.all.byModel.find((m) => m.profileId === 'gemini-3.1-pro');
+    assert.ok(proRow);
+    assert.deepEqual(proRow.rawModels, ['gemini-pro-default']);
     assert.equal(proRow.totalTokens, 6500);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
 });
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
 
 test('computeSpeed prioritizes SQLite completedAtMs over timingStore and scopes stats to activeModel', () => {
   clearParserCache();
@@ -2223,7 +2336,12 @@ test('computeSpeed prioritizes SQLite completedAtMs over timingStore and scopes 
 // Description: Verify PREFS_SCHEMA_VERSION = 3 migration for v1 250k/1M,
 // v2 250k/500k, and preservation of custom limits (180k/360k & 250k/800k).
 // ============================================================================
-test('main.mjs PREFS_SCHEMA_VERSION = 3 auto-migrates 250k/(1M|500k) while preserving custom limits', async () => {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Update PREFS_SCHEMA_VERSION = 4 migration tests (v1/v2 250k/(1M|500k)
+// and v3 400k/500k -> 409600/512000 while preserving custom limits 180k/360k, 250k/800k, 400k/600k).
+// ============================================================================
+test('main.mjs PREFS_SCHEMA_VERSION = 4 auto-migrates 250k/400k + (1M|500k) to 409600/512000 while preserving custom limits', async () => {
   const __dirname = dirname(fileURLToPath(import.meta.url));
   const mainPath = join(__dirname, '..', 'sidecars', 'monitor_pane', 'main.mjs');
 
@@ -2313,7 +2431,7 @@ test('main.mjs PREFS_SCHEMA_VERSION = 3 auto-migrates 250k/(1M|500k) while prese
 // ============================================================================
   }
 
-  // Case 1: Legacy v1 untouched 250k/1M migrates to 400k/500k and persists prefsSchemaVersion = 3
+  // Case 1: Legacy v1 untouched 250k/1M migrates to 409600/512000 and persists prefsSchemaVersion = 4
   const resUntouched = await runWithInitialState(
     {
       stepEndTimes: { 'abc:1': 1700000000000 },
@@ -2326,17 +2444,17 @@ test('main.mjs PREFS_SCHEMA_VERSION = 3 auto-migrates 250k/(1M|500k) while prese
     },
     19838,
   );
-  assert.equal(resUntouched.snap.prefs.softContextLimit, 400000);
-  assert.equal(resUntouched.snap.prefs.hardContextLimit, 500000);
+  assert.equal(resUntouched.snap.prefs.softContextLimit, 409600);
+  assert.equal(resUntouched.snap.prefs.hardContextLimit, 512000);
   assert.equal(resUntouched.snap.prefs.currency, 'CNY');
   assert.equal(resUntouched.snap.prefs.tokenUnit, 'auto');
   assert.equal(resUntouched.snap.prefs.language, 'zh');
-  assert.equal(resUntouched.persisted.prefsSchemaVersion, 3);
-  assert.equal(resUntouched.persisted.prefs.softContextLimit, 400000);
-  assert.equal(resUntouched.persisted.prefs.hardContextLimit, 500000);
+  assert.equal(resUntouched.persisted.prefsSchemaVersion, 4);
+  assert.equal(resUntouched.persisted.prefs.softContextLimit, 409600);
+  assert.equal(resUntouched.persisted.prefs.hardContextLimit, 512000);
   assert.equal(resUntouched.persisted.stepEndTimes['abc:1'], 1700000000000);
 
-  // Case 2: v2 state with default softContextLimit=250k and hardContextLimit=500k migrates to 400k/500k
+  // Case 2: v2 state with default softContextLimit=250k and hardContextLimit=500k migrates to 409600/512000
   const resV2Half = await runWithInitialState(
     {
       prefsSchemaVersion: 2,
@@ -2350,13 +2468,33 @@ test('main.mjs PREFS_SCHEMA_VERSION = 3 auto-migrates 250k/(1M|500k) while prese
     },
     19839,
   );
-  assert.equal(resV2Half.snap.prefs.softContextLimit, 400000);
-  assert.equal(resV2Half.snap.prefs.hardContextLimit, 500000);
-  assert.equal(resV2Half.persisted.prefsSchemaVersion, 3);
-  assert.equal(resV2Half.persisted.prefs.softContextLimit, 400000);
-  assert.equal(resV2Half.persisted.prefs.hardContextLimit, 500000);
+  assert.equal(resV2Half.snap.prefs.softContextLimit, 409600);
+  assert.equal(resV2Half.snap.prefs.hardContextLimit, 512000);
+  assert.equal(resV2Half.persisted.prefsSchemaVersion, 4);
+  assert.equal(resV2Half.persisted.prefs.softContextLimit, 409600);
+  assert.equal(resV2Half.persisted.prefs.hardContextLimit, 512000);
 
-  // Case 3: User-customized limits (180k/360k and 250k/800k) are preserved while bumping prefsSchemaVersion = 3
+  // Case 2b: v3 state with untouched 400k/500k migrates to 409600/512000
+  const resV3Default = await runWithInitialState(
+    {
+      prefsSchemaVersion: 3,
+      stepEndTimes: {},
+      prefs: {
+        softContextLimit: 400000,
+        hardContextLimit: 500000,
+        tokenUnit: 'auto',
+        language: 'zh',
+      },
+    },
+    19842,
+  );
+  assert.equal(resV3Default.snap.prefs.softContextLimit, 409600);
+  assert.equal(resV3Default.snap.prefs.hardContextLimit, 512000);
+  assert.equal(resV3Default.persisted.prefsSchemaVersion, 4);
+  assert.equal(resV3Default.persisted.prefs.softContextLimit, 409600);
+  assert.equal(resV3Default.persisted.prefs.hardContextLimit, 512000);
+
+  // Case 3: User-customized limits (180k/360k, 250k/800k, and 400k/600k) are preserved while bumping prefsSchemaVersion = 4
   const resCustom = await runWithInitialState(
     {
       prefsSchemaVersion: 2,
@@ -2374,7 +2512,7 @@ test('main.mjs PREFS_SCHEMA_VERSION = 3 auto-migrates 250k/(1M|500k) while prese
   assert.equal(resCustom.snap.prefs.hardContextLimit, 360000);
   assert.equal(resCustom.snap.prefs.language, 'en');
   assert.equal(resCustom.snap.prefs.tokenUnit, 'm');
-  assert.equal(resCustom.persisted.prefsSchemaVersion, 3);
+  assert.equal(resCustom.persisted.prefsSchemaVersion, 4);
   assert.equal(resCustom.persisted.prefs.softContextLimit, 180000);
   assert.equal(resCustom.persisted.prefs.hardContextLimit, 360000);
 
@@ -2391,8 +2529,26 @@ test('main.mjs PREFS_SCHEMA_VERSION = 3 auto-migrates 250k/(1M|500k) while prese
   );
   assert.equal(resCustomHard.snap.prefs.softContextLimit, 250000);
   assert.equal(resCustomHard.snap.prefs.hardContextLimit, 800000);
-  assert.equal(resCustomHard.persisted.prefsSchemaVersion, 3);
+  assert.equal(resCustomHard.persisted.prefsSchemaVersion, 4);
+
+  const resV3CustomHard = await runWithInitialState(
+    {
+      prefsSchemaVersion: 3,
+      stepEndTimes: {},
+      prefs: {
+        softContextLimit: 400000,
+        hardContextLimit: 600000,
+      },
+    },
+    19843,
+  );
+  assert.equal(resV3CustomHard.snap.prefs.softContextLimit, 400000);
+  assert.equal(resV3CustomHard.snap.prefs.hardContextLimit, 600000);
+  assert.equal(resV3CustomHard.persisted.prefsSchemaVersion, 4);
 });
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:26:00
 // ============================================================================
@@ -2558,7 +2714,16 @@ test('forked conversations deduplicate cloned parent steps in Tab 1 & Tab 2 whil
     });
     assert.equal(g1.periods.all.totalTokens, 60000);
     assert.equal(g1.periods.all.byModel.length, 1);
-    assert.equal(g1.periods.all.byModel[0].model, 'gemini-4-argon');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Assert Scheme A canonical label 'Gemini 4 Argon' and rawModels on Tab 2 byModel.
+// ============================================================================
+    assert.equal(g1.periods.all.byModel[0].model, 'Gemini 4 Argon');
+    assert.equal(g1.periods.all.byModel[0].profileId, 'gemini-4-argon');
+    assert.deepEqual(g1.periods.all.byModel[0].rawModels, ['gemini-4-argon-high']);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
     assert.equal(g1.periods.all.byModel[0].totalTokens, 60000);
 
     // Verify unchanged incremental sync stays clean (dirty === false)
@@ -3271,7 +3436,14 @@ test('standalone HTTP E2E: POST /api/sync-pricing, dynamic & gemini-3.1-pro over
 
     const snap1 = await (await fetch(`${base1}/api/snapshot?conv=${encodeURIComponent(convId)}`)).json();
     assert.equal(snap1.pricingSync.status, 'idle');
-    assert.equal(snap1.pricingCatalog.length, 9);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Update expected initial snapshot pricingCatalog length to 10 (with gemini-4-neon).
+// ============================================================================
+    assert.equal(snap1.pricingCatalog.length, 10);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
     assert.equal(snap1.current.totals.mainOnly.totalTokens, 105000);
     assert.equal(snap1.global.recentConversations[0].totalTokens, 105000);
 
@@ -3453,8 +3625,13 @@ test('built-in MODEL_PRICING_CATALOG orders Gemini series top-to-bottom by perfo
   const geminiIds = MODEL_PRICING_CATALOG
     .filter((m) => m.group === 'Gemini 系列')
     .map((m) => m.id);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Include first-class gemini-4-neon between Carbon and Argon in MODEL_PRICING_CATALOG order checks.
+// ============================================================================
   assert.deepEqual(geminiIds, [
     'gemini-4-carbon',
+    'gemini-4-neon',
     'gemini-4-argon',
     'gemini-4-hydrogen',
     'gemini-3.1-pro',
@@ -3464,6 +3641,7 @@ test('built-in MODEL_PRICING_CATALOG orders Gemini series top-to-bottom by perfo
     MODEL_PRICING_CATALOG.map((m) => m.id),
     [
       'gemini-4-carbon',
+      'gemini-4-neon',
       'gemini-4-argon',
       'gemini-4-hydrogen',
       'gemini-3.1-pro',
@@ -3474,6 +3652,9 @@ test('built-in MODEL_PRICING_CATALOG orders Gemini series top-to-bottom by perfo
       'auto',
     ],
   );
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 });
 
 test('scoreModelPerformance & compareModelsByPerformance rank versions, tiers, preview penalties, and groups accurately', () => {
@@ -3597,8 +3778,13 @@ test('pricing_sync discovers 3.5-3.7 Flash models sorted by capability and resol
 
     const runtimeCatalog = mgr.getRuntimeCatalog([]);
     const geminiIds = runtimeCatalog.filter((m) => m.group === 'Gemini 系列').map((m) => m.id);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Include gemini-4-neon in runtime catalog Gemini series order check.
+// ============================================================================
     assert.deepEqual(geminiIds, [
       'gemini-4-carbon',
+      'gemini-4-neon',
       'gemini-4-argon',
       'gemini-4-hydrogen',
       'gemini-3.1-pro',
@@ -3608,6 +3794,9 @@ test('pricing_sync discovers 3.5-3.7 Flash models sorted by capability and resol
       'gemini-3.5-flash',
       'gemini-3.5-flash-lite',
     ]);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 
     const cacheJson = JSON.parse(readFileSync(join(stateDir, 'pricing_cache.json'), 'utf-8'));
     assert.deepEqual(
@@ -3621,7 +3810,14 @@ test('pricing_sync discovers 3.5-3.7 Flash models sorted by capability and resol
     assert.equal(resolveModelProfile('Gemini 2.5 Pro', runtimeCatalog).id, 'gemini-4-carbon');
     assert.equal(resolveModelProfile('Gemini Flash', runtimeCatalog).id, 'gemini-3-8-flash');
     assert.equal(resolveModelProfile('Pro', runtimeCatalog).id, 'gemini-4-carbon');
-    assert.equal(resolveModelProfile('gemini-flash-worker-agy', runtimeCatalog).id, 'gemini-3-8-flash');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Update runtimeCatalog profile resolution for gemini-flash-worker-agy to gemini-4-hydrogen.
+// ============================================================================
+    assert.equal(resolveModelProfile('gemini-flash-worker-agy', runtimeCatalog).id, 'gemini-4-hydrogen');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -4014,9 +4210,18 @@ test('zero-timestamp filtering, prototype-key safety (constructor), and malforme
     assert.ok(ctorBucket, 'Model ID "constructor" should be tracked as own property');
     assert.equal(ctorBucket.totalTokens, 5500);
 
-    const proBucket = global.periods.all.byModel.find((m) => m.model === 'gemini-3.1-pro');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Match canonical profileId/model label for Gemini 3.1 Pro in Tab 2 byModel.
+// ============================================================================
+    const proBucket = global.periods.all.byModel.find((m) => m.profileId === 'gemini-3.1-pro');
     assert.ok(proBucket, 'Normal Conv C should still be included despite corrupt Conv B');
+    assert.equal(proBucket.model, 'Gemini 3.1 Pro');
+    assert.deepEqual(proBucket.rawModels, ['gemini-3.1-pro']);
     assert.equal(proBucket.totalTokens, 5200);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
 
     // Ensure Object.prototype was not corrupted
     assert.equal(Object.prototype.constructor, Object);
@@ -4612,7 +4817,14 @@ test('standalone HTTP E2E hot-update lifecycle: check-update, skip-version, next
     join(tempStateDir, 'monitor_state.json'),
     JSON.stringify(
       {
-        prefsSchemaVersion: 3,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Seed pre-upgrade prefsSchemaVersion: 4 in hot-update E2E test.
+// ============================================================================
+        prefsSchemaVersion: 4,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
         stepEndTimes: {},
         prefs: {
           ...DEFAULT_PREFS,
@@ -5431,7 +5643,16 @@ test('v0.2.6 isChildSession, childKind, parentConversationId, and isolated swarm
     assert.equal(coldWorkerA.totals.mainOnly.outputTokens, 800);
     assert.equal(coldWorkerA.totals.withChildren.outputTokens, 800);
     assert.equal(coldWorkerA.totals.mainOnlyByModel.length, 1);
-    assert.equal(coldWorkerA.totals.mainOnlyByModel[0].model, 'claude-opus-5-5');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Assert Scheme A canonical label 'Claude Opus 5.5' and rawModels on mainOnlyByModel.
+// ============================================================================
+    assert.equal(coldWorkerA.totals.mainOnlyByModel[0].model, 'Claude Opus 5.5');
+    assert.equal(coldWorkerA.totals.mainOnlyByModel[0].profileId, 'claude-opus-5-5');
+    assert.deepEqual(coldWorkerA.totals.mainOnlyByModel[0].rawModels, ['claude-opus-5-5']);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
     assert.deepEqual(coldWorkerA.totals.mainOnlyByModel, coldWorkerA.totals.byModel);
 
     // Coordinator inspection: not a child, aggregates both workers
@@ -5684,7 +5905,16 @@ test('v0.2.6 isChildSession, childKind, parentConversationId, and isolated swarm
     assert.equal(dbSubRes.totals.withChildren.costActual, dbSubRes.totals.mainOnly.costActual);
     assert.equal(dbSubRes.totals.mainOnly.outputTokens, 700);
     assert.equal(dbSubRes.totals.mainOnlyByModel.length, 1);
-    assert.equal(dbSubRes.totals.mainOnlyByModel[0].model, 'claude-sonnet-5-5');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Assert Scheme A canonical label 'Claude Sonnet 5.5' and rawModels on mainOnlyByModel.
+// ============================================================================
+    assert.equal(dbSubRes.totals.mainOnlyByModel[0].model, 'Claude Sonnet 5.5');
+    assert.equal(dbSubRes.totals.mainOnlyByModel[0].profileId, 'claude-sonnet-5-5');
+    assert.deepEqual(dbSubRes.totals.mainOnlyByModel[0].rawModels, ['claude-sonnet-5-5']);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
     assert.deepEqual(dbSubRes.totals.mainOnlyByModel, dbSubRes.totals.byModel);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -5869,11 +6099,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 // [MODIFIED BEGIN] 2026-11-18 16:40:11
 // Description: Bump current manifest version assertion from 0.3.1 to 0.3.2.
 // ============================================================================
-  // Manifests bumped to 0.3.2 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Bump current manifest version assertion from 0.3.2 to 0.4.0.
+// ============================================================================
+  // Manifests bumped to 0.4.0 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.3.2');
-  assert.equal(packageJson.version, '0.3.2');
+  assert.equal(pluginJson.version, '0.4.0');
+  assert.equal(packageJson.version, '0.4.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:40:11
 // ============================================================================
@@ -6120,18 +6357,25 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
 // [MODIFIED BEGIN] 2026-11-18 16:40:11
 // Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.3.1 to 0.3.2.
 // ============================================================================
-  // Version & docs consistency for current v0.3.2 release
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.3.2 to 0.4.0.
+// ============================================================================
+  // Version & docs consistency for current v0.4.0 release
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.3.2');
-  assert.equal(packageJson.version, '0.3.2');
-  assert.equal(pluginJson.description.includes('v0.3.2 beta'), true);
-  assert.equal(packageJson.description.includes('v0.3.2 beta'), true);
-  assert.equal(mainSource.includes("return '0.3.2'"), true);
-  assert.equal(releaseUpdaterSource.includes(": '0.3.2'"), true);
-  assert.equal(appSource.includes("'0.3.2'"), true);
-  assert.equal(skillMd.includes('# Token Monitor (v0.3.2 Beta)'), true);
-  assert.equal(readmeMd.includes('agy-token-monitor-v0.3.2.zip'), true);
+  assert.equal(pluginJson.version, '0.4.0');
+  assert.equal(packageJson.version, '0.4.0');
+  assert.equal(pluginJson.description.includes('v0.4.0 beta'), true);
+  assert.equal(packageJson.description.includes('v0.4.0 beta'), true);
+  assert.equal(mainSource.includes("return '0.4.0'"), true);
+  assert.equal(releaseUpdaterSource.includes(": '0.4.0'"), true);
+  assert.equal(appSource.includes("'0.4.0'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.4.0 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.4.0.zip'), true);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:40:11
 // ============================================================================
@@ -6605,10 +6849,17 @@ test('v0.2.7 headless Node VM behavioral tests: renderRollingText CLS=0 transiti
     },
     context: {
       currentTotal: 120000,
-      softLimit: 400000,
-      hardLimit: 500000,
-      hardUsagePct: 24.0,
-      softUsagePct: 30.0,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Update v0.2.7 VM context limits to 409600/512000.
+// ============================================================================
+      softLimit: 409600,
+      hardLimit: 512000,
+      hardUsagePct: 23.4375,
+      softUsagePct: 29.296875,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
       usageLevel: 'HEALTHY',
       compactedPendingTurn: false,
       latestCacheRead: 100000,
@@ -7148,7 +7399,14 @@ test('v0.2.8 createSystemProxyManager lifecycle, TTL cache, restore-before-set o
 // [MODIFIED BEGIN] 2026-11-18 16:40:11
 // Description: Update standalone /api/snapshot appVersion assertion to 0.3.2.
 // ============================================================================
-    assert.equal(snap.appVersion, '0.3.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Update standalone /api/snapshot appVersion assertion to 0.4.0.
+// ============================================================================
+    assert.equal(snap.appVersion, '0.4.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:40:11
 // ============================================================================
@@ -7716,8 +7974,15 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
 // [MODIFIED BEGIN] 2026-11-18 16:40:11
 // Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.3.2.
 // ============================================================================
-  assert.equal(pluginJson.version, '0.3.2');
-  assert.equal(packageJson.version, '0.3.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.4.0.
+// ============================================================================
+  assert.equal(pluginJson.version, '0.4.0');
+  assert.equal(packageJson.version, '0.4.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:40:11
 // ============================================================================
@@ -7955,7 +8220,14 @@ test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showTo
 // [MODIFIED BEGIN] 2026-11-18 16:40:11
 // Description: Update getCurrentAppVersion fallback assertion to 0.3.2.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.3.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test to 0.4.0.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.4.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:40:11
 // ============================================================================
@@ -9463,7 +9735,14 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
 // [MODIFIED BEGIN] 2026-11-18 16:40:11
 // Description: Bump createReleaseUpdater default currentVersion assertion to 0.3.2.
 // ============================================================================
-  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.3.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Bump createReleaseUpdater default currentVersion assertion to 0.4.0.
+// ============================================================================
+  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.4.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:40:11
 // ============================================================================
@@ -11014,7 +11293,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-18 16:40:11
 // Description: Bump standalone /api/snapshot appVersion assertion to 0.3.2.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.3.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Bump standalone /api/snapshot appVersion assertion to 0.4.0.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.4.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:40:11
 // ============================================================================
@@ -11044,7 +11330,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-18 16:40:11
 // Description: Bump standalone /api/check-update appVersion assertion to 0.3.2.
 // ============================================================================
-      assert.equal(checkBody.appVersion, '0.3.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Bump standalone /api/check-update appVersion assertion to 0.4.0.
+// ============================================================================
+      assert.equal(checkBody.appVersion, '0.4.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:40:11
 // ============================================================================
@@ -11337,7 +11630,14 @@ test('v0.3.0 headless Node VM Settings tooltip proxy diagnostics and static I18N
 // [MODIFIED BEGIN] 2026-11-18 16:40:11
 // Description: Bump getCurrentAppVersion fallback assertion to 0.3.2.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.3.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Bump getCurrentAppVersion fallback assertion to 0.4.0.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.4.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:40:11
 // ============================================================================
@@ -11933,7 +12233,14 @@ test('v0.3.2 constant 43-char SHA-256 base64url /api/snapshot etag prevents HTTP
       assert.equal(typeof snap.etag, 'string');
       assert.equal(snap.etag.length, 43);
       assert.match(snap.etag, /^[A-Za-z0-9_-]{43}$/);
-      assert.equal(snap.appVersion, '0.3.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:06:21
+// Description: Update v0.3.2 ETag test standalone appVersion assertion to 0.4.0.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.4.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:06:21
+// ============================================================================
       assert.equal(snap.current?.children?.length, workerCount);
 
       // 2. Second poll with etag + realistic ~1.5 KB request headers -> must return 200 (never 431) and unchanged: true
@@ -11990,4 +12297,3344 @@ test('v0.3.2 constant 43-char SHA-256 base64url /api/snapshot etag prevents HTTP
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:40:11
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 12:09:01
+// Description: Add comprehensive v0.4.0 regression suite covering Gemini 4 Neon /
+// Orchestrator (Neon) unification, pixel_office.js engine (10 archetypes, 160-sprite
+// cache, 1+8 cap, activeToolLabel, hitTest across 280/380/560px), backend prefs &
+// /pixel_office.js HTTP route, net_proxy high-CPU anti-flap hardening, update modal
+// nested markdown & section filtering, Pixel Office VM integration, I18N parity,
+// banned terms, and annotation balance.
+// ============================================================================
+test('v0.4.0 Gemini 4 Neon & Orchestrator (Neon) unification across parser, pricing_sync, subscription, receipt, pixel_office, and app.js', async () => {
+  // 1. Enum map & normalizeModelId
+  assert.equal(MODEL_ENUM_MAP.get(1535), 'gemini-4-neon');
+  assert.equal(MODEL_ENUM_MAP.get(1537), 'gemini-pro-orchestrator-neon');
+
+  assert.equal(normalizeModelId('Orchestrator (Neon)'), 'gemini-pro-orchestrator-neon');
+  assert.equal(normalizeModelId('Gemini 4 Neon (High)'), 'gemini-4-neon');
+  assert.equal(normalizeModelId('gemini-pro-orchestrator-neon'), 'gemini-pro-orchestrator-neon');
+  assert.equal(normalizeModelId('gemini-4-neon-high'), 'gemini-4-neon');
+  assert.equal(normalizeModelId('Orchestrator (Carbon)'), 'gemini-pro-orchestrator');
+  assert.equal(normalizeModelId('Orchestrator (Argon)'), 'gemini-pro-orchestrator-argon');
+
+  // 2. resolveModelProfile unification (never shadowed by Carbon or Auto)
+  for (const neonInput of [
+    'Gemini 4 Neon (High)',
+    'Orchestrator (Neon)',
+    'gemini-4-neon',
+    'gemini-pro-orchestrator-neon',
+  ]) {
+    const profile = resolveModelProfile(neonInput);
+    assert.equal(profile.id, 'gemini-4-neon', `Expected ${neonInput} -> gemini-4-neon, got ${profile.id}`);
+    assert.notEqual(profile.id, 'gemini-4-carbon');
+    assert.notEqual(profile.id, 'auto');
+  }
+
+  for (const carbonInput of ['gemini-pro-orchestrator', 'Orchestrator (Carbon)', 'Gemini 4 Carbon (High)']) {
+    assert.equal(resolveModelProfile(carbonInput).id, 'gemini-4-carbon');
+  }
+  for (const argonInput of ['gemini-pro-orchestrator-argon', 'Orchestrator (Argon)', 'Gemini 4 Argon (Low)']) {
+    assert.equal(resolveModelProfile(argonInput).id, 'gemini-4-argon');
+  }
+
+  // Performance tier ordering: Carbon > Neon > Argon > Hydrogen > 3.1 Pro > 3.8 Flash
+  assert.ok(
+    scoreModelPerformance({ id: 'gemini-4-carbon', group: 'Gemini 系列', label: 'Gemini 4 Carbon' }) >
+      scoreModelPerformance({ id: 'gemini-4-neon', group: 'Gemini 系列', label: 'Gemini 4 Neon' }),
+  );
+  assert.ok(
+    scoreModelPerformance({ id: 'gemini-4-neon', group: 'Gemini 系列', label: 'Gemini 4 Neon' }) >
+      scoreModelPerformance({ id: 'gemini-4-argon', group: 'Gemini 系列', label: 'Gemini 4 Argon' }),
+  );
+
+  // 3. pricingSync.getRuntimeCatalog merges both observed slugs cleanly without duplicate promoted entries
+  const stateDir = mkdtempSync(join(tmpdir(), 'tm-v040-neon-pricing-'));
+  try {
+    const mgr = createPricingSyncManager({
+      stateDir,
+      baseCatalog: MODEL_PRICING_CATALOG,
+      googlePricingUrl: '',
+      liteLlmUrl: '',
+      autoSyncDisabled: true,
+      fetchImpl: async (url) => {
+        if (url.includes('models.dev')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              google: {
+                models: {
+                  'gemini-4-neon': {
+                    id: 'gemini-4-neon',
+                    name: 'Gemini 4 Neon',
+                    cost: { input: 2.2, cache_read: 0.22, output: 11.0 },
+                  },
+                },
+              },
+            }),
+          };
+        }
+        return { ok: false, status: 404, text: async () => '' };
+      },
+    });
+
+    const beforeSyncCatalog = mgr.getRuntimeCatalog(['gemini-4-neon', 'gemini-pro-orchestrator-neon']);
+    assert.equal(beforeSyncCatalog.filter((m) => m.id === 'gemini-4-neon').length, 1);
+    assert.equal(beforeSyncCatalog.some((m) => m.id === 'gemini-pro-orchestrator-neon'), false);
+    assert.equal(beforeSyncCatalog.some((m) => m.hint === '本地观测模型'), false);
+
+    await mgr.syncNow(['gemini-4-neon', 'gemini-pro-orchestrator-neon']);
+    const afterSyncCatalog = mgr.getRuntimeCatalog(['gemini-4-neon', 'gemini-pro-orchestrator-neon']);
+    assert.equal(afterSyncCatalog.filter((m) => m.id === 'gemini-4-neon').length, 1);
+    assert.equal(afterSyncCatalog.some((m) => m.id === 'gemini-pro-orchestrator-neon'), false);
+    assert.equal(afterSyncCatalog.some((m) => m.hint === '本地观测模型'), false);
+    assert.equal(afterSyncCatalog.find((m) => m.id === 'gemini-4-neon')?.inputPer1M, 2.2);
+    assert.equal(resolveModelProfile('gemini-pro-orchestrator-neon', afterSyncCatalog).id, 'gemini-4-neon');
+  } finally {
+    rmSync(stateDir, { recursive: true, force: true });
+  }
+
+  // 4. Subscription auto-detection maps Neon slugs to 'pro' (not jio_pro, not ultra_5x)
+  for (const neonModel of [
+    'gemini-4-neon',
+    'gemini-pro-orchestrator-neon',
+    'Orchestrator (Neon)',
+    'Gemini 4 Neon (High)',
+  ]) {
+    const detected = detectSubscriptionPlanFromModels([neonModel]);
+    assert.equal(detected, 'pro', `Expected ${neonModel} subscription -> pro, got ${detected}`);
+    assert.notEqual(detected, 'jio_pro');
+    assert.notEqual(detected, 'ultra_5x');
+  }
+  assert.equal(detectSubscriptionPlanFromModels(['gemini-pro-orchestrator']), 'ultra_5x');
+  assert.equal(detectSubscriptionPlanFromModels(['gemini-flash-worker-agy']), 'jio_pro');
+
+  // 5. receipt.js formats gemini-pro-orchestrator-neon and Orchestrator (Neon) as 'Gemini 4 Neon'
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const paneDir = join(testDir, '..', 'sidecars', 'monitor_pane');
+  const receiptSource = readFileSync(join(paneDir, 'receipt.js'), 'utf-8');
+  const pixelOfficeSource = readFileSync(join(paneDir, 'pixel_office.js'), 'utf-8');
+
+  const uiSandbox = {
+    Blob,
+    Buffer,
+    Uint8Array,
+    Math,
+    Date,
+    Number,
+    String,
+    Array,
+    Object,
+    Promise,
+    Map,
+    Set,
+    RegExp,
+    performance,
+  };
+  uiSandbox.window = uiSandbox;
+  uiSandbox.globalThis = uiSandbox;
+  vm.runInNewContext(receiptSource, uiSandbox);
+  vm.runInNewContext(pixelOfficeSource, uiSandbox);
+
+  const receiptApi = uiSandbox.TokenMonitorReceipt;
+  const pixelApi = uiSandbox.TokenMonitorPixelOffice;
+  assert.ok(receiptApi, 'receipt.js must expose TokenMonitorReceipt');
+  assert.ok(pixelApi, 'pixel_office.js must expose TokenMonitorPixelOffice');
+
+  for (const modelCase of [
+    { model: 'gemini-pro-orchestrator-neon', profileId: '', profileLabel: '' },
+    { model: 'Orchestrator (Neon)', profileId: '', profileLabel: '' },
+    { model: 'gemini-4-neon', profileId: 'gemini-4-neon', profileLabel: 'Gemini 4 Neon (High)' },
+  ]) {
+    const vmReceipt = receiptApi.buildReceiptViewModel(
+      {
+        conversationId: '04000000-0000-4000-8000-000000000001',
+        title: 'Neon Receipt Test',
+        activeModel: modelCase.model,
+        receipt: {
+          todayDate: '2026-11-19',
+          today: {
+            scope: 'today',
+            hasData: true,
+            startDate: '2026-11-19',
+            endDate: '2026-11-19',
+            startedAtMs: Date.parse('2026-11-19T01:00:00Z'),
+            endedAtMs: Date.parse('2026-11-19T02:00:00Z'),
+            activeDurationMs: 600_000,
+            compactionsCount: 0,
+            primaryModel: modelCase,
+            subagentsCount: 0,
+            main: { totalTokens: 1000, costActual: 0.01, stepsCount: 1 },
+            children: [],
+            childrenSubtotal: { totalTokens: 0, costActual: 0 },
+            grandTotal: { totalTokens: 1000, costActual: 0.01, stepsCount: 1 },
+          },
+        },
+      },
+      { currency: 'USD' },
+      { lang: 'en', scope: 'today', detailMode: 'compact' },
+    );
+    assert.equal(
+      vmReceipt.metaRows.find((r) => r.key === 'primaryModel')?.value,
+      'Gemini 4 Neon',
+      `receipt.js must format ${modelCase.model} as Gemini 4 Neon`,
+    );
+  }
+
+  // Carbon and Argon remain distinct in receipt.js
+  const carbonVm = receiptApi.buildReceiptViewModel(
+    {
+      conversationId: '04000000-0000-4000-8000-000000000002',
+      activeModel: 'gemini-pro-orchestrator',
+      receipt: {
+        todayDate: '2026-11-19',
+        today: {
+          scope: 'today',
+          hasData: true,
+          primaryModel: { model: 'gemini-pro-orchestrator', profileId: '', profileLabel: '' },
+          main: { totalTokens: 100, costActual: 0.001, stepsCount: 1 },
+          children: [],
+          childrenSubtotal: { totalTokens: 0, costActual: 0 },
+          grandTotal: { totalTokens: 100, costActual: 0.001, stepsCount: 1 },
+        },
+      },
+    },
+    { currency: 'USD' },
+    { lang: 'en', scope: 'today', detailMode: 'compact' },
+  );
+  assert.equal(carbonVm.metaRows.find((r) => r.key === 'primaryModel')?.value, 'Gemini 4 Carbon');
+
+  // 6. pixel_office.js resolveCatArchetype maps Neon slugs to 'gemini-4-neon'
+  assert.equal(pixelApi.resolveCatArchetype('gemini-pro-orchestrator-neon').id, 'gemini-4-neon');
+  assert.equal(pixelApi.resolveCatArchetype('Orchestrator (Neon)').id, 'gemini-4-neon');
+  assert.equal(pixelApi.resolveCatArchetype('Gemini 4 Neon (High)').id, 'gemini-4-neon');
+  assert.equal(pixelApi.resolveCatArchetype('gemini-4-neon').id, 'gemini-4-neon');
+  assert.equal(pixelApi.resolveCatArchetype('gemini-pro-orchestrator').id, 'gemini-4-carbon');
+  assert.equal(pixelApi.resolveCatArchetype('gemini-pro-orchestrator-argon').id, 'gemini-4-argon');
+});
+
+test('v0.4.0 pixel_office.js engine: 10 archetypes, 160-sprite cache (32x32/24x24), 1+8 workstation cap, activeToolLabel, hitTest, and portrait', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const pixelOfficeSource = readFileSync(
+    join(testDir, '..', 'sidecars', 'monitor_pane', 'pixel_office.js'),
+    'utf-8',
+  );
+
+  function createMockCanvas(w = 0, h = 0) {
+    const drawnTexts = [];
+    const fillRectCalls = [];
+    const drawImageCalls = [];
+    const ctx = {
+      font: '',
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 1,
+      textAlign: 'left',
+      textBaseline: 'alphabetic',
+      imageSmoothingEnabled: true,
+      setTransform() {},
+      createLinearGradient() {
+        return { addColorStop() {} };
+      },
+      measureText(str) {
+        return { width: String(str || '').length * 6.5 };
+      },
+      fillRect(x, y, rw, rh) {
+        fillRectCalls.push({ x, y, rw, rh, fillStyle: this.fillStyle });
+      },
+      strokeRect() {},
+      fillText(str) {
+        drawnTexts.push(String(str));
+      },
+      drawImage(img, dx, dy, dw, dh) {
+        drawImageCalls.push({ img, dx, dy, dw, dh });
+      },
+    };
+    return {
+      width: w,
+      height: h,
+      clientWidth: w,
+      _drawnTexts: drawnTexts,
+      _fillRectCalls: fillRectCalls,
+      _drawImageCalls: drawImageCalls,
+      getContext(kind) {
+        return kind === '2d' ? ctx : null;
+      },
+    };
+  }
+
+  let cssBgValue = '#f6f7f9';
+  let dataThemeAttr = '';
+  let mediaDark = false;
+  const mockDocument = {
+    documentElement: {
+      getAttribute(name) {
+        return name === 'data-theme' ? dataThemeAttr : null;
+      },
+    },
+    createElement(tag) {
+      return tag === 'canvas' ? createMockCanvas(0, 0) : {};
+    },
+  };
+  const sandbox = {
+    Math,
+    Date,
+    Number,
+    String,
+    Array,
+    Object,
+    Map,
+    Set,
+    RegExp,
+    performance,
+    module: { exports: {} },
+    document: mockDocument,
+    getComputedStyle: () => ({
+      getPropertyValue(prop) {
+        return prop === '--tm-bg' ? cssBgValue : '';
+      },
+    }),
+    matchMedia: () => ({ matches: mediaDark }),
+  };
+  mockDocument.defaultView = sandbox;
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+
+  vm.runInNewContext(pixelOfficeSource, sandbox);
+  const api = sandbox.TokenMonitorPixelOffice;
+  assert.ok(api, 'pixel_office.js must attach TokenMonitorPixelOffice');
+  assert.equal(sandbox.module.exports, api, 'pixel_office.js must also populate module.exports');
+  assert.equal(api.MAX_SUBAGENTS, 8);
+  assert.equal(api.MODEL_ARCHETYPES.length, 10);
+  assert.equal(Object.isFrozen(api.MODEL_ARCHETYPES), true);
+
+  // 1. resolveCatArchetype across all 9 active models + aliases + Auto/empty
+  const archetypeCases = [
+    ['gemini-pro-orchestrator', 'gemini-4-carbon'],
+    ['Orchestrator (Carbon)', 'gemini-4-carbon'],
+    ['gemini-4-carbon', 'gemini-4-carbon'],
+    ['gemini-pro-orchestrator-argon', 'gemini-4-argon'],
+    ['Orchestrator (Argon)', 'gemini-4-argon'],
+    ['gemini-4-argon', 'gemini-4-argon'],
+    ['gemini-pro-orchestrator-neon', 'gemini-4-neon'],
+    ['Orchestrator (Neon)', 'gemini-4-neon'],
+    ['Gemini 4 Neon (High)', 'gemini-4-neon'],
+    ['gemini-4-hydrogen', 'gemini-4-hydrogen'],
+    ['gemini-pro-default', 'gemini-3.1-pro'],
+    ['gemini-3.1-pro', 'gemini-3.1-pro'],
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Update pixel_office resolveCatArchetype expectation for gemini-flash-worker-agy to gemini-4-hydrogen.
+// ============================================================================
+    ['gemini-flash-worker-agy', 'gemini-4-hydrogen'],
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
+    ['gemini-3-8-flash', 'gemini-3.8-flash'],
+    ['claude-opus-4-6', 'claude-opus-5-5'],
+    ['claude-opus-5-5', 'claude-opus-5-5'],
+    ['claude-haiku', 'claude-sonnet-5-5'],
+    ['claude-sonnet-5-5', 'claude-sonnet-5-5'],
+    ['gpt-5', 'gpt-oss-120b'],
+    ['o3', 'gpt-oss-120b'],
+    ['gpt-oss-120b', 'gpt-oss-120b'],
+    ['Auto', 'auto'],
+    ['Auto (默认)', 'auto'],
+    ['', 'auto'],
+    [null, 'auto'],
+  ];
+  for (const [input, expectedId] of archetypeCases) {
+    assert.equal(
+      api.resolveCatArchetype(input).id,
+      expectedId,
+      `resolveCatArchetype(${String(input)}) expected ${expectedId}`,
+    );
+  }
+
+  // 2. ensureSpriteCache creates 160 sprites (10 * 2 * 4 * 2) with 32x32 Main and 24x24 Sub dimensions
+  const createdCanvases = [];
+  const spriteFactory = (w, h) => {
+    const c = createMockCanvas(w, h);
+    createdCanvases.push(c);
+    return c;
+  };
+  const spritePack1 = api.ensureSpriteCache(spriteFactory);
+  assert.equal(spritePack1.size, 160);
+  assert.equal(spritePack1.cache.size, 160);
+  assert.equal(spritePack1.mainSize, 32);
+  assert.equal(spritePack1.subSize, 24);
+  assert.equal(createdCanvases.length, 160);
+
+  let mainCount = 0;
+  let subCount = 0;
+  for (const [key, spriteCanvas] of spritePack1.cache.entries()) {
+    assert.ok(spriteCanvas._fillRectCalls.length > 0, `Sprite ${key} must have pixel draws`);
+    if (key.startsWith('main:')) {
+      mainCount += 1;
+      assert.equal(spriteCanvas.width, 32);
+      assert.equal(spriteCanvas.height, 32);
+    } else if (key.startsWith('sub:')) {
+      subCount += 1;
+      assert.equal(spriteCanvas.width, 24);
+      assert.equal(spriteCanvas.height, 24);
+    }
+  }
+  assert.equal(mainCount, 80);
+  assert.equal(subCount, 80);
+
+  // Subsequent call with same factory hits cache without re-baking
+  const spritePack2 = api.ensureSpriteCache(spriteFactory);
+  assert.equal(spritePack2.cache, spritePack1.cache);
+  assert.equal(createdCanvases.length, 160);
+
+  // 3. detectDarkTheme precedence (--tm-bg -> data-theme -> matchMedia)
+  cssBgValue = '#0f172a';
+  assert.equal(api.detectDarkTheme(mockDocument), true);
+  cssBgValue = '#f6f7f9';
+  assert.equal(api.detectDarkTheme(mockDocument), false);
+  cssBgValue = '';
+  dataThemeAttr = 'dark';
+  assert.equal(api.detectDarkTheme(mockDocument), true);
+  dataThemeAttr = '';
+  mediaDark = true;
+  assert.equal(api.detectDarkTheme(mockDocument), true);
+
+  // 4. buildOfficeModel & renderOfficeCanvas enforce MAX_SUBAGENTS === 8, prioritize active, activeToolLabel, hitTest
+  const baseMs = Date.parse('2026-11-19T03:00:00Z');
+  const twelveRawChildren = [
+    ...Array.from({ length: 8 }, (_, idx) => ({
+      conversationId: `04010000-0000-4000-8000-00000000000${idx + 1}`,
+      kind: 'swarm',
+      name: `idle-${idx + 1}`,
+      role: 'worker',
+      model: 'gemini-3.8-flash',
+      status: 'IDLE',
+      killed: idx === 0,
+      activeToolLabel: idx === 0 ? 'should_be_cleared_when_killed' : '',
+      updatedAtMs: baseMs + 90_000 + idx * 1000,
+      latestTokPerSec: null,
+      contextTotal: 1000 + idx,
+      outputTokens: 200,
+      costActual: 0.01,
+    })),
+    {
+      conversationId: '04010000-0000-4000-8000-000000000011',
+      kind: 'swarm',
+      name: 'active-gen',
+      role: 'coder',
+      model: 'gemini-pro-orchestrator-neon',
+      status: 'GENERATING',
+      killed: false,
+      activeToolLabel: '',
+      updatedAtMs: baseMs + 1000,
+      latestTokPerSec: 95,
+      contextTotal: 25_000,
+      outputTokens: 1200,
+      costActual: 0.12,
+    },
+    {
+      conversationId: '04010000-0000-4000-8000-000000000012',
+      kind: 'subagent',
+      name: 'active-tool',
+      role: 'verifier',
+      model: 'claude-opus-4-6',
+      status: 'RUNNING_TOOLS',
+      killed: false,
+      activeToolLabel: 'Read parser.mjs',
+      updatedAtMs: baseMs + 2000,
+      latestTokPerSec: 40,
+      contextTotal: 18_000,
+      outputTokens: 800,
+      costActual: 0.18,
+    },
+    {
+      conversationId: '04010000-0000-4000-8000-000000000013',
+      kind: 'swarm',
+      name: 'killed-tool-stale',
+      role: 'worker',
+      model: 'gpt-5',
+      status: 'RUNNING_TOOLS',
+      killed: true,
+      activeToolLabel: 'stale_tool_should_clear',
+      updatedAtMs: baseMs + 3000,
+      latestTokPerSec: null,
+      contextTotal: 5_000,
+      outputTokens: 100,
+      costActual: 0.01,
+    },
+    {
+      conversationId: '04010000-0000-4000-8000-000000000014',
+      kind: 'swarm',
+      name: 'active-gen-2',
+      role: 'tester',
+      model: 'gemini-pro-orchestrator-argon',
+      status: 'GENERATING',
+      killed: false,
+      activeToolLabel: '',
+      updatedAtMs: baseMs + 4000,
+      latestTokPerSec: 88,
+      contextTotal: 12_000,
+      outputTokens: 400,
+      costActual: 0.05,
+    },
+  ];
+  assert.equal(twelveRawChildren.length, 12);
+
+  const sortedTwelve = sortChildrenByActivity(twelveRawChildren);
+  const officeModel = api.buildOfficeModel(
+    {
+      conversationId: '04010000-0000-4000-8000-000000000000',
+      title: 'Pixel Office Root',
+      activeModel: 'gemini-pro-orchestrator-neon',
+      status: 'GENERATING',
+      speed: { latestStepTokPerSec: 112 },
+      context: { currentTotal: 80_000 },
+      totals: { mainOnly: { outputTokens: 3200, costActual: 0.45 } },
+    },
+    sortedTwelve,
+    'zh',
+  );
+
+  assert.equal(officeModel.slots.length, 9);
+  assert.equal(officeModel.overflowCount, 4);
+  assert.equal(officeModel.totalChildren, 12);
+  assert.equal(officeModel.hasActive, true);
+  assert.equal(officeModel.slots[0].archetype.id, 'gemini-4-neon');
+
+  const subNames = officeModel.slots.slice(1).map((s) => s.name);
+  assert.equal(subNames.includes('active-gen'), true);
+  assert.equal(subNames.includes('active-tool'), true);
+  assert.equal(subNames.includes('active-gen-2'), true);
+
+  const toolSlot = officeModel.slots.find((s) => s.name === 'active-tool');
+  assert.equal(toolSlot.status, 'RUNNING_TOOLS');
+  assert.equal(toolSlot.activeToolLabel, 'Read parser.mjs');
+  assert.equal(toolSlot.archetype.id, 'claude-opus-5-5');
+
+  // Verify killed child clears activeToolLabel and flips status to ENDED inside buildOfficeModel
+  const killedDirectModel = api.buildOfficeModel(
+    { conversationId: 'main-direct', activeModel: 'Auto', status: 'IDLE' },
+    [twelveRawChildren[10]],
+    'en',
+  );
+  assert.equal(killedDirectModel.slots[1].killed, true);
+  assert.equal(killedDirectModel.slots[1].status, 'ENDED');
+  assert.equal(killedDirectModel.slots[1].activeToolLabel, '');
+
+  // Render & hitTest across narrow/wide widths (280, 380, 560)
+  for (const width of [280, 380, 560]) {
+    const canvas = createMockCanvas(width, 200);
+    const renderRes = api.renderOfficeCanvas(canvas, officeModel, {
+      cssWidth: width,
+      dpr: 2,
+      dark: width === 380,
+      tick: 5,
+      selectedKey: toolSlot.key,
+    });
+    assert.equal(renderRes.logicalWidth, width);
+    assert.ok(renderRes.logicalHeight > 120);
+    assert.equal(canvas.width, width * 2);
+    assert.equal(canvas.height, renderRes.logicalHeight * 2);
+
+    const slotBoxes = renderRes.hitBoxes.filter((b) => b.type === 'slot');
+    const overflowBoxes = renderRes.hitBoxes.filter((b) => b.type === 'overflow');
+    assert.equal(slotBoxes.length, 9, `Width ${width} must emit 9 slot hitBoxes (1 Main + 8 Sub)`);
+    assert.equal(overflowBoxes.length, 1, `Width ${width} must emit 1 overflow hitBox`);
+
+    // Assert every box stays within bounds and does not overlap any other box
+    for (let i = 0; i < renderRes.hitBoxes.length; i += 1) {
+      const a = renderRes.hitBoxes[i];
+      assert.ok(a.w > 0 && a.h > 0);
+      assert.ok(a.x >= 0 && a.y >= 0);
+      assert.ok(a.x + a.w <= renderRes.logicalWidth);
+      assert.ok(a.y + a.h <= renderRes.logicalHeight);
+      for (let j = i + 1; j < renderRes.hitBoxes.length; j += 1) {
+        const b = renderRes.hitBoxes[j];
+        const overlapX = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+        const overlapY = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+        assert.equal(
+          overlapX > 0 && overlapY > 0,
+          false,
+          `HitBoxes ${a.key} and ${b.key} overlap at width=${width}`,
+        );
+      }
+
+      const hit = api.hitTest(renderRes.hitBoxes, a.x + a.w / 2, a.y + a.h / 2);
+      assert.ok(hit, `hitTest must hit ${a.key} at width=${width}`);
+      assert.equal(hit.key, a.key);
+      assert.equal(hit.type, a.type);
+    }
+
+    assert.equal(api.hitTest(renderRes.hitBoxes, -10, -10), null);
+    assert.equal(canvas._drawnTexts.includes('+4'), true, `Width ${width} must draw +4 overflow pill`);
+    assert.equal(
+      canvas._drawnTexts.some((t) => t.includes('Read')),
+      true,
+      `Width ${width} must draw activeToolLabel bubble`,
+    );
+  }
+
+  // Portrait rendering
+  const portraitCanvas = createMockCanvas(96, 96);
+  const portraitOk = api.renderInspectorPortrait(portraitCanvas, toolSlot, { tick: 1, dark: false });
+  assert.equal(portraitOk, true);
+  assert.ok(portraitCanvas._drawImageCalls.length === 1);
+  assert.ok(portraitCanvas._fillRectCalls.length > 0);
+});
+
+test('v0.4.0 backend DEFAULT_PREFS.pixelOfficeCollapsed, child activeToolLabel, GET /pixel_office.js, and POST /api/prefs validation & persistence', async () => {
+  assert.equal(DEFAULT_PREFS.pixelOfficeCollapsed, false);
+
+  const { root, appData } = makeTempEnv();
+  try {
+    const baseMs = Date.parse('2026-11-19T03:30:00Z');
+    const parentId = '04020000-0000-4000-8000-000000000000';
+    const liveWorkerId = '04020000-0000-4000-8000-000000000001';
+    const killedWorkerId = '04020000-0000-4000-8000-000000000002';
+    const missingWorkerId = '04020000-0000-4000-8000-000000000003';
+
+    writeConversation(appData, liveWorkerId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs + 1000).toISOString(),
+          content: 'Run tests',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: new Date(baseMs + 2000).toISOString(),
+          input_tokens: 1200,
+          cache_read_tokens: 300,
+          output_tokens: 90,
+          tool_calls: [
+            {
+              name: 'run_command',
+              args: { toolSummary: 'Execute Node Test Suite' },
+            },
+          ],
+        },
+      ],
+      mtimeMs: baseMs + 2000,
+    });
+
+    writeConversation(appData, killedWorkerId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs + 3000).toISOString(),
+          content: 'Edit file then killed',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: new Date(baseMs + 4000).toISOString(),
+          input_tokens: 900,
+          cache_read_tokens: 100,
+          output_tokens: 60,
+          tool_calls: [
+            {
+              name: 'edit_file',
+              args: { Path: 'f:\\repo\\main.mjs' },
+            },
+          ],
+        },
+      ],
+      mtimeMs: baseMs + 4000,
+    });
+
+    writeConversation(appData, parentId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs).toISOString(),
+          content: 'Coordinate Neon test swarm',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: new Date(baseMs + 500).toISOString(),
+          input_tokens: 2000,
+          cache_read_tokens: 500,
+          output_tokens: 150,
+        },
+      ],
+      members: {
+        title: 'v0.4.0 activeToolLabel check',
+        members: {
+          coordinator: { conversation_id: parentId, role: 'coordinator', model: 'gemini-pro-orchestrator-neon' },
+          liveWorker: {
+            conversation_id: liveWorkerId,
+            role: 'tester',
+            model: 'gemini-4-neon',
+            killed: false,
+            state: 'working',
+          },
+          killedWorker: {
+            conversation_id: killedWorkerId,
+            role: 'editor',
+            model: 'claude-opus-5-5',
+            killed: true,
+            state: 'killed',
+          },
+          missingWorker: {
+            conversation_id: missingWorkerId,
+            role: 'ghost',
+            model: 'gemini-3.8-flash',
+            killed: false,
+            state: 'waiting',
+          },
+        },
+      },
+      mtimeMs: baseMs + 500,
+    });
+
+    const analyzed = analyzeConversation(parentId, { appDataDirs: [appData], disableAgentApi: true });
+    const liveChild = analyzed.children.find((c) => c.name === 'liveWorker');
+    const killedChild = analyzed.children.find((c) => c.name === 'killedWorker');
+    const missingChild = analyzed.children.find((c) => c.name === 'missingWorker');
+
+    assert.equal(liveChild.status, 'RUNNING_TOOLS');
+    assert.equal(liveChild.killed, false);
+    assert.equal(liveChild.activeToolLabel, 'Execute Node Test Suite');
+    assert.equal(killedChild.status, 'IDLE');
+    assert.equal(killedChild.killed, true);
+    assert.equal(killedChild.activeToolLabel, '');
+    assert.equal(missingChild.activeToolLabel, '');
+
+    // Standalone main.mjs HTTP checks for GET /pixel_office.js and POST /api/prefs pixelOfficeCollapsed
+    const dataDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'data');
+    mkdirSync(dataDir, { recursive: true });
+    const fakeHome = join(root, 'home');
+    mkdirSync(fakeHome, { recursive: true });
+
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    const mainPath = join(__dirname, '..', 'sidecars', 'monitor_pane', 'main.mjs');
+    const sdkCandidates = [
+      process.env.SIDECAR_SDK_PATH,
+      join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+      join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+    ].filter((p) => typeof p === 'string' && p.trim() && existsSync(p));
+
+    const baseEnv = { ...process.env };
+    delete baseEnv.ANTIGRAVITY_LS_ADDRESS;
+    delete baseEnv.ANTIGRAVITY_CSRF_TOKEN;
+    delete baseEnv.ANTIGRAVITY_SIDECAR_WEB_PORT;
+    delete baseEnv.ANTIGRAVITY_CONVERSATION_ID;
+    delete baseEnv.ANTIGRAVITY_SIDECAR_UI_TOKEN;
+    delete baseEnv.ANTIGRAVITY_AGENTAPI_EXE;
+    if (sdkCandidates[0]) baseEnv.SIDECAR_SDK_PATH = sdkCandidates[0];
+    baseEnv.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
+    baseEnv.USERPROFILE = fakeHome;
+    baseEnv.HOME = fakeHome;
+    baseEnv.PRICING_SYNC_DISABLE_AUTO = '1';
+    baseEnv.RELEASE_UPDATE_DISABLE_AUTO = '1';
+    baseEnv.DISABLE_SYSTEM_PROXY_LOOKUP = '1';
+
+    async function bootSidecar(port) {
+      const child = spawn(process.execPath, [mainPath, '--standalone', String(port)], {
+        env: baseEnv,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      await new Promise((resolveReady, rejectReady) => {
+        if (child.exitCode !== null) {
+          rejectReady(new Error(`Sidecar exited prematurely (${child.exitCode})`));
+          return;
+        }
+        const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 10000);
+        let out = '';
+        child.stdout.on('data', (chunk) => {
+          out += chunk.toString();
+          if (out.includes(`[sidecar] listening on 127.0.0.1:${port}`)) {
+            clearTimeout(timer);
+            resolveReady();
+          }
+        });
+        child.stderr.on('data', (chunk) => {
+          out += chunk.toString();
+        });
+        child.once('exit', (code) => {
+          clearTimeout(timer);
+          rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+        });
+      });
+      return child;
+    }
+
+    async function stopChild(child) {
+      if (!child || child.exitCode !== null || child.signalCode !== null) return;
+      child.kill();
+      await new Promise((r) => {
+        if (child.exitCode !== null || child.signalCode !== null) return r();
+        const t = setTimeout(r, 3000);
+        child.once('exit', () => {
+          clearTimeout(t);
+          r();
+        });
+      });
+    }
+
+    let child1 = null;
+    let child2 = null;
+    try {
+      const port1 = await pickFetchSafeFreePort();
+      child1 = await bootSidecar(port1);
+      const base1 = `http://127.0.0.1:${port1}`;
+
+      const pixelJsRes = await fetch(`${base1}/pixel_office.js`);
+      assert.equal(pixelJsRes.status, 200);
+      assert.match(pixelJsRes.headers.get('content-type') || '', /javascript/i);
+      const pixelJsBody = await pixelJsRes.text();
+      assert.equal(pixelJsBody.includes('TokenMonitorPixelOffice'), true);
+      assert.equal(pixelJsBody.includes('resolveCatArchetype'), true);
+
+      const initialSnap = await (await fetch(`${base1}/api/snapshot?conv=${encodeURIComponent(parentId)}`)).json();
+      assert.equal(initialSnap.appVersion, '0.4.0');
+      assert.equal(initialSnap.prefs.pixelOfficeCollapsed, false);
+
+      const badPrefRes = await fetch(`${base1}/api/prefs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pixelOfficeCollapsed: 'yes' }),
+      });
+      assert.equal(badPrefRes.status, 400);
+      const badPrefBody = await badPrefRes.json();
+      assert.equal(badPrefBody.error, 'pixelOfficeCollapsed must be a boolean.');
+
+      const okPrefRes = await fetch(`${base1}/api/prefs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pixelOfficeCollapsed: true }),
+      });
+      assert.equal(okPrefRes.status, 200);
+      const okPrefBody = await okPrefRes.json();
+      assert.equal(okPrefBody.ok, true);
+      assert.equal(okPrefBody.prefs.pixelOfficeCollapsed, true);
+
+      const snapAfterSave = await (await fetch(`${base1}/api/snapshot?conv=${encodeURIComponent(parentId)}`)).json();
+      assert.equal(snapAfterSave.prefs.pixelOfficeCollapsed, true);
+
+      await stopChild(child1);
+      child1 = null;
+
+      // Restart against same dataDir and verify pixelOfficeCollapsed persisted on reload
+      const port2 = await pickFetchSafeFreePort();
+      child2 = await bootSidecar(port2);
+      const snapReloaded = await (
+        await fetch(`http://127.0.0.1:${port2}/api/snapshot?conv=${encodeURIComponent(parentId)}`)
+      ).json();
+      assert.equal(snapReloaded.prefs.pixelOfficeCollapsed, true);
+    } finally {
+      await stopChild(child1);
+      await stopChild(child2);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.4.0 net_proxy high-CPU system proxy anti-flap: 4000ms timeout, transient error preservation, forced rebuild, no negative TTL, and clean ProxyEnable=0x0 switch', () => {
+  assert.equal(DEFAULT_OS_LOOKUP_TIMEOUT_MS, 4000);
+
+  // 1. isTransientLookupError classification
+  for (const err of [
+    { code: 'ETIMEDOUT' },
+    { code: 'etimedout' },
+    { code: 'EAGAIN' },
+    { code: 'ENOMEM' },
+    { code: 'ENOBUFS' },
+    { code: 'ENOENT' },
+    { killed: true },
+    { signal: 'SIGTERM' },
+  ]) {
+    assert.equal(isTransientLookupError(err), true);
+  }
+  for (const nonTransient of [{ status: 1 }, new Error('reg query failed'), null, undefined]) {
+    assert.equal(isTransientLookupError(nonTransient), false);
+  }
+
+  // 2. timeout: 4000 passed to execFileSyncImpl on Windows and macOS
+  const winTimeoutCalls = [];
+  const winProbe = resolveProxyConfig({
+    env: {},
+    platform: 'win32',
+    execFileSyncImpl: (cmd, args, opts) => {
+      winTimeoutCalls.push({ cmd, key: args[1], timeout: opts?.timeout });
+      if (args[1].endsWith('Internet Settings')) {
+        return '    ProxyEnable    REG_DWORD    0x0\n';
+      }
+      return '';
+    },
+  });
+  assert.deepEqual(Object.keys(winProbe).sort(), ['enabled', 'httpProxy', 'httpsProxy', 'noProxy', 'source']);
+  assert.equal(Object.hasOwn(winProbe, 'lookupFailed'), false);
+  assert.equal(winTimeoutCalls.length, 2);
+  assert.equal(winTimeoutCalls[0].timeout, 4000);
+  assert.equal(winTimeoutCalls[1].timeout, 4000);
+
+  const macTimeoutCalls = [];
+  const macProbe = resolveProxyConfig({
+    env: {},
+    platform: 'darwin',
+    execFileSyncImpl: (cmd, args, opts) => {
+      macTimeoutCalls.push({ cmd, args, timeout: opts?.timeout });
+      return '<dictionary> {\n  HTTPEnable : 0\n  HTTPSEnable : 0\n}\n';
+    },
+  });
+  assert.deepEqual(Object.keys(macProbe).sort(), ['enabled', 'httpProxy', 'httpsProxy', 'noProxy', 'source']);
+  assert.equal(Object.hasOwn(macProbe, 'lookupFailed'), false);
+  assert.equal(macTimeoutCalls.length, 1);
+  assert.equal(macTimeoutCalls[0].cmd, '/usr/sbin/scutil');
+  assert.equal(macTimeoutCalls[0].timeout, 4000);
+
+  // 3. Active win-registry proxy followed by ETIMEDOUT: preserves active proxy, allows forced rebuild, no 5-min negative TTL
+  let nowMs = 10_000_000;
+  let winMode = 'active-7890';
+  let winExecCalls = 0;
+  const winEvents = [];
+  const winMgr = createSystemProxyManager({
+    env: {},
+    platform: 'win32',
+    cacheTtlMs: 300_000,
+    maxDispatcherAgeMs: 15 * 60_000,
+    nowFn: () => nowMs,
+    execFileSyncImpl: (_cmd, args, opts) => {
+      winExecCalls += 1;
+      assert.equal(opts?.timeout, 4000);
+      if (winMode === 'etimedout') {
+        const err = new Error('reg.exe ETIMEDOUT');
+        err.code = 'ETIMEDOUT';
+        throw err;
+      }
+      if (args[1].endsWith('Internet Settings')) {
+        if (winMode === 'active-7890') {
+          return '    ProxyEnable    REG_DWORD    0x1\n    ProxyServer    REG_SZ    127.0.0.1:7890\n';
+        }
+        if (winMode === 'active-7899') {
+          return '    ProxyEnable    REG_DWORD    0x1\n    ProxyServer    REG_SZ    127.0.0.1:7899\n';
+        }
+        return '    ProxyEnable    REG_DWORD    0x0\n';
+      }
+      return '';
+    },
+    setGlobalProxyFn: (proxyEnv) => {
+      const tag = proxyEnv.HTTPS_PROXY;
+      winEvents.push(`set:${tag}`);
+      return () => {
+        winEvents.push(`restore:${tag}`);
+      };
+    },
+  });
+
+  const st1 = winMgr.refresh();
+  assert.equal(st1.enabled, true);
+  assert.equal(st1.source, 'win-registry');
+  assert.equal(st1.proxyUrl, 'http://127.0.0.1:7890');
+  assert.equal(st1.rebuildCount, 0);
+
+  // Advance past TTL and hit ETIMEDOUT -> active proxy MUST be preserved (not downgraded to direct)
+  nowMs += 305_000;
+  winMode = 'etimedout';
+  const stTimeout = winMgr.refresh();
+  assert.equal(stTimeout.enabled, true);
+  assert.equal(stTimeout.source, 'win-registry');
+  assert.equal(stTimeout.proxyUrl, 'http://127.0.0.1:7890');
+  assert.equal(stTimeout.rebuildCount, 0);
+  assert.deepEqual(winEvents, ['set:http://127.0.0.1:7890']);
+
+  // Forced rebuild while ETIMEDOUT still occurs -> preserves active proxy AND increments rebuildCount
+  const stForcedRebuild = winMgr.refresh({ force: true, rebuild: true });
+  assert.equal(stForcedRebuild.enabled, true);
+  assert.equal(stForcedRebuild.source, 'win-registry');
+  assert.equal(stForcedRebuild.proxyUrl, 'http://127.0.0.1:7890');
+  assert.equal(stForcedRebuild.rebuildCount, 1);
+  assert.deepEqual(winEvents, [
+    'set:http://127.0.0.1:7890',
+    'restore:http://127.0.0.1:7890',
+    'set:http://127.0.0.1:7890',
+  ]);
+
+  // CPU recovers immediately -> next refresh() (0ms later!) re-probes immediately (no 5-min negative TTL)
+  winMode = 'active-7899';
+  const callsBeforeRecover = winExecCalls;
+  const stRecovered = winMgr.refresh();
+  assert.ok(winExecCalls > callsBeforeRecover, 'refresh() after ETIMEDOUT must re-probe immediately without negative TTL');
+  assert.equal(stRecovered.enabled, true);
+  assert.equal(stRecovered.source, 'win-registry');
+  assert.equal(stRecovered.proxyUrl, 'http://127.0.0.1:7899');
+  assert.equal(stRecovered.rebuildCount, 2);
+
+  // Genuine ProxyEnable = 0x0 and empty HKCU\Environment -> clean switch back to direct
+  nowMs += 305_000;
+  winMode = 'disabled';
+  const stDisabled = winMgr.refresh();
+  assert.equal(stDisabled.enabled, false);
+  assert.equal(stDisabled.source, 'direct');
+  assert.equal(stDisabled.proxyUrl, '');
+  winMgr.dispose();
+
+  // 4. Active mac-scutil proxy followed by ETIMEDOUT -> preserves active proxy, forced rebuild, immediate recovery
+  let macNow = 20_000_000;
+  let macMode = 'active-8888';
+  let macExecCalls = 0;
+  const macMgr = createSystemProxyManager({
+    env: {},
+    platform: 'darwin',
+    cacheTtlMs: 300_000,
+    nowFn: () => macNow,
+    execFileSyncImpl: (_cmd, _args, opts) => {
+      macExecCalls += 1;
+      assert.equal(opts?.timeout, 4000);
+      if (macMode === 'etimedout') {
+        const err = new Error('scutil ETIMEDOUT');
+        err.code = 'ETIMEDOUT';
+        throw err;
+      }
+      const port = macMode === 'active-8899' ? 8899 : 8888;
+      return `<dictionary> {\n  HTTPEnable : 1\n  HTTPProxy : 127.0.0.1\n  HTTPPort : ${port}\n  HTTPSEnable : 1\n  HTTPSProxy : 127.0.0.1\n  HTTPSPort : ${port}\n}\n`;
+    },
+    setGlobalProxyFn: () => () => {},
+  });
+  const macInit = macMgr.refresh();
+  assert.equal(macInit.enabled, true);
+  assert.equal(macInit.source, 'mac-scutil');
+  assert.equal(macInit.proxyUrl, 'http://127.0.0.1:8888');
+
+  macNow += 305_000;
+  macMode = 'etimedout';
+  const macHold = macMgr.refresh();
+  assert.equal(macHold.enabled, true);
+  assert.equal(macHold.source, 'mac-scutil');
+  assert.equal(macHold.proxyUrl, 'http://127.0.0.1:8888');
+  const macForceHold = macMgr.refresh({ force: true, rebuild: true });
+  assert.equal(macForceHold.enabled, true);
+  assert.equal(macForceHold.rebuildCount, 1);
+
+  macMode = 'active-8899';
+  const macCallsBefore = macExecCalls;
+  const macRec = macMgr.refresh();
+  assert.ok(macExecCalls > macCallsBefore);
+  assert.equal(macRec.proxyUrl, 'http://127.0.0.1:8899');
+  assert.equal(macRec.rebuildCount, 2);
+  macMgr.dispose();
+
+  // 5. Cold-boot ETIMEDOUT -> direct is NOT locked into 5-min cache; immediate retry after recovery switches to system proxy
+  let coldBootMode = 'etimedout';
+  let coldCalls = 0;
+  const coldNow = 30_000_000;
+  const coldMgr = createSystemProxyManager({
+    env: {},
+    platform: 'win32',
+    cacheTtlMs: 300_000,
+    nowFn: () => coldNow,
+    execFileSyncImpl: (_cmd, args) => {
+      coldCalls += 1;
+      if (coldBootMode === 'etimedout') {
+        const err = new Error('reg.exe ETIMEDOUT');
+        err.code = 'ETIMEDOUT';
+        throw err;
+      }
+      if (args[1].endsWith('Internet Settings')) {
+        return '    ProxyEnable    REG_DWORD    0x1\n    ProxyServer    REG_SZ    127.0.0.1:7890\n';
+      }
+      return '';
+    },
+    setGlobalProxyFn: () => () => {},
+  });
+
+  const cold1 = coldMgr.refresh();
+  assert.equal(cold1.enabled, false);
+  assert.equal(cold1.source, 'direct');
+
+  // Recover CPU with 0ms clock advance -> immediate retry must re-probe and enable proxy
+  coldBootMode = 'active';
+  const coldCallsBefore = coldCalls;
+  const cold2 = coldMgr.refresh();
+  assert.ok(coldCalls > coldCallsBefore);
+  assert.equal(cold2.enabled, true);
+  assert.equal(cold2.source, 'win-registry');
+  assert.equal(cold2.proxyUrl, 'http://127.0.0.1:7890');
+  coldMgr.dispose();
+});
+
+test('v0.4.0 update modal nested markdown & section filtering, Pixel Office VM integration, I18N parity, and static hygiene', async () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = join(testDir, '..');
+  const paneDir = join(repoRoot, 'sidecars', 'monitor_pane');
+
+  const indexHtml = readFileSync(join(paneDir, 'index.html'), 'utf-8');
+  const stylesCss = readFileSync(join(paneDir, 'styles.css'), 'utf-8');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+  const receiptSource = readFileSync(join(paneDir, 'receipt.js'), 'utf-8');
+  const pixelOfficeSource = readFileSync(join(paneDir, 'pixel_office.js'), 'utf-8');
+  const mainSource = readFileSync(join(paneDir, 'main.mjs'), 'utf-8');
+  const netProxySource = readFileSync(join(paneDir, 'net_proxy.mjs'), 'utf-8');
+  const parserSource = readFileSync(join(paneDir, 'parser.mjs'), 'utf-8');
+  const pricingSyncSource = readFileSync(join(paneDir, 'pricing_sync.mjs'), 'utf-8');
+  const releaseUpdaterSource = readFileSync(join(paneDir, 'release_updater.mjs'), 'utf-8');
+  const clipboardImageSource = readFileSync(join(paneDir, 'clipboard_image.mjs'), 'utf-8');
+  const syncPluginPs1 = readFileSync(join(repoRoot, 'scripts', 'sync-plugin.ps1'), 'utf-8');
+  const readmeMd = readFileSync(join(repoRoot, 'README.md'), 'utf-8');
+  const skillMd = readFileSync(join(repoRoot, 'skills', 'token-monitor', 'SKILL.md'), 'utf-8');
+  const pluginJsonRaw = readFileSync(join(repoRoot, 'plugin.json'), 'utf-8');
+  const packageJsonRaw = readFileSync(join(paneDir, 'package.json'), 'utf-8');
+  const sidecarJsonRaw = readFileSync(join(paneDir, 'sidecar.json'), 'utf-8');
+  const selfSource = readFileSync(fileURLToPath(import.meta.url), 'utf-8');
+
+  // 1. index.html Pixel Office & plain-language update button contracts
+  const convStripIdx = indexHtml.indexOf('id="conv-strip"');
+  const pixelCardIdx = indexHtml.indexOf('id="card-pixel-office"');
+  const heroGridIdx = indexHtml.indexOf('class="hero-grid"');
+  assert.ok(convStripIdx > 0 && pixelCardIdx > convStripIdx && heroGridIdx > pixelCardIdx);
+  const receiptScriptIdx = indexHtml.indexOf('<script src="/receipt.js"></script>');
+  const pixelScriptIdx = indexHtml.indexOf('<script src="/pixel_office.js"></script>');
+  const appScriptIdx = indexHtml.indexOf('<script src="/app.js"></script>');
+  assert.ok(receiptScriptIdx > 0 && pixelScriptIdx > receiptScriptIdx && appScriptIdx > pixelScriptIdx);
+  assert.match(indexHtml, /id="btn-update-confirm"[^>]*>立即更新</);
+
+  // 2. I18N.zh / I18N.en 100% key and {placeholder} parity + v0.4.0 plain-language update & pixelOffice keys
+  const i18nStart = appSource.indexOf('const I18N = {');
+  assert.ok(i18nStart >= 0);
+  const i18nMatch = appSource
+    .slice(i18nStart)
+    .match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(i18nMatch, 'Both zh and en blocks must be extractable from I18N');
+
+  const extractEntries = (block) => {
+    const map = new Map();
+    for (const match of block.matchAll(/^\s*'([^']+)'\s*:\s*'((?:\\.|[^'\\])*)'/gm)) {
+      map.set(match[1], match[2]);
+    }
+    return map;
+  };
+  const zhEntries = extractEntries(i18nMatch[1]);
+  const enEntries = extractEntries(i18nMatch[2]);
+  assert.deepEqual([...zhEntries.keys()].sort(), [...enEntries.keys()].sort());
+
+  const extractPlaceholders = (str) =>
+    [...str.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
+  for (const [key, zhVal] of zhEntries.entries()) {
+    assert.deepEqual(
+      extractPlaceholders(zhVal),
+      extractPlaceholders(enEntries.get(key)),
+      `Placeholder mismatch for I18N key "${key}"`,
+    );
+  }
+
+  assert.equal(zhEntries.get('update.confirmBtn'), '立即更新');
+  assert.equal(enEntries.get('update.confirmBtn'), 'Update Now');
+
+  for (const key of [
+    'update.confirmApplying',
+    'update.downloading',
+    'update.restarting',
+    'update.applyFailed',
+    'update.updatedToast',
+    'update.errRateLimit',
+    'pixelOffice.title',
+    'pixelOffice.slotsMainOnly',
+    'pixelOffice.slotsCount',
+    'pixelOffice.overflowPill',
+    'pixelOffice.overflowTitle',
+    'pixelOffice.collapse',
+    'pixelOffice.expand',
+    'pixelOffice.clickHint',
+    'pixelOffice.mainRole',
+    'pixelOffice.kindMain',
+    'pixelOffice.kindSwarm',
+    'pixelOffice.kindSubagent',
+    'pixelOffice.statusGenerating',
+    'pixelOffice.statusTools',
+    'pixelOffice.statusToolsLabel',
+    'pixelOffice.statusIdle',
+    'pixelOffice.statusEnded',
+    'pixelOffice.closeInspector',
+    'pixelOffice.backToMain',
+    'pixelOffice.inspectBtn',
+    'pixelOffice.openChatBtn',
+    'pixelOffice.statCtx',
+    'pixelOffice.statSpeed',
+    'pixelOffice.statOut',
+    'pixelOffice.statCost',
+  ]) {
+    assert.ok(zhEntries.has(key) && zhEntries.get(key).length > 0, `I18N.zh missing ${key}`);
+    assert.ok(enEntries.has(key) && enEntries.get(key).length > 0, `I18N.en missing ${key}`);
+  }
+
+  // 3. Zero unsafe DOM APIs across app.js, receipt.js, and pixel_office.js
+  const unsafeDomRe = /\b(?:innerHTML|outerHTML|insertAdjacentHTML|document\.write)\b/;
+  assert.equal(unsafeDomRe.test(appSource), false, 'app.js must contain 0 unsafe DOM APIs');
+  assert.equal(unsafeDomRe.test(receiptSource), false, 'receipt.js must contain 0 unsafe DOM APIs');
+  assert.equal(unsafeDomRe.test(pixelOfficeSource), false, 'pixel_office.js must contain 0 unsafe DOM APIs');
+
+  // 4. Zero banned terms across frontend, backend, docs, and pixel_office.js
+  const bannedTerm = '\u6c34\u4f4d';
+  const legacyDocPhrase = 'Dedicated ' + 'Gemini 3.1 Pro';
+  const legacyUiTerm = '\u5728\u5f79\u6a21\u578b';
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['app.js', appSource],
+    ['receipt.js', receiptSource],
+    ['pixel_office.js', pixelOfficeSource],
+    ['parser.mjs', parserSource],
+    ['pricing_sync.mjs', pricingSyncSource],
+    ['main.mjs', mainSource],
+    ['net_proxy.mjs', netProxySource],
+    ['release_updater.mjs', releaseUpdaterSource],
+    ['clipboard_image.mjs', clipboardImageSource],
+    ['README.md', readmeMd],
+    ['SKILL.md', skillMd],
+    ['plugin.json', pluginJsonRaw],
+    ['package.json', packageJsonRaw],
+    ['sidecar.json', sidecarJsonRaw],
+    ['tests/parser.test.mjs', selfSource],
+  ]) {
+    assert.equal(src.includes(bannedTerm), false, `${label} must not contain banned term`);
+    assert.equal(src.includes(legacyDocPhrase), false, `${label} must not contain legacy doc phrase`);
+  }
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['receipt.js', receiptSource],
+    ['pixel_office.js', pixelOfficeSource],
+    ['I18N.zh', i18nMatch[1]],
+    ['plugin.json', pluginJsonRaw],
+    ['package.json', packageJsonRaw],
+    ['sidecar.json', sidecarJsonRaw],
+    ['README.md', readmeMd],
+    ['SKILL.md', skillMd],
+  ]) {
+    assert.equal(src.includes(legacyUiTerm), false, `${label} must not contain legacy UI term`);
+  }
+
+  // 5. Balanced [MODIFIED BEGIN/END] annotations across all modified files including pixel_office.js
+  const modBeginMarker = '[' + 'MODIFIED BEGIN]';
+  const modEndMarker = '[' + 'MODIFIED END]';
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['app.js', appSource],
+    ['receipt.js', receiptSource],
+    ['pixel_office.js', pixelOfficeSource],
+    ['parser.mjs', parserSource],
+    ['main.mjs', mainSource],
+    ['clipboard_image.mjs', clipboardImageSource],
+    ['net_proxy.mjs', netProxySource],
+    ['pricing_sync.mjs', pricingSyncSource],
+    ['release_updater.mjs', releaseUpdaterSource],
+    ['scripts/sync-plugin.ps1', syncPluginPs1],
+    ['tests/parser.test.mjs', selfSource],
+  ]) {
+    let depth = 0;
+    let minDepth = 0;
+    let begins = 0;
+    let ends = 0;
+    for (const line of src.split(/\r?\n/)) {
+      if (line.includes(modBeginMarker)) {
+        depth += 1;
+        begins += 1;
+      }
+      if (line.includes(modEndMarker)) {
+        depth -= 1;
+        ends += 1;
+        if (depth < minDepth) minDepth = depth;
+      }
+    }
+    assert.ok(begins > 0, `${label} must contain modification annotations`);
+    assert.equal(begins, ends, `${label} begin/end annotation count mismatch`);
+    assert.equal(depth, 0, `${label} unclosed modification annotation (depth=${depth})`);
+    assert.equal(minDepth, 0, `${label} unmatched end annotation (minDepth=${minDepth})`);
+  }
+
+  // 6. VM DOM Sandbox for app.js: nested markdown rendering, release line filtering, and Pixel Office integration
+  const iifeCloseIdx = appSource.lastIndexOf('})();');
+  assert.ok(iifeCloseIdx > 0, 'app.js must end with IIFE closing })();');
+
+  const instrumentedApp =
+    appSource.slice(0, iifeCloseIdx) +
+    `\n  globalThis.__tmV040Exports = {\n` +
+    `    state,\n` +
+    `    t,\n` +
+    `    init,\n` +
+    `    getCurrentAppVersion,\n` +
+    `    matchProfileIdForModel,\n` +
+    `    extractLocalizedReleaseLines,\n` +
+    `    renderReleaseNotesDom,\n` +
+    `    renderPixelOfficeCard,\n` +
+    `    renderCurrentTab,\n` +
+    `    setActiveTab,\n` +
+    `    syncPixelOfficeLoop,\n` +
+    `    stopPixelOfficeLoop,\n` +
+    `  };\n` +
+    appSource.slice(iifeCloseIdx);
+
+  class FakeNode {
+    constructor() {
+      this.parentNode = null;
+      this.childNodes = [];
+    }
+  }
+  class FakeTextNode extends FakeNode {
+    constructor(text) {
+      super();
+      this.nodeType = 3;
+      this._text = String(text ?? '');
+    }
+    get textContent() {
+      return this._text;
+    }
+    set textContent(v) {
+      this._text = String(v ?? '');
+    }
+  }
+  let fakeDocument = null;
+  function matchesSimpleSelector(elNode, selector) {
+    const s = selector.trim();
+    if (!s) return false;
+    if (s.startsWith('#')) return elNode.getAttribute('id') === s.slice(1);
+    if (s.startsWith('.')) {
+      return s.slice(1).split('.').filter(Boolean).every((cls) => elNode.classList.contains(cls));
+    }
+    const dotParts = s.split('.');
+    const tagPart = dotParts[0].toUpperCase();
+    if (tagPart && elNode.tagName !== tagPart) return false;
+    return dotParts.slice(1).every((cls) => elNode.classList.contains(cls));
+  }
+  class FakeElement extends FakeNode {
+    constructor(tagName, namespaceURI = 'http://www.w3.org/1999/xhtml') {
+      super();
+      this.nodeType = 1;
+      this.tagName = String(tagName || 'div').toUpperCase();
+      this.namespaceURI = namespaceURI;
+      this._classSet = new Set();
+      this.attributes = new Map();
+      this.listeners = new Map();
+      this.dataset = {};
+      this.title = '';
+      this.type = '';
+      this.role = '';
+      this.value = '';
+      this.disabled = false;
+      this.checked = false;
+      this.scrollTop = 0;
+      this.width = 0;
+      this.height = 0;
+      this.clientWidth = 380;
+      this._ctx2d = null;
+      this.style = {
+        cssText: '',
+        setProperty(name, val) {
+          this[name] = String(val);
+        },
+        getPropertyValue(name) {
+          return this[name] ?? '';
+        },
+      };
+      this.classList = {
+        add: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.add(part);
+            }
+          }
+        },
+        remove: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.delete(part);
+            }
+          }
+        },
+        contains: (tok) => this._classSet.has(String(tok || '')),
+        toggle: (tok, force) => {
+          const key = String(tok || '');
+          const shouldAdd = force === undefined ? !this._classSet.has(key) : Boolean(force);
+          if (shouldAdd) this._classSet.add(key);
+          else this._classSet.delete(key);
+          return shouldAdd;
+        },
+      };
+    }
+    get className() {
+      return [...this._classSet].join(' ');
+    }
+    set className(val) {
+      this._classSet.clear();
+      for (const part of String(val || '').trim().split(/\s+/)) {
+        if (part) this._classSet.add(part);
+      }
+    }
+    get children() {
+      return this.childNodes.filter((n) => n instanceof FakeElement);
+    }
+    get childElementCount() {
+      return this.children.length;
+    }
+    get textContent() {
+      return this.childNodes.map((n) => n.textContent).join('');
+    }
+    set textContent(val) {
+      for (const c of this.childNodes) c.parentNode = null;
+      this.childNodes = [];
+      const str = val === null || val === undefined ? '' : String(val);
+      if (str !== '') this.appendChild(new FakeTextNode(str));
+    }
+    setAttribute(name, val) {
+      const k = String(name);
+      const v = String(val);
+      if (k === 'class') {
+        this.className = v;
+        return;
+      }
+      if (k === 'title') this.title = v;
+      this.attributes.set(k, v);
+    }
+    getAttribute(name) {
+      const k = String(name);
+      if (k === 'class') return this.className;
+      return this.attributes.has(k) ? this.attributes.get(k) : null;
+    }
+    hasAttribute(name) {
+      return name === 'class' ? this._classSet.size > 0 : this.attributes.has(String(name));
+    }
+    removeAttribute(name) {
+      if (name === 'class') this.className = '';
+      else this.attributes.delete(String(name));
+    }
+    appendChild(child) {
+      if (child.parentNode) {
+        const idx = child.parentNode.childNodes.indexOf(child);
+        if (idx >= 0) child.parentNode.childNodes.splice(idx, 1);
+      }
+      child.parentNode = this;
+      this.childNodes.push(child);
+      return child;
+    }
+    remove() {
+      if (this.parentNode) {
+        const idx = this.parentNode.childNodes.indexOf(this);
+        if (idx >= 0) this.parentNode.childNodes.splice(idx, 1);
+        this.parentNode = null;
+      }
+    }
+    replaceChildren(...nodes) {
+      for (const c of this.childNodes) c.parentNode = null;
+      this.childNodes = [];
+      for (const n of nodes) {
+        if (n === null || n === undefined) continue;
+        this.appendChild(typeof n === 'string' ? new FakeTextNode(n) : n);
+      }
+    }
+    addEventListener(type, fn) {
+      if (!this.listeners.has(type)) this.listeners.set(type, []);
+      this.listeners.get(type).push(fn);
+    }
+    click(extraProps = {}) {
+      const evt = {
+        type: 'click',
+        target: this,
+        currentTarget: this,
+        preventDefault() {},
+        stopPropagation() {},
+        ...extraProps,
+      };
+      for (const fn of this.listeners.get('click') || []) fn(evt);
+    }
+    getBoundingClientRect() {
+      const w = this.clientWidth || 380;
+      const h =
+        this.tagName === 'CANVAS' && this.width > 0 && this.height > 0
+          ? Math.round(w * (this.height / this.width))
+          : 200;
+      return { left: 0, top: 0, width: w, height: h };
+    }
+    scrollIntoView() {}
+    querySelectorAll(selector) {
+      const out = [];
+      const visit = (node) => {
+        for (const ch of node.children) {
+          if (matchesSimpleSelector(ch, selector)) out.push(ch);
+          visit(ch);
+        }
+      };
+      visit(this);
+      return out;
+    }
+    querySelector(selector) {
+      return this.querySelectorAll(selector)[0] || null;
+    }
+    getContext(kind) {
+      if (this.tagName !== 'CANVAS' || kind !== '2d') return null;
+      if (!this._ctx2d) {
+        this._ctx2d = {
+          font: '',
+          fillStyle: '',
+          strokeStyle: '',
+          lineWidth: 1,
+          textAlign: 'left',
+          textBaseline: 'alphabetic',
+          imageSmoothingEnabled: true,
+          setTransform() {},
+          save() {},
+          restore() {},
+          scale() {},
+          beginPath() {},
+          moveTo() {},
+          lineTo() {},
+          stroke() {},
+          fillRect() {},
+          strokeRect() {},
+          setLineDash() {},
+          createLinearGradient() {
+            return { addColorStop() {} };
+          },
+          measureText(str) {
+            return { width: String(str || '').length * 6.5 };
+          },
+          fillText() {},
+          drawImage() {},
+        };
+      }
+      return this._ctx2d;
+    }
+    toDataURL(mime = 'image/png') {
+      return `data:${mime};base64,${Buffer.from('MOCK_PNG').toString('base64')}`;
+    }
+  }
+
+  const elementsById = new Map();
+  const docListeners = new Map();
+  const rootHtml = new FakeElement('html');
+  const rootBody = new FakeElement('body');
+  rootHtml.appendChild(rootBody);
+  fakeDocument = {
+    readyState: 'loading',
+    hidden: false,
+    documentElement: rootHtml,
+    body: rootBody,
+    createElement: (tag) => new FakeElement(tag),
+    createElementNS: (ns, tag) => new FakeElement(tag, ns),
+    createTextNode: (text) => new FakeTextNode(text),
+    getElementById(id) {
+      const k = String(id);
+      if (!elementsById.has(k)) {
+        const node = new FakeElement(k.includes('card') ? 'article' : 'div');
+        node.setAttribute('id', k);
+        rootBody.appendChild(node);
+        elementsById.set(k, node);
+      }
+      return elementsById.get(k);
+    },
+    querySelectorAll: () => [],
+    addEventListener(type, fn) {
+      if (!docListeners.has(type)) docListeners.set(type, []);
+      docListeners.get(type).push(fn);
+    },
+  };
+
+  const postedPrefs = [];
+  const activeTimers = new Map();
+  let nextTimerId = 1;
+  let vmMockSnap = { unchanged: true };
+
+  const sandbox = {
+    Node: FakeNode,
+    document: fakeDocument,
+    innerWidth: 400,
+    devicePixelRatio: 2,
+    addEventListener: () => {},
+    matchMedia: () => ({ matches: false }),
+    sidecar: { conversationId: 'conv-vm-v040' },
+    location: { reload: () => {} },
+    sessionStorage: {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    },
+    navigator: { clipboard: { writeText: async () => {} } },
+    MutationObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+    getComputedStyle: () => ({
+      color: 'rgb(246, 247, 249)',
+      getPropertyValue: (p) => (p === '--tm-bg' ? '#f6f7f9' : ''),
+    }),
+    AbortController,
+    Blob,
+    Buffer,
+    Uint8Array,
+    Math,
+    Date,
+    Number,
+    String,
+    Array,
+    Object,
+    Map,
+    Set,
+    RegExp,
+    JSON,
+    Promise,
+    performance,
+    URLSearchParams,
+    Intl,
+    fetch: async (url, init) => {
+      if (String(url).includes('/api/prefs') && init?.body) {
+        postedPrefs.push(JSON.parse(init.body));
+      }
+      if (String(url).includes('/api/snapshot')) {
+        return { ok: true, status: 200, json: async () => vmMockSnap };
+      }
+      return { ok: true, status: 200, json: async () => ({ ok: true }) };
+    },
+    requestAnimationFrame: (cb) => {
+      cb();
+      return 1;
+    },
+    setTimeout: () => 1,
+    clearTimeout: () => {},
+    setInterval: (fn, ms) => {
+      const id = nextTimerId++;
+      activeTimers.set(id, { fn, ms });
+      return id;
+    },
+    clearInterval: (id) => {
+      activeTimers.delete(id);
+    },
+    console,
+  };
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+  fakeDocument.defaultView = sandbox;
+
+  vm.runInNewContext(receiptSource, sandbox);
+  vm.runInNewContext(pixelOfficeSource, sandbox);
+  vm.runInNewContext(instrumentedApp, sandbox);
+
+  const exports = sandbox.__tmV040Exports;
+  assert.ok(exports, 'VM execution must expose __tmV040Exports');
+  assert.equal(exports.getCurrentAppVersion(), '0.4.0');
+
+  // Test matchProfileIdForModel for Neon
+  assert.equal(exports.matchProfileIdForModel('Orchestrator (Neon)'), 'gemini-4-neon');
+  assert.equal(exports.matchProfileIdForModel('gemini-pro-orchestrator-neon'), 'gemini-4-neon');
+  assert.equal(exports.matchProfileIdForModel('Gemini 4 Neon (High)'), 'gemini-4-neon');
+  assert.equal(exports.matchProfileIdForModel('Orchestrator (Carbon)'), 'gemini-4-carbon');
+  assert.equal(exports.matchProfileIdForModel('Orchestrator (Argon)'), 'gemini-4-argon');
+
+  // Test renderReleaseNotesDom nested code inside **bold** with zero raw backticks
+  const notesBox = fakeDocument.createElement('div');
+  exports.renderReleaseNotesDom(
+    notesBox,
+    '## 中文\n\n- **固定长度 `/api/snapshot` ETag（修复 `HTTP 431` 报错）**',
+    'zh',
+  );
+  const strongNode = notesBox.querySelector('strong');
+  assert.ok(strongNode, 'renderReleaseNotesDom must produce <strong> element');
+  const nestedCodeNodes = strongNode.querySelectorAll('code.update-notes-code');
+  assert.equal(nestedCodeNodes.length, 2, '<strong> must contain two <code class="update-notes-code"> nodes');
+  assert.equal(nestedCodeNodes[0].textContent, '/api/snapshot');
+  assert.equal(nestedCodeNodes[1].textContent, 'HTTP 431');
+  assert.equal(notesBox.textContent.includes('`'), false, 'Rendered DOM textContent must contain ZERO raw backticks');
+
+  // Also test paragraph form without bullet
+  const notesParaBox = fakeDocument.createElement('div');
+  exports.renderReleaseNotesDom(
+    notesParaBox,
+    '**固定长度 `/api/snapshot` ETag（修复 `HTTP 431` 报错）**',
+    'zh',
+  );
+  assert.equal(notesParaBox.querySelector('strong')?.querySelectorAll('code.update-notes-code').length, 2);
+  assert.equal(notesParaBox.textContent.includes('`'), false);
+
+  // Test extractLocalizedReleaseLines strips checksum / technical / verification sections & SHA-256 lines
+  const dummyHashA = 'a'.repeat(64);
+  const dummyHashB = 'b'.repeat(64);
+  const bilingualNotes = [
+    '## 中文',
+    '',
+    '### 新增功能',
+    '- **像素工位猫猫**：实时展示主代理与子代理工作状态。',
+    '',
+    '### 发布包校验',
+    `- Archive SHA-256: \`${dummyHashA}\``,
+    dummyHashB,
+    '',
+    '### 技术细节',
+    '- 内部实现细节不应显示给终端用户。',
+    '',
+    '### 验证情况',
+    '- 测试计数 details',
+    '',
+    '## English',
+    '',
+    '### New Features',
+    '- **Pixel Office Cats**: Live workstation monitor.',
+    '',
+    '### Package Checksum',
+    `- SHA-256: \`${dummyHashA}\``,
+    dummyHashB,
+    '',
+    '### Technical Details',
+    '- Internal implementation detail should be stripped.',
+    '',
+    '### Verification',
+    '- Internal test verification line.',
+  ].join('\n');
+
+  const zhLinesJoined = exports.extractLocalizedReleaseLines(bilingualNotes, 'zh').join('\n');
+  assert.equal(zhLinesJoined.includes('像素工位猫猫'), true);
+  assert.equal(zhLinesJoined.includes('发布包校验'), false);
+  assert.equal(zhLinesJoined.includes('技术细节'), false);
+  assert.equal(zhLinesJoined.includes('验证情况'), false);
+  assert.equal(zhLinesJoined.includes(dummyHashA), false);
+  assert.equal(zhLinesJoined.includes(dummyHashB), false);
+
+  const enLinesJoined = exports.extractLocalizedReleaseLines(bilingualNotes, 'en').join('\n');
+  assert.equal(enLinesJoined.includes('Pixel Office Cats'), true);
+  assert.equal(enLinesJoined.includes('Package Checksum'), false);
+  assert.equal(enLinesJoined.includes('Technical Details'), false);
+  assert.equal(enLinesJoined.includes('Verification'), false);
+  assert.equal(enLinesJoined.includes(dummyHashA), false);
+  assert.equal(enLinesJoined.includes(dummyHashB), false);
+
+  // Pixel Office UI VM Integration: render 10 children -> 9 slots + overflow badge, inspector, collapse toggle, idle loop
+  const children10 = Array.from({ length: 10 }, (_, idx) => ({
+    conversationId: `04030000-0000-4000-8000-00000000000${idx}`,
+    kind: 'swarm',
+    name: `cat-${idx}`,
+    role: 'worker',
+    model: idx === 0 ? 'gemini-pro-orchestrator-neon' : 'gemini-3.8-flash',
+    status: idx === 0 ? 'RUNNING_TOOLS' : 'IDLE',
+    killed: false,
+    activeToolLabel: idx === 0 ? 'Read main.mjs' : '',
+    updatedAtMs: Date.now() - idx * 1000,
+    latestTokPerSec: idx === 0 ? 77 : null,
+    contextTotal: 5000,
+    outputTokens: 200,
+    costActual: 0.02,
+  }));
+
+  const sampleSnap = {
+    appVersion: '0.4.0',
+    prefs: { ...DEFAULT_PREFS, pixelOfficeCollapsed: false },
+    pricingCatalog: MODEL_PRICING_CATALOG,
+    current: {
+      conversationId: 'conv-vm-v040',
+      title: 'VM Pixel Office Session',
+      activeModel: 'gemini-pro-orchestrator-neon',
+      status: 'GENERATING',
+      speed: { latestStepTokPerSec: 92, weightedAvgTokPerSec: 85, maxStepTokPerSec: 110, steps: [] },
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:40:17
+// Description: Update v0.4.0 VM sampleSnap context limits to 409600/512000.
+// ============================================================================
+      context: { currentTotal: 50_000, usageLevel: 'HEALTHY', softLimit: 409_600, hardLimit: 512_000 },
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:40:17
+// ============================================================================
+      cache: { hitRatePct: 80, cacheReadTokens: 40_000, inputUncachedTokens: 10_000, spikes: [] },
+      totals: {
+        mainOnly: { totalTokens: 52_000, outputTokens: 2000, costActual: 0.25, stepsCount: 3 },
+        withChildren: { totalTokens: 100_000, outputTokens: 4000, costActual: 0.45, stepsCount: 13 },
+      },
+      children: children10,
+      byModel: [],
+    },
+  };
+
+  exports.init();
+  await new Promise((r) => setImmediate(r));
+  exports.state.snapshot = sampleSnap;
+  exports.state.lang = 'zh';
+  exports.state.activeTab = 'current';
+  exports.state.pixelOfficeCollapsed = false;
+  exports.renderCurrentTab(sampleSnap);
+
+  const pixelCard = fakeDocument.getElementById('card-pixel-office');
+  assert.equal(pixelCard.classList.contains('hidden'), false);
+  assert.equal(pixelCard.classList.contains('is-collapsed'), false);
+  assert.equal(pixelCard.querySelector('.pixel-office-count')?.textContent, '1 主 + 8 子');
+  assert.equal(pixelCard.querySelector('.pixel-office-overflow-badge')?.textContent, '+2');
+  assert.equal(exports.state.pixelOfficeHitBoxes.length, 10);
+  assert.equal(exports.state.pixelOfficeIntervalMs, 110);
+
+  // Click sub slot hitBox on canvas -> opens .pixel-inspector with 96x96 portrait canvas
+  const subBox = exports.state.pixelOfficeHitBoxes.find((b) => b.type === 'slot' && b.key === children10[0].conversationId);
+  assert.ok(subBox, 'First subagent slot hitBox must exist');
+  exports.state.pixelOfficeCanvas.click({
+    clientX: subBox.x + subBox.w / 2,
+    clientY: subBox.y + subBox.h / 2,
+  });
+  const inspector = pixelCard.querySelector('.pixel-inspector');
+  assert.ok(inspector, 'Clicking a cat slot must open .pixel-inspector');
+  const portrait = inspector.querySelector('.pixel-inspector-portrait');
+  assert.equal(portrait?.width, 96);
+  assert.equal(portrait?.height, 96);
+  assert.equal(inspector.textContent.includes('Gemini 4 Neon'), true);
+
+  // Click collapse toggle -> collapses card, stops loop (0ms/cleared), posts pixelOfficeCollapsed: true
+  const toggleBtn = pixelCard.querySelector('#btn-pixel-office-toggle');
+  assert.ok(toggleBtn);
+  toggleBtn.click();
+  assert.equal(exports.state.pixelOfficeCollapsed, true);
+  assert.equal(pixelCard.classList.contains('is-collapsed'), true);
+  assert.equal(exports.state.pixelOfficeIntervalMs, 0);
+  assert.equal(exports.state.pixelOfficeTimer, null);
+  assert.deepEqual(postedPrefs[postedPrefs.length - 1], { pixelOfficeCollapsed: true });
+
+  // Uncollapse with idle slots -> runs at 500ms, then tab switch & visibilitychange stop loop cleanly
+  sampleSnap.current.status = 'IDLE';
+  sampleSnap.current.children = [];
+  exports.state.pixelOfficeCollapsed = false;
+  exports.state.pixelOfficeSelectedKey = '';
+  exports.renderCurrentTab(sampleSnap);
+  assert.equal(exports.state.pixelOfficeIntervalMs, 500);
+
+  exports.setActiveTab('global');
+  assert.equal(exports.state.pixelOfficeIntervalMs, 0);
+  assert.equal(exports.state.pixelOfficeTimer, null);
+
+  exports.setActiveTab('current');
+  assert.equal(exports.state.pixelOfficeIntervalMs, 500);
+
+  fakeDocument.hidden = true;
+  for (const fn of docListeners.get('visibilitychange') || []) fn();
+  assert.equal(exports.state.pixelOfficeIntervalMs, 0);
+  assert.equal(exports.state.pixelOfficeTimer, null);
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-19 12:09:01
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:43:05
+// Description: Add Round-2 v0.4.0 regression tests covering (1) worker attribution,
+// display-first normalization & Neon enum seeds, (2) Scheme A canonical byModel
+// merging + ledger v5 rebuild + unknown model isolation, (3) round-scoped Pixel
+// Office filtering, (4) Pixel Inspector cleanup & header #model-pill VM checks,
+// and (5) 409600/512000 context limits + PREFS_SCHEMA_VERSION = 4 migration + hygiene.
+// ============================================================================
+test('v0.4.0-r2 Test 1: worker attribution, display-first normalization, Neon enum seeds, and cross-module gemini-flash-worker-agy unification', async () => {
+  assert.equal(MODEL_ENUM_MAP.get(1532), 'gemini-4-neon');
+  assert.equal(MODEL_ENUM_MAP.get(1533), 'gemini-4-neon');
+  assert.equal(MODEL_ENUM_MAP.get(1535), 'gemini-4-neon');
+  assert.equal(MODEL_ENUM_MAP.get(1537), 'gemini-pro-orchestrator-neon');
+
+  assert.equal(
+    normalizeModelId('gemini-flash-worker-agy', 'Gemini 4 Hydrogen (Orchestrator)'),
+    'gemini-4-hydrogen',
+  );
+  assert.equal(
+    normalizeModelId('gemini-flash-worker-agy-xhigh', 'Gemini 4 Hydrogen (Orchestrator)'),
+    'gemini-4-hydrogen',
+  );
+  assert.equal(normalizeModelId('gemini-flash-worker-agy', 'Gemini Flash'), 'gemini-3.8-flash');
+  assert.equal(normalizeModelId('gemini-flash-worker-agy', ''), 'gemini-flash-worker-agy');
+  assert.equal(normalizeModelId('gemini-flash-worker-agy', 'Auto'), 'gemini-flash-worker-agy');
+  assert.equal(normalizeModelId('gemini-flash-worker', 'Gemini 4 Neon (High)'), 'gemini-4-neon');
+  assert.equal(normalizeModelId('gemini-flash-worker', 'Gemini 4 Argon (Low)'), 'gemini-4-argon');
+
+  assert.equal(resolveModelProfile('gemini-flash-worker-agy').id, 'gemini-4-hydrogen');
+  assert.equal(resolveModelProfile('gemini-3.8-flash').id, 'gemini-3-8-flash');
+  assert.equal(resolveModelProfile('gemini-3-8-flash').id, 'gemini-3-8-flash');
+  assert.equal(resolveModelProfile('Gemini Flash').id, 'gemini-3-8-flash');
+
+  const pricing = resolveModelPricing('gemini-flash-worker-agy', DEFAULT_PREFS);
+  assert.equal(pricing.profileId, 'gemini-4-hydrogen');
+  assert.equal(pricing.profileLabel, 'Gemini 4 Hydrogen');
+  assert.equal(pricing.usdInputPer1M, 1.5);
+  assert.equal(pricing.usdCachedPer1M, 0.15);
+  assert.equal(pricing.usdOutputPer1M, 7.5);
+
+  // Bare worker raw slug keeps jio_pro subscription detection while normalized gemini-4-hydrogen detects pro
+  assert.equal(detectSubscriptionPlanFromModels(['gemini-flash-worker-agy']), 'jio_pro');
+  assert.equal(detectSubscriptionPlanFromModels(['gemini-4-hydrogen']), 'pro');
+
+  // pricing_sync.getRuntimeCatalog maps bare gemini-flash-worker-agy cleanly to gemini-4-hydrogen without duplicate promoted entry
+  const stateDir = mkdtempSync(join(tmpdir(), 'tm-v040r2-t1-pricing-'));
+  try {
+    const mgr = createPricingSyncManager({ stateDir, autoSyncDisabled: true });
+    const runtimeCatalog = mgr.getRuntimeCatalog(['gemini-flash-worker-agy']);
+    assert.equal(runtimeCatalog.some((m) => m.id === 'gemini-flash-worker-agy'), false);
+    assert.equal(runtimeCatalog.some((m) => m.hint === '本地观测模型'), false);
+    assert.equal(resolveModelProfile('gemini-flash-worker-agy', runtimeCatalog).id, 'gemini-4-hydrogen');
+    assert.equal(resolveModelProfile('Gemini Flash', runtimeCatalog).id, 'gemini-3-8-flash');
+
+    // Hypothetical unknown flash-worker slug (if unmapped) derives Hydrogen baseline ($1.5/$0.15/$7.5)
+    const promotedCatalog = mgr.getRuntimeCatalog(['gemini-flash-worker@custom']);
+    const promotedEntry = promotedCatalog.find((m) => m.id === 'gemini-flash-worker@custom');
+    assert.ok(promotedEntry);
+    assert.equal(promotedEntry.inputPer1M, 1.5);
+    assert.equal(promotedEntry.cachedPer1M, 0.15);
+    assert.equal(promotedEntry.outputPer1M, 7.5);
+  } finally {
+    rmSync(stateDir, { recursive: true, force: true });
+  }
+
+  // receipt.js, pixel_office.js, and app.js VM checks for bare gemini-flash-worker-agy
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const paneDir = join(testDir, '..', 'sidecars', 'monitor_pane');
+  const receiptSource = readFileSync(join(paneDir, 'receipt.js'), 'utf-8');
+  const pixelOfficeSource = readFileSync(join(paneDir, 'pixel_office.js'), 'utf-8');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+
+  const sandbox = {
+    Blob,
+    Buffer,
+    Uint8Array,
+    Math,
+    Date,
+    Number,
+    String,
+    Array,
+    Object,
+    Promise,
+    Map,
+    Set,
+    RegExp,
+    JSON,
+    URLSearchParams,
+    Intl,
+    AbortController,
+    performance,
+    Node: class {},
+    innerWidth: 400,
+    devicePixelRatio: 2,
+    addEventListener: () => {},
+    matchMedia: () => ({ matches: false }),
+    sidecar: { conversationId: 'conv-r2-t1' },
+    location: { reload: () => {} },
+    sessionStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    navigator: { clipboard: { writeText: async () => {} } },
+    MutationObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+    getComputedStyle: () => ({ color: '#000', getPropertyValue: () => '' }),
+    fetch: async () => ({ ok: true, status: 200, json: async () => ({ unchanged: true }) }),
+    requestAnimationFrame: (cb) => {
+      cb();
+      return 1;
+    },
+    setTimeout: () => 1,
+    clearTimeout: () => {},
+    setInterval: () => 1,
+    clearInterval: () => {},
+    console,
+  };
+  const dummyEl = () => ({
+    style: { setProperty() {}, getPropertyValue: () => '' },
+    classList: { add() {}, remove() {}, contains: () => false, toggle: () => false },
+    setAttribute() {},
+    getAttribute: () => null,
+    addEventListener() {},
+    appendChild() {},
+    remove() {},
+    scrollIntoView() {},
+    replaceChildren() {},
+    querySelectorAll: () => [],
+    querySelector: () => null,
+    dataset: {},
+    children: [],
+    childElementCount: 0,
+  });
+  sandbox.document = {
+    readyState: 'loading',
+    hidden: false,
+    documentElement: dummyEl(),
+    body: dummyEl(),
+    createElement: dummyEl,
+    createElementNS: dummyEl,
+    createTextNode: (t) => ({ textContent: String(t ?? '') }),
+    getElementById: dummyEl,
+    querySelectorAll: () => [],
+    addEventListener() {},
+  };
+  sandbox.document.defaultView = sandbox;
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+
+  const iifeCloseIdx = appSource.lastIndexOf('})();');
+  const instrumentedApp =
+    appSource.slice(0, iifeCloseIdx) +
+    '\n  globalThis.__tmR2T1 = { state, matchProfileIdForModel };\n' +
+    appSource.slice(iifeCloseIdx);
+
+  vm.runInNewContext(receiptSource, sandbox);
+  vm.runInNewContext(pixelOfficeSource, sandbox);
+  vm.runInNewContext(instrumentedApp, sandbox);
+
+  const workerReceipt = sandbox.TokenMonitorReceipt.buildReceiptViewModel(
+    {
+      conversationId: '04020001-0000-4000-8000-000000000001',
+      activeModel: 'gemini-flash-worker-agy',
+      receipt: {
+        todayDate: '2026-11-19',
+        today: {
+          scope: 'today',
+          hasData: true,
+          primaryModel: { model: 'gemini-flash-worker-agy', profileId: '', profileLabel: '' },
+          main: { totalTokens: 1000, costActual: 0.01, stepsCount: 1 },
+          children: [],
+          childrenSubtotal: { totalTokens: 0, costActual: 0 },
+          grandTotal: { totalTokens: 1000, costActual: 0.01, stepsCount: 1 },
+        },
+      },
+    },
+    { currency: 'USD' },
+    { lang: 'en', scope: 'today', detailMode: 'compact' },
+  );
+  assert.equal(
+    workerReceipt.metaRows.find((r) => r.key === 'primaryModel')?.value,
+    'Gemini 4 Hydrogen',
+  );
+  const flashReceipt = sandbox.TokenMonitorReceipt.buildReceiptViewModel(
+    {
+      conversationId: '04020001-0000-4000-8000-000000000002',
+      activeModel: 'gemini-3-8-flash',
+      receipt: {
+        todayDate: '2026-11-19',
+        today: {
+          scope: 'today',
+          hasData: true,
+          primaryModel: { model: 'gemini-3-8-flash', profileId: '', profileLabel: '' },
+          main: { totalTokens: 1000, costActual: 0.01, stepsCount: 1 },
+          children: [],
+          childrenSubtotal: { totalTokens: 0, costActual: 0 },
+          grandTotal: { totalTokens: 1000, costActual: 0.01, stepsCount: 1 },
+        },
+      },
+    },
+    { currency: 'USD' },
+    { lang: 'en', scope: 'today', detailMode: 'compact' },
+  );
+  assert.equal(
+    flashReceipt.metaRows.find((r) => r.key === 'primaryModel')?.value,
+    'Gemini 3.8 Flash',
+  );
+
+  assert.equal(sandbox.TokenMonitorPixelOffice.resolveCatArchetype('gemini-flash-worker-agy').id, 'gemini-4-hydrogen');
+  assert.equal(sandbox.TokenMonitorPixelOffice.resolveCatArchetype('gemini-3-8-flash').id, 'gemini-3.8-flash');
+
+  sandbox.__tmR2T1.state.snapshot = { pricingCatalog: MODEL_PRICING_CATALOG };
+  assert.equal(sandbox.__tmR2T1.matchProfileIdForModel('gemini-flash-worker-agy'), 'gemini-4-hydrogen');
+  assert.equal(sandbox.__tmR2T1.matchProfileIdForModel('Gemini 4 Hydrogen (Orchestrator)'), 'gemini-4-hydrogen');
+  assert.equal(sandbox.__tmR2T1.matchProfileIdForModel('gemini-3-8-flash'), 'gemini-3-8-flash');
+});
+
+test('v0.4.0-r2 Test 2: Scheme A canonical byModel merging, unknown model isolation, and Ledger v5 auto-rebuild', () => {
+  clearParserCache();
+  const { root, appData } = makeTempEnv();
+  try {
+    const convsDir = join(appData, 'conversations');
+    mkdirSync(convsDir, { recursive: true });
+    const baseMs = Date.parse('2026-11-19T04:00:00Z');
+    const todayKey = formatLocalDate(baseMs);
+
+    const coordId = '04020002-0000-4000-8000-000000000000';
+    const childCarbonOrchId = '04020002-0000-4000-8000-000000000001';
+    const childHydrogenWorkerId = '04020002-0000-4000-8000-000000000002';
+    const childLegacyFlashId = '04020002-0000-4000-8000-000000000003';
+    const childUnknownId = '04020002-0000-4000-8000-000000000004';
+
+    function writeDbConv(cid, specs) {
+      const db = new DatabaseSync(join(convsDir, `${cid}.db`));
+      db.exec(`
+        CREATE TABLE gen_metadata (idx INTEGER PRIMARY KEY, data BLOB, size INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INTEGER NOT NULL DEFAULT 0, status INTEGER NOT NULL DEFAULT 0, metadata BLOB);
+      `);
+      const insGen = db.prepare('INSERT INTO gen_metadata (idx, data, size) VALUES (?, ?, ?)');
+      const insStep = db.prepare('INSERT INTO steps (idx, step_type, status, metadata) VALUES (?, ?, ?, ?)');
+      specs.forEach((sp, idx) => {
+        const usageBuf = encodeTokenUsage({
+          enumId: sp.enumId,
+          input: sp.input,
+          cacheRead: sp.cacheRead,
+          output: sp.output,
+          botId: sp.botId,
+        });
+        const genInner = Buffer.concat([
+          encodeBytesField(4, usageBuf),
+          encodeBytesField(19, sp.rawModel),
+          encodeBytesField(20, encodeGenKv('cascade_id', cid)),
+          encodeBytesField(21, sp.displayModel),
+        ]);
+        const genTop = Buffer.concat([
+          encodeBytesField(1, genInner),
+          encodeBytesField(2, encodeVarint(sp.stepIdx)),
+        ]);
+        insGen.run(idx, genTop, genTop.length);
+
+        const metaBuf = Buffer.concat([
+          encodeBytesField(1, encodeTimestampMs(sp.createdMs)),
+          encodeBytesField(7, encodeTimestampMs(sp.createdMs + 1000)),
+          encodeBytesField(9, usageBuf),
+          encodeBytesField(20, encodeStepField20({ stepIdx: sp.stepIdx, genIdx: idx, originCascadeId: cid })),
+        ]);
+        insStep.run(sp.stepIdx, 15, 3, metaBuf);
+      });
+      db.close();
+    }
+
+    // Main coordinator uses Neon (1532 + 1537), Carbon (1427), Hydrogen (1525), and unknown gemini-5-quantum
+    writeDbConv(coordId, [
+      {
+        stepIdx: 1,
+        enumId: 1532,
+        rawModel: 'gemini-4-neon',
+        displayModel: 'Gemini 4 Neon (High)',
+        botId: 'r2t2-bot-neon-1',
+        input: 1000,
+        cacheRead: 2000,
+        output: 100,
+        createdMs: baseMs + 1000,
+      },
+      {
+        stepIdx: 3,
+        enumId: 1537,
+        rawModel: 'gemini-pro-orchestrator-neon',
+        displayModel: 'Orchestrator (Neon)',
+        botId: 'r2t2-bot-neon-2',
+        input: 2000,
+        cacheRead: 3000,
+        output: 200,
+        createdMs: baseMs + 2000,
+      },
+      {
+        stepIdx: 5,
+        enumId: 1427,
+        rawModel: 'gemini-4-carbon',
+        displayModel: 'Gemini 4 Carbon (High)',
+        botId: 'r2t2-bot-carbon-1',
+        input: 3000,
+        cacheRead: 4000,
+        output: 300,
+        createdMs: baseMs + 3000,
+      },
+      {
+        stepIdx: 7,
+        enumId: 1525,
+        rawModel: 'gemini-4-hydrogen',
+        displayModel: 'Gemini 4 Hydrogen (High)',
+        botId: 'r2t2-bot-hydro-1',
+        input: 4000,
+        cacheRead: 5000,
+        output: 400,
+        createdMs: baseMs + 4000,
+      },
+      {
+        stepIdx: 9,
+        enumId: 1999,
+        rawModel: 'gemini-5-quantum',
+        displayModel: 'Gemini 5 Quantum (High)',
+        botId: 'r2t2-bot-quantum-1',
+        input: 500,
+        cacheRead: 500,
+        output: 50,
+        createdMs: baseMs + 5000,
+      },
+    ]);
+
+    // Swarm members on coordinator
+    writeConversation(appData, coordId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs).toISOString(),
+          content: '<USER_REQUEST>Scheme A multi-model check</USER_REQUEST>',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: new Date(baseMs + 1000).toISOString(),
+          input_tokens: 1000,
+          cache_read_tokens: 2000,
+          output_tokens: 100,
+          tool_calls: [],
+        },
+      ],
+      members: {
+        title: 'Scheme A Swarm',
+        members: {
+          coordinator: { conversation_id: coordId, role: 'coordinator', model: 'gemini-4-neon' },
+          wCarbon: { conversation_id: childCarbonOrchId, role: 'worker', model: 'gemini-pro-orchestrator' },
+          wHydrogen: { conversation_id: childHydrogenWorkerId, role: 'worker', model: 'gemini-flash-worker-agy' },
+          wLegacyFlash: { conversation_id: childLegacyFlashId, role: 'worker', model: 'gemini-flash-worker-agy' },
+          wUnknown: { conversation_id: childUnknownId, role: 'worker', model: 'gemini-5-quantum' },
+        },
+      },
+      mtimeMs: baseMs + 5500,
+    });
+
+    writeDbConv(childCarbonOrchId, [
+      {
+        stepIdx: 1,
+        enumId: 1667,
+        rawModel: 'gemini-pro-orchestrator',
+        displayModel: 'Orchestrator (Carbon)',
+        botId: 'r2t2-bot-carbon-2',
+        input: 6000,
+        cacheRead: 7000,
+        output: 600,
+        createdMs: baseMs + 6000,
+      },
+    ]);
+
+    writeDbConv(childHydrogenWorkerId, [
+      {
+        stepIdx: 1,
+        enumId: 1669,
+        rawModel: 'gemini-flash-worker-agy',
+        displayModel: 'Gemini 4 Hydrogen (Orchestrator)',
+        botId: 'r2t2-bot-hydro-2',
+        input: 8000,
+        cacheRead: 9000,
+        output: 800,
+        createdMs: baseMs + 7000,
+      },
+    ]);
+
+    writeDbConv(childLegacyFlashId, [
+      {
+        stepIdx: 1,
+        enumId: 1669,
+        rawModel: 'gemini-flash-worker-agy',
+        displayModel: 'Gemini Flash',
+        botId: 'r2t2-bot-flash-1',
+        input: 1000,
+        cacheRead: 1000,
+        output: 100,
+        createdMs: baseMs + 8000,
+      },
+    ]);
+
+    writeDbConv(childUnknownId, [
+      {
+        stepIdx: 1,
+        enumId: 1999,
+        rawModel: 'gemini-5-quantum',
+        displayModel: 'Gemini 5 Quantum',
+        botId: 'r2t2-bot-quantum-2',
+        input: 1500,
+        cacheRead: 1500,
+        output: 150,
+        createdMs: baseMs + 9000,
+      },
+    ]);
+
+    const res = analyzeConversation(coordId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.ok(res);
+
+    // Tab 1 withChildren byModel: 5 clean rows (4 canonical + 1 unknown gemini-5-quantum, ZERO 'Auto' merge)
+    assert.equal(res.totals.byModel.length, 5);
+    assert.deepEqual(
+      res.totals.byModel.map((r) => r.model).sort(),
+      ['Gemini 3.8 Flash', 'Gemini 4 Carbon', 'Gemini 4 Hydrogen', 'Gemini 4 Neon', 'gemini-5-quantum'],
+    );
+    const byModelByName = new Map(res.totals.byModel.map((r) => [r.model, r]));
+
+    assert.equal(byModelByName.get('Gemini 4 Neon').profileId, 'gemini-4-neon');
+    assert.deepEqual(byModelByName.get('Gemini 4 Neon').rawModels, [
+      'gemini-4-neon',
+      'gemini-pro-orchestrator-neon',
+    ]);
+    assert.equal(byModelByName.get('Gemini 4 Neon').totalTokens, 8300);
+
+    assert.equal(byModelByName.get('Gemini 4 Carbon').profileId, 'gemini-4-carbon');
+    assert.deepEqual(byModelByName.get('Gemini 4 Carbon').rawModels, [
+      'gemini-4-carbon',
+      'gemini-pro-orchestrator',
+    ]);
+    assert.equal(byModelByName.get('Gemini 4 Carbon').totalTokens, 20900);
+
+    assert.equal(byModelByName.get('Gemini 4 Hydrogen').profileId, 'gemini-4-hydrogen');
+    assert.deepEqual(byModelByName.get('Gemini 4 Hydrogen').rawModels, [
+      'gemini-4-hydrogen',
+      'gemini-flash-worker-agy',
+    ]);
+    assert.equal(byModelByName.get('Gemini 4 Hydrogen').totalTokens, 27200);
+
+    assert.equal(byModelByName.get('Gemini 3.8 Flash').profileId, 'gemini-3-8-flash');
+    assert.deepEqual(byModelByName.get('Gemini 3.8 Flash').rawModels, ['gemini-flash-worker-agy']);
+    assert.equal(byModelByName.get('Gemini 3.8 Flash').totalTokens, 2100);
+
+    const quantumRow = byModelByName.get('gemini-5-quantum');
+    assert.ok(quantumRow, 'Unknown model gemini-5-quantum must stay in its own independent row');
+    assert.equal(quantumRow.profileId, 'auto');
+    assert.deepEqual(quantumRow.rawModels, ['gemini-5-quantum']);
+    assert.equal(quantumRow.totalTokens, 4200);
+    assert.equal(byModelByName.has('Auto'), false);
+    assert.equal(byModelByName.has('Auto (默认)'), false);
+
+    // Tab 1 mainOnlyByModel isolates main coordinator rows (excludes child-only Gemini 3.8 Flash)
+    assert.deepEqual(
+      res.totals.mainOnlyByModel.map((r) => r.model).sort(),
+      ['Gemini 4 Carbon', 'Gemini 4 Hydrogen', 'Gemini 4 Neon', 'gemini-5-quantum'],
+    );
+    const mainQuantum = res.totals.mainOnlyByModel.find((r) => r.model === 'gemini-5-quantum');
+    assert.equal(mainQuantum.totalTokens, 1050);
+
+    // Verify LEDGER_SCHEMA_VERSION === 5 automatically rebuilds stale v4 ledger and fixes Hydrogen vs Flash attribution
+    assert.equal(LEDGER_SCHEMA_VERSION, 5);
+    const staleV4Ledger = {
+      version: 4,
+      threshold: 200000,
+      conversations: {
+        [childHydrogenWorkerId]: {
+          cacheKey: 'stale-v4-misattributed-flash',
+          updatedAtMs: baseMs + 7000,
+          onDisk: true,
+          activeModel: 'gemini-flash-worker-agy',
+          days: {
+            [todayKey]: {
+              byModel: {
+                'gemini-flash-worker-agy': {
+                  steps: 1,
+                  stdIn: 8000,
+                  stdCache: 9000,
+                  stdOut: 800,
+                  longIn: 0,
+                  longCache: 0,
+                  longOut: 0,
+                },
+              },
+              hours: {},
+            },
+          },
+        },
+      },
+    };
+    const ledger = createUsageLedger(staleV4Ledger);
+    assert.equal(ledger.getData().version, 5);
+    assert.equal(ledger.isDirty(), true);
+    assert.deepEqual(ledger.getData().conversations, {});
+
+    const global = summarizeGlobalAndRecent({
+      appDataDirs: [appData],
+      nowMs: baseMs + 15000,
+      ledger,
+      disableAgentApi: true,
+    });
+    for (const periodKey of ['today', 'all']) {
+      const rows = global.periods[periodKey].byModel;
+      assert.equal(rows.length, 5);
+      const map = new Map(rows.map((r) => [r.model, r]));
+      assert.deepEqual([...map.keys()].sort(), [
+        'Gemini 3.8 Flash',
+        'Gemini 4 Carbon',
+        'Gemini 4 Hydrogen',
+        'Gemini 4 Neon',
+        'gemini-5-quantum',
+      ]);
+      assert.deepEqual(map.get('Gemini 4 Neon').rawModels, [
+        'gemini-4-neon',
+        'gemini-pro-orchestrator-neon',
+      ]);
+      assert.deepEqual(map.get('Gemini 4 Carbon').rawModels, [
+        'gemini-4-carbon',
+        'gemini-pro-orchestrator',
+      ]);
+      assert.deepEqual(map.get('Gemini 4 Hydrogen').rawModels, [
+        'gemini-4-hydrogen',
+        'gemini-flash-worker-agy',
+      ]);
+      assert.equal(map.get('Gemini 4 Hydrogen').totalTokens, 27200);
+      assert.deepEqual(map.get('Gemini 3.8 Flash').rawModels, ['gemini-flash-worker-agy']);
+      assert.equal(map.get('Gemini 3.8 Flash').totalTokens, 2100);
+      assert.equal(map.get('gemini-5-quantum').profileId, 'auto');
+      assert.deepEqual(map.get('gemini-5-quantum').rawModels, ['gemini-5-quantum']);
+      assert.equal(map.get('gemini-5-quantum').totalTokens, 4200);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.4.0-r2 Test 3: round-scoped Pixel Office filtering (selectRoundChildren / buildOfficeModel) and backend timestamps', () => {
+  clearParserCache();
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const pixelOfficeSource = readFileSync(
+    join(testDir, '..', 'sidecars', 'monitor_pane', 'pixel_office.js'),
+    'utf-8',
+  );
+  const sandbox = {
+    Math,
+    Date,
+    Number,
+    String,
+    Array,
+    Object,
+    Map,
+    Set,
+    RegExp,
+    performance,
+    module: { exports: {} },
+  };
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+  vm.runInNewContext(pixelOfficeSource, sandbox);
+  const api = sandbox.TokenMonitorPixelOffice;
+  assert.equal(typeof api.selectRoundChildren, 'function');
+
+  const day1 = Date.parse('2026-11-18T10:00:00Z');
+  const day2 = Date.parse('2026-11-19T04:00:00Z');
+  const turn1 = day1;
+  const turn2 = day1 + 3600_000;
+  const turn3 = day2;
+
+  const standingMonitor = {
+    conversationId: 'r2t3-monitor',
+    name: 'monitor',
+    role: 'monitor',
+    model: 'gemini-4-hydrogen',
+    status: 'IDLE',
+    killed: false,
+    createdAtMs: turn1 + 5000,
+    updatedAtMs: turn3 + 20_000,
+  };
+  const oldRetired1 = {
+    conversationId: 'r2t3-v032-1',
+    name: 'v032-backend',
+    role: 'worker',
+    model: 'gemini-4-carbon',
+    status: 'IDLE',
+    killed: true,
+    createdAtMs: turn2 + 5000,
+    updatedAtMs: turn2 + 600_000,
+  };
+  const oldRetired2 = {
+    conversationId: 'r2t3-v032-2',
+    name: 'v032-ui',
+    role: 'worker',
+    model: 'gemini-4-argon',
+    status: 'IDLE',
+    killed: true,
+    createdAtMs: turn2 + 10_000,
+    updatedAtMs: turn2 + 620_000,
+  };
+  const round2CompletedA = {
+    conversationId: 'r2t3-v040-a',
+    name: 'v040r2backend',
+    role: 'worker',
+    model: 'gemini-4-carbon',
+    status: 'IDLE',
+    killed: true,
+    createdAtMs: turn3 + 5000,
+    updatedAtMs: turn3 + 120_000,
+  };
+  const round2CompletedB = {
+    conversationId: 'r2t3-v040-b',
+    name: 'v040r2ui',
+    role: 'worker',
+    model: 'gemini-4-neon',
+    status: 'IDLE',
+    killed: true,
+    createdAtMs: turn3 + 6000,
+    updatedAtMs: turn3 + 110_000,
+  };
+
+  const allHistoryChildren = [
+    standingMonitor,
+    round2CompletedA,
+    round2CompletedB,
+    oldRetired1,
+    oldRetired2,
+  ];
+
+  // (a) Idle / Completed mode keeps ONLY latest round (v040*) + still-alive standing worker (monitor), hides v032*
+  const idleCurrent = {
+    conversationId: 'r2t3-main',
+    status: 'IDLE',
+    activeModel: 'gemini-4-hydrogen',
+    userTurnTimestampsMs: [turn1, turn2, turn3],
+  };
+  const idleSelected = api.selectRoundChildren(idleCurrent, allHistoryChildren);
+  assert.deepEqual(
+    idleSelected.map((c) => c.name),
+    ['monitor', 'v040r2backend', 'v040r2ui'],
+  );
+  const idleOffice = api.buildOfficeModel(idleCurrent, allHistoryChildren, 'zh');
+  assert.equal(idleOffice.overflowCount, 0);
+  assert.equal(idleOffice.totalChildren, 3);
+  assert.equal(idleOffice.slots.length, 4);
+
+  // (b) Working mode hides ALL earlier retired workers (v032*) while keeping alive standing + current-round workers
+  const workingActive = {
+    conversationId: 'r2t3-v040-live',
+    name: 'v040r2test',
+    role: 'tester',
+    model: 'gemini-4-neon',
+    status: 'RUNNING_TOOLS',
+    killed: false,
+    activeToolLabel: 'node --test',
+    createdAtMs: turn3 + 8000,
+    updatedAtMs: turn3 + 130_000,
+  };
+  const workingChildren = [workingActive, ...allHistoryChildren];
+  const workingCurrent = {
+    conversationId: 'r2t3-main',
+    status: 'GENERATING',
+    activeModel: 'gemini-4-hydrogen',
+    userTurnTimestampsMs: [turn1, turn2, turn3],
+  };
+  const workingSelected = api.selectRoundChildren(workingCurrent, workingChildren);
+  assert.deepEqual(
+    workingSelected.map((c) => c.name),
+    ['v040r2test', 'monitor', 'v040r2backend', 'v040r2ui'],
+  );
+  const workingOffice = api.buildOfficeModel(workingCurrent, workingChildren, 'en');
+  assert.equal(workingOffice.hasActive, true);
+  assert.equal(workingOffice.overflowCount, 0);
+  assert.equal(workingOffice.slots.length, 5);
+
+  // (c) Single active round with 12 subagents caps visible sub desks at 8 and sets overflowCount === 4
+  const twelveCurrentRound = Array.from({ length: 12 }, (_, idx) => ({
+    conversationId: `r2t3-12-${idx}`,
+    name: `v040-sub-${idx + 1}`,
+    role: 'worker',
+    model: 'gemini-4-hydrogen',
+    status: idx < 2 ? 'GENERATING' : 'IDLE',
+    killed: idx >= 6,
+    createdAtMs: turn3 + 1000 + idx * 100,
+    updatedAtMs: turn3 + 20_000 + idx * 100,
+  }));
+  const twelveOffice = api.buildOfficeModel(workingCurrent, twelveCurrentRound, 'zh');
+  assert.equal(twelveOffice.totalChildren, 12);
+  assert.equal(twelveOffice.slots.length, 9); // 1 main + 8 sub desks
+  assert.equal(twelveOffice.overflowCount, 4);
+
+  // (d) Missing userTurnTimestampsMs fallback: 30-min window + timestamp-less legacy mock compatibility
+  const noTurnsCurrent = { conversationId: 'r2t3-noturns', status: 'IDLE', activeModel: 'Auto' };
+  const noTurnsSelected = api.selectRoundChildren(noTurnsCurrent, allHistoryChildren);
+  assert.deepEqual(
+    noTurnsSelected.map((c) => c.name),
+    ['monitor', 'v040r2backend', 'v040r2ui'],
+  );
+
+  const legacyTimestampless = [
+    { conversationId: 'leg-1', name: 'alive-leg', killed: false, status: 'IDLE' },
+    { conversationId: 'leg-2', name: 'killed-leg', killed: true, status: 'IDLE' },
+  ];
+  assert.deepEqual(
+    api.selectRoundChildren(noTurnsCurrent, legacyTimestampless).map((c) => c.name),
+    ['alive-leg'],
+  );
+  const allKilledTimestampless = [
+    { conversationId: 'leg-k1', name: 'killed-1', killed: true, status: 'IDLE' },
+    { conversationId: 'leg-k2', name: 'killed-2', killed: true, status: 'IDLE' },
+  ];
+  assert.deepEqual(
+    api.selectRoundChildren(noTurnsCurrent, allKilledTimestampless).map((c) => c.name),
+    ['killed-1', 'killed-2'],
+  );
+
+  // Backend integration: analyzeConversation exposes sorted userTurnTimestampsMs and children[].createdAtMs
+  const { root, appData } = makeTempEnv();
+  try {
+    const coordId = '04020003-0000-4000-8000-000000000000';
+    const childId = '04020003-0000-4000-8000-000000000001';
+    const u1 = Date.parse('2026-11-19T01:00:00Z');
+    const u2 = Date.parse('2026-11-19T02:00:00Z');
+    writeConversation(appData, childId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(u2 + 2000).toISOString(),
+          content: 'Child turn',
+        },
+      ],
+      mtimeMs: u2 + 5000,
+    });
+    writeConversation(appData, coordId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(u1).toISOString(),
+          content: 'Turn 1',
+        },
+        {
+          step_index: 1,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(u2).toISOString(),
+          content: 'Turn 2',
+        },
+      ],
+      members: {
+        title: 'Round Turn Backend Test',
+        members: {
+          coordinator: { conversation_id: coordId, role: 'coordinator', model: 'gemini-4-neon' },
+          worker: { conversation_id: childId, role: 'worker', model: 'gemini-flash-worker-agy' },
+        },
+      },
+      mtimeMs: u2 + 6000,
+    });
+    const analyzed = analyzeConversation(coordId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.deepEqual(analyzed.userTurnTimestampsMs, [u1, u2]);
+    assert.equal(analyzed.children[0].createdAtMs, u2 + 2000);
+    assert.equal(analyzed.children[0].rawModel, 'gemini-flash-worker-agy');
+    assert.equal(analyzed.children[0].modelLabel, 'Gemini 4 Hydrogen');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.4.0-r2 Test 4: Pixel Inspector cleanup, #model-pill canonical + raw tooltip, and Tab 1/Tab 2 model-cell tooltips in VM DOM', async () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const paneDir = join(testDir, '..', 'sidecars', 'monitor_pane');
+  const receiptSource = readFileSync(join(paneDir, 'receipt.js'), 'utf-8');
+  const pixelOfficeSource = readFileSync(join(paneDir, 'pixel_office.js'), 'utf-8');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+
+  const iifeCloseIdx = appSource.lastIndexOf('})();');
+  const instrumentedApp =
+    appSource.slice(0, iifeCloseIdx) +
+    '\n  globalThis.__tmR2T4 = { state, init, renderHeader, renderPixelOfficeCard, renderChildrenAndModelsCard, renderGlobalTab, renderCurrentTab };\n' +
+    appSource.slice(iifeCloseIdx);
+
+  class FakeNode {
+    constructor() {
+      this.parentNode = null;
+      this.childNodes = [];
+    }
+  }
+  class FakeTextNode extends FakeNode {
+    constructor(text) {
+      super();
+      this.nodeType = 3;
+      this._text = String(text ?? '');
+    }
+    get textContent() {
+      return this._text;
+    }
+    set textContent(v) {
+      this._text = String(v ?? '');
+    }
+  }
+  function matchesSimpleSelector(elNode, selector) {
+    const s = selector.trim();
+    if (!s) return false;
+    if (s.startsWith('#')) return elNode.getAttribute('id') === s.slice(1);
+    if (s.startsWith('.')) {
+      return s.slice(1).split('.').filter(Boolean).every((cls) => elNode.classList.contains(cls));
+    }
+    const dotParts = s.split('.');
+    const tagPart = dotParts[0].toUpperCase();
+    if (tagPart && elNode.tagName !== tagPart) return false;
+    return dotParts.slice(1).every((cls) => elNode.classList.contains(cls));
+  }
+  class FakeElement extends FakeNode {
+    constructor(tagName, namespaceURI = 'http://www.w3.org/1999/xhtml') {
+      super();
+      this.nodeType = 1;
+      this.tagName = String(tagName || 'div').toUpperCase();
+      this.namespaceURI = namespaceURI;
+      this._classSet = new Set();
+      this.attributes = new Map();
+      this.listeners = new Map();
+      this.dataset = {};
+      this.title = '';
+      this.type = '';
+      this.role = '';
+      this.value = '';
+      this.disabled = false;
+      this.checked = false;
+      this.scrollTop = 0;
+      this.clientWidth = 420;
+      this.width = 0;
+      this.height = 0;
+      this.style = {
+        setProperty(name, val) {
+          this[name] = String(val);
+        },
+        getPropertyValue(name) {
+          return this[name] ?? '';
+        },
+      };
+      this.classList = {
+        add: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.add(part);
+            }
+          }
+        },
+        remove: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.delete(part);
+            }
+          }
+        },
+        contains: (tok) => this._classSet.has(String(tok || '')),
+        toggle: (tok, force) => {
+          const key = String(tok || '');
+          const shouldAdd = force === undefined ? !this._classSet.has(key) : Boolean(force);
+          if (shouldAdd) this._classSet.add(key);
+          else this._classSet.delete(key);
+          return shouldAdd;
+        },
+      };
+    }
+    get className() {
+      return [...this._classSet].join(' ');
+    }
+    set className(val) {
+      this._classSet.clear();
+      for (const part of String(val || '').trim().split(/\s+/)) {
+        if (part) this._classSet.add(part);
+      }
+    }
+    get children() {
+      return this.childNodes.filter((n) => n instanceof FakeElement);
+    }
+    get childElementCount() {
+      return this.children.length;
+    }
+    get textContent() {
+      return this.childNodes.map((n) => n.textContent).join('');
+    }
+    set textContent(val) {
+      for (const c of this.childNodes) c.parentNode = null;
+      this.childNodes = [];
+      const str = val === null || val === undefined ? '' : String(val);
+      if (str !== '') this.appendChild(new FakeTextNode(str));
+    }
+    setAttribute(name, val) {
+      const k = String(name);
+      const v = String(val);
+      if (k === 'class') {
+        this.className = v;
+        return;
+      }
+      if (k === 'title') this.title = v;
+      this.attributes.set(k, v);
+    }
+    getAttribute(name) {
+      const k = String(name);
+      if (k === 'class') return this.className;
+      return this.attributes.has(k) ? this.attributes.get(k) : null;
+    }
+    hasAttribute(name) {
+      return name === 'class' ? this._classSet.size > 0 : this.attributes.has(String(name));
+    }
+    removeAttribute(name) {
+      if (name === 'class') this.className = '';
+      else this.attributes.delete(String(name));
+    }
+    appendChild(child) {
+      if (child.parentNode) {
+        const idx = child.parentNode.childNodes.indexOf(child);
+        if (idx >= 0) child.parentNode.childNodes.splice(idx, 1);
+      }
+      child.parentNode = this;
+      this.childNodes.push(child);
+      return child;
+    }
+    remove() {
+      if (this.parentNode) {
+        const idx = this.parentNode.childNodes.indexOf(this);
+        if (idx >= 0) this.parentNode.childNodes.splice(idx, 1);
+        this.parentNode = null;
+      }
+    }
+    scrollIntoView() {}
+    replaceChildren(...nodes) {
+      for (const c of this.childNodes) c.parentNode = null;
+      this.childNodes = [];
+      for (const n of nodes) {
+        if (n === null || n === undefined) continue;
+        this.appendChild(typeof n === 'string' ? new FakeTextNode(n) : n);
+      }
+    }
+    addEventListener(type, fn) {
+      if (!this.listeners.has(type)) this.listeners.set(type, []);
+      this.listeners.get(type).push(fn);
+    }
+    click(extraProps = {}) {
+      const evt = {
+        type: 'click',
+        target: this,
+        currentTarget: this,
+        preventDefault() {},
+        stopPropagation() {},
+        ...extraProps,
+      };
+      for (const fn of this.listeners.get('click') || []) fn(evt);
+    }
+    getBoundingClientRect() {
+      const w = this.clientWidth || 420;
+      const h =
+        this.tagName === 'CANVAS' && this.width > 0 && this.height > 0
+          ? Math.round(w * (this.height / this.width))
+          : 200;
+      return { left: 0, top: 0, width: w, height: h };
+    }
+    querySelectorAll(selector) {
+      const out = [];
+      const visit = (node) => {
+        for (const ch of node.children) {
+          if (matchesSimpleSelector(ch, selector)) out.push(ch);
+          visit(ch);
+        }
+      };
+      visit(this);
+      return out;
+    }
+    querySelector(selector) {
+      return this.querySelectorAll(selector)[0] || null;
+    }
+    getContext(kind) {
+      if (this.tagName !== 'CANVAS' || kind !== '2d') return null;
+      return {
+        font: '',
+        fillStyle: '',
+        strokeStyle: '',
+        lineWidth: 1,
+        textAlign: 'left',
+        textBaseline: 'alphabetic',
+        imageSmoothingEnabled: true,
+        setTransform() {},
+        createLinearGradient() {
+          return { addColorStop() {} };
+        },
+        measureText(str) {
+          return { width: String(str || '').length * 6.5 };
+        },
+        fillRect() {},
+        strokeRect() {},
+        fillText() {},
+        drawImage() {},
+      };
+    }
+  }
+
+  const elementsById = new Map();
+  const rootHtml = new FakeElement('html');
+  const rootBody = new FakeElement('body');
+  rootHtml.appendChild(rootBody);
+  const fakeDocument = {
+    readyState: 'loading',
+    hidden: false,
+    documentElement: rootHtml,
+    body: rootBody,
+    createElement: (tag) => new FakeElement(tag),
+    createElementNS: (ns, tag) => new FakeElement(tag, ns),
+    createTextNode: (text) => new FakeTextNode(text),
+    getElementById(id) {
+      const k = String(id);
+      if (!elementsById.has(k)) {
+        const node = new FakeElement(k.includes('card') ? 'article' : 'div');
+        node.setAttribute('id', k);
+        rootBody.appendChild(node);
+        elementsById.set(k, node);
+      }
+      return elementsById.get(k);
+    },
+    querySelectorAll: () => [],
+    addEventListener() {},
+  };
+
+  const sandbox = {
+    Node: FakeNode,
+    document: fakeDocument,
+    innerWidth: 420,
+    devicePixelRatio: 2,
+    addEventListener: () => {},
+    matchMedia: () => ({ matches: false }),
+    sidecar: { conversationId: 'conv-r2t4' },
+    location: { reload: () => {} },
+    sessionStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    navigator: { clipboard: { writeText: async () => {} } },
+    MutationObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+    getComputedStyle: () => ({ color: 'rgb(246, 247, 249)', getPropertyValue: () => '#f6f7f9' }),
+    AbortController,
+    Blob,
+    Buffer,
+    Uint8Array,
+    Math,
+    Date,
+    Number,
+    String,
+    Array,
+    Object,
+    Map,
+    Set,
+    RegExp,
+    JSON,
+    Promise,
+    performance,
+    URLSearchParams,
+    Intl,
+    fetch: async () => ({ ok: true, status: 200, json: async () => ({ unchanged: true }) }),
+    requestAnimationFrame: (cb) => {
+      cb();
+      return 1;
+    },
+    setTimeout: () => 1,
+    clearTimeout: () => {},
+    setInterval: () => 1,
+    clearInterval: () => {},
+    console,
+  };
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+  fakeDocument.defaultView = sandbox;
+
+  vm.runInNewContext(receiptSource, sandbox);
+  vm.runInNewContext(pixelOfficeSource, sandbox);
+  vm.runInNewContext(instrumentedApp, sandbox);
+
+  const exports = sandbox.__tmR2T4;
+  exports.init();
+  await new Promise((r) => setImmediate(r));
+
+  const mergedByModelRows = [
+    {
+      model: 'Gemini 4 Neon',
+      profileId: 'gemini-4-neon',
+      profileLabel: 'Gemini 4 Neon',
+      rawModels: ['gemini-4-neon', 'gemini-pro-orchestrator-neon'],
+      rateDisplay: 'USD 2.00 / 0.20 / 10.00',
+      stepsCount: 4,
+      conversationsCount: 2,
+      inputUncachedTokens: 10_000,
+      cacheReadTokens: 20_000,
+      outputTokens: 1000,
+      inputTokens: 10_000,
+      totalTokens: 31_000,
+      costActual: 0.034,
+    },
+    {
+      model: 'Gemini 4 Hydrogen',
+      profileId: 'gemini-4-hydrogen',
+      profileLabel: 'Gemini 4 Hydrogen',
+      rawModels: ['gemini-4-hydrogen', 'gemini-flash-worker-agy'],
+      rateDisplay: 'USD 1.50 / 0.15 / 7.50',
+      stepsCount: 3,
+      conversationsCount: 1,
+      inputUncachedTokens: 8000,
+      cacheReadTokens: 9000,
+      outputTokens: 800,
+      inputTokens: 8000,
+      totalTokens: 17_800,
+      costActual: 0.01935,
+    },
+  ];
+
+  const baseCurrent = {
+    conversationId: 'conv-r2t4',
+    title: 'R2 UI Verification',
+    activeModel: 'gemini-4-neon',
+    activeModelLabel: 'Gemini 4 Neon',
+    activeRawModel: 'gemini-pro-orchestrator-neon',
+    status: 'GENERATING',
+    userTurnTimestampsMs: [Date.now() - 60_000],
+    speed: { latestStepTokPerSec: 88, weightedAvgTokPerSec: 80, maxStepTokPerSec: 95, steps: [] },
+    context: { currentTotal: 50_000, usageLevel: 'HEALTHY', softLimit: 409_600, hardLimit: 512_000 },
+    cache: { hitRatePct: 75, cacheReadTokens: 30_000, inputUncachedTokens: 10_000, spikes: [] },
+    totals: {
+      mainOnly: { totalTokens: 31_000, outputTokens: 1000, costActual: 0.034, stepsCount: 4 },
+      withChildren: { totalTokens: 48_800, outputTokens: 1800, costActual: 0.05335, stepsCount: 7 },
+      byModel: mergedByModelRows,
+      mainOnlyByModel: [mergedByModelRows[0]],
+    },
+    children: [
+      {
+        conversationId: 'conv-r2t4-child-1',
+        kind: 'swarm',
+        name: 'worker-hydro',
+        role: 'worker',
+        model: 'gemini-4-hydrogen',
+        rawModel: 'gemini-flash-worker-agy',
+        modelLabel: 'Gemini 4 Hydrogen',
+        status: 'RUNNING_TOOLS',
+        killed: false,
+        activeToolLabel: 'Run tests',
+        createdAtMs: Date.now() - 30_000,
+        updatedAtMs: Date.now() - 1000,
+        latestTokPerSec: 70,
+        contextTotal: 17_000,
+        outputTokens: 800,
+        costActual: 0.01935,
+      },
+    ],
+  };
+
+  const snap = {
+    appVersion: '0.4.0',
+    prefs: { ...DEFAULT_PREFS, pixelOfficeCollapsed: false },
+    pricingCatalog: MODEL_PRICING_CATALOG,
+    current: baseCurrent,
+    global: {
+      todayDate: '2026-11-19',
+      periods: {
+        today: {
+          rangeKey: 'today',
+          startDate: '2026-11-19',
+          endDate: '2026-11-19',
+          spanDaysCount: 1,
+          activeDaysCount: 1,
+          conversationsCount: 2,
+          archivedConversationsCount: 0,
+          stepsCount: 7,
+          inputTokens: 18_000,
+          cacheReadTokens: 29_000,
+          outputTokens: 1800,
+          totalTokens: 48_800,
+          cacheHitRatePct: 61.7,
+          costActual: 0.05335,
+          avgDailyCost: 0.05335,
+          avgDailyTokens: 48_800,
+          trendGranularity: 'hour',
+          series: [],
+          byModel: mergedByModelRows,
+          topConversations: [],
+          subscription: null,
+        },
+      },
+      recentConversations: [],
+    },
+  };
+
+  // 1. Header #model-pill verification (Neon, Hydrogen, Auto ZH/EN)
+  exports.state.snapshot = snap;
+  exports.state.lang = 'zh';
+  exports.renderHeader(snap);
+  assert.equal(fakeDocument.getElementById('model-text').textContent, 'Gemini 4 Neon');
+  assert.equal(
+    fakeDocument.getElementById('model-pill').title,
+    '当前模型: Gemini 4 Neon (gemini-pro-orchestrator-neon)',
+  );
+
+  exports.state.lang = 'en';
+  exports.renderHeader(snap);
+  assert.equal(fakeDocument.getElementById('model-text').textContent, 'Gemini 4 Neon');
+  assert.equal(
+    fakeDocument.getElementById('model-pill').title,
+    'Current Model: Gemini 4 Neon (gemini-pro-orchestrator-neon)',
+  );
+
+  // Hydrogen header pill check
+  const hydroSnap = {
+    ...snap,
+    current: {
+      ...baseCurrent,
+      activeModel: 'gemini-4-hydrogen',
+      activeModelLabel: 'Gemini 4 Hydrogen',
+      activeRawModel: 'gemini-flash-worker-agy',
+    },
+  };
+  exports.renderHeader(hydroSnap);
+  assert.equal(fakeDocument.getElementById('model-text').textContent, 'Gemini 4 Hydrogen');
+  assert.equal(
+    fakeDocument.getElementById('model-pill').title,
+    'Current Model: Gemini 4 Hydrogen (gemini-flash-worker-agy)',
+  );
+
+  // Auto header pill localization check (EN vs ZH)
+  const autoSnap = {
+    ...snap,
+    current: {
+      ...baseCurrent,
+      activeModel: 'Auto',
+      activeModelLabel: 'Auto',
+      activeRawModel: 'Auto',
+    },
+  };
+  exports.state.lang = 'zh';
+  exports.renderHeader(autoSnap);
+  assert.equal(fakeDocument.getElementById('model-text').textContent, 'Auto (默认)');
+  assert.equal(fakeDocument.getElementById('model-pill').title, '当前模型: Auto (默认)');
+  exports.state.lang = 'en';
+  exports.renderHeader(autoSnap);
+  assert.equal(fakeDocument.getElementById('model-text').textContent, 'Auto');
+  assert.equal(fakeDocument.getElementById('model-pill').title, 'Current Model: Auto');
+
+  // 2. Pixel Inspector cleanup on Main and Child desk clicks
+  exports.state.lang = 'zh';
+  exports.state.activeTab = 'current';
+  exports.state.pixelOfficeCollapsed = false;
+  exports.state.pixelOfficeSelectedKey = '';
+  exports.state.snapshot = snap;
+  exports.renderCurrentTab(snap);
+
+  const pixelCard = fakeDocument.getElementById('card-pixel-office');
+  const mainBox = exports.state.pixelOfficeHitBoxes.find((b) => b.type === 'slot' && b.key === 'main');
+  const childBox = exports.state.pixelOfficeHitBoxes.find(
+    (b) => b.type === 'slot' && b.key === 'conv-r2t4-child-1',
+  );
+  assert.ok(mainBox && childBox);
+
+  // Click Main desk (Gemini 4 Neon)
+  exports.state.pixelOfficeCanvas.click({
+    clientX: mainBox.x + mainBox.w / 2,
+    clientY: mainBox.y + mainBox.h / 2,
+  });
+  const mainBadge = pixelCard.querySelector('.pixel-inspector-persona-badge');
+  assert.equal(mainBadge?.textContent, 'Gemini 4 Neon');
+  assert.equal(mainBadge.textContent.includes('\u8d5b\u535a\u9713\u8679\u7535\u5149\u732b'), false);
+  assert.equal(mainBadge.textContent.includes('·'), false);
+  assert.equal(pixelCard.querySelectorAll('.pixel-inspector-trait').length, 0);
+  assert.equal(
+    pixelCard.querySelector('.pixel-inspector-model')?.textContent,
+    'gemini-pro-orchestrator-neon',
+  );
+
+  // Click Child desk (Gemini 4 Hydrogen / gemini-flash-worker-agy)
+  exports.state.pixelOfficeCanvas.click({
+    clientX: childBox.x + childBox.w / 2,
+    clientY: childBox.y + childBox.h / 2,
+  });
+  const childBadge = pixelCard.querySelector('.pixel-inspector-persona-badge');
+  assert.equal(childBadge?.textContent, 'Gemini 4 Hydrogen');
+  assert.equal(childBadge.textContent.includes('\u6c22\u4e91\u51b0\u84dd\u8f7b\u7fbd\u732b'), false);
+  assert.equal(childBadge.textContent.includes('·'), false);
+  assert.equal(pixelCard.querySelectorAll('.pixel-inspector-trait').length, 0);
+  assert.equal(
+    pixelCard.querySelector('.pixel-inspector-model')?.textContent,
+    'gemini-flash-worker-agy',
+  );
+
+  // 3. Tab 1 and Tab 2 td.model-cell.title includes row.rawModels + rate summary
+  const modelsCard = fakeDocument.getElementById('card-children-models');
+  const tab1Cells = modelsCard.querySelectorAll('td.model-cell');
+  assert.equal(tab1Cells.length, 2);
+  assert.equal(tab1Cells[0].textContent, 'Gemini 4 Neon');
+  assert.equal(tab1Cells[0].title.includes('gemini-4-neon, gemini-pro-orchestrator-neon'), true);
+  assert.equal(tab1Cells[0].title.includes('USD 2.00 / 0.20 / 10.00'), true);
+  assert.equal(tab1Cells[1].textContent, 'Gemini 4 Hydrogen');
+  assert.equal(tab1Cells[1].title.includes('gemini-4-hydrogen, gemini-flash-worker-agy'), true);
+  assert.equal(tab1Cells[1].title.includes('USD 1.50 / 0.15 / 7.50'), true);
+
+  exports.renderGlobalTab(snap);
+  const globalContent = fakeDocument.getElementById('global-content');
+  const tab2Cells = globalContent.querySelectorAll('td.model-cell');
+  assert.equal(tab2Cells.length, 2);
+  assert.equal(tab2Cells[0].textContent, 'Gemini 4 Neon');
+  assert.equal(tab2Cells[0].title.includes('gemini-4-neon, gemini-pro-orchestrator-neon'), true);
+  assert.equal(tab2Cells[0].title.includes('USD 2.00 / 0.20 / 10.00'), true);
+  assert.equal(tab2Cells[1].textContent, 'Gemini 4 Hydrogen');
+  assert.equal(tab2Cells[1].title.includes('gemini-4-hydrogen, gemini-flash-worker-agy'), true);
+  assert.equal(tab2Cells[1].title.includes('USD 1.50 / 0.15 / 7.50'), true);
+});
+
+test('v0.4.0-r2 Test 5: 409600/512000 context limits, PREFS_SCHEMA_VERSION = 4 migration, docs/index zero leftovers, banned terms, and I18N parity', async () => {
+  assert.equal(DEFAULT_PREFS.softContextLimit, 409600);
+  assert.equal(DEFAULT_PREFS.hardContextLimit, 512000);
+
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = join(testDir, '..');
+  const paneDir = join(repoRoot, 'sidecars', 'monitor_pane');
+  const indexHtml = readFileSync(join(paneDir, 'index.html'), 'utf-8');
+  const stylesCss = readFileSync(join(paneDir, 'styles.css'), 'utf-8');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+  const receiptSource = readFileSync(join(paneDir, 'receipt.js'), 'utf-8');
+  const pixelOfficeSource = readFileSync(join(paneDir, 'pixel_office.js'), 'utf-8');
+  const parserSource = readFileSync(join(paneDir, 'parser.mjs'), 'utf-8');
+  const pricingSyncSource = readFileSync(join(paneDir, 'pricing_sync.mjs'), 'utf-8');
+  const mainSource = readFileSync(join(paneDir, 'main.mjs'), 'utf-8');
+  const readmeMd = readFileSync(join(repoRoot, 'README.md'), 'utf-8');
+  const skillMd = readFileSync(join(repoRoot, 'skills', 'token-monitor', 'SKILL.md'), 'utf-8');
+  const pluginJsonRaw = readFileSync(join(repoRoot, 'plugin.json'), 'utf-8');
+  const selfSource = readFileSync(fileURLToPath(import.meta.url), 'utf-8');
+
+  // Placeholders & 0 leftover 400000/500000 defaults in index.html & docs
+  assert.match(indexHtml, /id="pref-soft-limit"[^>]*placeholder="409600"/);
+  assert.match(indexHtml, /id="pref-hard-limit"[^>]*placeholder="512000"/);
+  assert.equal(indexHtml.includes('400000'), false);
+  assert.equal(indexHtml.includes('500000'), false);
+  for (const [docName, docText] of [
+    ['README.md', readmeMd],
+    ['SKILL.md', skillMd],
+    ['plugin.json', pluginJsonRaw],
+  ]) {
+    for (const staleStr of ['400000', '500000', '400,000', '500,000', '400k', '500k', '460k']) {
+      assert.equal(docText.includes(staleStr), false, `${docName} must not contain stale ${staleStr}`);
+    }
+  }
+
+  // Banned terms check across all code, docs, and UI I18N
+  const bannedTerm = '\u6c34\u4f4d';
+  const legacyDocPhrase = 'Dedicated ' + 'Gemini 3.1 Pro';
+  const legacyUiTerm = '\u5728\u5f79\u6a21\u578b';
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['app.js', appSource],
+    ['receipt.js', receiptSource],
+    ['pixel_office.js', pixelOfficeSource],
+    ['parser.mjs', parserSource],
+    ['pricing_sync.mjs', pricingSyncSource],
+    ['main.mjs', mainSource],
+    ['README.md', readmeMd],
+    ['SKILL.md', skillMd],
+    ['plugin.json', pluginJsonRaw],
+    ['tests/parser.test.mjs', selfSource],
+  ]) {
+    assert.equal(src.includes(bannedTerm), false, `${label} must not contain banned term`);
+    assert.equal(src.includes(legacyDocPhrase), false, `${label} must not contain legacy doc phrase`);
+  }
+  const i18nStart = appSource.indexOf('const I18N = {');
+  const i18nMatch = appSource
+    .slice(i18nStart)
+    .match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(i18nMatch);
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['receipt.js', receiptSource],
+    ['pixel_office.js', pixelOfficeSource],
+    ['I18N.zh', i18nMatch[1]],
+    ['README.md', readmeMd],
+    ['SKILL.md', skillMd],
+    ['plugin.json', pluginJsonRaw],
+  ]) {
+    assert.equal(src.includes(legacyUiTerm), false, `${label} must not contain legacy UI term`);
+  }
+
+  // 100% I18N.zh / I18N.en key & placeholder parity
+  const extractEntries = (block) => {
+    const map = new Map();
+    for (const match of block.matchAll(/^\s*'([^']+)'\s*:\s*'((?:\\.|[^'\\])*)'/gm)) {
+      map.set(match[1], match[2]);
+    }
+    return map;
+  };
+  const zhEntries = extractEntries(i18nMatch[1]);
+  const enEntries = extractEntries(i18nMatch[2]);
+  assert.deepEqual([...zhEntries.keys()].sort(), [...enEntries.keys()].sort());
+  const extractPlaceholders = (str) =>
+    [...str.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
+  for (const [key, zhVal] of zhEntries.entries()) {
+    assert.deepEqual(
+      extractPlaceholders(zhVal),
+      extractPlaceholders(enEntries.get(key)),
+      `I18N placeholder mismatch for "${key}"`,
+    );
+  }
+
+  // Standalone main.mjs startup migration for v3 untouched (400000/500000 -> 409600/512000) vs custom limits
+  const mainPath = join(paneDir, 'main.mjs');
+  const sdkCandidates = [
+    process.env.SIDECAR_SDK_PATH,
+    join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+    join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+  ].filter((p) => typeof p === 'string' && p.trim() && existsSync(p));
+
+  async function runV3Startup(initialState) {
+    const { root, appData } = makeTempEnv();
+    const dataDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'data');
+    mkdirSync(dataDir, { recursive: true });
+    const fakeHome = join(root, 'home');
+    mkdirSync(fakeHome, { recursive: true });
+    const stateFile = join(dataDir, 'monitor_state.json');
+    writeFileSync(stateFile, JSON.stringify(initialState, null, 2), 'utf-8');
+
+    const port = await pickFetchSafeFreePort();
+    const env = { ...process.env };
+    delete env.ANTIGRAVITY_LS_ADDRESS;
+    delete env.ANTIGRAVITY_CSRF_TOKEN;
+    delete env.ANTIGRAVITY_SIDECAR_WEB_PORT;
+    delete env.ANTIGRAVITY_CONVERSATION_ID;
+    delete env.ANTIGRAVITY_SIDECAR_UI_TOKEN;
+    delete env.ANTIGRAVITY_AGENTAPI_EXE;
+    if (sdkCandidates[0]) env.SIDECAR_SDK_PATH = sdkCandidates[0];
+    env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
+    env.USERPROFILE = fakeHome;
+    env.HOME = fakeHome;
+    env.PRICING_SYNC_DISABLE_AUTO = '1';
+    env.RELEASE_UPDATE_DISABLE_AUTO = '1';
+    env.DISABLE_SYSTEM_PROXY_LOOKUP = '1';
+
+    const child = spawn(process.execPath, [mainPath, '--standalone', String(port)], {
+      env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    try {
+      await new Promise((resolveReady, rejectReady) => {
+        if (child.exitCode !== null) {
+          rejectReady(new Error(`Sidecar exited prematurely (${child.exitCode})`));
+          return;
+        }
+        const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 10000);
+        let out = '';
+        child.stdout.on('data', (chunk) => {
+          out += chunk.toString();
+          if (out.includes(`[sidecar] listening on 127.0.0.1:${port}`)) {
+            clearTimeout(timer);
+            resolveReady();
+          }
+        });
+        child.stderr.on('data', (chunk) => {
+          out += chunk.toString();
+        });
+        child.once('exit', (code) => {
+          clearTimeout(timer);
+          rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+        });
+      });
+      const snap = await (await fetch(`http://127.0.0.1:${port}/api/snapshot`)).json();
+      const persisted = JSON.parse(readFileSync(stateFile, 'utf-8'));
+      return { snap, persisted };
+    } finally {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill();
+        await new Promise((r) => {
+          if (child.exitCode !== null || child.signalCode !== null) return r();
+          const t = setTimeout(r, 3000);
+          child.once('exit', () => {
+            clearTimeout(t);
+            r();
+          });
+        });
+      }
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+
+  const migratedV3 = await runV3Startup({
+    prefsSchemaVersion: 3,
+    stepEndTimes: {},
+    prefs: { softContextLimit: 400000, hardContextLimit: 500000 },
+  });
+  assert.equal(migratedV3.snap.prefs.softContextLimit, 409600);
+  assert.equal(migratedV3.snap.prefs.hardContextLimit, 512000);
+  assert.equal(migratedV3.persisted.prefsSchemaVersion, 4);
+
+  const preservedCustomV3 = await runV3Startup({
+    prefsSchemaVersion: 3,
+    stepEndTimes: {},
+    prefs: { softContextLimit: 320000, hardContextLimit: 500000 },
+  });
+  assert.equal(preservedCustomV3.snap.prefs.softContextLimit, 320000);
+  assert.equal(preservedCustomV3.snap.prefs.hardContextLimit, 500000);
+  assert.equal(preservedCustomV3.persisted.prefsSchemaVersion, 4);
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:43:05
 // ============================================================================

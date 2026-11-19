@@ -3004,5 +3004,369 @@ Description: Replace position:absolute / inline-block slot-roll geometry with in
 ============================================================================ */
 
 /* ============================================================================
+[MODIFIED BEGIN] 2026-11-19 11:49:06
+Description: Add adaptive light/dark theme and 280px-900px responsive styles for in-panel Pixel Office card, crisp pixelated canvas, collapsed zero-margin state, and agent slot inspector.
+============================================================================ */
+/* ---------------- v0.4.0 In-Panel Pixel Office ---------------- */
+.pixel-office-card {
+  padding: 10px 12px;
+}
+
+.pixel-office-card .card-head {
+  margin-bottom: 8px;
+  gap: 6px;
+}
+
+.pixel-office-card.is-collapsed {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.pixel-office-card.is-collapsed .card-head {
+  margin-bottom: 0;
+}
+
+.pixel-office-head-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+}
+
+.pixel-office-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--tm-subtle);
+  border: 1px solid var(--tm-border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tm-muted-fg);
+  white-space: nowrap;
+}
+
+.pixel-office-overflow-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--tm-cyan) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tm-cyan) 36%, transparent);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--tm-cyan);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.14s ease, border-color 0.14s ease;
+}
+
+.pixel-office-overflow-badge:hover {
+  background: color-mix(in srgb, var(--tm-cyan) 22%, transparent);
+  border-color: color-mix(in srgb, var(--tm-cyan) 56%, transparent);
+}
+
+.pixel-office-toggle-btn {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.pixel-office-canvas-wrap {
+  position: relative;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1px solid var(--tm-border);
+  background: var(--tm-subtle);
+}
+
+.pixel-office-canvas {
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  width: 100%;
+  height: auto;
+  display: block;
+  cursor: pointer;
+}
+
+.pixel-office-hint {
+  margin-top: 6px;
+  font-size: 10.5px;
+  color: var(--tm-muted-fg);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pixel-inspector {
+  margin-top: 8px;
+  padding: 9px 10px;
+  border-radius: var(--r-md);
+  background: var(--tm-subtle);
+  border: 1px solid var(--tm-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pixel-inspector-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+}
+
+.pixel-inspector-portrait {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border-radius: var(--r-md);
+  border: 1px solid var(--tm-border);
+  background: var(--tm-card);
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  display: block;
+}
+
+.pixel-inspector-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pixel-inspector-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pixel-inspector-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+
+.pixel-inspector-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--tm-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.kind-badge.main {
+  background: color-mix(in srgb, var(--tm-amber) 14%, transparent);
+  color: var(--tm-amber);
+}
+
+.pixel-inspector-close {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--tm-muted-fg);
+  font-size: 15px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.14s ease, color 0.14s ease;
+}
+
+.pixel-inspector-close:hover {
+  background: var(--tm-hover);
+  color: var(--tm-fg);
+}
+
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-19 13:28:17
+Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation after removing .pixel-inspector-trait.
+============================================================================ */
+.pixel-inspector-persona-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 1px 0;
+}
+
+.pixel-inspector-persona-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--tm-card);
+  border: 1px solid var(--tm-border);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--tm-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pixel-inspector-persona-badge > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.pixel-inspector-persona-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  flex: none;
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-19 13:28:17
+============================================================================ */
+
+.pixel-inspector-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  min-width: 0;
+}
+
+.pixel-inspector-status {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.pixel-inspector-status.is-generating {
+  color: var(--tm-amber);
+}
+
+.pixel-inspector-status.is-tools {
+  color: var(--tm-cyan);
+}
+
+.pixel-inspector-status.is-idle {
+  color: var(--tm-emerald);
+}
+
+.pixel-inspector-status.is-ended {
+  color: var(--tm-muted-fg);
+}
+
+.pixel-inspector-model {
+  font-family: var(--tm-mono);
+  font-size: 10.5px;
+  color: var(--tm-muted-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.pixel-inspector-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.pixel-inspector-stat {
+  padding: 4px 7px;
+  border-radius: var(--r-sm);
+  background: var(--tm-card);
+  border: 1px solid var(--tm-border);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.pixel-inspector-stat-label {
+  font-size: 10px;
+  color: var(--tm-muted-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pixel-inspector-stat-val {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--tm-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pixel-inspector-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+@media (max-width: 420px) {
+  .pixel-inspector-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 340px) {
+  .pixel-office-card {
+    padding: 9px 10px;
+  }
+
+  .pixel-office-card.is-collapsed {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .pixel-office-count {
+    font-size: 10.5px;
+    padding: 2px 6px;
+  }
+
+  .pixel-inspector {
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .pixel-inspector-portrait {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+@media (min-width: 760px) {
+  .pixel-office-card {
+    padding: 12px 14px;
+  }
+
+  .pixel-office-card.is-collapsed {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-19 11:49:06
+============================================================================ */
+
+/* ============================================================================
 [MODIFIED END] 2026-11-16 20:24:00
 ============================================================================ */

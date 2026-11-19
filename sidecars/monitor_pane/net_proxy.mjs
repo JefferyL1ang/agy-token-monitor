@@ -24,6 +24,45 @@ export const DEFAULT_MAX_DISPATCHER_AGE_MS = 15 * 60 * 1000;
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:28:51
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Export DEFAULT_OS_LOOKUP_TIMEOUT_MS (4000ms) and isTransientLookupError()
+// to distinguish transient OS/process failures from normal non-zero exits.
+// ============================================================================
+export const DEFAULT_OS_LOOKUP_TIMEOUT_MS = 4000;
+
+const TRANSIENT_LOOKUP_ERROR_CODES = new Set([
+  'ETIMEDOUT',
+  'EAGAIN',
+  'ENOMEM',
+  'ENOBUFS',
+  'ENOENT',
+]);
+
+function normalizeLookupTimeoutMs(lookupTimeoutMs) {
+  const n = Number(lookupTimeoutMs);
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_OS_LOOKUP_TIMEOUT_MS;
+}
+
+/**
+ * Return true only for transient OS/process failures (timeouts, resource exhaustion,
+ * missing binary, or killed/signaled process), never normal non-zero exit statuses.
+ */
+export function isTransientLookupError(err) {
+  if (!err || typeof err !== 'object') return false;
+  if (
+    typeof err.code === 'string' &&
+    TRANSIENT_LOOKUP_ERROR_CODES.has(err.code.toUpperCase())
+  ) {
+    return true;
+  }
+  if (err.killed === true) return true;
+  if (Boolean(err.signal)) return true;
+  return false;
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
 
 const UNSUPPORTED_PROXY_SCHEME_RE =
   /^(?:socks4a?|socks5h?|socks|pac(?:\+[a-z0-9.+-]+)?|ftp|ws|wss):\/\//i;
@@ -333,13 +372,23 @@ export function parseWindowsUserEnvProxyOutput(stdout) {
   };
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Add configurable lookupTimeoutMs (default 4000ms), detailed live OS
+// probe status, and transient lookup error propagation in resolveProxyConfig.
+// ============================================================================
 /**
  * Query a Windows registry key via reg.exe, retrying via System32\reg.exe on ENOENT.
  */
-function queryWindowsRegistryKey(execFileSyncImpl, regKeyPath, safeEnv) {
+function queryWindowsRegistryKey(
+  execFileSyncImpl,
+  regKeyPath,
+  safeEnv,
+  lookupTimeoutMs = DEFAULT_OS_LOOKUP_TIMEOUT_MS,
+) {
   const execOpts = {
     encoding: 'utf-8',
-    timeout: 1200,
+    timeout: normalizeLookupTimeoutMs(lookupTimeoutMs),
     windowsHide: true,
     stdio: ['ignore', 'pipe', 'ignore'],
   };
@@ -362,16 +411,17 @@ function queryWindowsRegistryKey(execFileSyncImpl, regKeyPath, safeEnv) {
 }
 
 /**
- * Resolve live OS-level system proxy settings (Windows Internet Settings or macOS scutil).
- * Returns null if disabled, unsupported, or lookup fails.
+ * Resolve live OS-level system proxy settings with transient lookup failure detail.
  */
-export function resolveLiveOsSystemProxy({
+function resolveLiveOsSystemProxyDetailed({
   env = process.env,
   platform = process.platform,
   execFileSyncImpl = execFileSync,
+  lookupTimeoutMs = DEFAULT_OS_LOOKUP_TIMEOUT_MS,
 } = {}) {
   const safeEnv = env || {};
   const baseNoProxy = ensureLoopbackNoProxy(safeEnv.NO_PROXY || safeEnv.no_proxy || '');
+  const timeoutMs = normalizeLookupTimeoutMs(lookupTimeoutMs);
 
   if (platform === 'win32') {
     try {
@@ -379,44 +429,72 @@ export function resolveLiveOsSystemProxy({
         execFileSyncImpl,
         'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings',
         safeEnv,
+        timeoutMs,
       );
       const parsed = parseWindowsRegProxyOutput(stdout);
       if (parsed.enabled) {
         return {
-          ...parsed,
-          noProxy: ensureLoopbackNoProxy(`${baseNoProxy},${parsed.noProxy}`),
-          source: 'win-registry',
+          proxy: {
+            ...parsed,
+            noProxy: ensureLoopbackNoProxy(`${baseNoProxy},${parsed.noProxy}`),
+            source: 'win-registry',
+          },
+          failed: false,
         };
       }
-    } catch {
-      // Ignore Windows Internet Settings registry lookup failure.
+      return { proxy: null, failed: false };
+    } catch (err) {
+      return { proxy: null, failed: isTransientLookupError(err) };
     }
-    return null;
   }
 
   if (platform === 'darwin') {
     try {
       const stdout = execFileSyncImpl('/usr/sbin/scutil', ['--proxy'], {
         encoding: 'utf-8',
-        timeout: 1200,
+        timeout: timeoutMs,
         stdio: ['ignore', 'pipe', 'ignore'],
       });
       const parsed = parseMacScutilProxyOutput(stdout);
       if (parsed.enabled) {
         return {
-          ...parsed,
-          noProxy: ensureLoopbackNoProxy(`${baseNoProxy},${parsed.noProxy}`),
-          source: 'mac-scutil',
+          proxy: {
+            ...parsed,
+            noProxy: ensureLoopbackNoProxy(`${baseNoProxy},${parsed.noProxy}`),
+            source: 'mac-scutil',
+          },
+          failed: false,
         };
       }
-    } catch {
-      // Ignore macOS scutil lookup failure.
+      return { proxy: null, failed: false };
+    } catch (err) {
+      return { proxy: null, failed: isTransientLookupError(err) };
     }
-    return null;
   }
 
-  return null;
+  return { proxy: null, failed: false };
 }
+
+/**
+ * Resolve live OS-level system proxy settings (Windows Internet Settings or macOS scutil).
+ * Returns null if disabled, unsupported, or lookup fails.
+ */
+export function resolveLiveOsSystemProxy({
+  env = process.env,
+  platform = process.platform,
+  execFileSyncImpl = execFileSync,
+  lookupTimeoutMs = DEFAULT_OS_LOOKUP_TIMEOUT_MS,
+} = {}) {
+  return resolveLiveOsSystemProxyDetailed({
+    env,
+    platform,
+    execFileSyncImpl,
+    lookupTimeoutMs,
+  }).proxy;
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 15:28:51
 // ============================================================================
@@ -440,6 +518,14 @@ export function resolveProxyConfig({
   platform = process.platform,
   execFileSyncImpl = execFileSync,
   disableOsLookup = false,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Accept optional lookupTimeoutMs in resolveProxyConfig.
+// ============================================================================
+  lookupTimeoutMs = DEFAULT_OS_LOOKUP_TIMEOUT_MS,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
 } = {}) {
   const safeEnv = env || {};
   const noProxy = ensureLoopbackNoProxy(safeEnv.NO_PROXY || safeEnv.no_proxy || '');
@@ -475,14 +561,24 @@ export function resolveProxyConfig({
 // [MODIFIED BEGIN] 2026-11-18 15:28:51
 // Description: Use resolveLiveOsSystemProxy and add Windows HKCU\Environment fallback.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Track transient OS lookup failures across Internet Settings,
+// macOS scutil, and HKCU\Environment and surface lookupFailed only when true.
+// ============================================================================
+  let osLookupFailed = false;
   if (!disableOsLookup && safeEnv.DISABLE_SYSTEM_PROXY_LOOKUP !== '1') {
-    const liveOs = resolveLiveOsSystemProxy({
+    const liveOsResult = resolveLiveOsSystemProxyDetailed({
       env: safeEnv,
       platform,
       execFileSyncImpl,
+      lookupTimeoutMs,
     });
-    if (liveOs && liveOs.enabled) {
-      return liveOs;
+    if (liveOsResult.proxy && liveOsResult.proxy.enabled) {
+      return liveOsResult.proxy;
+    }
+    if (liveOsResult.failed) {
+      osLookupFailed = true;
     }
 
     if (platform === 'win32') {
@@ -491,6 +587,7 @@ export function resolveProxyConfig({
           execFileSyncImpl,
           'HKCU\\Environment',
           safeEnv,
+          lookupTimeoutMs,
         );
         const userEnvParsed = parseWindowsUserEnvProxyOutput(envStdout);
         if (userEnvParsed.enabled) {
@@ -500,8 +597,10 @@ export function resolveProxyConfig({
             source: 'win-user-env',
           };
         }
-      } catch {
-        // Ignore OS HKCU\Environment lookup failure and fall back to direct mode.
+      } catch (err) {
+        if (isTransientLookupError(err)) {
+          osLookupFailed = true;
+        }
       }
     }
   }
@@ -515,7 +614,11 @@ export function resolveProxyConfig({
     httpProxy: '',
     httpsProxy: '',
     noProxy,
+    ...(osLookupFailed ? { lookupFailed: true } : {}),
   };
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
 }
 
 // ============================================================================
@@ -546,6 +649,14 @@ export function createSystemProxyManager(options = {}) {
     cacheTtlMs = 300_000,
     maxDispatcherAgeMs = DEFAULT_MAX_DISPATCHER_AGE_MS,
     disableOsLookup = false,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Accept configurable lookupTimeoutMs in createSystemProxyManager.
+// ============================================================================
+    lookupTimeoutMs = DEFAULT_OS_LOOKUP_TIMEOUT_MS,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
   } = options || {};
 
   let lastResolvedAtMs = null;
@@ -660,13 +771,32 @@ export function createSystemProxyManager(options = {}) {
       return getStatus();
     }
 
-    lastResolvedAtMs = nowFn();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Harden refresh() against transient OS proxy lookup failures
+// (anti-flap preservation of active proxy and no 5-min failure caching) and
+// propagate lookupTimeoutMs into resolveProxyConfig and recoverFromTransportFailure.
+// ============================================================================
     const next = resolveProxyConfig({
       env,
       platform,
       execFileSyncImpl,
       disableOsLookup,
+      lookupTimeoutMs,
     });
+
+    if (next.lookupFailed === true) {
+      lastResolvedAtMs = null;
+      if (activeConfig.enabled === true) {
+        if (force || rebuild || ageExceeded) {
+          applyProxyConfig(activeConfig, activeSig, true);
+        }
+        return getStatus();
+      }
+      return getStatus();
+    }
+
+    lastResolvedAtMs = nowFn();
     const nextSig = next.enabled ? `${next.httpProxy}|${next.httpsProxy}|${next.noProxy}` : 'direct';
     const sigChanged = nextSig !== activeSig;
     const shouldRebuildSameProxy = !sigChanged && next.enabled && (force || rebuild || ageExceeded);
@@ -695,6 +825,7 @@ export function createSystemProxyManager(options = {}) {
         env,
         platform,
         execFileSyncImpl,
+        lookupTimeoutMs,
       });
       if (liveOs && liveOs.enabled) {
         const liveSig = `${liveOs.httpProxy}|${liveOs.httpsProxy}|${liveOs.noProxy}`;
@@ -705,6 +836,9 @@ export function createSystemProxyManager(options = {}) {
         }
       }
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
 
     if (activeConfig.enabled) {
       return refresh({ force: true, rebuild: true });

@@ -137,7 +137,14 @@ function readPluginVersion(rootDir) {
 // [MODIFIED BEGIN] 2026-11-18 16:37:35
 // Description: Bump fallback plugin version string to 0.3.2.
 // ============================================================================
-  return '0.3.2';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Bump fallback plugin version string to 0.4.0.
+// ============================================================================
+  return '0.4.0';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:37:35
 // ============================================================================
@@ -191,7 +198,15 @@ const VALID_MODEL_SORT_DIR_SET = new Set(VALID_MODEL_SORT_DIRS);
 // Description: Bump PREFS_SCHEMA_VERSION to 3 so v1/v2 states with default
 // softContextLimit=250000 and hardContextLimit=1000000 or 500000 migrate to 400k/500k.
 // ============================================================================
-const PREFS_SCHEMA_VERSION = 3;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:30:19
+// Description: Bump PREFS_SCHEMA_VERSION to 4 so untouched 250k/400k and
+// 1M/500k context limits migrate to 409600/512000 while keeping custom limits.
+// ============================================================================
+const PREFS_SCHEMA_VERSION = 4;
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:30:19
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:26:00
 // ============================================================================
@@ -446,6 +461,14 @@ function sanitizeLoadedPrefs(rawPrefs) {
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:30:10
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Include pixelOfficeCollapsed default in sanitizeLoadedPrefs.
+// ============================================================================
+    pixelOfficeCollapsed: DEFAULT_PREFS.pixelOfficeCollapsed,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
     modelOverrides: {},
   };
   if (!rawPrefs || typeof rawPrefs !== 'object') return merged;
@@ -527,6 +550,16 @@ function sanitizeLoadedPrefs(rawPrefs) {
 // [MODIFIED END] 2026-11-17 20:30:10
 // ============================================================================
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Restore persisted pixelOfficeCollapsed boolean in sanitizeLoadedPrefs.
+// ============================================================================
+  if (typeof rawPrefs.pixelOfficeCollapsed === 'boolean') {
+    merged.pixelOfficeCollapsed = rawPrefs.pixelOfficeCollapsed;
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
+// ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:42:00
 // Description: Preserve persisted user modelOverrides on load without pruning
 // against updated upstream synced defaults.
@@ -567,13 +600,22 @@ function loadState() {
       migrated = true;
       const rawSoft = raw.prefs?.softContextLimit;
       const rawHard = raw.prefs?.hardContextLimit;
-      const isUntouchedSoft = rawSoft === undefined || Number(rawSoft) === 250000;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:30:19
+// Description: Migrate untouched v1/v2/v3 default context limits
+// (250k/400k soft and 1M/500k hard) to 409600/512000.
+// ============================================================================
+      const isUntouchedSoft =
+        rawSoft === undefined || Number(rawSoft) === 250000 || Number(rawSoft) === 400000;
       const isLegacyHard =
         rawHard === undefined || Number(rawHard) === 1000000 || Number(rawHard) === 500000;
       if (isUntouchedSoft && isLegacyHard) {
-        prefs.softContextLimit = 400000;
-        prefs.hardContextLimit = 500000;
+        prefs.softContextLimit = 409600;
+        prefs.hardContextLimit = 512000;
       }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:30:19
+// ============================================================================
     }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:26:00
@@ -821,6 +863,19 @@ function validateAndMergePrefs(currentPrefs, input) {
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:30:10
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Validate optional pixelOfficeCollapsed boolean preference in /api/prefs.
+// ============================================================================
+  if (input.pixelOfficeCollapsed !== undefined) {
+    if (typeof input.pixelOfficeCollapsed !== 'boolean') {
+      return { error: 'pixelOfficeCollapsed must be a boolean.' };
+    }
+    next.pixelOfficeCollapsed = input.pixelOfficeCollapsed;
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
 
   if (input.resetAllModels === true) {
     next.modelOverrides = {};
@@ -903,6 +958,14 @@ app.page('/app.js', () => readStaticAsset('app.js', 'application/javascript; cha
 app.page('/receipt.js', () => readStaticAsset('receipt.js', 'application/javascript; charset=utf-8'));
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:42:30
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:47:54
+// Description: Register static asset route /pixel_office.js for Pixel Office Canvas renderer.
+// ============================================================================
+app.page('/pixel_office.js', () => readStaticAsset('pixel_office.js', 'application/javascript; charset=utf-8'));
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:47:54
 // ============================================================================
 
 // Live transcript watcher state

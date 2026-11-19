@@ -1,11 +1,11 @@
 {
   "name": "agy-token-monitor",
   "displayName": "Token Monitor",
-  "version": "0.3.2",
-  "description": "Lightweight Token & Context Monitor for Antigravity (v0.3.2 beta): live tok/s speed, context usage monitor & one-click /compact helper, session total tokens & one-click session checkout receipt image copy, Top-5 active subagent folding, daily official model/pricing sync, OS/env proxy auto-sync & connection pool rebuild, 3-channel release check & SHA-256 CDN hot update, bilingual EN/ZH UI, and multi-period usage analytics. | 面向 Antigravity 的轻量级实时 Token 测速、上下文监控与一键 /compact、会话总 Token 消耗与一键结账收工票根直接复制剪贴板、Top-5 活跃子代理折叠、每日官方模型价格同步、系统与环境变量代理自动同步与连接池自愈、三通道版本检测与 SHA-256 CDN 热更新、中英双语切换及多周期统计插件。",
+  "version": "0.4.0",
+  "description": "Lightweight Token & Context Monitor for Antigravity (v0.4.0 beta): round-scoped interactive Pixel Office (32x32 Main Cat + 24x24 Subagent Cats across 9+1 model personas & 1+8 workstation cap), live tok/s speed, 409.6k/512k context usage monitor & one-click /compact helper, session total tokens & one-click session checkout receipt image copy, Top-5 active subagent folding, daily official model/pricing sync with Scheme A canonical model attribution & merging (Gemini 4 Neon, Gemini 4 Hydrogen, Gemini 4 Carbon, etc., ledger v5), high-CPU anti-flap OS/env proxy auto-sync & connection pool rebuild, 3-channel release check & SHA-256 CDN hot update with plain-language prompts, bilingual EN/ZH UI, and multi-period usage analytics. | 面向 Antigravity 的轻量级插件（v0.4.0 beta）：按轮次过滤的交互式像素工位（32x32 主猫 + 24x24 子猫、9+1 模型人格与 1+8 工位上限）、实时 Token 测速、409.6k/512k 上下文监控与一键 /compact、会话总 Token 消耗与一键结账收工票根直接复制剪贴板、Top-5 活跃子代理折叠、每日官方模型价格同步与 Scheme A 规范模型归因合并（含 Gemini 4 Neon、Gemini 4 Hydrogen、Gemini 4 Carbon 等及 ledger v5 重建）、高负载防抖动系统与环境变量代理自动同步及连接池自愈、三通道版本检测与 SHA-256 CDN 热更新及通俗化更新提示、中英双语切换与多周期统计。",
   "logo": "assets/logo.svg",
   "suggestedPrompts": [
-    "Open the Token Monitor panel to track live tok/s, context usage, and session total tokens",
+    "Open the Token Monitor panel to watch the Pixel Office cats, live tok/s, context usage, and session total tokens",
     "Inspect today, 7-day, 30-day, and all-time token usage and subscription ROI",
     "Check context spikes, prompt cache hit rate, /compact timing, and per-model API cost breakdown"
   ]

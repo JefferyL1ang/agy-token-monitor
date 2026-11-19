@@ -13,11 +13,28 @@
   const MIXED_VALUE_FONT_FAMILY = `${MONO_FONT_FAMILY}, ${SANS_FONT_FAMILY}`;
 
   const KNOWN_MODEL_SLUGS = Object.freeze([
-    [/gemini[\s_-]*4[\s_-]*carbon|orchestrator[\s(-]*carbon|gemini-pro-orchestrator(?!-argon)/i, 'Gemini 4 Carbon'],
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:48:32
+// Description: Tighten Gemini 4 Carbon regex boundary and add Gemini 4 Neon /
+// Orchestrator (Neon) display label mapping.
+// ============================================================================
+    [/gemini[\s_-]*4[\s_-]*carbon|orchestrator[\s(-]*carbon|gemini-pro-orchestrator(?=$|[\s)]|-carbon(?=$|[-_\s]))/i, 'Gemini 4 Carbon'],
+    [/gemini[\s_-]*4[\s_-]*neon|orchestrator[\s(-]*neon|gemini-pro-orchestrator-neon/i, 'Gemini 4 Neon'],
+// ============================================================================
+// [MODIFIED END] 2026-11-19 11:48:32
+// ============================================================================
     [/gemini[\s_-]*4[\s_-]*argon|orchestrator[\s(-]*argon|gemini-pro-orchestrator-argon/i, 'Gemini 4 Argon'],
-    [/gemini[\s_-]*4[\s_-]*hydrogen/i, 'Gemini 4 Hydrogen'],
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 13:26:49
+// Description: Move gemini-flash-worker attribution from Gemini 3.8 Flash to
+// Gemini 4 Hydrogen in KNOWN_MODEL_SLUGS.
+// ============================================================================
+    [/gemini[\s_-]*4[\s_-]*hydrogen|gemini[\s_-]*flash[\s_-]*worker/i, 'Gemini 4 Hydrogen'],
     [/gemini[\s_-]*3\.?1[\s_-]*pro|gemini-pro-default/i, 'Gemini 3.1 Pro'],
-    [/gemini[\s_-]*3\.?8[\s_-]*flash|gemini-flash-worker/i, 'Gemini 3.8 Flash'],
+    [/gemini[\s_-]*3[._-]?8[\s_-]*flash/i, 'Gemini 3.8 Flash'],
+// ============================================================================
+// [MODIFIED END] 2026-11-19 13:26:49
+// ============================================================================
     [/claude[\s_-]*opus[\s_-]*5[._-]*5/i, 'Claude Opus 5.5'],
     [/claude[\s_-]*opus[\s_-]*4[._-]*6/i, 'Claude Opus 4.6'],
     [/claude[\s_-]*opus/i, 'Claude Opus 5.5'],

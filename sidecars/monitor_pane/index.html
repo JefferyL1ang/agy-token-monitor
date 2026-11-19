@@ -134,14 +134,21 @@ Description: Standardize Chinese terminology to 现役模型 in settings subtitl
           <div class="drawer-section">
             <div class="drawer-section-title" data-i18n="settings.sec1Title">上下文与币种</div>
             <div class="form-grid">
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-19 13:28:17
+Description: Update default soft/hard context limit placeholders to 409600 and 512000.
+============================================================================ -->
               <label class="field">
                 <span class="field-label" data-i18n="settings.softLimitLabel">提醒线 (tokens)</span>
-                <input id="pref-soft-limit" type="number" min="1000" step="1000" placeholder="400000" class="field-input tabular-nums" required>
+                <input id="pref-soft-limit" type="number" min="1000" step="1000" placeholder="409600" class="field-input tabular-nums" required>
               </label>
               <label class="field">
                 <span class="field-label" data-i18n="settings.hardLimitLabel">最大窗口 (tokens)</span>
-                <input id="pref-hard-limit" type="number" min="1000" step="1000" placeholder="500000" class="field-input tabular-nums" required>
+                <input id="pref-hard-limit" type="number" min="1000" step="1000" placeholder="512000" class="field-input tabular-nums" required>
               </label>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-19 13:28:17
+============================================================================ -->
               <label class="field">
                 <span class="field-label" data-i18n="settings.tokenUnitLabel">Token 显示单位</span>
                 <select id="pref-token-unit" class="field-input">
@@ -335,6 +342,15 @@ Description: Add current plugin version status bar and manual update check butto
             <span id="conv-workspace" class="conv-workspace"></span>
           </div>
 
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-19 11:49:06
+Description: Insert in-panel Pixel Office container card (#card-pixel-office) above .hero-grid.
+============================================================================ -->
+          <article id="card-pixel-office" class="card pixel-office-card"></article>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-19 11:49:06
+============================================================================ -->
+
           <div class="hero-grid">
             <article id="card-speed" class="card metric-card"></article>
             <article id="card-cost" class="card metric-card"></article>
@@ -386,7 +402,14 @@ Description: Add accessible release-notes preview & one-click hot-update dialog 
         <div id="update-modal-feedback" class="update-modal-feedback hidden" role="status" aria-live="polite"></div>
         <div class="update-modal-footer">
           <button id="btn-update-skip" type="button" class="btn-ghost" data-i18n="update.skipBtn">跳过此版本</button>
-          <button id="btn-update-confirm" type="button" class="btn-primary" data-i18n="update.confirmBtn">立即热更新</button>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-19 11:49:06
+Description: Use plain-language update button label (立即更新) on #btn-update-confirm.
+============================================================================ -->
+          <button id="btn-update-confirm" type="button" class="btn-primary" data-i18n="update.confirmBtn">立即更新</button>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-19 11:49:06
+============================================================================ -->
         </div>
       </div>
     </div>
@@ -472,6 +495,14 @@ Description: Remove Save PNG button and keep single .receipt-copy-btn action in 
   <script src="/receipt.js"></script>
 <!-- ============================================================================
 [MODIFIED END] 2026-11-18 11:39:00
+============================================================================ -->
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-19 11:49:06
+Description: Load /pixel_office.js before /app.js for in-panel Pixel Office rendering.
+============================================================================ -->
+  <script src="/pixel_office.js"></script>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-19 11:49:06
 ============================================================================ -->
   <script src="/app.js"></script>
 </body>
