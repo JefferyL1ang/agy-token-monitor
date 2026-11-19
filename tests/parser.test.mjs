@@ -156,6 +156,14 @@ import {
   formatLocalDate,
   isValidConversationId,
   normalizeModelId,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Import parseRawSummarySideQuestions for v0.4.1 Side Questions protobuf & SQLite tests.
+// ============================================================================
+  parseRawSummarySideQuestions,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
   parseTranscript,
   resolveConversationPaths,
   resolveModelPricing,
@@ -6126,11 +6134,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 // [MODIFIED BEGIN] 2026-11-19 12:06:21
 // Description: Bump current manifest version assertion from 0.3.2 to 0.4.0.
 // ============================================================================
-  // Manifests bumped to 0.4.0 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Bump current manifest version assertion from 0.4.0 to 0.4.1.
+// ============================================================================
+  // Manifests bumped to 0.4.1 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.4.0');
-  assert.equal(packageJson.version, '0.4.0');
+  assert.equal(pluginJson.version, '0.4.1');
+  assert.equal(packageJson.version, '0.4.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 12:06:21
 // ============================================================================
@@ -6384,18 +6399,25 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
 // [MODIFIED BEGIN] 2026-11-19 12:06:21
 // Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.3.2 to 0.4.0.
 // ============================================================================
-  // Version & docs consistency for current v0.4.0 release
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.4.0 to 0.4.1.
+// ============================================================================
+  // Version & docs consistency for current v0.4.1 release
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.4.0');
-  assert.equal(packageJson.version, '0.4.0');
-  assert.equal(pluginJson.description.includes('v0.4.0 beta'), true);
-  assert.equal(packageJson.description.includes('v0.4.0 beta'), true);
-  assert.equal(mainSource.includes("return '0.4.0'"), true);
-  assert.equal(releaseUpdaterSource.includes(": '0.4.0'"), true);
-  assert.equal(appSource.includes("'0.4.0'"), true);
-  assert.equal(skillMd.includes('# Token Monitor (v0.4.0 Beta)'), true);
-  assert.equal(readmeMd.includes('agy-token-monitor-v0.4.0.zip'), true);
+  assert.equal(pluginJson.version, '0.4.1');
+  assert.equal(packageJson.version, '0.4.1');
+  assert.equal(pluginJson.description.includes('v0.4.1 beta'), true);
+  assert.equal(packageJson.description.includes('v0.4.1 beta'), true);
+  assert.equal(mainSource.includes("return '0.4.1'"), true);
+  assert.equal(releaseUpdaterSource.includes(": '0.4.1'"), true);
+  assert.equal(appSource.includes("'0.4.1'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.4.1 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.4.1.zip'), true);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 12:06:21
 // ============================================================================
@@ -7426,7 +7448,14 @@ test('v0.2.8 createSystemProxyManager lifecycle, TTL cache, restore-before-set o
 // [MODIFIED BEGIN] 2026-11-19 12:06:21
 // Description: Update standalone /api/snapshot appVersion assertion to 0.4.0.
 // ============================================================================
-    assert.equal(snap.appVersion, '0.4.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Update standalone /api/snapshot appVersion assertion to 0.4.1.
+// ============================================================================
+    assert.equal(snap.appVersion, '0.4.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 12:06:21
 // ============================================================================
@@ -8001,8 +8030,15 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
 // [MODIFIED BEGIN] 2026-11-19 12:06:21
 // Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.4.0.
 // ============================================================================
-  assert.equal(pluginJson.version, '0.4.0');
-  assert.equal(packageJson.version, '0.4.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.4.1.
+// ============================================================================
+  assert.equal(pluginJson.version, '0.4.1');
+  assert.equal(packageJson.version, '0.4.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 12:06:21
 // ============================================================================
@@ -8247,7 +8283,14 @@ test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showTo
 // [MODIFIED BEGIN] 2026-11-19 12:06:21
 // Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test to 0.4.0.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.4.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test to 0.4.1.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.4.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 12:06:21
 // ============================================================================
@@ -9762,7 +9805,14 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
 // [MODIFIED BEGIN] 2026-11-19 12:06:21
 // Description: Bump createReleaseUpdater default currentVersion assertion to 0.4.0.
 // ============================================================================
-  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.4.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Bump createReleaseUpdater default currentVersion assertion to 0.4.1.
+// ============================================================================
+  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.4.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 12:06:21
 // ============================================================================
@@ -11320,7 +11370,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-19 12:06:21
 // Description: Bump standalone /api/snapshot appVersion assertion to 0.4.0.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.4.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Bump standalone /api/snapshot appVersion assertion to 0.4.1.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.4.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 12:06:21
 // ============================================================================
@@ -11357,7 +11414,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-19 12:06:21
 // Description: Bump standalone /api/check-update appVersion assertion to 0.4.0.
 // ============================================================================
-      assert.equal(checkBody.appVersion, '0.4.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Bump standalone /api/check-update appVersion assertion to 0.4.1.
+// ============================================================================
+      assert.equal(checkBody.appVersion, '0.4.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 12:06:21
 // ============================================================================
@@ -11657,7 +11721,14 @@ test('v0.3.0 headless Node VM Settings tooltip proxy diagnostics and static I18N
 // [MODIFIED BEGIN] 2026-11-19 12:06:21
 // Description: Bump getCurrentAppVersion fallback assertion to 0.4.0.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.4.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Bump getCurrentAppVersion fallback assertion to 0.4.1.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.4.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 12:06:21
 // ============================================================================
@@ -12260,7 +12331,14 @@ test('v0.3.2 constant 43-char SHA-256 base64url /api/snapshot etag prevents HTTP
 // [MODIFIED BEGIN] 2026-11-19 12:06:21
 // Description: Update v0.3.2 ETag test standalone appVersion assertion to 0.4.0.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.4.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Update v0.3.2 ETag test standalone appVersion assertion to 0.4.1.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.4.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 12:06:21
 // ============================================================================
@@ -13124,7 +13202,14 @@ test('v0.4.0 backend DEFAULT_PREFS.pixelOfficeCollapsed, child activeToolLabel, 
       assert.equal(pixelJsBody.includes('resolveCatArchetype'), true);
 
       const initialSnap = await (await fetch(`${base1}/api/snapshot?conv=${encodeURIComponent(parentId)}`)).json();
-      assert.equal(initialSnap.appVersion, '0.4.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Bump v0.4.0 backend standalone /api/snapshot appVersion assertion to 0.4.1.
+// ============================================================================
+      assert.equal(initialSnap.appVersion, '0.4.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
       assert.equal(initialSnap.prefs.pixelOfficeCollapsed, false);
 
       const badPrefRes = await fetch(`${base1}/api/prefs`, {
@@ -13949,7 +14034,14 @@ test('v0.4.0 update modal nested markdown & section filtering, Pixel Office VM i
 
   const exports = sandbox.__tmV040Exports;
   assert.ok(exports, 'VM execution must expose __tmV040Exports');
-  assert.equal(exports.getCurrentAppVersion(), '0.4.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:31:27
+// Description: Bump v0.4.0 VM getCurrentAppVersion fallback assertion to 0.4.1.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.4.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:31:27
+// ============================================================================
 
   // Test matchProfileIdForModel for Neon
   assert.equal(exports.matchProfileIdForModel('Orchestrator (Neon)'), 'gemini-4-neon');
@@ -16541,4 +16633,1372 @@ test('v0.4.0 Gemini 4 flat-context pricing, 95% cache discount, LiteLLM 5% fallb
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-19 14:26:51
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:33:24
+// Description: Add v0.4.1 regression tests #72 (Side Questions protobuf/SQLite
+// discovery, fork-deduped incremental totals, direct side_question inspection,
+// Tab 1 & Tab 2 byModel cacheHitRatePct) and #73 (headless VM Side Questions
+// card Top-5 fold, one-click open stopPropagation, inspect & back-to-parent,
+// Tab 1 & Tab 2 8-col cache hit rate, I18N parity, and static hygiene).
+// ============================================================================
+test('v0.4.1 Side Questions protobuf/SQLite discovery, fork-deduped incremental totals, direct side_question inspection, and Tab 1 & Tab 2 byModel cacheHitRatePct', () => {
+  clearParserCache();
+
+  function encodeRawSummarySideQuestions({ ids17 = [], titled18 = [], includeNoise = true } = {}) {
+    const f15Parts = [];
+    if (includeNoise) {
+      f15Parts.push(encodeVarintField(1, 42));
+      f15Parts.push(encodeBytesField(2, 'unrelated-nested-payload'));
+    }
+    for (const id of ids17) {
+      f15Parts.push(encodeBytesField(17, id));
+    }
+    for (const entry of titled18) {
+      const mParts = [];
+      if (entry.id !== undefined) mParts.push(encodeBytesField(1, entry.id));
+      if (entry.title !== undefined) mParts.push(encodeBytesField(2, entry.title));
+      f15Parts.push(encodeBytesField(18, Buffer.concat(mParts)));
+    }
+    const topParts = [];
+    if (includeNoise) {
+      topParts.push(encodeBytesField(1, 'Main v0.4.1 Session'));
+      topParts.push(encodeVarintField(3, 999));
+    }
+    topParts.push(encodeBytesField(15, Buffer.concat(f15Parts)));
+    return Buffer.concat(topParts);
+  }
+
+  // 1. Unit tests for parseRawSummarySideQuestions: valid 15.17 / 15.18, deduping, cleaning, & malformed resilience
+  const protoIdA = '04100000-0000-4000-8000-00000000000a';
+  const protoIdB = '04100000-0000-4000-8000-00000000000b';
+  const protoIdC = '04100000-0000-4000-8000-00000000000c';
+  const validRawBuf = encodeRawSummarySideQuestions({
+    ids17: [protoIdA, protoIdA.toUpperCase(), '../invalid-id', 'short', protoIdC],
+    titled18: [
+      { id: protoIdA, title: '  `How does` **cache**   hit\nrate work?  ' },
+      { id: protoIdB, title: 'Compare Gemini 4 Hydrogen latency' },
+      { id: 'not-valid!', title: 'Should be ignored' },
+    ],
+  });
+
+  const parsedBuf = parseRawSummarySideQuestions(validRawBuf);
+  assert.deepEqual(parsedBuf.sideQuestionIds, [protoIdA, protoIdC, protoIdB]);
+  assert.equal(parsedBuf.titlesById.get(protoIdA), 'How does cache hit rate work?');
+  assert.equal(parsedBuf.titlesById.get(protoIdB), 'Compare Gemini 4 Hydrogen latency');
+  assert.equal(parsedBuf.titlesById.has(protoIdC), false);
+  assert.equal(parsedBuf.titlesById.size, 2);
+
+  // Uint8Array & ArrayBuffer inputs behave identically
+  const u8View = new Uint8Array(validRawBuf.buffer, validRawBuf.byteOffset, validRawBuf.byteLength);
+  const parsedU8 = parseRawSummarySideQuestions(u8View);
+  assert.deepEqual(parsedU8.sideQuestionIds, parsedBuf.sideQuestionIds);
+  assert.equal(parsedU8.titlesById.get(protoIdA), 'How does cache hit rate work?');
+  const exactAb = validRawBuf.buffer.slice(validRawBuf.byteOffset, validRawBuf.byteOffset + validRawBuf.byteLength);
+  const parsedAb = parseRawSummarySideQuestions(exactAb);
+  assert.deepEqual(parsedAb.sideQuestionIds, parsedBuf.sideQuestionIds);
+
+  // Empty, nullish, malformed, and truncated buffers NEVER throw
+  for (const badInput of [
+    null,
+    undefined,
+    Buffer.alloc(0),
+    Buffer.from([0x80, 0x80, 0x80]), // truncated varint
+    Buffer.from([0x7a, 0x40, 0x01, 0x02]), // field 15 truncated length-delimited
+    validRawBuf.subarray(0, Math.max(1, validRawBuf.length - 7)), // truncated mid-15.18
+    Buffer.from([0xff, 0xff, 0xff, 0xff, 0xff, 0x7a, 0x7f, 0x92, 0x01, 0x50]), // garbage wire types/lengths
+  ]) {
+    let res = null;
+    assert.doesNotThrow(() => {
+      res = parseRawSummarySideQuestions(badInput);
+    });
+    assert.ok(Array.isArray(res.sideQuestionIds));
+    assert.ok(res.titlesById instanceof Map);
+  }
+
+  // 2. Temp appData with conversation_summaries.db + SQLite DBs for mainId, sqA (IDLE), sqB (GENERATING)
+  const { root, appData } = makeTempEnv();
+  try {
+    const convsDir = join(appData, 'conversations');
+    mkdirSync(convsDir, { recursive: true });
+
+    const now = new Date();
+    const baseMs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0).getTime();
+    const evalNowMs = baseMs + 300_000;
+
+    const mainId = '04100000-0000-4000-8000-000000000001';
+    const sqA = protoIdA;
+    const sqB = protoIdB;
+    const sqMissing = '04100000-0000-4000-8000-00000000000f';
+    const sqATitle = 'How does cache hit rate work?';
+    const sqBTitle = 'Compare Gemini 4 Hydrogen latency';
+
+    const mainRawSummary = encodeRawSummarySideQuestions({
+      ids17: [sqA, sqA.toUpperCase()],
+      titled18: [
+        { id: sqA, title: sqATitle },
+        { id: sqB, title: sqBTitle },
+      ],
+    });
+
+    const sumDb = new DatabaseSync(join(appData, 'conversation_summaries.db'));
+    sumDb.exec(`
+      CREATE TABLE conversation_summaries (
+        conversation_id TEXT PRIMARY KEY,
+        title TEXT NOT NULL DEFAULT "",
+        preview TEXT NOT NULL DEFAULT "",
+        workspace_uris TEXT NOT NULL DEFAULT "",
+        agent_name TEXT NOT NULL DEFAULT "",
+        parent_conversation_id TEXT NOT NULL DEFAULT "",
+        raw_summary BLOB
+      );
+      CREATE TABLE conversation_parents (
+        conversation_id TEXT PRIMARY KEY,
+        parent_id TEXT NOT NULL DEFAULT ""
+      );
+    `);
+    sumDb
+      .prepare(
+        'INSERT INTO conversation_summaries (conversation_id, title, preview, workspace_uris, agent_name, parent_conversation_id, raw_summary) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      )
+      .run(
+        mainId,
+        'Main v0.4.1 Session',
+        'Investigating Side Questions and Cache Hit Rate',
+        JSON.stringify(['file:///f%3A/Other%20Items/agy-token-monitor']),
+        '',
+        '',
+        mainRawSummary,
+      );
+    const insParent = sumDb.prepare(
+      'INSERT INTO conversation_parents (conversation_id, parent_id) VALUES (?, ?)',
+    );
+    insParent.run(sqA, mainId);
+    insParent.run(sqB, mainId);
+    insParent.run(sqMissing, mainId); // missing DB/transcript -> must be skipped
+    insParent.run(mainId, mainId); // self-reference -> must be skipped
+    sumDb.close();
+
+    function writeSqTestDb(dbPath, { plannerSpecs = [], extraSteps = [] } = {}) {
+      rmSync(dbPath, { force: true });
+      const db = new DatabaseSync(dbPath);
+      db.exec(`
+        CREATE TABLE gen_metadata (idx INTEGER PRIMARY KEY, data BLOB, size INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INTEGER NOT NULL DEFAULT 0, status INTEGER NOT NULL DEFAULT 0, metadata BLOB);
+      `);
+      const insGen = db.prepare('INSERT INTO gen_metadata (idx, data, size) VALUES (?, ?, ?)');
+      const insStep = db.prepare(
+        'INSERT INTO steps (idx, step_type, status, metadata) VALUES (?, ?, ?, ?)',
+      );
+
+      for (const extra of extraSteps) {
+        const metaBuf = encodeBytesField(1, encodeTimestampMs(extra.createdMs));
+        insStep.run(extra.stepIdx, extra.stepType ?? 14, extra.status ?? 3, metaBuf);
+      }
+
+      plannerSpecs.forEach((spec, genIdx) => {
+        const usageBuf = encodeTokenUsage({
+          enumId: spec.enumId,
+          input: spec.input,
+          cacheRead: spec.cacheRead,
+          output: spec.output,
+          botId: spec.botId,
+        });
+        const genInnerParts = [
+          encodeBytesField(4, usageBuf),
+          encodeBytesField(19, spec.rawModel),
+          encodeBytesField(21, spec.displayModel),
+        ];
+        if (spec.originCascadeId) {
+          genInnerParts.push(encodeBytesField(20, encodeGenKv('cascade_id', spec.originCascadeId)));
+        }
+        const genTop = Buffer.concat([
+          encodeBytesField(1, Buffer.concat(genInnerParts)),
+          encodeBytesField(2, encodeVarint(spec.stepIdx)),
+        ]);
+        insGen.run(genIdx, genTop, genTop.length);
+
+        const metaBuf = Buffer.concat([
+          encodeBytesField(1, encodeTimestampMs(spec.createdMs)),
+          encodeBytesField(7, encodeTimestampMs(spec.createdMs + (spec.durationMs || 2000))),
+          encodeBytesField(9, usageBuf),
+          encodeBytesField(
+            20,
+            encodeStepField20({
+              stepIdx: spec.stepIdx,
+              genIdx,
+              originCascadeId: spec.originCascadeId || '',
+            }),
+          ),
+        ]);
+        insStep.run(spec.stepIdx, 15, spec.status ?? 3, metaBuf);
+      });
+      db.close();
+    }
+
+    const parentClonedSpecs = [
+      {
+        stepIdx: 1,
+        originCascadeId: mainId,
+        botId: 'v041-main-bot-1',
+        enumId: 1427,
+        rawModel: 'gemini-4-carbon-high',
+        displayModel: 'Gemini 4 Carbon (High)',
+        input: 20_000,
+        cacheRead: 80_000, // 80% high cache hit
+        output: 2_000,
+        createdMs: baseMs + 1_000,
+        durationMs: 2_000,
+      },
+      {
+        stepIdx: 3,
+        originCascadeId: mainId,
+        botId: 'v041-main-bot-2',
+        enumId: 1525,
+        rawModel: 'gemini-4-hydrogen-low',
+        displayModel: 'Gemini 4 Hydrogen (Low)',
+        input: 30_000,
+        cacheRead: 10_000, // 25% low cache hit
+        output: 1_000,
+        createdMs: baseMs + 5_000,
+        durationMs: 2_000,
+      },
+    ];
+
+    // Main parent conversation DB: high cache hit (Carbon 80%), low cache hit (Hydrogen 25%), zero-input edge case (Claude Opus 5.5 0%)
+    writeSqTestDb(join(convsDir, `${mainId}.db`), {
+      extraSteps: [{ stepIdx: 0, stepType: 14, status: 3, createdMs: baseMs }],
+      plannerSpecs: [
+        ...parentClonedSpecs,
+        {
+          stepIdx: 5,
+          originCascadeId: mainId,
+          botId: 'v041-main-bot-3',
+          enumId: 1402,
+          rawModel: 'claude-opus-5-5-high',
+          displayModel: 'Claude Opus 5.5 (High)',
+          input: 0,
+          cacheRead: 0, // zero-input edge case -> cacheHitRatePct === 0
+          output: 500,
+          createdMs: baseMs + 9_000,
+          durationMs: 1_000,
+        },
+      ],
+    });
+
+    // Side Question A (IDLE, older): cloned parent steps + own Gemini 4 Carbon step (5k in, 15k cache, 1k out -> 75% hit, $0.0215)
+    const sqADbPath = join(convsDir, `${sqA}.db`);
+    const sqAOwnStep = {
+      stepIdx: 5,
+      originCascadeId: sqA,
+      botId: 'v041-sqA-bot-1',
+      enumId: 1427,
+      rawModel: 'gemini-4-carbon-high',
+      displayModel: 'Gemini 4 Carbon (High)',
+      input: 5_000,
+      cacheRead: 15_000,
+      output: 1_000,
+      createdMs: baseMs + 60_000,
+      durationMs: 2_000,
+    };
+    writeSqTestDb(sqADbPath, {
+      plannerSpecs: [...parentClonedSpecs, sqAOwnStep],
+    });
+
+    // Side Question B (GENERATING, newer): cloned parent steps + own Gemini 4 Hydrogen step (30k in, 10k cache, 2k out -> 25% hit, $0.06075) + active USER_INPUT
+    const sqBDbPath = join(convsDir, `${sqB}.db`);
+    writeSqTestDb(sqBDbPath, {
+      plannerSpecs: [
+        ...parentClonedSpecs,
+        {
+          stepIdx: 5,
+          originCascadeId: sqB,
+          botId: 'v041-sqB-bot-1',
+          enumId: 1525,
+          rawModel: 'gemini-4-hydrogen-medium',
+          displayModel: 'Gemini 4 Hydrogen (Medium)',
+          input: 30_000,
+          cacheRead: 10_000,
+          output: 2_000,
+          createdMs: baseMs + 120_000,
+          durationMs: 3_000,
+        },
+      ],
+      extraSteps: [{ stepIdx: 6, stepType: 14, status: 3, createdMs: baseMs + 125_000 }],
+    });
+
+    // 3. Assert analyzeConversation(mainId)
+    const mainRes = analyzeConversation(mainId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.ok(mainRes, 'analyzeConversation(mainId) must succeed');
+    assert.equal(mainRes.isChildSession, false);
+    assert.equal(mainRes.childKind, null);
+
+    // Side Questions discovery, ordering (sqB GENERATING ahead of sqA IDLE), titles, models, non-cloned timestamps, fork-deduped incremental totals
+    assert.equal(mainRes.sideQuestions.length, 2);
+    const [firstSq, secondSq] = mainRes.sideQuestions;
+    assert.equal(firstSq.conversationId, sqB);
+    assert.equal(firstSq.status, 'GENERATING');
+    assert.equal(firstSq.generatingSinceMs, baseMs + 125_000);
+    assert.equal(firstSq.title, sqBTitle);
+    assert.equal(firstSq.model, 'Gemini 4 Hydrogen');
+    assert.equal(firstSq.stepsCount, 1);
+    assert.equal(firstSq.inputUncachedTokens, 30_000);
+    assert.equal(firstSq.cacheReadTokens, 10_000);
+    assert.equal(firstSq.outputTokens, 2_000);
+    assert.equal(firstSq.totalTokens, 42_000);
+    assert.ok(Math.abs(firstSq.cacheHitRatePct - 25) < 1e-9);
+    assert.ok(Math.abs(firstSq.costActual - 0.06075) < 1e-9);
+    assert.equal(firstSq.createdAtMs, baseMs + 120_000);
+    assert.equal(firstSq.updatedAtMs, baseMs + 125_000);
+
+    assert.equal(secondSq.conversationId, sqA);
+    assert.equal(secondSq.status, 'IDLE');
+    assert.equal(secondSq.title, sqATitle);
+    assert.equal(secondSq.model, 'Gemini 4 Carbon');
+    assert.equal(secondSq.stepsCount, 1);
+    assert.equal(secondSq.inputUncachedTokens, 5_000);
+    assert.equal(secondSq.cacheReadTokens, 15_000);
+    assert.equal(secondSq.outputTokens, 1_000);
+    assert.equal(secondSq.totalTokens, 21_000);
+    assert.ok(Math.abs(secondSq.cacheHitRatePct - 75) < 1e-9);
+    assert.ok(Math.abs(secondSq.costActual - 0.0215) < 1e-9);
+    assert.equal(secondSq.createdAtMs, baseMs + 60_000);
+    assert.equal(secondSq.updatedAtMs, baseMs + 62_000);
+
+    // Weighted sideQuestionsTotals (25,000 / 60,000 = 41.6666...%, NOT naive 50% average)
+    assert.equal(mainRes.sideQuestionsTotals.count, 2);
+    assert.equal(mainRes.sideQuestionsTotals.stepsCount, 2);
+    assert.equal(mainRes.sideQuestionsTotals.inputUncachedTokens, 35_000);
+    assert.equal(mainRes.sideQuestionsTotals.cacheReadTokens, 25_000);
+    assert.equal(mainRes.sideQuestionsTotals.outputTokens, 3_000);
+    assert.equal(mainRes.sideQuestionsTotals.totalTokens, 63_000);
+    assert.ok(Math.abs(mainRes.sideQuestionsTotals.costActual - 0.08225) < 1e-9);
+    assert.ok(Math.abs(mainRes.sideQuestionsTotals.cacheHitRatePct - (25_000 / 60_000) * 100) < 1e-9);
+
+    // Main totals.withChildren, totals.byModel, totals.mainOnlyByModel, and receipt are 100% isolated from sqA/sqB
+    assert.equal(mainRes.totals.withChildren.stepsCount, 3);
+    assert.equal(mainRes.totals.withChildren.inputUncachedTokens, 50_000);
+    assert.equal(mainRes.totals.withChildren.cacheReadTokens, 90_000);
+    assert.equal(mainRes.totals.withChildren.outputTokens, 3_500);
+    assert.equal(mainRes.totals.withChildren.totalTokens, 143_500);
+    assert.ok(Math.abs(mainRes.totals.withChildren.costActual - 0.13125) < 1e-9);
+    assert.equal(mainRes.receipt.all.grandTotal.stepsCount, 3);
+    assert.equal(mainRes.receipt.all.grandTotal.totalTokens, 143_500);
+    assert.ok(Math.abs(mainRes.receipt.all.grandTotal.costActual - 0.13125) < 1e-9);
+
+    // Tab 1 totals.byModel & totals.mainOnlyByModel expose accurate cacheHitRatePct (incl. 0 for zero-input edge case)
+    for (const modelList of [mainRes.totals.byModel, mainRes.totals.mainOnlyByModel]) {
+      assert.equal(modelList.length, 3);
+      const carbonRow = modelList.find((r) => r.profileId === 'gemini-4-carbon');
+      const hydroRow = modelList.find((r) => r.profileId === 'gemini-4-hydrogen');
+      const opusRow = modelList.find((r) => r.profileId === 'claude-opus-5-5');
+      assert.ok(carbonRow && hydroRow && opusRow);
+      assert.equal(carbonRow.totalTokens, 102_000); // isolated from sqA's 21k Carbon tokens
+      assert.ok(Math.abs(carbonRow.cacheHitRatePct - 80) < 1e-9);
+      assert.equal(hydroRow.totalTokens, 41_000); // isolated from sqB's 42k Hydrogen tokens
+      assert.ok(Math.abs(hydroRow.cacheHitRatePct - 25) < 1e-9);
+      assert.equal(opusRow.inputUncachedTokens, 0);
+      assert.equal(opusRow.cacheReadTokens, 0);
+      assert.equal(opusRow.outputTokens, 500);
+      assert.equal(opusRow.cacheHitRatePct, 0);
+    }
+
+    // _etagPart includes both Side Question IDs, cache keys & official titles; _activeWatchIds contains sqA & sqB
+    assert.equal(mainRes._etagPart.includes(`${sqA}:`), true);
+    assert.equal(mainRes._etagPart.includes(`${sqB}:`), true);
+    assert.equal(mainRes._etagPart.includes(`t:${sqATitle}`), true);
+    assert.equal(mainRes._etagPart.includes(`t:${sqBTitle}`), true);
+    assert.equal(mainRes._activeWatchIds.includes(mainId), true);
+    assert.equal(mainRes._activeWatchIds.includes(sqA), true);
+    assert.equal(mainRes._activeWatchIds.includes(sqB), true);
+
+    // 4. Assert direct Side Question inspection: analyzeConversation(sqA)
+    const sqARes = analyzeConversation(sqA, { appDataDirs: [appData], disableAgentApi: true });
+    assert.ok(sqARes, 'analyzeConversation(sqA) must succeed');
+    assert.equal(sqARes.isChildSession, true);
+    assert.equal(sqARes.childKind, 'side_question');
+    assert.equal(sqARes.parentConversationId, mainId);
+    assert.equal(sqARes.title, sqATitle);
+    assert.equal(sqARes.totals.mainOnly.stepsCount, 1);
+    assert.equal(sqARes.totals.mainOnly.totalTokens, 21_000);
+    assert.ok(Math.abs(sqARes.totals.mainOnlyByModel[0].cacheHitRatePct - 75) < 1e-9);
+
+    // 5. Assert summarizeGlobalAndRecent Tab 2 periods.*.byModel expose accurate cacheHitRatePct
+    const globalRes = summarizeGlobalAndRecent({ appDataDirs: [appData], nowMs: evalNowMs });
+    for (const periodKey of ['today', '7d', '30d', 'all']) {
+      const pByModel = globalRes.periods[periodKey]?.byModel || [];
+      const gCarbon = pByModel.find((r) => r.profileId === 'gemini-4-carbon');
+      const gHydro = pByModel.find((r) => r.profileId === 'gemini-4-hydrogen');
+      const gOpus = pByModel.find((r) => r.profileId === 'claude-opus-5-5');
+      assert.ok(gCarbon && gHydro && gOpus, `Period ${periodKey} must contain all 3 models`);
+      // Carbon: main (20k in, 80k cache) + sqA (5k in, 15k cache) => 95k / 120k = 79.16666...%
+      assert.equal(gCarbon.inputTokens, 25_000);
+      assert.equal(gCarbon.cacheReadTokens, 95_000);
+      assert.ok(Math.abs(gCarbon.cacheHitRatePct - (95_000 / 120_000) * 100) < 1e-9);
+      // Hydrogen: main (30k in, 10k cache) + sqB (30k in, 10k cache) => 20k / 80k = 25%
+      assert.equal(gHydro.inputTokens, 60_000);
+      assert.equal(gHydro.cacheReadTokens, 20_000);
+      assert.ok(Math.abs(gHydro.cacheHitRatePct - 25) < 1e-9);
+      // Claude Opus 5.5: zero input -> 0%
+      assert.equal(gOpus.inputTokens, 0);
+      assert.equal(gOpus.cacheReadTokens, 0);
+      assert.equal(gOpus.cacheHitRatePct, 0);
+    }
+
+    // 6. Verify second-prong matching botId deduplication (even without originCascadeId) & _etagPart invalidation
+    const prevEtagPart = mainRes._etagPart;
+    writeSqTestDb(sqADbPath, {
+      plannerSpecs: [
+        parentClonedSpecs[0],
+        {
+          ...parentClonedSpecs[1],
+          originCascadeId: '', // omit originCascadeId; must still dedupe via matching mainSeenBotIds botId!
+        },
+        sqAOwnStep,
+      ],
+    });
+    const bumpSec = (evalNowMs + 10_000) / 1000;
+    utimesSync(sqADbPath, bumpSec, bumpSec);
+
+    const mainResAfter = analyzeConversation(mainId, { appDataDirs: [appData], disableAgentApi: true });
+    assert.notEqual(mainResAfter._etagPart, prevEtagPart, 'Mutating sqA DB must invalidate parent _etagPart');
+    const sqAAfter = mainResAfter.sideQuestions.find((sq) => sq.conversationId === sqA);
+    assert.equal(sqAAfter.stepsCount, 1);
+    assert.equal(sqAAfter.totalTokens, 21_000);
+    assert.ok(Math.abs(sqAAfter.cacheHitRatePct - 75) < 1e-9);
+    assert.ok(Math.abs(sqAAfter.costActual - 0.0215) < 1e-9);
+  } finally {
+    clearParserCache();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPropagation, inspect & back-to-parent), Tab 1 & Tab 2 8-col cache hit rate, I18N parity, and static hygiene', async () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = join(testDir, '..');
+  const paneDir = join(repoRoot, 'sidecars', 'monitor_pane');
+
+  const indexHtml = readFileSync(join(paneDir, 'index.html'), 'utf-8');
+  const stylesCss = readFileSync(join(paneDir, 'styles.css'), 'utf-8');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+  const receiptSource = readFileSync(join(paneDir, 'receipt.js'), 'utf-8');
+  const pixelOfficeSource = readFileSync(join(paneDir, 'pixel_office.js'), 'utf-8');
+  const parserSource = readFileSync(join(paneDir, 'parser.mjs'), 'utf-8');
+  const mainSource = readFileSync(join(paneDir, 'main.mjs'), 'utf-8');
+  const releaseUpdaterSource = readFileSync(join(paneDir, 'release_updater.mjs'), 'utf-8');
+  const pricingSyncSource = readFileSync(join(paneDir, 'pricing_sync.mjs'), 'utf-8');
+  const netProxySource = readFileSync(join(paneDir, 'net_proxy.mjs'), 'utf-8');
+  const clipboardImageSource = readFileSync(join(paneDir, 'clipboard_image.mjs'), 'utf-8');
+  const syncPluginPs1 = readFileSync(join(repoRoot, 'scripts', 'sync-plugin.ps1'), 'utf-8');
+  const readmeMd = readFileSync(join(repoRoot, 'README.md'), 'utf-8');
+  const skillMd = readFileSync(join(repoRoot, 'skills', 'token-monitor', 'SKILL.md'), 'utf-8');
+  const pluginJsonRaw = readFileSync(join(repoRoot, 'plugin.json'), 'utf-8');
+  const packageJsonRaw = readFileSync(join(paneDir, 'package.json'), 'utf-8');
+  const sidecarJsonRaw = readFileSync(join(paneDir, 'sidecar.json'), 'utf-8');
+  const selfSource = readFileSync(fileURLToPath(import.meta.url), 'utf-8');
+
+  // ---------------- Part A: Headless Node VM Mock DOM ----------------
+  const iifeCloseIdx = appSource.lastIndexOf('})();');
+  assert.ok(iifeCloseIdx > 0, 'app.js must end with IIFE closing })();');
+
+  const instrumentedApp =
+    appSource.slice(0, iifeCloseIdx) +
+    `\n  globalThis.__tmV041Exports = {\n` +
+    `    state,\n` +
+    `    t,\n` +
+    `    init,\n` +
+    `    getCurrentAppVersion,\n` +
+    `    getModelRowCacheHitMeta,\n` +
+    `    renderHeader,\n` +
+    `    renderCurrentTab,\n` +
+    `    renderCostCard,\n` +
+    `    renderChildrenAndModelsCard,\n` +
+    `    renderSideQuestionsCard,\n` +
+    `    renderGlobalTab,\n` +
+    `    selectConversation,\n` +
+    `    setActiveTab,\n` +
+    `  };\n` +
+    appSource.slice(iifeCloseIdx);
+
+  class FakeNode {
+    constructor() {
+      this.parentNode = null;
+      this.childNodes = [];
+    }
+  }
+  class FakeTextNode extends FakeNode {
+    constructor(text) {
+      super();
+      this.nodeType = 3;
+      this._text = String(text ?? '');
+    }
+    get textContent() {
+      return this._text;
+    }
+    set textContent(v) {
+      this._text = String(v ?? '');
+    }
+  }
+  function matchesAtomSelector(elNode, atom) {
+    const s = atom.trim();
+    if (!s) return false;
+    if (s.startsWith('#')) return elNode.getAttribute('id') === s.slice(1);
+    if (s.startsWith('.')) {
+      return s.slice(1).split('.').filter(Boolean).every((cls) => elNode.classList.contains(cls));
+    }
+    const dotParts = s.split('.');
+    const tagPart = dotParts[0].toUpperCase();
+    if (tagPart && elNode.tagName !== tagPart) return false;
+    return dotParts.slice(1).every((cls) => elNode.classList.contains(cls));
+  }
+  function matchesDescendantSelector(elNode, selector, rootScope) {
+    const parts = selector.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return false;
+    if (!matchesAtomSelector(elNode, parts[parts.length - 1])) return false;
+    let partIdx = parts.length - 2;
+    let cur = elNode.parentNode;
+    while (partIdx >= 0 && cur && cur !== rootScope) {
+      if (cur instanceof FakeElement && matchesAtomSelector(cur, parts[partIdx])) {
+        partIdx -= 1;
+      }
+      cur = cur.parentNode;
+    }
+    return partIdx < 0;
+  }
+  class FakeElement extends FakeNode {
+    constructor(tagName, namespaceURI = 'http://www.w3.org/1999/xhtml') {
+      super();
+      this.nodeType = 1;
+      this.tagName = String(tagName || 'div').toUpperCase();
+      this.namespaceURI = namespaceURI;
+      this._classSet = new Set();
+      this.attributes = new Map();
+      this.listeners = new Map();
+      this.dataset = {};
+      this.title = '';
+      this.type = '';
+      this.role = '';
+      this.value = '';
+      this.disabled = false;
+      this.checked = false;
+      this.scrollTop = 0;
+      this.width = 0;
+      this.height = 0;
+      this.clientWidth = 380;
+      this._ctx2d = null;
+      this.style = {
+        cssText: '',
+        setProperty(name, val) {
+          this[name] = String(val);
+        },
+        getPropertyValue(name) {
+          return this[name] ?? '';
+        },
+      };
+      this.classList = {
+        add: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.add(part);
+            }
+          }
+        },
+        remove: (...tokens) => {
+          for (const tok of tokens) {
+            for (const part of String(tok || '').trim().split(/\s+/)) {
+              if (part) this._classSet.delete(part);
+            }
+          }
+        },
+        contains: (tok) => this._classSet.has(String(tok || '')),
+        toggle: (tok, force) => {
+          const key = String(tok || '');
+          const shouldAdd = force === undefined ? !this._classSet.has(key) : Boolean(force);
+          if (shouldAdd) this._classSet.add(key);
+          else this._classSet.delete(key);
+          return shouldAdd;
+        },
+      };
+    }
+    get className() {
+      return [...this._classSet].join(' ');
+    }
+    set className(val) {
+      this._classSet.clear();
+      for (const part of String(val || '').trim().split(/\s+/)) {
+        if (part) this._classSet.add(part);
+      }
+    }
+    get children() {
+      return this.childNodes.filter((n) => n instanceof FakeElement);
+    }
+    get childElementCount() {
+      return this.children.length;
+    }
+    get textContent() {
+      return this.childNodes.map((n) => n.textContent).join('');
+    }
+    set textContent(val) {
+      for (const c of this.childNodes) c.parentNode = null;
+      this.childNodes = [];
+      const str = val === null || val === undefined ? '' : String(val);
+      if (str !== '') this.appendChild(new FakeTextNode(str));
+    }
+    setAttribute(name, val) {
+      const k = String(name);
+      const v = String(val);
+      if (k === 'class') {
+        this.className = v;
+        return;
+      }
+      if (k === 'title') this.title = v;
+      this.attributes.set(k, v);
+    }
+    getAttribute(name) {
+      const k = String(name);
+      if (k === 'class') return this.className;
+      return this.attributes.has(k) ? this.attributes.get(k) : null;
+    }
+    hasAttribute(name) {
+      return name === 'class' ? this._classSet.size > 0 : this.attributes.has(String(name));
+    }
+    removeAttribute(name) {
+      if (name === 'class') this.className = '';
+      else this.attributes.delete(String(name));
+    }
+    appendChild(child) {
+      if (child.parentNode) {
+        const idx = child.parentNode.childNodes.indexOf(child);
+        if (idx >= 0) child.parentNode.childNodes.splice(idx, 1);
+      }
+      child.parentNode = this;
+      this.childNodes.push(child);
+      return child;
+    }
+    remove() {
+      if (this.parentNode) {
+        const idx = this.parentNode.childNodes.indexOf(this);
+        if (idx >= 0) this.parentNode.childNodes.splice(idx, 1);
+        this.parentNode = null;
+      }
+    }
+    replaceChildren(...nodes) {
+      for (const c of this.childNodes) c.parentNode = null;
+      this.childNodes = [];
+      for (const n of nodes) {
+        if (n === null || n === undefined) continue;
+        this.appendChild(typeof n === 'string' ? new FakeTextNode(n) : n);
+      }
+    }
+    addEventListener(type, fn) {
+      if (!this.listeners.has(type)) this.listeners.set(type, []);
+      this.listeners.get(type).push(fn);
+    }
+    dispatchEvent(type, extraProps = {}) {
+      let stopped = false;
+      let prevented = false;
+      const evt = {
+        type,
+        target: this,
+        currentTarget: this,
+        preventDefault() {
+          prevented = true;
+        },
+        stopPropagation() {
+          stopped = true;
+        },
+        get defaultPrevented() {
+          return prevented;
+        },
+        get propagationStopped() {
+          return stopped;
+        },
+        ...extraProps,
+      };
+      let cur = this;
+      while (cur) {
+        evt.currentTarget = cur;
+        for (const fn of cur.listeners?.get(type) || []) {
+          fn(evt);
+        }
+        if (stopped) break;
+        cur = cur.parentNode;
+      }
+      return evt;
+    }
+    click(extraProps = {}) {
+      return this.dispatchEvent('click', extraProps);
+    }
+    getBoundingClientRect() {
+      return { left: 0, top: 0, width: this.clientWidth || 380, height: 180 };
+    }
+    scrollIntoView() {}
+    querySelectorAll(selector) {
+      const out = [];
+      const visit = (node) => {
+        for (const ch of node.children) {
+          if (matchesDescendantSelector(ch, selector, this)) out.push(ch);
+          visit(ch);
+        }
+      };
+      visit(this);
+      return out;
+    }
+    querySelector(selector) {
+      return this.querySelectorAll(selector)[0] || null;
+    }
+    getContext(kind) {
+      if (this.tagName !== 'CANVAS' || kind !== '2d') return null;
+      if (!this._ctx2d) {
+        this._ctx2d = {
+          font: '',
+          fillStyle: '',
+          strokeStyle: '',
+          lineWidth: 1,
+          textAlign: 'left',
+          textBaseline: 'alphabetic',
+          imageSmoothingEnabled: true,
+          setTransform() {},
+          save() {},
+          restore() {},
+          scale() {},
+          beginPath() {},
+          moveTo() {},
+          lineTo() {},
+          stroke() {},
+          fillRect() {},
+          strokeRect() {},
+          setLineDash() {},
+          createLinearGradient() {
+            return { addColorStop() {} };
+          },
+          measureText(str) {
+            return { width: String(str || '').length * 6.5 };
+          },
+          fillText() {},
+          drawImage() {},
+        };
+      }
+      return this._ctx2d;
+    }
+  }
+
+  const elementsById = new Map();
+  const rootHtml = new FakeElement('html');
+  const rootBody = new FakeElement('body');
+  rootHtml.appendChild(rootBody);
+  const fakeDocument = {
+    readyState: 'loading',
+    hidden: false,
+    documentElement: rootHtml,
+    body: rootBody,
+    createElement: (tag) => new FakeElement(tag),
+    createElementNS: (ns, tag) => new FakeElement(tag, ns),
+    createTextNode: (text) => new FakeTextNode(text),
+    getElementById(id) {
+      const k = String(id);
+      if (!elementsById.has(k)) {
+        const node = new FakeElement(k.includes('card') ? 'article' : 'div');
+        node.setAttribute('id', k);
+        rootBody.appendChild(node);
+        elementsById.set(k, node);
+      }
+      return elementsById.get(k);
+    },
+    querySelectorAll: () => [],
+    addEventListener() {},
+  };
+
+  const mainId = '04110000-0000-4000-8000-000000000001';
+  const sqIds = Array.from({ length: 6 }, (_, i) => `04110000-0000-4000-8000-00000000001${i + 1}`);
+  const toggledConversations = [];
+  const fetchedConvs = [];
+  const snapByConv = new Map();
+
+  const sandbox = {
+    Node: FakeNode,
+    document: fakeDocument,
+    innerWidth: 420,
+    devicePixelRatio: 2,
+    addEventListener: () => {},
+    matchMedia: () => ({ matches: false }),
+    sidecar: {
+      conversationId: mainId,
+      ui: {
+        toggleConversation(convId) {
+          toggledConversations.push(convId);
+        },
+      },
+    },
+    location: { reload: () => {} },
+    sessionStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    navigator: { clipboard: { writeText: async () => {} } },
+    MutationObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+    getComputedStyle: () => ({ color: 'rgb(246, 247, 249)', getPropertyValue: () => '#f6f7f9' }),
+    AbortController,
+    Blob,
+    Buffer,
+    Uint8Array,
+    Math,
+    Date,
+    Number,
+    String,
+    Array,
+    Object,
+    Map,
+    Set,
+    RegExp,
+    JSON,
+    Promise,
+    performance,
+    URLSearchParams,
+    Intl,
+    fetch: async (url) => {
+      const parsedUrl = new URL(String(url), 'http://127.0.0.1');
+      if (parsedUrl.pathname === '/api/snapshot') {
+        const requestedConv = parsedUrl.searchParams.get('conv') || '';
+        fetchedConvs.push(requestedConv);
+        const mockSnap = snapByConv.get(requestedConv);
+        return { ok: true, status: 200, json: async () => mockSnap || { unchanged: true } };
+      }
+      return { ok: true, status: 200, json: async () => ({ ok: true }) };
+    },
+    requestAnimationFrame: (cb) => {
+      cb();
+      return 1;
+    },
+    setTimeout: () => 1,
+    clearTimeout: () => {},
+    setInterval: () => 1,
+    clearInterval: () => {},
+    console,
+  };
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+  fakeDocument.defaultView = sandbox;
+
+  vm.runInNewContext(receiptSource, sandbox);
+  vm.runInNewContext(pixelOfficeSource, sandbox);
+  vm.runInNewContext(instrumentedApp, sandbox);
+
+  const exports = sandbox.__tmV041Exports;
+  assert.ok(exports, 'VM execution must expose __tmV041Exports');
+  assert.equal(exports.getCurrentAppVersion(), '0.4.1');
+
+  exports.init();
+  await new Promise((r) => setImmediate(r));
+  fetchedConvs.length = 0;
+
+  const modelRows4 = [
+    {
+      model: 'Gemini 4 Carbon',
+      profileId: 'gemini-4-carbon',
+      profileLabel: 'Gemini 4 Carbon',
+      rawModels: ['gemini-4-carbon'],
+      rateDisplay: 'USD 2.00 / 0.10 / 10.00',
+      stepsCount: 4,
+      conversationsCount: 2,
+      inputUncachedTokens: 10_000,
+      inputTokens: 10_000,
+      cacheReadTokens: 90_000,
+      outputTokens: 2_000,
+      totalTokens: 102_000,
+      cacheHitRatePct: 90,
+      costActual: 0.049,
+    },
+    {
+      model: 'Gemini 4 Neon',
+      profileId: 'gemini-4-neon',
+      profileLabel: 'Gemini 4 Neon',
+      rawModels: ['gemini-4-neon'],
+      rateDisplay: 'USD 3.00 / 0.15 / 15.00',
+      stepsCount: 3,
+      conversationsCount: 1,
+      inputUncachedTokens: 45_000,
+      inputTokens: 45_000,
+      cacheReadTokens: 55_000,
+      outputTokens: 1_500,
+      totalTokens: 101_500,
+      cacheHitRatePct: 55,
+      costActual: 0.16575,
+    },
+    {
+      model: 'Gemini 4 Hydrogen',
+      profileId: 'gemini-4-hydrogen',
+      profileLabel: 'Gemini 4 Hydrogen',
+      rawModels: ['gemini-4-hydrogen'],
+      rateDisplay: 'USD 1.50 / 0.075 / 7.50',
+      stepsCount: 2,
+      conversationsCount: 1,
+      inputUncachedTokens: 80_000,
+      inputTokens: 80_000,
+      cacheReadTokens: 20_000,
+      outputTokens: 1_000,
+      totalTokens: 101_000,
+      cacheHitRatePct: 20,
+      costActual: 0.129,
+    },
+    {
+      model: 'Claude Opus 5.5',
+      profileId: 'claude-opus-5-5',
+      profileLabel: 'Claude Opus 5.5',
+      rawModels: ['claude-opus-5-5'],
+      rateDisplay: 'USD 4.00 / 0.20 / 20.00',
+      stepsCount: 1,
+      conversationsCount: 1,
+      inputUncachedTokens: 0,
+      inputTokens: 0,
+      cacheReadTokens: 0,
+      outputTokens: 500,
+      totalTokens: 500,
+      cacheHitRatePct: 0,
+      costActual: 0.01,
+    },
+  ];
+  // Sorted descending by costActual: Neon (55%, mid) -> Hydrogen (20%, low) -> Carbon (90%, high) -> Opus (0%, none)
+
+  const makeMainSnap = (sideQuestions, sideQuestionsTotals) => ({
+    appVersion: '0.4.1',
+    prefs: { ...DEFAULT_PREFS, currency: 'USD', language: 'zh', pixelOfficeCollapsed: true },
+    pricingCatalog: MODEL_PRICING_CATALOG,
+    current: {
+      conversationId: mainId,
+      title: 'Main Session v0.4.1',
+      activeModel: 'gemini-4-carbon',
+      activeModelLabel: 'Gemini 4 Carbon',
+      activeRawModel: 'gemini-4-carbon',
+      isChildSession: false,
+      childKind: null,
+      parentConversationId: '',
+      status: 'IDLE',
+      speed: { latestStepTokPerSec: 85, weightedAvgTokPerSec: 80, peakTokPerSec: 95, recentSteps: [] },
+      context: { currentTotal: 100_000, usageLevel: 'HEALTHY', softLimit: 409_600, hardLimit: 512_000 },
+      cache: { hitRatePct: 75, cacheReadTokens: 75_000, inputUncachedTokens: 25_000, spikes: [] },
+      totals: {
+        mainOnly: { totalTokens: 305_000, outputTokens: 5_000, costActual: 0.35375, stepsCount: 10 },
+        withChildren: { totalTokens: 305_000, outputTokens: 5_000, costActual: 0.35375, stepsCount: 10 },
+        byModel: modelRows4,
+        mainOnlyByModel: modelRows4,
+      },
+      children: [],
+      sideQuestions,
+      sideQuestionsTotals,
+    },
+    global: {
+      todayDate: '2026-11-19',
+      periods: {
+        today: {
+          rangeKey: 'today',
+          startDate: '2026-11-19',
+          endDate: '2026-11-19',
+          spanDaysCount: 1,
+          activeDaysCount: 1,
+          conversationsCount: 4,
+          archivedConversationsCount: 0,
+          stepsCount: 10,
+          inputTokens: 135_000,
+          cacheReadTokens: 165_000,
+          outputTokens: 5_000,
+          totalTokens: 305_000,
+          cacheHitRatePct: 55,
+          costActual: 0.35375,
+          avgDailyCost: 0.35375,
+          avgDailyTokens: 305_000,
+          trendGranularity: 'hour',
+          series: [],
+          byModel: modelRows4,
+          topConversations: [],
+          subscription: null,
+        },
+      },
+      recentConversations: [],
+    },
+  });
+
+  // 1. Zero Side Questions -> #card-side-questions has .hidden and empty content
+  const emptySqSnap = makeMainSnap([], {
+    count: 0,
+    stepsCount: 0,
+    inputUncachedTokens: 0,
+    cacheReadTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+    cacheHitRatePct: 0,
+    costActual: 0,
+  });
+  exports.state.homeConvId = mainId;
+  exports.state.lang = 'zh';
+  exports.state.snapshot = emptySqSnap;
+  exports.renderHeader(emptySqSnap);
+  exports.renderCurrentTab(emptySqSnap);
+
+  const sqCard = fakeDocument.getElementById('card-side-questions');
+  assert.equal(sqCard.classList.contains('hidden'), true);
+  assert.equal(sqCard.childElementCount, 0);
+  assert.equal(sqCard.textContent, '');
+  assert.equal(fakeDocument.getElementById('conv-kind-badge').classList.contains('hidden'), true);
+
+  // 2. 6 Side Questions -> Top-5 fold, expand/collapse, one-click open stopPropagation, row inspect
+  const nowMs = Date.now();
+  const sixSideQuestions = sqIds.map((sqId, idx) => ({
+    conversationId: sqId,
+    title: `Side Question #${idx + 1}`,
+    model: idx % 2 === 0 ? 'Gemini 4 Carbon' : 'Gemini 4 Hydrogen',
+    rawModel: idx % 2 === 0 ? 'gemini-4-carbon' : 'gemini-4-hydrogen',
+    status: idx === 0 ? 'GENERATING' : 'IDLE',
+    generatingSinceMs: idx === 0 ? nowMs - 4000 : null,
+    stepsCount: idx + 1,
+    inputUncachedTokens: 4_000,
+    cacheReadTokens: 16_000,
+    outputTokens: 1_000,
+    totalTokens: 21_000,
+    cacheHitRatePct: 80,
+    costActual: 0.02,
+    updatedAtMs: nowMs - idx * 5_000,
+    createdAtMs: nowMs - (idx + 1) * 10_000,
+  }));
+  const sixTotals = {
+    count: 6,
+    stepsCount: 21,
+    inputUncachedTokens: 24_000,
+    cacheReadTokens: 96_000,
+    outputTokens: 6_000,
+    totalTokens: 126_000,
+    cacheHitRatePct: 80,
+    costActual: 0.12,
+  };
+  const sixSqSnap = makeMainSnap(sixSideQuestions, sixTotals);
+  const sqDirectSnap = {
+    appVersion: '0.4.1',
+    prefs: { ...DEFAULT_PREFS, currency: 'USD', language: 'zh', pixelOfficeCollapsed: true },
+    pricingCatalog: MODEL_PRICING_CATALOG,
+    current: {
+      conversationId: sqIds[0],
+      title: 'Side Question #1',
+      activeModel: 'gemini-4-carbon',
+      activeModelLabel: 'Gemini 4 Carbon',
+      activeRawModel: 'gemini-4-carbon',
+      isChildSession: true,
+      childKind: 'side_question',
+      parentConversationId: mainId,
+      status: 'IDLE',
+      speed: { latestStepTokPerSec: 70, weightedAvgTokPerSec: 70, peakTokPerSec: 70, recentSteps: [] },
+      context: { currentTotal: 20_000, usageLevel: 'HEALTHY', softLimit: 409_600, hardLimit: 512_000 },
+      cache: { hitRatePct: 80, cacheReadTokens: 16_000, inputUncachedTokens: 4_000, spikes: [] },
+      totals: {
+        mainOnly: { totalTokens: 21_000, outputTokens: 1_000, costActual: 0.02, stepsCount: 1 },
+        withChildren: { totalTokens: 21_000, outputTokens: 1_000, costActual: 0.02, stepsCount: 1 },
+        byModel: [modelRows4[0]],
+        mainOnlyByModel: [modelRows4[0]],
+      },
+      children: [],
+      sideQuestions: [],
+      sideQuestionsTotals: {
+        count: 0,
+        stepsCount: 0,
+        inputUncachedTokens: 0,
+        cacheReadTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        cacheHitRatePct: 0,
+        costActual: 0,
+      },
+    },
+  };
+  snapByConv.set(mainId, sixSqSnap);
+  snapByConv.set(sqIds[0], sqDirectSnap);
+
+  exports.state.snapshot = sixSqSnap;
+  exports.renderHeader(sixSqSnap);
+  exports.renderCurrentTab(sixSqSnap);
+
+  assert.equal(sqCard.classList.contains('hidden'), false);
+  assert.equal(sqCard.querySelectorAll('.side-q-row').length, 5, 'Collapsed Side Questions must show Top-5');
+  assert.equal(sqCard.querySelector('.side-questions-list.is-expanded'), null);
+  const headerToggleBtn = sqCard.querySelector('.side-questions-head-right .mini-btn');
+  const footerToggleBtn = sqCard.querySelector('.children-toggle-bar');
+  assert.equal(headerToggleBtn?.textContent, '展开全部 (6)');
+  assert.equal(footerToggleBtn?.textContent, '展开其余 1 条支线（共 6 条）');
+
+  // Expand to all 6 with .is-expanded, preserve scrollTop, then collapse cleanly back to Top-5
+  headerToggleBtn.click();
+  const expandedList = sqCard.querySelector('.side-questions-list.is-expanded');
+  assert.ok(expandedList, 'Expanded Side Questions list must carry .is-expanded');
+  assert.equal(sqCard.querySelectorAll('.side-q-row').length, 6);
+  assert.equal(sqCard.querySelector('.side-questions-head-right .mini-btn')?.textContent, '收起');
+  assert.equal(sqCard.querySelector('.children-toggle-bar')?.textContent, '收起至最近活跃 Top 5');
+  expandedList.scrollTop = 128;
+  expandedList.dispatchEvent('scroll');
+  assert.equal(exports.state.sideQuestionsScrollTop, 128);
+
+  sqCard.querySelector('.children-toggle-bar').click();
+  assert.equal(sqCard.querySelectorAll('.side-q-row').length, 5);
+  assert.equal(sqCard.querySelector('.side-questions-list.is-expanded'), null);
+  assert.equal(exports.state.sideQuestionsScrollTop, 0);
+  assert.equal(sqCard.querySelector('.side-questions-head-right .mini-btn')?.textContent, '展开全部 (6)');
+
+  // Clicking .side-q-open-btn calls window.sidecar.ui.toggleConversation(sqId) and stops propagation (does NOT trigger selectConversation)
+  toggledConversations.length = 0;
+  fetchedConvs.length = 0;
+  const firstRow = sqCard.querySelector('.side-q-row');
+  const firstOpenBtn = firstRow.querySelector('.side-q-open-btn');
+  assert.equal(firstOpenBtn?.textContent, '↗ 打开会话');
+  const openClickEvt = firstOpenBtn.click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(openClickEvt.propagationStopped, true, '.side-q-open-btn must call stopPropagation()');
+  assert.deepEqual(toggledConversations, [sqIds[0]]);
+  assert.equal(fetchedConvs.length, 0, '.side-q-open-btn must NOT trigger selectConversation');
+
+  // Clicking .side-q-row triggers selectConversation(sqId) without invoking toggleConversation again
+  firstRow.click();
+  await new Promise((r) => setImmediate(r));
+  assert.deepEqual(toggledConversations, [sqIds[0]]);
+  assert.equal(fetchedConvs.includes(sqIds[0]), true, 'Clicking .side-q-row must trigger selectConversation(sqId)');
+
+  // 3. Direct Side Question inspection (childKind: 'side_question', even when homeConvId === viewingId)
+  exports.state.homeConvId = sqIds[0];
+  exports.state.lang = 'zh';
+  exports.state.snapshot = sqDirectSnap;
+  exports.renderHeader(sqDirectSnap);
+  exports.renderCurrentTab(sqDirectSnap);
+
+  const nonboundBanner = fakeDocument.getElementById('nonbound-banner');
+  const nonboundLabel = fakeDocument.getElementById('nonbound-label');
+  const backBtn = fakeDocument.getElementById('btn-back-bound');
+  const kindBadge = fakeDocument.getElementById('conv-kind-badge');
+  const costCard = fakeDocument.getElementById('card-cost');
+
+  assert.equal(nonboundBanner.classList.contains('hidden'), false, '#nonbound-banner must be visible even when homeConvId === viewingId');
+  assert.equal(nonboundBanner.classList.contains('is-side-question'), true);
+  assert.equal(nonboundLabel.textContent, '支线问题：Side Question #1');
+  assert.equal(backBtn.textContent, '← 返回主对话');
+  assert.equal(kindBadge.classList.contains('hidden'), false);
+  assert.equal(kindBadge.textContent, '支线问题');
+  assert.equal(costCard.querySelector('.child-cost-badge.is-side-question')?.textContent, '支线独立计费');
+
+  // English labels for Side Question inspection
+  exports.state.lang = 'en';
+  exports.renderHeader(sqDirectSnap);
+  exports.renderCurrentTab(sqDirectSnap);
+  assert.equal(nonboundLabel.textContent, 'Side Question: Side Question #1');
+  assert.equal(backBtn.textContent, '← Back to Main Chat');
+  assert.equal(kindBadge.textContent, 'Side Q');
+  assert.equal(costCard.querySelector('.child-cost-badge.is-side-question')?.textContent, 'Side Question Only');
+
+  // Clicking #btn-back-bound navigates back to parentConversationId (mainId)
+  fetchedConvs.length = 0;
+  backBtn.click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(fetchedConvs[fetchedConvs.length - 1], mainId, '#btn-back-bound must navigate to parentConversationId');
+
+  // 4. Tab 1 & Tab 2 Model Tables: 8 columns, Hit % / 命中率 right after Cache / 缓存, exact %, —, tier classes, tooltips
+  const expectedRowOrder = [
+    { tier: 'is-mid', text: '55.0%', zhTip: '缓存读取 55,000 / 总输入 100,000 (55.0%)', enTip: 'Cache Read 55,000 / Total Input 100,000 (55.0%)' },
+    { tier: 'is-low', text: '20.0%', zhTip: '缓存读取 20,000 / 总输入 100,000 (20.0%)', enTip: 'Cache Read 20,000 / Total Input 100,000 (20.0%)' },
+    { tier: 'is-high', text: '90.0%', zhTip: '缓存读取 90,000 / 总输入 100,000 (90.0%)', enTip: 'Cache Read 90,000 / Total Input 100,000 (90.0%)' },
+    { tier: 'is-none', text: '—', zhTip: '', enTip: '' },
+  ];
+
+  const assertModelTable8Cols = (containerEl, lang) => {
+    const table = containerEl.querySelector('table.data-table');
+    assert.ok(table, `Expected table.data-table in ${lang}`);
+    const ths = table.querySelectorAll('thead th');
+    assert.equal(ths.length, 8, `Model table must render exactly 8 columns (${lang})`);
+    assert.equal(ths[3].textContent, lang === 'zh' ? '缓存' : 'Cache');
+    assert.equal(ths[4].textContent, lang === 'zh' ? '命中率' : 'Hit %');
+    assert.equal(ths[4].classList.contains('cache-hit-col'), true);
+    assert.equal(ths[4].title.includes(lang === 'zh' ? '缓存命中率' : 'Cache hit rate'), true);
+    assert.equal(ths[5].textContent, lang === 'zh' ? '输出' : 'Output');
+
+    const rows = table.querySelectorAll('tbody tr');
+    assert.equal(rows.length, 4);
+    rows.forEach((tr, idx) => {
+      const tds = tr.querySelectorAll('td');
+      assert.equal(tds.length, 8, `Row ${idx} must render 8 cells (${lang})`);
+      const hitCell = tds[4];
+      const exp = expectedRowOrder[idx];
+      assert.equal(hitCell.classList.contains('cache-hit-col'), true);
+      assert.equal(hitCell.classList.contains(exp.tier), true, `Row ${idx} must have .${exp.tier}`);
+      assert.equal(hitCell.textContent, exp.text);
+      assert.equal(hitCell.title, lang === 'zh' ? exp.zhTip : exp.enTip);
+    });
+  };
+
+  exports.state.homeConvId = mainId;
+  exports.state.snapshot = sixSqSnap;
+  exports.state.modelSortBy = 'cost';
+  exports.state.modelSortDir = 'desc';
+
+  for (const lang of ['zh', 'en']) {
+    exports.state.lang = lang;
+    exports.renderChildrenAndModelsCard(sixSqSnap.current, sixSqSnap.prefs);
+    exports.renderGlobalTab(sixSqSnap);
+    assertModelTable8Cols(fakeDocument.getElementById('card-children-models'), lang);
+    assertModelTable8Cols(fakeDocument.getElementById('global-content'), lang);
+  }
+
+  // ---------------- Part B: Static Hygiene ----------------
+  // 1. I18N.zh / I18N.en 100% key & {placeholder} parity + all 19 v0.4.1 keys present
+  const i18nStart = appSource.indexOf('const I18N = {');
+  assert.ok(i18nStart >= 0, 'I18N object must exist in app.js');
+  const i18nMatch = appSource
+    .slice(i18nStart)
+    .match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(i18nMatch, 'Both zh and en blocks must be extractable from I18N');
+  const extractEntries = (block) => {
+    const map = new Map();
+    for (const m of block.matchAll(/^\s*'([^']+)'\s*:\s*'((?:\\.|[^'\\])*)'/gm)) {
+      map.set(m[1], m[2]);
+    }
+    return map;
+  };
+  const zhEntries = extractEntries(i18nMatch[1]);
+  const enEntries = extractEntries(i18nMatch[2]);
+  assert.deepEqual([...zhEntries.keys()].sort(), [...enEntries.keys()].sort());
+  const extractPlaceholders = (str) =>
+    [...str.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
+  for (const [key, zhVal] of zhEntries.entries()) {
+    assert.deepEqual(
+      extractPlaceholders(zhVal),
+      extractPlaceholders(enEntries.get(key)),
+      `I18N placeholder mismatch for "${key}"`,
+    );
+  }
+  for (const v041Key of [
+    'childrenModels.colCacheHit',
+    'childrenModels.colCacheHitTip',
+    'childrenModels.colCacheHitCellTip',
+    'sideQuestions.title',
+    'sideQuestions.countBadge',
+    'sideQuestions.summaryMeta',
+    'sideQuestions.summaryTip',
+    'sideQuestions.openBtn',
+    'sideQuestions.openTip',
+    'sideQuestions.inspectTip',
+    'sideQuestions.expandAll',
+    'sideQuestions.collapse',
+    'sideQuestions.expandMoreFooter',
+    'sideQuestions.collapseFooter',
+    'sideQuestions.badge',
+    'sideQuestions.viewingBanner',
+    'sideQuestions.backToParent',
+    'sideQuestions.isolatedCostBadge',
+    'sideQuestions.hitStat',
+  ]) {
+    assert.equal(zhEntries.has(v041Key), true, `I18N.zh missing ${v041Key}`);
+    assert.equal(enEntries.has(v041Key), true, `I18N.en missing ${v041Key}`);
+  }
+
+  // 2. Zero unsafe DOM APIs across app.js, receipt.js, pixel_office.js
+  const unsafeDomRe = /\b(?:innerHTML|outerHTML|insertAdjacentHTML|document\.write)\b/;
+  assert.equal(unsafeDomRe.test(appSource), false, 'app.js must contain 0 unsafe DOM APIs');
+  assert.equal(unsafeDomRe.test(receiptSource), false, 'receipt.js must contain 0 unsafe DOM APIs');
+  assert.equal(unsafeDomRe.test(pixelOfficeSource), false, 'pixel_office.js must contain 0 unsafe DOM APIs');
+
+  // 3. Zero banned terms across all code, docs, manifests, and tests
+  const bannedTerm = '\u6c34\u4f4d';
+  const legacyDocPhrase = 'Dedicated ' + 'Gemini 3.1 Pro';
+  const legacyUiTerm = '\u5728\u5f79\u6a21\u578b';
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['app.js', appSource],
+    ['receipt.js', receiptSource],
+    ['pixel_office.js', pixelOfficeSource],
+    ['parser.mjs', parserSource],
+    ['main.mjs', mainSource],
+    ['release_updater.mjs', releaseUpdaterSource],
+    ['pricing_sync.mjs', pricingSyncSource],
+    ['net_proxy.mjs', netProxySource],
+    ['clipboard_image.mjs', clipboardImageSource],
+    ['README.md', readmeMd],
+    ['SKILL.md', skillMd],
+    ['plugin.json', pluginJsonRaw],
+    ['package.json', packageJsonRaw],
+    ['sidecar.json', sidecarJsonRaw],
+    ['tests/parser.test.mjs', selfSource],
+  ]) {
+    assert.equal(src.includes(bannedTerm), false, `${label} must not contain banned term`);
+    assert.equal(src.includes(legacyDocPhrase), false, `${label} must not contain legacy doc phrase`);
+  }
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['receipt.js', receiptSource],
+    ['pixel_office.js', pixelOfficeSource],
+    ['I18N.zh', i18nMatch[1]],
+    ['README.md', readmeMd],
+    ['SKILL.md', skillMd],
+    ['plugin.json', pluginJsonRaw],
+    ['package.json', packageJsonRaw],
+    ['sidecar.json', sidecarJsonRaw],
+  ]) {
+    assert.equal(src.includes(legacyUiTerm), false, `${label} must not contain legacy UI term`);
+  }
+
+  // 4. .roll-col { display: inline-grid } preserved in styles.css
+  const stylesNoComments = stylesCss.replace(/\/\*[\s\S]*?\*\//g, '');
+  const rollColMatch = stylesNoComments.match(/(?:^|\n)\s*\.roll-col\s*\{([^}]*)\}/);
+  assert.ok(rollColMatch, 'styles.css must preserve .roll-col rule');
+  assert.match(rollColMatch[1], /display\s*:\s*inline-grid\b/);
+  assert.doesNotMatch(rollColMatch[1], /display\s*:\s*inline-block\b/);
+
+  // 5. Balanced [MODIFIED BEGIN/END] annotations across all modified files
+  const modBeginMarker = '[' + 'MODIFIED BEGIN]';
+  const modEndMarker = '[' + 'MODIFIED END]';
+  for (const [label, src] of [
+    ['index.html', indexHtml],
+    ['styles.css', stylesCss],
+    ['app.js', appSource],
+    ['receipt.js', receiptSource],
+    ['pixel_office.js', pixelOfficeSource],
+    ['parser.mjs', parserSource],
+    ['main.mjs', mainSource],
+    ['release_updater.mjs', releaseUpdaterSource],
+    ['pricing_sync.mjs', pricingSyncSource],
+    ['net_proxy.mjs', netProxySource],
+    ['clipboard_image.mjs', clipboardImageSource],
+    ['scripts/sync-plugin.ps1', syncPluginPs1],
+    ['tests/parser.test.mjs', selfSource],
+  ]) {
+    let depth = 0;
+    let minDepth = 0;
+    let begins = 0;
+    let ends = 0;
+    for (const line of src.split(/\r?\n/)) {
+      if (line.includes(modBeginMarker)) {
+        depth += 1;
+        begins += 1;
+      }
+      if (line.includes(modEndMarker)) {
+        depth -= 1;
+        ends += 1;
+        if (depth < minDepth) minDepth = depth;
+      }
+    }
+    assert.ok(begins > 0, `${label} must contain modification annotations`);
+    assert.equal(begins, ends, `${label} begin/end annotation count mismatch`);
+    assert.equal(depth, 0, `${label} unclosed modification annotation (depth=${depth})`);
+    assert.equal(minDepth, 0, `${label} unmatched end annotation (minDepth=${minDepth})`);
+  }
+
+  // 6. Manifests plugin.json & package.json version === "0.4.1" with 0 JSON comments
+  for (const [label, rawJson] of [
+    ['plugin.json', pluginJsonRaw],
+    ['package.json', packageJsonRaw],
+    ['sidecar.json', sidecarJsonRaw],
+  ]) {
+    assert.equal(/^\s*(?:\/\/|\/\*)/m.test(rawJson), false, `${label} must contain 0 JSON comments`);
+    assert.equal(rawJson.includes(modBeginMarker), false, `${label} must not contain comment annotations`);
+    assert.doesNotThrow(() => JSON.parse(rawJson), `${label} must be valid strict JSON`);
+  }
+  assert.equal(JSON.parse(pluginJsonRaw).version, '0.4.1');
+  assert.equal(JSON.parse(packageJsonRaw).version, '0.4.1');
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:33:24
 // ============================================================================

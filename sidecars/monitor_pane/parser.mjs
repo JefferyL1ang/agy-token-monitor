@@ -1547,11 +1547,131 @@ export function parseConversationDb(convId, dbPath, walPath = '') {
   }
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:11
+// Description: Add bounds-checked parseRawSummarySideQuestions() protobuf wire
+// reader and cached readConversationSummariesBundle() extracting Side Question
+// parent links and official field 15.18 titles from conversation_summaries.db.
+// ============================================================================
 /**
- * Reads `<appData>/conversation_summaries.db` in read-only mode, cached by `.db` + `.db-wal` stat.
+ * Extracts Side Question conversation IDs (`field 15.17`) and official Antigravity
+ * titles (`field 15.18`: `{ field 1: convId, field 2: title }`) from `raw_summary`
+ * protobuf bytes using zero-dependency bounds-checked varint decoding.
  */
-function readConversationSummariesMap(appDataDirs) {
-  const combined = new Map();
+export function parseRawSummarySideQuestions(rawSummaryBuf) {
+  const sideQuestionIds = [];
+  const titlesById = new Map();
+  if (!rawSummaryBuf) return { sideQuestionIds, titlesById };
+
+  let bytes = null;
+  if (rawSummaryBuf instanceof Uint8Array) {
+    bytes = rawSummaryBuf;
+  } else if (rawSummaryBuf instanceof ArrayBuffer) {
+    bytes = new Uint8Array(rawSummaryBuf);
+  } else if (ArrayBuffer.isView(rawSummaryBuf)) {
+    bytes = new Uint8Array(
+      rawSummaryBuf.buffer,
+      rawSummaryBuf.byteOffset,
+      rawSummaryBuf.byteLength,
+    );
+  }
+  if (!bytes || bytes.length === 0) return { sideQuestionIds, titlesById };
+
+  const canonicalByLower = new Map();
+  const addId = (rawId) => {
+    const id = typeof rawId === 'string' ? rawId.trim() : '';
+    if (!isValidConversationId(id)) return '';
+    const lower = id.toLowerCase();
+    const existing = canonicalByLower.get(lower);
+    if (existing) return existing;
+    canonicalByLower.set(lower, id);
+    sideQuestionIds.push(id);
+    return id;
+  };
+
+  try {
+    for (const top of decodeProtoFields(bytes)) {
+      if (top.fieldNo !== 15 || top.wire !== 2 || !top.bytes || top.bytes.length === 0) continue;
+      for (const sf of decodeProtoFields(top.bytes)) {
+        if (sf.wire !== 2 || !sf.bytes || sf.bytes.length === 0) continue;
+        if (sf.fieldNo === 17) {
+          addId(UTF8_DECODER.decode(sf.bytes));
+        } else if (sf.fieldNo === 18) {
+          let entryConvId = '';
+          let entryTitle = '';
+          for (const mf of decodeProtoFields(sf.bytes)) {
+            if (mf.wire !== 2 || !mf.bytes || mf.bytes.length === 0) continue;
+            if (mf.fieldNo === 1) {
+              entryConvId = UTF8_DECODER.decode(mf.bytes).trim();
+            } else if (mf.fieldNo === 2) {
+              entryTitle = UTF8_DECODER.decode(mf.bytes);
+            }
+          }
+          const validId = addId(entryConvId);
+          if (validId) {
+            const cleaned = oneLine(entryTitle, 96);
+            if (cleaned) {
+              titlesById.set(validId, cleaned);
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    // Ignore malformed protobuf payloads and return any valid fields decoded so far.
+  }
+
+  return { sideQuestionIds, titlesById };
+}
+
+/**
+ * Reads `<appData>/conversation_summaries.db` in read-only mode (cached by `.db` + `.db-wal` stat),
+ * returning `{ byConvId, sideQuestionsByParent, sideQuestionParentById }`.
+ */
+function readConversationSummariesBundle(appDataDirs) {
+  const combinedByConvId = new Map();
+  const combinedParentMaps = new Map(); // parentId -> Map<sqLower, { conversationId, title }>
+  const combinedParentCanonical = new Map(); // parentLower -> parentId
+  const combinedParentById = new Map(); // sqId -> { parentId, title }
+  const combinedSqLowerIndex = new Map(); // sqLower -> sqId
+
+  const mergeSideQuestionLink = (parentId, sqId, title = '') => {
+    if (!isValidConversationId(parentId) || !isValidConversationId(sqId)) return;
+    const parentLower = parentId.toLowerCase();
+    const sqLower = sqId.toLowerCase();
+    if (parentLower === sqLower) return;
+
+    const canonicalParent = combinedParentCanonical.get(parentLower) || parentId;
+    if (!combinedParentCanonical.has(parentLower)) {
+      combinedParentCanonical.set(parentLower, canonicalParent);
+    }
+
+    const cleanTitle = typeof title === 'string' ? title.trim() : '';
+
+    let childMap = combinedParentMaps.get(canonicalParent);
+    if (!childMap) {
+      childMap = new Map();
+      combinedParentMaps.set(canonicalParent, childMap);
+    }
+    const prevChild = childMap.get(sqLower);
+    if (!prevChild) {
+      childMap.set(sqLower, { conversationId: sqId, title: cleanTitle });
+    } else if (cleanTitle && !prevChild.title) {
+      prevChild.title = cleanTitle;
+    }
+
+    const existingSqKey = combinedSqLowerIndex.get(sqLower);
+    if (!existingSqKey) {
+      combinedSqLowerIndex.set(sqLower, sqId);
+      combinedParentById.set(sqId, { parentId: canonicalParent, title: cleanTitle });
+    } else {
+      const prevRev = combinedParentById.get(existingSqKey);
+      if (prevRev && cleanTitle && !prevRev.title) {
+        prevRev.title = cleanTitle;
+      }
+    }
+  };
+
   for (const appData of appDataDirs || []) {
     const sumDbPath = join(appData, 'conversation_summaries.db');
     const sumWalPath = `${sumDbPath}-wal`;
@@ -1561,28 +1681,116 @@ function readConversationSummariesMap(appDataDirs) {
     const statKey = `${dbStat.mtimeMs}:${dbStat.size}|${walStat.mtimeMs}:${walStat.size}`;
 
     let cached = summariesDbCache.get(sumDbPath);
-    if (!cached || cached.key !== statKey) {
+    if (
+      !cached ||
+      cached.key !== statKey ||
+      !cached.sideQuestionsByParent ||
+      !cached.sideQuestionParentById
+    ) {
       let db = null;
       try {
         db = new DatabaseSync(sumDbPath, { readOnly: true, timeout: 2500 });
-        let rows;
-        try {
-          rows = db
-            .prepare(
-              'SELECT conversation_id, title, preview, workspace_uris, agent_name, parent_conversation_id FROM conversation_summaries',
-            )
-            .all();
-        } catch {
-          rows = db
-            .prepare(
-              'SELECT conversation_id, title, workspace_uris, agent_name, parent_conversation_id FROM conversation_summaries',
-            )
-            .all();
+        const summaryQueries = [
+          'SELECT conversation_id, title, preview, workspace_uris, agent_name, parent_conversation_id, raw_summary FROM conversation_summaries',
+          'SELECT conversation_id, title, workspace_uris, agent_name, parent_conversation_id, raw_summary FROM conversation_summaries',
+          'SELECT conversation_id, title, preview, workspace_uris, agent_name, parent_conversation_id FROM conversation_summaries',
+          'SELECT conversation_id, title, workspace_uris, agent_name, parent_conversation_id FROM conversation_summaries',
+        ];
+        let rows = [];
+        let summaryLoaded = false;
+        for (const sql of summaryQueries) {
+          try {
+            rows = db.prepare(sql).all();
+            summaryLoaded = true;
+            break;
+          } catch (err) {
+            if (!/no such (?:column|table)/i.test(String(err?.message || ''))) {
+              throw err;
+            }
+          }
         }
+        if (!summaryLoaded) {
+          try {
+            const infoRows = db.prepare('PRAGMA table_info(conversation_summaries)').all();
+            const allowedCols = [
+              'conversation_id',
+              'title',
+              'preview',
+              'workspace_uris',
+              'agent_name',
+              'parent_conversation_id',
+              'raw_summary',
+            ];
+            const present = new Set(infoRows.map((c) => String(c?.name || '').toLowerCase()));
+            const selected = allowedCols.filter((c) => present.has(c));
+            if (selected.includes('conversation_id')) {
+              rows = db.prepare(`SELECT ${selected.join(', ')} FROM conversation_summaries`).all();
+            }
+          } catch (err) {
+            if (!/no such (?:column|table)/i.test(String(err?.message || ''))) {
+              throw err;
+            }
+          }
+        }
+
+        let parentRows = [];
+        try {
+          parentRows = db
+            .prepare('SELECT conversation_id, parent_id FROM conversation_parents')
+            .all();
+        } catch (err) {
+          if (!/no such (?:column|table)/i.test(String(err?.message || ''))) {
+            throw err;
+          }
+        }
+
         const byConvId = new Map();
+        const dbParentMaps = new Map();
+        const dbParentCanonical = new Map();
+        const dbParentById = new Map();
+        const dbSqLowerIndex = new Map();
+
+        const registerDbSq = (parentId, sqId, officialTitle = '') => {
+          if (!isValidConversationId(parentId) || !isValidConversationId(sqId)) return;
+          const parentLower = parentId.toLowerCase();
+          const sqLower = sqId.toLowerCase();
+          if (parentLower === sqLower) return;
+
+          const canonicalParent = dbParentCanonical.get(parentLower) || parentId;
+          if (!dbParentCanonical.has(parentLower)) {
+            dbParentCanonical.set(parentLower, canonicalParent);
+          }
+
+          const cleanTitle = typeof officialTitle === 'string' ? officialTitle.trim() : '';
+
+          let childMap = dbParentMaps.get(canonicalParent);
+          if (!childMap) {
+            childMap = new Map();
+            dbParentMaps.set(canonicalParent, childMap);
+          }
+          const prevChild = childMap.get(sqLower);
+          if (!prevChild) {
+            childMap.set(sqLower, { conversationId: sqId, title: cleanTitle });
+          } else if (cleanTitle && !prevChild.title) {
+            prevChild.title = cleanTitle;
+          }
+
+          const existingSqKey = dbSqLowerIndex.get(sqLower);
+          if (!existingSqKey) {
+            dbSqLowerIndex.set(sqLower, sqId);
+            dbParentById.set(sqId, { parentId: canonicalParent, title: cleanTitle });
+          } else {
+            const prevRev = dbParentById.get(existingSqKey);
+            if (prevRev && cleanTitle && !prevRev.title) {
+              prevRev.title = cleanTitle;
+            }
+          }
+        };
+
         for (const r of rows) {
           const cid = typeof r.conversation_id === 'string' ? r.conversation_id.trim() : '';
           if (!isValidConversationId(cid)) continue;
+          dbParentCanonical.set(cid.toLowerCase(), cid);
           byConvId.set(cid, {
             title: typeof r.title === 'string' && r.title.trim() ? oneLine(r.title, 64) : '',
             preview:
@@ -1592,11 +1800,36 @@ function readConversationSummariesMap(appDataDirs) {
             parentConversationId:
               typeof r.parent_conversation_id === 'string' ? r.parent_conversation_id.trim() : '',
           });
+
+          if (r.raw_summary) {
+            const rawSq = parseRawSummarySideQuestions(r.raw_summary);
+            for (const sqId of rawSq.sideQuestionIds) {
+              registerDbSq(cid, sqId, rawSq.titlesById.get(sqId) || '');
+            }
+          }
         }
-        cached = { key: statKey, byConvId };
+
+        for (const pr of parentRows) {
+          const sqId = typeof pr.conversation_id === 'string' ? pr.conversation_id.trim() : '';
+          const parentId = typeof pr.parent_id === 'string' ? pr.parent_id.trim() : '';
+          if (!isValidConversationId(sqId) || !isValidConversationId(parentId)) continue;
+          registerDbSq(parentId, sqId, '');
+        }
+
+        const sideQuestionsByParent = new Map();
+        for (const [parentId, childMap] of dbParentMaps) {
+          sideQuestionsByParent.set(parentId, [...childMap.values()]);
+        }
+
+        cached = {
+          key: statKey,
+          byConvId,
+          sideQuestionsByParent,
+          sideQuestionParentById: dbParentById,
+        };
         summariesDbCache.set(sumDbPath, cached);
       } catch {
-        // Keep previous cached map if SQLite is momentarily busy.
+        // Keep previous cached bundle if SQLite is momentarily busy.
       } finally {
         if (db) {
           try {
@@ -1610,12 +1843,47 @@ function readConversationSummariesMap(appDataDirs) {
 
     if (cached?.byConvId) {
       for (const [cid, meta] of cached.byConvId) {
-        if (!combined.has(cid)) combined.set(cid, meta);
+        if (!combinedByConvId.has(cid)) {
+          combinedByConvId.set(cid, meta);
+          combinedParentCanonical.set(cid.toLowerCase(), cid);
+        }
+      }
+    }
+    if (cached?.sideQuestionsByParent) {
+      for (const [parentId, list] of cached.sideQuestionsByParent) {
+        for (const item of list) {
+          mergeSideQuestionLink(parentId, item.conversationId, item.title);
+        }
+      }
+    }
+    if (cached?.sideQuestionParentById) {
+      for (const [sqId, meta] of cached.sideQuestionParentById) {
+        mergeSideQuestionLink(meta.parentId, sqId, meta.title);
       }
     }
   }
-  return combined;
+
+  const combinedSideQuestionsByParent = new Map();
+  for (const [parentId, childMap] of combinedParentMaps) {
+    combinedSideQuestionsByParent.set(parentId, [...childMap.values()]);
+  }
+
+  return {
+    byConvId: combinedByConvId,
+    sideQuestionsByParent: combinedSideQuestionsByParent,
+    sideQuestionParentById: combinedParentById,
+  };
 }
+
+/**
+ * Reads `<appData>/conversation_summaries.db` in read-only mode, cached by `.db` + `.db-wal` stat.
+ */
+function readConversationSummariesMap(appDataDirs) {
+  return readConversationSummariesBundle(appDataDirs).byConvId;
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:11
+// ============================================================================
 
 function extractModelChangesFromContent(content) {
   if (typeof content !== 'string' || !content.includes('<USER_SETTINGS_CHANGE>')) {
@@ -4255,6 +4523,185 @@ function finalizeReceiptScope(scope, state, todayDate, activeModel, effectivePre
 // [MODIFIED END] 2026-11-18 11:41:14
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:11
+// Description: Add resolveSideQuestions() to discover linked Side Questions,
+// compute fork-deduplicated incremental usage without mutating parent totals,
+// sort by live activity, and compute sideQuestionsTotals and ETag parts.
+// ============================================================================
+function resolveSideQuestions({
+  convId,
+  summariesBundle,
+  children,
+  mainSeenBotIds,
+  appDataDirs,
+  effectivePrefs,
+  resolveLabel,
+}) {
+  const emptyTotals = {
+    count: 0,
+    stepsCount: 0,
+    inputUncachedTokens: 0,
+    cacheReadTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+    cacheHitRatePct: 0,
+    costActual: 0,
+  };
+  const linked = summariesBundle?.sideQuestionsByParent?.get(convId);
+  if (!Array.isArray(linked) || linked.length === 0) {
+    return { sideQuestions: [], sideQuestionsTotals: emptyTotals, sqEtagParts: [] };
+  }
+
+  const convIdLower = convId.toLowerCase();
+  const childIdsLower = new Set(
+    (children || [])
+      .map((c) => (typeof c?.conversationId === 'string' ? c.conversationId.toLowerCase() : ''))
+      .filter(Boolean),
+  );
+  const seenSqLower = new Set();
+  const sideQuestions = [];
+  const sqEtagParts = [];
+  const sqTotBucket = emptyBucket();
+
+  for (const sqMeta of linked) {
+    const sqId = typeof sqMeta?.conversationId === 'string' ? sqMeta.conversationId.trim() : '';
+    if (!isValidConversationId(sqId)) continue;
+    const sqLower = sqId.toLowerCase();
+    if (sqLower === convIdLower || childIdsLower.has(sqLower) || seenSqLower.has(sqLower)) {
+      continue;
+    }
+    seenSqLower.add(sqLower);
+
+    const sqPaths = resolveConversationPaths(sqId, appDataDirs);
+    if (!sqPaths) continue;
+    const sqParsed = parseTranscript(sqId, sqPaths);
+    if (!sqParsed) continue;
+
+    const sqTimeline = resolveModelTimeline(sqParsed, 'Auto');
+    const sqLive = computeLiveStatus(sqParsed);
+
+    const sqBucket = emptyBucket();
+    const sqSeenBotIds = new Set(mainSeenBotIds);
+    accumulateStepsInto(
+      sqBucket,
+      null,
+      null,
+      sqParsed,
+      sqTimeline.modelByStepIdx,
+      effectivePrefs,
+      sqSeenBotIds,
+    );
+    finalizeBucket(sqBucket);
+    addBucketInto(sqTotBucket, sqBucket);
+
+    const sqSteps = sqParsed.steps || [];
+    let lastClonedIdx = findLastClonedStepIdx(sqSteps);
+    for (let i = 0; i < sqSteps.length; i++) {
+      const s = sqSteps[i];
+      if (s?.botId && mainSeenBotIds.has(s.botId) && i > lastClonedIdx) {
+        lastClonedIdx = i;
+      }
+    }
+
+    let sqCreatedAtMs = null;
+    let sqUpdatedAtMs = null;
+    for (let i = lastClonedIdx + 1; i < sqSteps.length; i++) {
+      const s = sqSteps[i];
+      if (!s || s.isClonedFromParent) continue;
+      if (sqCreatedAtMs === null && isValidTimestampMs(s.createdAtMs)) {
+        sqCreatedAtMs = s.createdAtMs;
+      }
+      const ts = isValidTimestampMs(s.completedAtMs)
+        ? s.completedAtMs
+        : isValidTimestampMs(s.genericCompletedAtMs)
+          ? s.genericCompletedAtMs
+          : isValidTimestampMs(s.createdAtMs)
+            ? s.createdAtMs
+            : isValidTimestampMs(s.genericCreatedAtMs)
+              ? s.genericCreatedAtMs
+              : null;
+      if (ts !== null && (sqUpdatedAtMs === null || ts > sqUpdatedAtMs)) {
+        sqUpdatedAtMs = ts;
+      }
+    }
+    const fallbackStatMs = isValidTimestampMs(sqParsed.statMtimeMs)
+      ? sqParsed.statMtimeMs
+      : isValidTimestampMs(sqParsed.mtimeMs)
+        ? sqParsed.mtimeMs
+        : null;
+    if (sqUpdatedAtMs === null) {
+      sqUpdatedAtMs = fallbackStatMs;
+    }
+    if (sqCreatedAtMs === null) {
+      sqCreatedAtMs = sqUpdatedAtMs;
+    }
+
+    const sqSummaryMeta = summariesBundle?.byConvId?.get(sqId);
+    const officialTitle = typeof sqMeta.title === 'string' ? sqMeta.title.trim() : '';
+    const title =
+      officialTitle ||
+      buildConversationTitle({
+        convId: sqId,
+        metaTitle: sqSummaryMeta?.title || '',
+        metaPreview: sqSummaryMeta?.preview || '',
+        parsed: sqParsed,
+      });
+
+    sqEtagParts.push(`${sqId}:${sqParsed.cacheKey}`);
+    if (officialTitle) {
+      sqEtagParts.push(`t:${officialTitle}`);
+    }
+
+    sideQuestions.push({
+      conversationId: sqId,
+      title,
+      model: resolveLabel(sqTimeline.activeModel, sqTimeline.activeRawModel),
+      rawModel: sqTimeline.activeRawModel || sqTimeline.activeModel,
+      status: sqLive.status,
+      generatingSinceMs: sqLive.generatingSinceMs,
+      stepsCount: sqBucket.stepsCount,
+      inputUncachedTokens: sqBucket.inputUncachedTokens,
+      cacheReadTokens: sqBucket.cacheReadTokens,
+      outputTokens: sqBucket.outputTokens,
+      totalTokens: sqBucket.totalTokens,
+      cacheHitRatePct: sqBucket.cacheHitRatePct,
+      costActual: sqBucket.costActual,
+      updatedAtMs: sqUpdatedAtMs,
+      createdAtMs: sqCreatedAtMs,
+    });
+  }
+
+  const getSqTier = (item) =>
+    item.status === 'GENERATING' ? 0 : item.status === 'RUNNING_TOOLS' ? 1 : 2;
+  sideQuestions.sort((a, b) => {
+    const tierDiff = getSqTier(a) - getSqTier(b);
+    if (tierDiff !== 0) return tierDiff;
+    const updDiff = (Number(b.updatedAtMs) || 0) - (Number(a.updatedAtMs) || 0);
+    if (updDiff !== 0) return updDiff;
+    const createdDiff = (Number(b.createdAtMs) || 0) - (Number(a.createdAtMs) || 0);
+    if (createdDiff !== 0) return createdDiff;
+    return String(a.conversationId || '').localeCompare(String(b.conversationId || ''));
+  });
+
+  finalizeBucket(sqTotBucket);
+  const sideQuestionsTotals = {
+    count: sideQuestions.length,
+    stepsCount: sqTotBucket.stepsCount,
+    inputUncachedTokens: sqTotBucket.inputUncachedTokens,
+    cacheReadTokens: sqTotBucket.cacheReadTokens,
+    outputTokens: sqTotBucket.outputTokens,
+    totalTokens: sqTotBucket.totalTokens,
+    cacheHitRatePct: sqTotBucket.cacheHitRatePct,
+    costActual: sqTotBucket.costActual,
+  };
+
+  return { sideQuestions, sideQuestionsTotals, sqEtagParts };
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:11
+// ============================================================================
+
 /**
  * Analyzes a conversation and its subagent/swarm descendants cleanly without cycles.
  */
@@ -4307,8 +4754,18 @@ export function analyzeConversation(convId, options = {}) {
 // Description: Read conversation_summaries.db once early to resolve
 // isSwarmWorker and summaryParentId alongside subagent parent discovery.
 // ============================================================================
-  const summaries = readConversationSummariesMap(appDataDirs);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:11
+// Description: Read cached conversation_summaries bundle (including Side
+// Questions parent/child maps) once early in analyzeConversation().
+// ============================================================================
+  const summariesBundle = readConversationSummariesBundle(appDataDirs);
+  const summaries = summariesBundle.byConvId;
   const sumMeta = summaries.get(convId);
+  const sqParentMeta = summariesBundle.sideQuestionParentById.get(convId) || null;
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:11
+// ============================================================================
   const isSwarmWorker = Boolean(swarmInfo && !swarmInfo.isCoordinator);
   const summaryParentId =
     typeof sumMeta?.parentConversationId === 'string' &&
@@ -4691,14 +5148,25 @@ export function analyzeConversation(convId, options = {}) {
 // Description: Serialize rawModels onto byModel/mainOnlyByModel rows and strip
 // internal _rawModels/_stepModels Sets.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:11
+// Description: Add per-model cacheHitRatePct to Tab 1 byModel and mainOnlyByModel rows.
+// ============================================================================
   const formatByModelList = (modelMap) =>
     [...modelMap.values()]
-      .map(({ _rawModels, _stepModels, ...entry }) => ({
-        ...entry,
-        rawModels: [...(_rawModels || [])].filter((x) => x && !AUTO_UNKNOWN_RE.test(x)).sort(),
-        totalTokens: entry.inputUncachedTokens + entry.cacheReadTokens + entry.outputTokens,
-      }))
+      .map(({ _rawModels, _stepModels, ...entry }) => {
+        const totalIn = entry.inputUncachedTokens + entry.cacheReadTokens;
+        return {
+          ...entry,
+          rawModels: [...(_rawModels || [])].filter((x) => x && !AUTO_UNKNOWN_RE.test(x)).sort(),
+          totalTokens: totalIn + entry.outputTokens,
+          cacheHitRatePct: totalIn > 0 ? (entry.cacheReadTokens / totalIn) * 100 : 0,
+        };
+      })
       .sort((a, b) => b.costActual - a.costActual || b.totalTokens - a.totalTokens);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:34:25
 // ============================================================================
@@ -4761,24 +5229,61 @@ export function analyzeConversation(convId, options = {}) {
 // across all 3 read-only sources, and expose isChildSession/childKind/
 // parentConversationId and totals.mainOnlyByModel.
 // ============================================================================
-  const storeMeta = options.metadataStore?.get?.(convId, { appDataDirs }) || {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:11
+// Description: Detect Side Question child sessions (childKind='side_question')
+// with official field 15.18 metaTitle fallback, resolve linked Side Questions
+// without mutating parent totals/receipt, and include them in _activeWatchIds.
+// ============================================================================
+  const isSideQuestion = Boolean(sqParentMeta && !isSwarmWorker);
+  const storeMeta = options.metadataStore?.get?.(convId, {
+    appDataDirs,
+    hasFallback: Boolean(isSideQuestion && sqParentMeta?.title),
+  }) || {
     title: '',
     workspace: '',
   };
-  const metaTitle = storeMeta.title || sumMeta?.title || '';
+  const metaTitle =
+    storeMeta.title || sumMeta?.title || (isSideQuestion ? sqParentMeta.title : '') || '';
   const metaWorkspace = storeMeta.workspace || sumMeta?.workspace || '';
 
-  if (!isSwarmWorker && !summaryParentId && !subagentHint) {
+  if (!isSwarmWorker && !isSideQuestion && !summaryParentId && !subagentHint) {
     subagentHint = findSubagentParentHint(convId, appDataDirs);
-  } else if (!subagentHint && !swarmInfo && !metaTitle && !parsed.firstUserPrompt) {
+  } else if (
+    !subagentHint &&
+    !swarmInfo &&
+    !isSideQuestion &&
+    !metaTitle &&
+    !parsed.firstUserPrompt
+  ) {
     subagentHint = findSubagentParentHint(convId, appDataDirs);
   }
 
-  const isChildSession = Boolean(isSwarmWorker || summaryParentId || subagentHint);
-  const childKind = isSwarmWorker ? 'swarm' : isChildSession ? 'subagent' : null;
+  const isChildSession = Boolean(
+    isSwarmWorker || isSideQuestion || summaryParentId || subagentHint,
+  );
+  const childKind = isSwarmWorker
+    ? 'swarm'
+    : isSideQuestion
+      ? 'side_question'
+      : isChildSession
+        ? 'subagent'
+        : null;
   const parentConversationId = isSwarmWorker
     ? swarmInfo.coordinatorId || ''
-    : summaryParentId || subagentHint?.parentConversationId || '';
+    : isSideQuestion
+      ? sqParentMeta.parentId
+      : summaryParentId || subagentHint?.parentConversationId || '';
+
+  const { sideQuestions, sideQuestionsTotals, sqEtagParts } = resolveSideQuestions({
+    convId,
+    summariesBundle,
+    children,
+    mainSeenBotIds,
+    appDataDirs,
+    effectivePrefs,
+    resolveLabel,
+  });
 
   const title = buildConversationTitle({
     convId,
@@ -4790,7 +5295,14 @@ export function analyzeConversation(convId, options = {}) {
     parsed,
   });
 
-  const activeWatchIds = [convId, ...children.map((c) => c.conversationId)];
+  const activeWatchIds = [
+    convId,
+    ...children.map((c) => c.conversationId),
+    ...sideQuestions.map((sq) => sq.conversationId),
+  ];
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 13:34:30
 // Description: Compute ascending userTurnTimestampsMs and expose
@@ -4837,7 +5349,17 @@ export function analyzeConversation(convId, options = {}) {
 // [MODIFIED END] 2026-11-18 11:41:14
 // ============================================================================
     children,
-    _etagPart: `${parsed.cacheKey}|${childEtagParts.join(',')}|${isChildSession ? `${childKind}:${parentConversationId}` : ''}`,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:11
+// Description: Expose sideQuestions and sideQuestionsTotals on analyzeConversation()
+// and include Side Question cache keys and titles in _etagPart.
+// ============================================================================
+    sideQuestions,
+    sideQuestionsTotals,
+    _etagPart: `${parsed.cacheKey}|${childEtagParts.join(',')}|${sqEtagParts.join(',')}|${isChildSession ? `${childKind}:${parentConversationId}${isSideQuestion && sqParentMeta?.title ? `:${sqParentMeta.title}` : ''}` : ''}`,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:11
+// ============================================================================
     _activeWatchIds: activeWatchIds,
   };
 // ============================================================================
@@ -5975,21 +6497,32 @@ function buildPeriodSummary({
 // [MODIFIED BEGIN] 2026-11-19 13:35:15
 // Description: Serialize sorted non-Auto rawModels onto Tab 2 periods.*.byModel rows.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:11
+// Description: Add per-model cacheHitRatePct to Tab 2 periods.*.byModel rows.
+// ============================================================================
   const byModel = [...byModelMap.values()]
-    .map((m) => ({
-      model: m.model,
-      profileId: m.profileId,
-      profileLabel: m.profileLabel,
-      rateDisplay: m.rateDisplay,
-      rawModels: [...m._rawModels].filter((x) => x && !AUTO_UNKNOWN_RE.test(x)).sort(),
-      conversationsCount: m.convIds.size,
-      inputTokens: m.inputTokens,
-      cacheReadTokens: m.cacheReadTokens,
-      outputTokens: m.outputTokens,
-      totalTokens: m.inputTokens + m.cacheReadTokens + m.outputTokens,
-      costActual: m.costActual,
-    }))
+    .map((m) => {
+      const totalIn = m.inputTokens + m.cacheReadTokens;
+      return {
+        model: m.model,
+        profileId: m.profileId,
+        profileLabel: m.profileLabel,
+        rateDisplay: m.rateDisplay,
+        rawModels: [...m._rawModels].filter((x) => x && !AUTO_UNKNOWN_RE.test(x)).sort(),
+        conversationsCount: m.convIds.size,
+        inputTokens: m.inputTokens,
+        cacheReadTokens: m.cacheReadTokens,
+        outputTokens: m.outputTokens,
+        totalTokens: totalIn + m.outputTokens,
+        cacheHitRatePct: totalIn > 0 ? (m.cacheReadTokens / totalIn) * 100 : 0,
+        costActual: m.costActual,
+      };
+    })
     .sort((a, b) => b.costActual - a.costActual || b.totalTokens - a.totalTokens);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:35:15
 // ============================================================================

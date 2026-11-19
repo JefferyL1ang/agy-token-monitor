@@ -22,6 +22,14 @@ Description: Implement adaptive dark/light theme styling, semantic accents, tabu
   --tm-amber: #d97706;
   --tm-rose: #e11d48;
   --tm-cyan: #0284c7;
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-19 20:18:30
+Description: Add violet semantic accent token (--tm-violet) for light mode Side Questions UI.
+============================================================================ */
+  --tm-violet: #7c3aed;
+/* ============================================================================
+[MODIFIED END] 2026-11-19 20:18:30
+============================================================================ */
 
   /* Derived surfaces */
   --tm-hover: color-mix(in srgb, var(--tm-fg) 5%, transparent);
@@ -57,6 +65,14 @@ Description: Implement adaptive dark/light theme styling, semantic accents, tabu
     --tm-amber: #fbbf24;
     --tm-rose: #fb7185;
     --tm-cyan: #22d3ee;
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-19 20:18:30
+Description: Add violet semantic accent token (--tm-violet) for system dark mode Side Questions UI.
+============================================================================ */
+    --tm-violet: #a78bfa;
+/* ============================================================================
+[MODIFIED END] 2026-11-19 20:18:30
+============================================================================ */
     --tm-hover: color-mix(in srgb, var(--tm-fg) 6%, transparent);
     --tm-press: color-mix(in srgb, var(--tm-fg) 11%, transparent);
     --tm-subtle: color-mix(in srgb, var(--tm-fg) 5%, transparent);
@@ -81,6 +97,14 @@ Description: Implement adaptive dark/light theme styling, semantic accents, tabu
   --tm-amber: #fbbf24;
   --tm-rose: #fb7185;
   --tm-cyan: #22d3ee;
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-19 20:18:30
+Description: Add violet semantic accent token (--tm-violet) for explicit dark theme Side Questions UI.
+============================================================================ */
+  --tm-violet: #a78bfa;
+/* ============================================================================
+[MODIFIED END] 2026-11-19 20:18:30
+============================================================================ */
   --tm-hover: color-mix(in srgb, var(--tm-fg) 6%, transparent);
   --tm-press: color-mix(in srgb, var(--tm-fg) 11%, transparent);
   --tm-subtle: color-mix(in srgb, var(--tm-fg) 5%, transparent);
@@ -3365,6 +3389,191 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-19 11:49:06
+============================================================================ */
+
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-19 20:18:30
+Description: Add v0.4.1 styles for per-model cache hit rate column (.data-table .cache-hit-col), Side Question violet kind badge (.kind-badge.side-question), Side Question inspection accents, and standalone #card-side-questions list & rows.
+============================================================================ */
+/* ---------------- v0.4.1 Per-Model Cache Hit Column ---------------- */
+.data-table th.cache-hit-col {
+  cursor: help;
+}
+
+.data-table td.cache-hit-col {
+  font-weight: 600;
+}
+
+.data-table .cache-hit-col.is-high {
+  color: var(--tm-emerald);
+}
+
+.data-table .cache-hit-col.is-mid {
+  color: var(--tm-cyan);
+}
+
+.data-table .cache-hit-col.is-low {
+  color: var(--tm-muted-fg);
+  font-weight: 500;
+}
+
+.data-table .cache-hit-col.is-none {
+  color: var(--tm-muted-fg);
+  font-weight: 400;
+  opacity: 0.72;
+}
+
+/* ---------------- v0.4.1 Side Questions Card & Inspection Badges ---------------- */
+.kind-badge.side-question {
+  flex: none;
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  background: color-mix(in srgb, var(--tm-violet) 15%, transparent);
+  color: var(--tm-violet);
+  border: 1px solid color-mix(in srgb, var(--tm-violet) 32%, transparent);
+}
+
+.nonbound-banner.is-side-question {
+  background: color-mix(in srgb, var(--tm-violet) 12%, var(--tm-card));
+  border-color: color-mix(in srgb, var(--tm-violet) 34%, transparent);
+}
+
+.nonbound-banner.is-side-question .back-btn {
+  border-color: color-mix(in srgb, var(--tm-violet) 45%, transparent);
+  background: color-mix(in srgb, var(--tm-violet) 16%, transparent);
+  color: var(--tm-violet);
+}
+
+.nonbound-banner.is-side-question .back-btn:hover {
+  background: color-mix(in srgb, var(--tm-violet) 26%, transparent);
+}
+
+.child-cost-badge.is-side-question {
+  background: color-mix(in srgb, var(--tm-violet) 13%, transparent);
+  border-color: color-mix(in srgb, var(--tm-violet) 34%, transparent);
+  color: var(--tm-violet);
+}
+
+#card-side-questions .card-head {
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+
+#card-side-questions .card-title-dot {
+  background: var(--tm-violet);
+}
+
+.side-questions-head-right {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.side-questions-summary {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tm-muted-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  cursor: help;
+}
+
+.side-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.side-questions-list.is-expanded {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
+  overscroll-behavior: contain;
+}
+
+.side-q-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 9px;
+  border-radius: var(--r-md);
+  background: var(--tm-subtle);
+  border: 1px solid var(--tm-border);
+  cursor: pointer;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+
+.side-q-row:hover {
+  background: var(--tm-hover);
+  border-color: color-mix(in srgb, var(--tm-violet) 46%, var(--tm-border));
+}
+
+.side-q-row:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--tm-violet) 68%, transparent);
+  outline-offset: 1px;
+}
+
+.side-q-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.side-q-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--tm-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-q-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: 11px;
+  color: var(--tm-muted-fg);
+}
+
+.side-q-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 9px;
+  min-width: 0;
+}
+
+.side-q-open-btn {
+  flex: none;
+  margin-left: auto;
+  font-weight: 700;
+}
+
+@media (max-width: 340px) {
+  .side-q-row {
+    padding: 7px 8px;
+  }
+
+  .side-q-meta {
+    gap: 5px 8px;
+  }
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-19 20:18:30
 ============================================================================ */
 
 /* ============================================================================

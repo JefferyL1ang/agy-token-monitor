@@ -338,6 +338,14 @@ Description: Add current plugin version status bar and manual update check butto
 
         <div id="current-content" class="view-stack hidden">
           <div id="conv-strip" class="conv-strip">
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-19 20:18:05
+Description: Add compact hidden Side Question kind badge (#conv-kind-badge) next to #conv-title in #conv-strip.
+============================================================================ -->
+            <span id="conv-kind-badge" class="kind-badge side-question hidden"></span>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-19 20:18:05
+============================================================================ -->
             <span id="conv-title" class="conv-title">—</span>
             <span id="conv-workspace" class="conv-workspace"></span>
           </div>
@@ -359,6 +367,14 @@ Description: Insert in-panel Pixel Office container card (#card-pixel-office) ab
           <article id="card-context" class="card"></article>
           <article id="card-cache" class="card"></article>
           <article id="card-children-models" class="card"></article>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-19 20:18:05
+Description: Add standalone hidden Side Questions card container (#card-side-questions) directly below #card-children-models.
+============================================================================ -->
+          <article id="card-side-questions" class="card hidden"></article>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-19 20:18:05
+============================================================================ -->
         </div>
       </section>
 

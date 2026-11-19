@@ -63,6 +63,14 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:40:30
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:19:10
+// Description: Add v0.4.1 collapsed Side Questions display limit constant.
+// ============================================================================
+  const MAX_COLLAPSED_SIDE_QUESTIONS = 5;
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:19:10
+// ============================================================================
 
   const state = {
     homeConvId: boundConvId,
@@ -167,6 +175,14 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:49:06
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:19:10
+// Description: Add sideQuestions dirty-signature field to state.cardRenderSigs.
+// ============================================================================
+      sideQuestions: '',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:19:10
+// ============================================================================
     },
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:07:46
@@ -213,6 +229,15 @@
     pixelOfficeLastPrefs: null,
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:49:06
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:19:10
+// Description: Add Side Questions expanded toggle and scroll preservation state fields.
+// ============================================================================
+    sideQuestionsExpanded: false,
+    sideQuestionsScrollTop: 0,
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:19:10
 // ============================================================================
   };
 
@@ -666,6 +691,32 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:49:06
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:19:10
+// Description: Add v0.4.1 per-model cache hit column and Side Questions i18n keys (zh).
+// ============================================================================
+      'childrenModels.colCacheHit': '命中率',
+      'childrenModels.colCacheHitTip': '缓存命中率 = 缓存读取 / (未缓存输入 + 缓存读取)',
+      'childrenModels.colCacheHitCellTip': '缓存读取 {cached} / 总输入 {totalIn} ({pct})',
+      'sideQuestions.title': '支线问题',
+      'sideQuestions.countBadge': '{count} 条',
+      'sideQuestions.summaryMeta': '{tokens} · {cost}',
+      'sideQuestions.summaryTip': '共 {count} 条支线增量 · {steps} 步 · 缓存命中 {hit}（已剔除主会话克隆历史）',
+      'sideQuestions.openBtn': '↗ 打开会话',
+      'sideQuestions.openTip': '在 Antigravity 中一键打开此支线会话',
+      'sideQuestions.inspectTip': '点击在监控面板内查看此支线详情',
+      'sideQuestions.expandAll': '展开全部 ({count})',
+      'sideQuestions.collapse': '收起',
+      'sideQuestions.expandMoreFooter': '展开其余 {rest} 条支线（共 {total} 条）',
+      'sideQuestions.collapseFooter': '收起至最近活跃 Top {shown}',
+      'sideQuestions.badge': '支线问题',
+      'sideQuestions.viewingBanner': '支线问题：{label}',
+      'sideQuestions.backToParent': '← 返回主对话',
+      'sideQuestions.isolatedCostBadge': '支线独立计费',
+      'sideQuestions.hitStat': '命中 {pct}',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:19:10
+// ============================================================================
     },
     en: {
       'header.waiting': 'Waiting',
@@ -1109,6 +1160,32 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:49:06
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:19:10
+// Description: Add v0.4.1 per-model cache hit column and Side Questions i18n keys (en).
+// ============================================================================
+      'childrenModels.colCacheHit': 'Hit %',
+      'childrenModels.colCacheHitTip': 'Cache hit rate = Cache Read / (Uncached Input + Cache Read)',
+      'childrenModels.colCacheHitCellTip': 'Cache Read {cached} / Total Input {totalIn} ({pct})',
+      'sideQuestions.title': 'Side Questions',
+      'sideQuestions.countBadge': '{count}',
+      'sideQuestions.summaryMeta': '{tokens} · {cost}',
+      'sideQuestions.summaryTip': '{count} side questions incremental · {steps} steps · {hit} cache hit (cloned parent history excluded)',
+      'sideQuestions.openBtn': '↗ Open',
+      'sideQuestions.openTip': 'Open this side question conversation in Antigravity',
+      'sideQuestions.inspectTip': 'Click to inspect this side question inside Token Monitor',
+      'sideQuestions.expandAll': 'Show All ({count})',
+      'sideQuestions.collapse': 'Collapse',
+      'sideQuestions.expandMoreFooter': 'Show {rest} more side questions ({total} total)',
+      'sideQuestions.collapseFooter': 'Collapse to Top {shown} Recent',
+      'sideQuestions.badge': 'Side Q',
+      'sideQuestions.viewingBanner': 'Side Question: {label}',
+      'sideQuestions.backToParent': '← Back to Main Chat',
+      'sideQuestions.isolatedCostBadge': 'Side Question Only',
+      'sideQuestions.hitStat': 'Hit {pct}',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:19:10
+// ============================================================================
     },
   };
 
@@ -1380,6 +1457,14 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:49:06
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:19:40
+// Description: Reset sideQuestions dirty signature inside resetCardRenderSigs().
+// ============================================================================
+    state.cardRenderSigs.sideQuestions = '';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:19:40
+// ============================================================================
   }
 
   function clearCurrentSessionMotionMemory() {
@@ -1398,6 +1483,15 @@
     state.lastReceiptDataSig = '';
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:40:30
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:19:40
+// Description: Reset Side Questions expanded flag and scroll offset on conversation switch.
+// ============================================================================
+    state.sideQuestionsExpanded = false;
+    state.sideQuestionsScrollTop = 0;
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:19:40
 // ============================================================================
     resetCardRenderSigs();
   }
@@ -1593,7 +1687,18 @@
 
   function isChildSessionView(current) {
     const cid = String(current?.conversationId || '').toLowerCase();
-    return Boolean(current?.isChildSession || (cid && state.inspectedChildIds.has(cid)));
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:19:40
+// Description: Treat Side Question sessions (childKind === 'side_question') as isolated child views alongside isChildSession.
+// ============================================================================
+    return Boolean(
+      current?.isChildSession ||
+      current?.childKind === 'side_question' ||
+      (cid && state.inspectedChildIds.has(cid)),
+    );
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:19:40
+// ============================================================================
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 21:28:45
@@ -2933,12 +3038,19 @@
 // [MODIFIED BEGIN] 2026-11-19 11:49:06
 // Description: Bump fallback app version from 0.3.2 to 0.4.0.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:19:40
+// Description: Bump fallback app version from 0.4.0 to 0.4.1.
+// ============================================================================
     const raw =
       state.snapshot?.appVersion ||
       state.snapshot?.updateStatus?.currentVersion ||
       state.activeUpdateStatus?.currentVersion ||
-      '0.4.0';
-    return String(raw).trim().replace(/^[vV]/, '') || '0.4.0';
+      '0.4.1';
+    return String(raw).trim().replace(/^[vV]/, '') || '0.4.1';
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:19:40
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:49:06
 // ============================================================================
@@ -3961,18 +4073,40 @@
 // [MODIFIED END] 2026-11-19 13:28:17
 // ============================================================================
 
-    // Non-bound conversation banner
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:19:40
+// Description: Show Side Question inspection banner and Back to Main Chat label even when directly bound to a Side Question, and restore Back to Current label otherwise.
+// ============================================================================
+    // Non-bound & Side Question conversation banner
     const banner = $('nonbound-banner');
+    const backBtn = $('btn-back-bound');
     const viewingId = current?.conversationId || selectedConv;
-    const isNonBound = Boolean(
-      state.homeConvId && viewingId && viewingId !== state.homeConvId
+    const isSideQuestionWithParent = Boolean(
+      current?.childKind === 'side_question' && current?.parentConversationId,
     );
-    banner.classList.toggle('hidden', !isNonBound);
-    if (isNonBound) {
+    const isNonBound = Boolean(
+      state.homeConvId && viewingId && viewingId !== state.homeConvId,
+    );
+    const showBanner = isSideQuestionWithParent || isNonBound;
+    banner.classList.toggle('hidden', !showBanner);
+    banner.classList.toggle('is-side-question', isSideQuestionWithParent);
+    if (showBanner) {
       const label = localizeConvTitle(current?.title) || shortId(viewingId);
-      $('nonbound-label').textContent = t('header.viewing', { label });
+      $('nonbound-label').textContent = isSideQuestionWithParent
+        ? t('sideQuestions.viewingBanner', { label })
+        : t('header.viewing', { label });
       $('nonbound-label').title = `${label} (${viewingId})`;
+      if (backBtn) {
+        backBtn.textContent = isSideQuestionWithParent
+          ? t('sideQuestions.backToParent')
+          : t('header.backToCurrent');
+      }
+    } else if (backBtn) {
+      backBtn.textContent = t('header.backToCurrent');
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:19:40
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 20:29:41
@@ -4196,6 +4330,14 @@
       num(prefs?.cnyRate, 0),
       current.conversationId || '',
       isChildView,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:19:40
+// Description: Include childKind in Cost card dirty signature and show Side Question Only isolated cost badge when viewing a Side Question.
+// ============================================================================
+      current?.childKind || '',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:19:40
+// ============================================================================
       hasChildren ? current.children.length : 0,
       scopeKey,
       costActual,
@@ -4210,7 +4352,21 @@
     state.cardRenderSigs.cost = sig;
 
     const headRight = isChildView
-      ? el('span', { className: 'child-cost-badge', textContent: t('cost.childIsolatedBadge') })
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:19:40
+// Description: Render dedicated isolated cost badge text and violet accent for Side Question child views.
+// ============================================================================
+      ? el('span', {
+          className: current?.childKind === 'side_question'
+            ? 'child-cost-badge is-side-question'
+            : 'child-cost-badge',
+          textContent: current?.childKind === 'side_question'
+            ? t('sideQuestions.isolatedCostBadge')
+            : t('cost.childIsolatedBadge'),
+        })
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:19:40
+// ============================================================================
       : el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('cost.scopeAria') },
           el('button', {
             type: 'button',
@@ -4744,6 +4900,40 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:29:41
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:20:30
+// Description: Add getModelRowCacheHitMeta(row) helper for per-model cache hit rate display, tiering, and tooltips in Tab 1 and Tab 2 tables.
+// ============================================================================
+  function getModelRowCacheHitMeta(row) {
+    const uncached = num(row?.inputUncachedTokens ?? row?.inputTokens, 0);
+    const cached = num(row?.cacheReadTokens, 0);
+    const totalIn = uncached + cached;
+    const rawPct = row?.cacheHitRatePct;
+    const pct =
+      rawPct !== null && rawPct !== undefined && rawPct !== '' && Number.isFinite(Number(rawPct))
+        ? Number(rawPct)
+        : (totalIn > 0 ? (cached / totalIn) * 100 : 0);
+    const hasInput = totalIn > 0;
+    const tierClass = !hasInput
+      ? 'is-none'
+      : pct >= 75
+        ? 'is-high'
+        : pct >= 40
+          ? 'is-mid'
+          : 'is-low';
+    const text = hasInput ? fmtPct(pct) : '—';
+    const title = hasInput
+      ? t('childrenModels.colCacheHitCellTip', {
+          cached: fmtInt(cached),
+          totalIn: fmtInt(totalIn),
+          pct: fmtPct(pct),
+        })
+      : '';
+    return { hasInput, pct, tierClass, text, title };
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:20:30
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-18 11:41:00
@@ -4848,6 +5038,14 @@
         num(row?.stepsCount, 0),
         num(row?.inputUncachedTokens, 0),
         num(row?.cacheReadTokens, 0),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:20:30
+// Description: Include per-model cacheHitRatePct in Tab 1 childrenModels dirty signature.
+// ============================================================================
+        num(row?.cacheHitRatePct, 0),
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:20:30
+// ============================================================================
         num(row?.outputTokens, 0),
         num(row?.totalTokens, 0),
         num(row?.costActual, 0),
@@ -5089,6 +5287,14 @@
                   el('th', { className: 'num' }, t('childrenModels.colSteps')),
                   el('th', { className: 'num' }, t('childrenModels.colInput')),
                   el('th', { className: 'num' }, t('childrenModels.colCache')),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:20:30
+// Description: Insert per-model Cache Hit Rate column right after Cache in Tab 1 model table.
+// ============================================================================
+                  el('th', { className: 'num cache-hit-col', title: t('childrenModels.colCacheHitTip') }, t('childrenModels.colCacheHit')),
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:20:30
+// ============================================================================
                   el('th', { className: 'num' }, t('childrenModels.colOutput')),
                   createSortableHeaderCell({
                     colKey: 'total',
@@ -5110,15 +5316,28 @@
                 sortedByModel.map((row) => {
                   const { displayModel, title: rateTip } = formatModelBreakdownRowDisplay(row);
                   const totalTok = getTab1TotalTokens(row);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:20:30
+// Description: Compute and render per-model cache hit rate cell in Tab 1 model table.
+// ============================================================================
+                  const hitMeta = getModelRowCacheHitMeta(row);
                   return el('tr', null,
                     el('td', { className: 'model-cell', title: rateTip, textContent: displayModel }),
                     el('td', { className: 'num', textContent: fmtInt(row.stepsCount) }),
                     el('td', { className: 'num', title: fmtInt(row.inputUncachedTokens), textContent: fmtTokens(row.inputUncachedTokens) }),
                     el('td', { className: 'num', title: fmtInt(row.cacheReadTokens), textContent: fmtTokens(row.cacheReadTokens) }),
+                    el('td', {
+                      className: `num cache-hit-col ${hitMeta.tierClass}`,
+                      title: hitMeta.title || undefined,
+                      textContent: hitMeta.text,
+                    }),
                     el('td', { className: 'num', title: fmtInt(row.outputTokens), textContent: fmtTokens(row.outputTokens) }),
                     el('td', { className: 'num total-col', title: fmtInt(totalTok), textContent: fmtTokens(totalTok) }),
                     el('td', { className: 'num', textContent: fmtCost(row.costActual, currency) }),
                   );
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:20:30
+// ============================================================================
                 }),
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:28:17
@@ -5150,6 +5369,281 @@
 // [MODIFIED END] 2026-11-18 11:41:00
 // ============================================================================
   }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:20:30
+// Description: Implement standalone Side Questions card renderer (#card-side-questions) with dirty-signature memoization, Top-5 folding, scroll preservation, click-to-inspect, and one-click Open Chat action.
+// ============================================================================
+  function renderSideQuestionsCard(current, prefs) {
+    const card = $('card-side-questions');
+    if (!card) return;
+    const sideQuestions = Array.isArray(current?.sideQuestions) ? current.sideQuestions : [];
+    if (sideQuestions.length === 0) {
+      card.classList.add('hidden');
+      state.cardRenderSigs.sideQuestions = '';
+      card.replaceChildren();
+      return;
+    }
+
+    card.classList.remove('hidden');
+    const currency = prefs?.currency || 'USD';
+    const rawTot = current.sideQuestionsTotals && typeof current.sideQuestionsTotals === 'object'
+      ? current.sideQuestionsTotals
+      : null;
+
+    const totCount = num(rawTot?.count, sideQuestions.length);
+    const totSteps = rawTot
+      ? num(rawTot.stepsCount, 0)
+      : sideQuestions.reduce((acc, q) => acc + num(q?.stepsCount, 0), 0);
+    const totUncached = rawTot
+      ? num(rawTot.inputUncachedTokens, 0)
+      : sideQuestions.reduce((acc, q) => acc + num(q?.inputUncachedTokens, 0), 0);
+    const totCached = rawTot
+      ? num(rawTot.cacheReadTokens, 0)
+      : sideQuestions.reduce((acc, q) => acc + num(q?.cacheReadTokens, 0), 0);
+    const totOut = rawTot
+      ? num(rawTot.outputTokens, 0)
+      : sideQuestions.reduce((acc, q) => acc + num(q?.outputTokens, 0), 0);
+    const totTokens = rawTot
+      ? num(rawTot.totalTokens, totUncached + totCached + totOut)
+      : sideQuestions.reduce((acc, q) => acc + num(q?.totalTokens, 0), 0);
+    const totCost = rawTot
+      ? num(rawTot.costActual, 0)
+      : sideQuestions.reduce((acc, q) => acc + num(q?.costActual, 0), 0);
+    const totIn = totUncached + totCached;
+    const rawTotHit = rawTot?.cacheHitRatePct;
+    const totHitPct =
+      rawTotHit !== null && rawTotHit !== undefined && rawTotHit !== '' && Number.isFinite(Number(rawTotHit))
+        ? Number(rawTotHit)
+        : (totIn > 0 ? (totCached / totIn) * 100 : 0);
+
+    const sig = JSON.stringify([
+      state.lang,
+      state.tokenUnit,
+      currency,
+      num(prefs?.cnyRate, 0),
+      Boolean(state.sideQuestionsExpanded),
+      current.conversationId || '',
+      totCount,
+      totSteps,
+      totTokens,
+      totCost,
+      totHitPct,
+      sideQuestions.map((sq) => [
+        sq?.conversationId || '',
+        sq?.title || '',
+        sq?.model || '',
+        sq?.rawModel || '',
+        sq?.status || '',
+        num(sq?.generatingSinceMs, 0),
+        num(sq?.stepsCount, 0),
+        num(sq?.inputUncachedTokens, 0),
+        num(sq?.cacheReadTokens, 0),
+        num(sq?.outputTokens, 0),
+        num(sq?.totalTokens, 0),
+        num(sq?.cacheHitRatePct, 0),
+        num(sq?.costActual, 0),
+        sq?.updatedAtMs ? fmtRelTime(sq.updatedAtMs) : '',
+      ]),
+    ]);
+    if (card.childElementCount > 0 && state.cardRenderSigs.sideQuestions === sig) return;
+    state.cardRenderSigs.sideQuestions = sig;
+
+    if (state.sideQuestionsExpanded) {
+      const prevList = card.querySelector('.side-questions-list.is-expanded');
+      if (prevList) {
+        state.sideQuestionsScrollTop = prevList.scrollTop;
+      }
+    }
+
+    const canToggle = sideQuestions.length > MAX_COLLAPSED_SIDE_QUESTIONS;
+    const isExpanded = canToggle && Boolean(state.sideQuestionsExpanded);
+    const visibleItems = isExpanded
+      ? sideQuestions
+      : sideQuestions.slice(0, MAX_COLLAPSED_SIDE_QUESTIONS);
+    const hiddenCount = Math.max(0, sideQuestions.length - MAX_COLLAPSED_SIDE_QUESTIONS);
+
+    const handleToggleExpand = () => {
+      if (state.sideQuestionsExpanded) {
+        state.sideQuestionsExpanded = false;
+        state.sideQuestionsScrollTop = 0;
+      } else {
+        state.sideQuestionsExpanded = true;
+      }
+      const latestCurrent = state.snapshot?.current || current;
+      const latestPrefs = state.snapshot?.prefs || prefs;
+      renderSideQuestionsCard(latestCurrent, latestPrefs);
+    };
+
+    const summaryText = t('sideQuestions.summaryMeta', {
+      tokens: fmtTokens(totTokens),
+      cost: fmtCost(totCost, currency),
+    });
+    const summaryTip = t('sideQuestions.summaryTip', {
+      count: fmtInt(totCount),
+      steps: fmtInt(totSteps),
+      hit: totIn > 0 ? fmtPct(totHitPct) : '—',
+    });
+
+    const headEl = el('div', { className: 'card-head' },
+      el('div', { className: 'card-title' },
+        el('span', { className: 'card-title-dot' }),
+        t('sideQuestions.title'),
+        el('span', {
+          className: 'kind-badge side-question tabular-nums',
+          textContent: t('sideQuestions.countBadge', { count: fmtInt(totCount) }),
+        }),
+      ),
+      el('div', { className: 'side-questions-head-right' },
+        el('span', {
+          className: 'side-questions-summary tabular-nums',
+          textContent: summaryText,
+          title: summaryTip,
+        }),
+        canToggle
+          ? el('button', {
+              type: 'button',
+              className: 'mini-btn',
+              textContent: isExpanded
+                ? t('sideQuestions.collapse')
+                : t('sideQuestions.expandAll', { count: sideQuestions.length }),
+              onClick: handleToggleExpand,
+            })
+          : null,
+      ),
+    );
+
+    const listEl = el(
+      'div',
+      { className: isExpanded ? 'side-questions-list is-expanded' : 'side-questions-list' },
+      visibleItems.map((sq) => {
+        const sqTitle =
+          localizeConvTitle(sq.title) ||
+          t('common.sessionPrefix', { id: shortId(sq.conversationId) });
+        const status = sq.status || 'IDLE';
+        const statusSpan = el('span', {
+          className: `child-status tabular-nums ${status}`,
+          textContent: status === 'GENERATING' && sq.generatingSinceMs
+            ? `⚡ ${fmtElapsed(sq.generatingSinceMs)}`
+            : status === 'GENERATING'
+              ? t('childrenModels.childGenerating')
+              : status === 'RUNNING_TOOLS'
+                ? t('childrenModels.childRunning')
+                : t('childrenModels.childIdle'),
+        });
+        if (status === 'GENERATING' && sq.generatingSinceMs) {
+          statusSpan.dataset.childSince = String(sq.generatingSinceMs);
+        }
+
+        const updatedAtNum = Number(sq.updatedAtMs);
+        const hasValidUpdatedAt = Number.isFinite(updatedAtNum) && updatedAtNum > 0;
+        const relTime = hasValidUpdatedAt ? fmtRelTime(updatedAtNum) : '';
+
+        const sqModel = sq.model || 'Auto';
+        const sqModelTip = sq.rawModel && sq.rawModel !== sqModel
+          ? `${sqModel} (${sq.rawModel})`
+          : sqModel;
+        const sqHitMeta = getModelRowCacheHitMeta(sq);
+        const sqTotalTokens = num(
+          sq.totalTokens,
+          num(sq.inputUncachedTokens, 0) + num(sq.cacheReadTokens, 0) + num(sq.outputTokens, 0),
+        );
+
+        const inspectSideQuestion = () => {
+          const cid = String(sq.conversationId || '').toLowerCase();
+          if (cid) state.inspectedChildIds.add(cid);
+          selectConversation(sq.conversationId);
+        };
+
+        return el('div', {
+          className: 'side-q-row',
+          role: 'button',
+          tabIndex: 0,
+          title: t('sideQuestions.inspectTip'),
+          onClick: inspectSideQuestion,
+          onKeyDown: (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              inspectSideQuestion();
+            }
+          },
+        },
+          el('div', { className: 'side-q-top' },
+            el('span', { className: 'side-q-title', textContent: sqTitle, title: sqTitle }),
+            el('div', { className: 'child-top-right tabular-nums' },
+              relTime
+                ? el('span', {
+                    className: 'child-rel-time muted-hint',
+                    textContent: relTime,
+                    title: new Date(updatedAtNum).toLocaleString(),
+                  })
+                : null,
+              statusSpan,
+            ),
+          ),
+          el('div', { className: 'side-q-meta' },
+            el('div', { className: 'side-q-stats tabular-nums' },
+              el('span', { textContent: sqModel, title: sqModelTip }),
+              el('span', { textContent: t('global.stepsCount', { count: fmtInt(sq.stepsCount) }) }),
+              el('span', { title: fmtInt(sqTotalTokens), textContent: fmtTokens(sqTotalTokens) }),
+              sqHitMeta.hasInput
+                ? el('span', {
+                    title: sqHitMeta.title || undefined,
+                    textContent: t('sideQuestions.hitStat', { pct: sqHitMeta.text }),
+                  })
+                : null,
+              el('span', { textContent: fmtCost(sq.costActual, currency) }),
+            ),
+            el('button', {
+              type: 'button',
+              className: 'mini-btn accent side-q-open-btn',
+              textContent: t('sideQuestions.openBtn'),
+              title: t('sideQuestions.openTip'),
+              onClick: (e) => {
+                e.stopPropagation();
+                openConversationInHost(sq.conversationId);
+              },
+              onKeyDown: (e) => {
+                e.stopPropagation();
+              },
+            }),
+          ),
+        );
+      }),
+    );
+
+    if (isExpanded) {
+      listEl.addEventListener(
+        'scroll',
+        () => {
+          state.sideQuestionsScrollTop = listEl.scrollTop;
+        },
+        { passive: true },
+      );
+    }
+
+    const toggleFooter = canToggle
+      ? el('button', {
+          type: 'button',
+          className: 'children-toggle-bar',
+          textContent: isExpanded
+            ? t('sideQuestions.collapseFooter', { shown: MAX_COLLAPSED_SIDE_QUESTIONS })
+            : t('sideQuestions.expandMoreFooter', {
+                rest: hiddenCount,
+                total: sideQuestions.length,
+              }),
+          onClick: handleToggleExpand,
+        })
+      : null;
+
+    card.replaceChildren(...[headEl, listEl, toggleFooter].filter(Boolean));
+    if (isExpanded) {
+      listEl.scrollTop = state.sideQuestionsScrollTop;
+    }
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:20:30
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 11:49:06
@@ -5307,12 +5801,28 @@
       ? (localizeConvTitle(slot.name || current.title) || t('common.sessionPrefix', { id: shortId(slot.conversationId || current.conversationId) }))
       : (slot.name || shortId(slot.conversationId));
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:00
+// Description: Display Side Question kind badge and parent fallback back button inside Pixel Inspector when viewing a Side Question session.
+// ============================================================================
+    const isSideQuestionView = current?.childKind === 'side_question';
     const kindClass = slot.isMain
-      ? (isChildView ? (current?.childKind === 'swarm' ? 'kind-badge swarm' : 'kind-badge') : 'kind-badge main')
+      ? (isChildView
+          ? (isSideQuestionView
+              ? 'kind-badge side-question'
+              : (current?.childKind === 'swarm' ? 'kind-badge swarm' : 'kind-badge'))
+          : 'kind-badge main')
       : (slot.kind === 'swarm' ? 'kind-badge swarm' : 'kind-badge');
     const kindLabel = slot.isMain
-      ? (isChildView ? (current?.childKind === 'swarm' ? t('pixelOffice.kindSwarm') : t('pixelOffice.kindSubagent')) : t('pixelOffice.kindMain'))
+      ? (isChildView
+          ? (isSideQuestionView
+              ? t('sideQuestions.badge')
+              : (current?.childKind === 'swarm' ? t('pixelOffice.kindSwarm') : t('pixelOffice.kindSubagent')))
+          : t('pixelOffice.kindMain'))
       : (slot.kind === 'swarm' ? t('pixelOffice.kindSwarm') : t('pixelOffice.kindSubagent'));
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:00
+// ============================================================================
 
     const showRole = Boolean(
       !slot.isMain &&
@@ -5409,21 +5919,35 @@
           onClick: () => openConversationInHost(slot.conversationId),
         }),
       );
-    } else if (slot.isMain && isChildView && state.homeConvId) {
-      actions.push(
-        el('button', {
-          type: 'button',
-          className: 'mini-btn accent',
-          textContent: t('pixelOffice.backToMain'),
-          onClick: () => {
-            if (state.homeConvId !== selectedConv) {
-              clearCurrentSessionMotionMemory();
-            }
-            selectConversation(state.homeConvId);
-          },
-        }),
-      );
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:00
+// Description: Support returning to parentConversationId when inspecting a Side Question directly in Pixel Inspector.
+// ============================================================================
+    } else if (slot.isMain && isChildView) {
+      const viewingId = current?.conversationId || selectedConv;
+      const backTargetId =
+        isSideQuestionView && current?.parentConversationId && (!state.homeConvId || state.homeConvId === viewingId)
+          ? current.parentConversationId
+          : (state.homeConvId || (isSideQuestionView ? current?.parentConversationId : ''));
+      if (backTargetId) {
+        actions.push(
+          el('button', {
+            type: 'button',
+            className: 'mini-btn accent',
+            textContent: isSideQuestionView ? t('sideQuestions.backToParent') : t('pixelOffice.backToMain'),
+            onClick: () => {
+              if (backTargetId !== selectedConv) {
+                clearCurrentSessionMotionMemory();
+              }
+              selectConversation(backTargetId);
+            },
+          }),
+        );
+      }
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:00
+// ============================================================================
 
     const inspectorEl = el('div', { className: 'pixel-inspector', role: 'region', 'aria-label': displayName },
       el('div', { className: 'pixel-inspector-top' },
@@ -5532,6 +6056,15 @@
       state.pixelOfficeSelectedKey || '',
       current.conversationId || '',
       isChildView,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:00
+// Description: Include childKind and parentConversationId in Pixel Office dirty signature.
+// ============================================================================
+      current?.childKind || '',
+      current?.parentConversationId || '',
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:00
+// ============================================================================
       Boolean(state.homeConvId),
       userTurnCount,
       latestUserTurnMs,
@@ -5703,6 +6236,23 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:49:06
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:00
+// Description: Hide #card-side-questions and #conv-kind-badge when active session is empty.
+// ============================================================================
+      const emptySideQCard = $('card-side-questions');
+      if (emptySideQCard) {
+        emptySideQCard.classList.add('hidden');
+        emptySideQCard.replaceChildren();
+      }
+      const emptyKindBadge = $('conv-kind-badge');
+      if (emptyKindBadge) {
+        emptyKindBadge.classList.add('hidden');
+        emptyKindBadge.textContent = '';
+      }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:00
+// ============================================================================
       emptyEl.classList.remove('hidden');
       contentEl.classList.add('hidden');
       return;
@@ -5714,6 +6264,20 @@
     const titleText = localizeConvTitle(current.title) || t('common.sessionPrefix', { id: shortId(current.conversationId) });
     $('conv-title').textContent = titleText;
     $('conv-title').title = `${titleText} (${current.conversationId})`;
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:00
+// Description: Toggle #conv-kind-badge visibility and label when viewing a Side Question session.
+// ============================================================================
+    const kindBadge = $('conv-kind-badge');
+    if (kindBadge) {
+      const isSideQ = current?.childKind === 'side_question';
+      kindBadge.classList.toggle('hidden', !isSideQ);
+      kindBadge.textContent = isSideQ ? t('sideQuestions.badge') : '';
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:00
+// ============================================================================
 
     const wsBase = workspaceBase(current.workspace);
     $('conv-workspace').textContent = wsBase;
@@ -5732,6 +6296,14 @@
     renderContextCard(current);
     renderCacheCard(current);
     renderChildrenAndModelsCard(current, snap.prefs);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:00
+// Description: Render standalone Side Questions card right after Children & Models card in Tab 1.
+// ============================================================================
+    renderSideQuestionsCard(current, snap.prefs);
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:00
+// ============================================================================
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:15:00
@@ -6398,6 +6970,14 @@
                   el('th', { className: 'num' }, t('global.colChats')),
                   el('th', { className: 'num' }, t('childrenModels.colInput')),
                   el('th', { className: 'num' }, t('childrenModels.colCache')),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:00
+// Description: Insert per-model Cache Hit Rate column right after Cache in Tab 2 model table.
+// ============================================================================
+                  el('th', { className: 'num cache-hit-col', title: t('childrenModels.colCacheHitTip') }, t('childrenModels.colCacheHit')),
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:00
+// ============================================================================
                   el('th', { className: 'num' }, t('childrenModels.colOutput')),
                   createSortableHeaderCell({
                     colKey: 'total',
@@ -6419,15 +6999,28 @@
                 sortedPeriodByModel.map((row) => {
                   const { displayModel, title: rateTip } = formatModelBreakdownRowDisplay(row);
                   const totalTok = getTab2TotalTokens(row);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:00
+// Description: Compute and render per-model cache hit rate cell in Tab 2 model table.
+// ============================================================================
+                  const hitMeta = getModelRowCacheHitMeta(row);
                   return el('tr', null,
                     el('td', { className: 'model-cell', title: rateTip, textContent: displayModel }),
                     el('td', { className: 'num', textContent: fmtInt(row.conversationsCount) }),
                     el('td', { className: 'num', title: fmtInt(row.inputTokens), textContent: fmtTokens(row.inputTokens) }),
                     el('td', { className: 'num', title: fmtInt(row.cacheReadTokens), textContent: fmtTokens(row.cacheReadTokens) }),
+                    el('td', {
+                      className: `num cache-hit-col ${hitMeta.tierClass}`,
+                      title: hitMeta.title || undefined,
+                      textContent: hitMeta.text,
+                    }),
                     el('td', { className: 'num', title: fmtInt(row.outputTokens), textContent: fmtTokens(row.outputTokens) }),
                     el('td', { className: 'num total-col', title: fmtInt(totalTok), textContent: fmtTokens(totalTok) }),
                     el('td', { className: 'num', textContent: fmtCostCompact(row.costActual, currency) }),
                   );
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:00
+// ============================================================================
                 }),
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:28:17
@@ -6978,21 +7571,30 @@
     $('tabbtn-global').addEventListener('click', () => setActiveTab('global'));
     $('btn-goto-global').addEventListener('click', () => setActiveTab('global'));
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 20:21:00
+// Description: Route #btn-back-bound to parentConversationId when directly viewing a Side Question (homeConvId === viewingId or !homeConvId), otherwise keep returning to homeConvId.
+// ============================================================================
     $('btn-back-bound').addEventListener('click', () => {
-      if (state.homeConvId) {
-// ============================================================================
-// [MODIFIED BEGIN] 2026-11-17 21:28:45
-// Description: Clear current-session motion memory when returning to home conversation.
-// ============================================================================
-        if (state.homeConvId !== selectedConv) {
+      const cur = state.snapshot?.current;
+      const viewingId = cur?.conversationId || selectedConv;
+      const isSideQuestionWithParent = Boolean(
+        cur?.childKind === 'side_question' && cur?.parentConversationId,
+      );
+      const targetConvId =
+        isSideQuestionWithParent && (!state.homeConvId || state.homeConvId === viewingId)
+          ? cur.parentConversationId
+          : (state.homeConvId || (isSideQuestionWithParent ? cur.parentConversationId : ''));
+      if (targetConvId) {
+        if (targetConvId !== selectedConv) {
           clearCurrentSessionMotionMemory();
         }
-// ============================================================================
-// [MODIFIED END] 2026-11-17 21:28:45
-// ============================================================================
-        selectConversation(state.homeConvId);
+        selectConversation(targetConvId);
       }
     });
+// ============================================================================
+// [MODIFIED END] 2026-11-19 20:21:00
+// ============================================================================
 
     $('btn-settings').addEventListener('click', () => setDrawerOpen(!state.drawerOpen));
     $('btn-settings-cancel').addEventListener('click', () => setDrawerOpen(false));

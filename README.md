@@ -1,6 +1,6 @@
 # agy-token-monitor
 
-![Version](https://img.shields.io/badge/version-v0.4.0--beta-4285F4) ![Platform](https://img.shields.io/badge/Antigravity-Aux%20Pane-6366F1) ![Mode](https://img.shields.io/badge/mode-Read--Only-10B981)
+![Version](https://img.shields.io/badge/version-v0.4.1--beta-4285F4) ![Platform](https://img.shields.io/badge/Antigravity-Aux%20Pane-6366F1) ![Mode](https://img.shields.io/badge/mode-Read--Only-10B981)
 
 [English](#english) | [中文](#中文)
 
@@ -8,13 +8,16 @@
 
 ## English
 
-**agy-token-monitor** is a lightweight Token & Context monitor plugin built for **Antigravity** (`v0.4.0 beta`). It runs in the right-hand side panel with a low memory footprint, reading local session data in read-only mode without modifying any Antigravity databases, transcripts, or host settings.
+**agy-token-monitor** is a lightweight Token & Context monitor plugin built for **Antigravity** (`v0.4.1 beta`). It runs in the right-hand side panel with a low memory footprint, reading local session data in read-only mode without modifying any Antigravity databases, transcripts, or host settings.
 
 ### Changelog
 
-- **`v0.4.0` (Latest)**:
+- **`v0.4.1` (Latest)**:
+  - **Independent Current Session Side Questions Card & One-Click Open**: Automatically discovers linked Antigravity Side Questions from `conversation_summaries.db` (`conversation_parents` + Protobuf `raw_summary` official titles) and renders a dedicated **Side Questions** summary card at the bottom of Current Session (auto-shown only when side questions exist, sorted by live activity with **Top-5** folding and `400px` scrollable expansion preserving scroll position). Displays fork-deduplicated incremental steps, tokens, cache hit rate, and cost (excluding cloned parent history without affecting main-session totals or checkout receipts), provides a one-click **`↗ Open`** button to jump straight into that Side Question in Antigravity, and supports in-panel inspection with a **`Side Q`** badge, **`Side Question Only`** isolated cost view, and a **`← Back to Main Chat`** banner button.
+  - **Per-Model Cache Hit Rate (`Hit %` / `命中率`) in Both Model Distribution Tables**: Added a dedicated **`Hit %` (`命中率`)** column right after `Cache` across both **Current Session (Tab 1)** and **Usage Statistics (Tab 2)** model breakdown tables (`cacheRead / (uncachedInput + cacheRead)` with tiered color highlights and `Cache Read / Total Input (%)` hover tooltips).
+- **`v0.4.0`**:
   - **Interactive Pixel Office (`像素工位`) & Round-Scoped Filtering**: Added a zero-dependency Canvas 2D pixel-cat studio card (`pixel_office.js`) at the top of Tab 1 featuring a `32×32` Main Cat and `24×24` Subagent/Swarm Cats across 9 model-specific personas plus an `Auto` fallback cat (`1 Main + Max 8 Subagents` cap, clickable `+N` archive overflow pill, `GENERATING` / `RUNNING_TOOLS` / `IDLE` / `ENDED` animations, `0 fps` background pause, and persisted Collapse/Expand toggle). Uses **round-scoped filtering** (`selectRoundChildren`) so the studio displays only active/current-round subagents while working — or the last completed round + standing workers when idle — hiding older retired subagents while keeping full history in the breakdown table below, with a streamlined `48×48` inspector badge showing the canonical model pill and the raw slug right beside the status line.
-  - **Scheme A Canonical Model Attribution, Merging & `Gemini 4 Neon` / `Gemini 4 Hydrogen` Recognition**: Added first-class `Gemini 4 Neon` classification and pricing (`$2.00` / `$0.20` / `$10.00` per 1M tokens, SQLite enum IDs `1532`/`1533`/`1535`/`1537`, tightened Carbon matching), routed `gemini-flash-worker-agy` via SQLite official `displayModel` (`Gemini 4 Hydrogen (Orchestrator)` -> `Gemini 4 Hydrogen`, historical `Gemini Flash` -> `Gemini 3.8 Flash`), unified canonical names (`Gemini 4 Neon`, `Gemini 4 Hydrogen`, `Gemini 4 Carbon`, etc.) across the header pill and Tab 1 & Tab 2 `byModel` distribution tables while preserving underlying raw slugs in row tooltips and Pixel Inspector status lines, and bumped `usage_ledger.json` to schema `v5` to auto-rebuild historical attribution cleanly.
+  - **Scheme A Canonical Model Attribution, Gemini 4 Flat 1M Pricing (95% Cache) & Google Markdoc Pricing Sync**: Added first-class `Gemini 4 Neon` classification and SQLite enum IDs `1532`/`1533`/`1535`/`1537` (with tightened Carbon matching), routed `gemini-flash-worker-agy` via SQLite official `displayModel` (`Gemini 4 Hydrogen (Orchestrator)` -> `Gemini 4 Hydrogen`, historical `Gemini Flash` -> `Gemini 3.8 Flash`), updated Gemini 4 Standard Paid Tier rates to flat 1M-window pricing (`longContextTier: false`) with 95% cache discounts (`Gemini 4 Neon` `$3.00`/`$0.15`/`$15.00`, `Gemini 4 Carbon`/`Argon` `$2.00`/`$0.10`/`$10.00`, `Gemini 4 Hydrogen` `$1.50`/`$0.075`/`$7.50`; `Gemini 3.1 Pro` keeping `>200k` tiering), restored Google Markdoc (`<noscript><pre>`) official pricing sync with `pricing_cache.json` `v2` migration, unified canonical names across the header pill and Tab 1 & Tab 2 `byModel` distribution tables (preserving raw slugs in row tooltips and Pixel Inspector status lines), and bumped `usage_ledger.json` to schema `v5` to auto-rebuild historical attribution cleanly.
   - **`409.6k / 512k` Default Context Window Thresholds**: Updated default context thresholds to **`409.6k / 512k`** (`409,600` 80% `WARNING` alert / `512,000` max window, `471.04k` / 92% `CRITICAL`), automatically migrating untouched legacy defaults (`PREFS_SCHEMA_VERSION = 4`) while keeping user-customized thresholds intact.
   - **High-CPU (`100%`) OS Proxy Probe Anti-Flap Hardening**: Raised OS proxy probe timeouts to `4000ms`, isolated transient process/lookup errors (`ETIMEDOUT`, `EAGAIN`, `ENOMEM`, `ENOBUFS`, `ENOENT`, killed/signal) from absent registry keys, prevented transient errors from poisoning the 5-minute cache or downgrading an active proxy to `direct`, and increased release-check timeouts (`12s` / `8s`) and sidecar restart tolerance (`45 × 3.5s`).
   - **Plain-Language Update Dialog & Release Notes Formatting Fixes**: Switched technical update wording to user-friendly prompts (`Update Now` / `Updating…`), fixed nested Markdown rendering inside `**bold**` spans so inline code no longer renders literal backticks, and stripped installation, checksum/verification sections, and standalone SHA-256 lines from the localized update modal preview.
@@ -34,8 +37,8 @@
 - **Context Window Monitor (`409.6k / 512k`) & One-Click `/compact`**:
   - Shows current context usage (`input + cache read`) against configurable defaults of **`409.6k` (`409,600`, 80% `WARNING`) alert limit** and **`512k` (`512,000`) max window** (`471.04k` / 92% `CRITICAL`), automatically migrating untouched legacy defaults while preserving custom limits.
   - Includes a **`⚡ Compact`** button in the Context card header that copies `/compact` to the clipboard so you can compress long conversations at the right time.
-- **Session Cost, Total Tokens, Checkout Receipt & Subscription ROI**:
-  - Breaks down uncached input, cache read, output tokens, and total token consumption per session. Main conversations let you toggle between **With Subagents** and **Main Only**; when inspecting an individual subagent or swarm worker directly, Equivalent Cost stays isolated to that worker's own steps (**Subagent Only**) without pulling in parent or sibling usage, and model breakdown tables support clickable **Total** and **Cost** column sorting.
+- **Session Cost, Total Tokens, Per-Model Cache Hit Rate, Checkout Receipt & Subscription ROI**:
+  - Breaks down uncached input, cache read, **per-model cache hit rate (`Hit %` / `命中率`)**, output tokens, and total token consumption per session. Main conversations let you toggle between **With Subagents** and **Main Only**; when inspecting an individual subagent/swarm worker or Side Question directly, Equivalent Cost stays isolated to that session's own steps (**Subagent Only** / **Side Question Only**) without pulling in parent or sibling usage. Model breakdown tables display **`Hit %`** right after `Cache` (with `Cache Read / Total Input (%)` hover tooltips and tiered color cues) and support clickable **Total** and **Cost** column sorting.
   - Implements **Scheme A canonical model attribution & merging**: unifies `Orchestrator (Neon)` and `gemini-4-neon` / `gemini-pro-orchestrator-neon` (SQLite enum IDs `1532`/`1533`/`1535`/`1537`) under first-class **`Gemini 4 Neon`** alongside `Gemini 4 Carbon` (tightened matching so Neon never collides), `Gemini 4 Argon`, `Gemini 4 Hydrogen`, `Gemini 3.1 Pro`, `Gemini 3.8 Flash`, `Claude Opus 5.5`, `Claude Sonnet 5.5`, `GPT-OSS 120B`, and `Auto`. Routes `gemini-flash-worker-agy` via SQLite official `displayModel` first (`Gemini 4 Hydrogen (Orchestrator)` -> `Gemini 4 Hydrogen`, historical `Gemini Flash` -> `Gemini 3.8 Flash`), merges variant slugs under unified canonical names across the header pill and Tab 1 & Tab 2 model distribution tables (while keeping unknown new models in independent rows), and preserves underlying raw slugs in row hover tooltips and Pixel Inspector status lines.
   - Includes a one-click **`🧾 Checkout`** button on the Equivalent Cost card that renders a high-DPI `3x` thermal-style **Session Receipt** (`PNG`) via `receipt.js` and copies it directly to your clipboard (`navigator.clipboard.write`, with automatic Sidecar `POST /api/copy-receipt` OS-native clipboard fallback inside Antigravity's Aux Pane) — complete with **Today / All-Time** scope and **Compact / Full** itemization switches, merged active session duration, primary model, subagent & compaction counts, and adaptive **EN / ZH** language and **USD / CNY** currency formatting.
   - Automatically detects your monthly plan from models used over the past 14 days (`Jio AI Pro`, `Google AI Pro`, `Ultra 5x`, `Ultra 20x`, or manual `Free` / custom fee) and compares API equivalent cost across `USD` and `CNY`.
@@ -43,11 +46,16 @@
   - Prioritizes active workers (`Generating` and `Tools` first, then most recently updated) and folds large subagent or swarm rosters to the **Top 5** most recently active entries by default, with one-click expansion into a **`400px` scrollable** list that preserves scroll position across live updates.
   - Displays each worker's relative last-active time, active tool labels, and an **`● Ended`** badge for terminated subagents and killed swarm workers.
   - Uses fixed 43-char SHA-256 snapshot ETags to prevent `HTTP 431` request header overflows on large rosters (75+ workers).
-- **Daily Official Model & Pricing Sync**:
-  - Syncs model lists, token pricing, and `USD / CNY` exchange rates once per day when opened (`ai.google.dev`, `models.dev`, and ECB reference FX rates), caching results locally with a `↻ Sync Now` button and offline fallback.
+- **Current Session Side Questions Summary & One-Click Open**:
+  - Automatically displays an independent **Side Questions** summary card at the bottom of Current Session whenever the active chat has linked Antigravity Side Questions (auto-hidden when none exist), extracting official titles from `conversation_summaries.db` (`conversation_parents` + Protobuf `raw_summary` `field 15.17`/`15.18`) and sorting by live activity with **Top-5** folding into a **`400px` scrollable** list (preserving scroll position across live polls).
+  - Computes strictly fork-deduplicated incremental steps, tokens, cache hit rate, and cost per side question (excluding cloned parent history via `isClonedFromParent` and parent `botId` sets so main-session totals and checkout receipts stay clean).
+  - Provides a one-click **`↗ Open`** button on each row to jump straight into that Side Question in Antigravity, while clicking any row inspects it inside Token Monitor with a **`Side Q`** badge, **`Side Question Only`** isolated billing, and a **`← Back to Main Chat`** header banner button.
+- **Daily Official Model & Pricing Sync (Google Markdoc + Flat 1M Gemini 4 Rates)**:
+  - Syncs official model lists, Paid Tier token pricing (including Google Markdoc `<noscript><pre>` SPA extraction on `ai.google.dev`, `models.dev`, and `litellm` fallback into `pricing_cache.json` `v2`), and `USD / CNY` ECB reference exchange rates once per day when opened, caching results locally with a `↻ Sync Now` button and offline fallback (`8s` timeout).
+  - Built-in Gemini 4 rates match Google Standard Paid Tier flat 1M-context pricing (`longContextTier: false`) with 95% cache discounts (`Gemini 4 Neon` `$3.00`/`$0.15`/`$15.00`, `Gemini 4 Carbon`/`Argon` `$2.00`/`$0.10`/`$10.00`, `Gemini 4 Hydrogen` `$1.50`/`$0.075`/`$7.50`), while `Gemini 3.1 Pro` preserves `>200k` tiering (`×2` / `×1.5`).
   - Custom per-model price edits (`*`) and manual FX rate locks always take priority over auto-synced defaults, and clicking any row in the rate table loads that model for quick editing.
 - **Multi-Period Usage Analytics**:
-  - Aggregates usage across **Today** (24-hour bars), **7 Days**, **30 Days**, and **All Time** with two-line KPI summaries (active days / archived sessions and daily average / output tokens) in horizontally scrollable, mouse-draggable trend charts with a compact left Y-axis and clickable **Total** / **Cost** sorting in the unified canonical model breakdown table (with raw model slugs surfaced in row tooltips).
+  - Aggregates usage across **Today** (24-hour bars), **7 Days**, **30 Days**, and **All Time** with two-line KPI summaries (active days / archived sessions and daily average / output tokens) in horizontally scrollable, mouse-draggable trend charts with a compact left Y-axis and a unified canonical model breakdown table featuring the per-model **`Hit %` (`命中率`)** column right after `Cache` (with `Cache Read / Total Input (%)` hover tooltips) plus clickable **Total** / **Cost** sorting (with raw model slugs surfaced in row tooltips).
   - Deduplicates forked, branched, and rewound conversations so inherited history is never double-counted, and automatically rebuilds historical model attribution via `usage_ledger.json` schema `v5`.
 - **Bilingual UI & Flexible Token Units**:
   - Switch between **English** and **Chinese** (`EN / 中`) in one click from the top bar.
@@ -68,7 +76,7 @@
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.4.0.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.4.1.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -139,13 +147,16 @@ node --test tests/parser.test.mjs
 
 ## 中文
 
-**agy-token-monitor** 是一个面向 **Antigravity** 的轻量级 Token 与上下文监控插件（`v0.4.0 beta`）。它运行在右侧辅助面板中，内存占用低，仅以只读方式读取本地会话数据，不修改任何 Antigravity 数据库、聊天记录或全局配置。
+**agy-token-monitor** 是一个面向 **Antigravity** 的轻量级 Token 与上下文监控插件（`v0.4.1 beta`）。它运行在右侧辅助面板中，内存占用低，仅以只读方式读取本地会话数据，不修改任何 Antigravity 数据库、聊天记录或全局配置。
 
 ### 更新日志
 
-- **`v0.4.0`（最新）**：
+- **`v0.4.1`（最新）**：
+  - **当前会话支线问题（Side Questions）独立汇总与一键打开**：自动从 `conversation_summaries.db`（`conversation_parents` 与 Protobuf `raw_summary` 官方标题）发现主对话关联的 Antigravity 支线问题，并在当前会话（Tab 1）底部渲染独立的 **支线问题（Side Questions）** 汇总卡片（无支线时自动隐藏，按活跃度排序并默认 **Top 5** 折叠、支持展开为 `400px` 滚动列表且刷新保持滚动位置）。按分支去重仅统计各条支线的增量步数、Token、缓存命中率与费用（剔除主会话克隆历史，不污染主会话统计与收工票根）；每行提供显眼的一键 **`↗ 打开会话`** 按钮直达 Antigravity 支线会话，点击整行可在监控面板内查看支线详情，配以 **`支线问题`** 徽章、**`支线独立计费`** 标识与 **`← 返回主对话`** 横幅按钮。
+  - **Tab 1 & Tab 2 双表新增分模型缓存命中率（`命中率` / `Hit %`）列**：在当前会话（Tab 1）与历史统计（Tab 2）两张模型用量分布表的 **`缓存`** 列右侧新增 **`命中率`（`Hit %`）** 列（`缓存读取 / (未缓存输入 + 缓存读取)`，支持分级高亮配色及 `缓存读取 / 总输入 (%)` 悬停明细）。
+- **`v0.4.0`**：
   - **交互式像素工位（Pixel Office）与按轮次过滤**：在当前会话页顶部新增零依赖 Canvas 2D 像素猫咪工位卡片（`pixel_office.js`），以 **`32×32` 主猫 + `24×24` 子猫** 实时呈现 **9 种模型专属猫咪形象** 与 `Auto` 默认猫（`1 主 + 最多 8 子` 工位上限、右下角可点击 `+N` 溢出展开胶囊、`GENERATING` / `RUNNING_TOOLS` / `IDLE` / `ENDED` 动画、后台/切页/收起自动降为 `0 fps` 及持久化收起/展开开关）。引入**按轮次过滤子代理**（`selectRoundChildren`）：对话进行中仅显示当前轮次与在跑子代理，空闲时仅显示上一轮已完结子代理与常驻节点，隐藏更早轮次已结束的历史子代理并在下方明细表保留完整历史；精简 **`48×48` 像素头像详情卡**，仅保留规范模型徽章与状态行右侧原始 model slug（去除猫咪绰号与毛色描述）。
-  - **Scheme A 规范模型归因、合并展示与 `Gemini 4 Neon` / `Gemini 4 Hydrogen` 识别**：新增一等公民 **`Gemini 4 Neon`** 模型档案与定价（`$2.00` / `$0.20` / `$10.00` 每百万 Token，适配 SQLite 枚举 ID `1532`/`1533`/`1535`/`1537` 并收紧 Carbon 正则防碰撞）；`gemini-flash-worker-agy` 优先遵循 SQLite 官方 `displayModel`（`Gemini 4 Hydrogen (Orchestrator)` 归入 **`Gemini 4 Hydrogen`**，历史 `Gemini Flash` 归入 **`Gemini 3.8 Flash`**）；顶部模型胶囊与 Tab 1 / Tab 2 模型用量明细表统一展示规范名称（`Gemini 4 Neon`、`Gemini 4 Hydrogen`、`Gemini 4 Carbon` 等）并在行悬停提示与像素详情卡状态行保留原始 slug；`usage_ledger.json` 升级至 **`v5`** 并在启动时自动无损重建历史归因。
+  - **Scheme A 规范模型归因、Gemini 4 全系 1M 统一单价（95% 缓存折扣）与 Google Markdoc 定价同步**：新增一等公民 **`Gemini 4 Neon`** 模型档案并适配 SQLite 枚举 ID `1532`/`1533`/`1535`/`1537`（收紧 Carbon 正则防碰撞）；`gemini-flash-worker-agy` 优先遵循 SQLite 官方 `displayModel`（`Gemini 4 Hydrogen (Orchestrator)` 归入 **`Gemini 4 Hydrogen`**，历史 `Gemini Flash` 归入 **`Gemini 3.8 Flash`**）；将 Gemini 4 标准付费档费率校准为 1M 统一单价（`longContextTier: false`）与 95% 缓存折扣（`Gemini 4 Neon` `$3.00`/`$0.15`/`$15.00`、`Gemini 4 Carbon`/`Argon` `$2.00`/`$0.10`/`$10.00`、`Gemini 4 Hydrogen` `$1.50`/`$0.075`/`$7.50`；`Gemini 3.1 Pro` 保留 `>200k` 阶梯），恢复 Google Markdoc（`<noscript><pre>`）官方定价自动同步并支持 `pricing_cache.json` `v2` 无损迁移；顶部模型胶囊与 Tab 1 / Tab 2 模型用量明细表统一展示规范名称（行悬停提示与像素详情卡状态行保留原始 slug），`usage_ledger.json` 升级至 **`v5`** 并在启动时自动无损重建历史归因。
   - **上下文默认窗口升级为 `409.6k / 512k`**：将默认上下文提醒线与最大窗口升级为 **`409.6k / 512k`**（`409,600` 80% `WARNING` 提醒线 / `512,000` 最大窗口，`471.04k` / 92% `CRITICAL`），通过 `PREFS_SCHEMA_VERSION = 4` 自动迁移未自定义的旧默认值并保留用户手动设置。
   - **高 CPU（`100%`）场景系统代理探测防抖加固**：将系统代理探测超时提升至 `4000ms`，严格区分瞬态进程/系统错误（`ETIMEDOUT`、`EAGAIN`、`ENOMEM`、`ENOBUFS`、`ENOENT`、killed/signal）与注册表项不存在，瞬态失败绝不写入 5 分钟缓存且绝不将已生效的代理降级为直连；同时提升版本检测超时（`12s` / `8s`）与更新后重启探测容忍度（`45 × 3.5s`）。
   - **通俗化更新弹窗与更新说明排版修复**：将技术术语替换为更易懂的文案（`立即更新` / `正在更新…` 等），修复粗体 `**...`code`...**` 内嵌行内代码时显示原始反引号的问题，并在更新说明预览中自动过滤安装说明、文件校验/技术细节段落及独立的 SHA-256 校验行。
@@ -165,8 +176,8 @@ node --test tests/parser.test.mjs
 - **上下文占用监控（`409.6k / 512k`）与一键 `/compact`**：
   - 直观显示当前对话上下文占用（`input + cache read`）、缓存命中率及上下文增长最快的 Top 5 步骤；默认使用 **`409.6k`（`409,600`，80% `WARNING`）提醒线**与 **`512k`（`512,000`）最大窗口**（`471.04k` / 92% `CRITICAL`），支持自定义配置，且自动迁移未自定义的旧版默认值。
   - 卡片右上角提供 **`⚡ 压缩 /compact`** 按钮，点击即可复制 `/compact` 命令，方便在上下文接近上限时快速压缩。
-- **会话费用、总 Token 消耗、一键收工票根与订阅对比**：
-  - 统计单次会话的未缓存输入、缓存读取、累计输出与**总 Token 消耗**：主对话可在「含子代理」与「仅主对话」间切换，直接查看单个子代理或 Swarm Worker 时会自动切换为「子代理独立计费」，仅统计该节点自身用量而不混入主对话或兄弟节点；模型用量明细表支持点击 **总计** 和 **费用** 列头升降序排列。
+- **会话费用、总 Token 消耗、分模型缓存命中率、一键收工票根与订阅对比**：
+  - 统计单次会话的未缓存输入、缓存读取、**分模型缓存命中率（`命中率` / `Hit %`）**、累计输出与**总 Token 消耗**：主对话可在「含子代理」与「仅主对话」间切换，直接查看单个子代理/Swarm Worker 或支线问题时会自动切换为「子代理独立计费」/「支线独立计费」，仅统计该会话自身用量而不混入主对话或兄弟节点；模型用量分布表在 `缓存` 列右侧展示 **`命中率`（`Hit %`）** 列（带分级配色与 `缓存读取 / 总输入 (%)` 悬停提示），并支持点击 **总计** 和 **费用** 列头升降序排列。
   - 采用 **Scheme A 规范模型归因与合并策略**：将 `Orchestrator (Neon)` 与 `gemini-4-neon` / `gemini-pro-orchestrator-neon`（SQLite 枚举 ID `1532`/`1533`/`1535`/`1537`）统一归类为独立的一等模型 **`Gemini 4 Neon`**（并收紧 Carbon 正则以防误判）；`gemini-flash-worker-agy` 优先遵循 SQLite 官方 `displayModel`（`Gemini 4 Hydrogen (Orchestrator)` 归入 **`Gemini 4 Hydrogen`**，历史 `Gemini Flash` 归入 **`Gemini 3.8 Flash`**）。Tab 1 / Tab 2 模型用量明细表与顶部模型胶囊统一展示规范名称（`Gemini 4 Neon`、`Gemini 4 Hydrogen`、`Gemini 4 Carbon` 等）并合并同档位变体 slug（未知新模型仍独立成行不混入 `Auto`），同时在表格行悬停提示与像素详情卡状态行保留原始 slug 便于核对。
   - 等效花费卡片提供一键 **`🧾 结账`** 按钮，基于 `receipt.js` 渲染高清 `3x` 账单式**收工票根（`PNG`）**并直接一键复制图片至系统剪贴板（优先调用 `navigator.clipboard.write`，在 Antigravity 辅助面板受限环境中自动回退至 Sidecar `POST /api/copy-receipt` 原生系统剪贴板写入）；内置 **今日收工 / 全程累计** 统计范围与 **精简 / 完整** 明细模式切换，自动汇总有效会话时长、主力模型、子代理数、压缩次数及分项费用，并随当前界面自适应 **中 / 英** 文案与 **USD / CNY** 币种。
   - 支持 `USD` / `CNY` 折算，基于近 14 天实际使用的模型自动识别订阅方案（`Jio AI Pro`、`Google AI Pro`、`Ultra 5x`、`Ultra 20x`），也支持手动选择 `Free` 或自定义月费进行回本对比。
@@ -174,11 +185,16 @@ node --test tests/parser.test.mjs
   - 按活跃优先级（生成中、工具调用中优先，其次按最近更新时间倒序）排列子代理与 Swarm Worker；超过 5 个节点时默认折叠展示最近活跃的 **Top 5**，支持一键展开为 **`400px` 可滚动列表**并在实时刷新时保持滚动位置。
   - 每行显示节点相对活跃时间、当前工具标签，并对已终止的子代理及已销毁（killed）的 Swarm Worker 明确标注 **`● 已结束`** 状态徽章。
   - 采用固定 43 字符 SHA-256 快照 ETag 摘要，避免超大规模子代理 / Swarm 节点列表（75+ 并发节点）触发 `HTTP 431` 请求头过大错误。
-- **每日同步官方模型、价格与汇率**：
-  - 每天首次打开面板时自动同步现役模型单价与实时 `USD / CNY` 汇率（`ai.google.dev`、`models.dev` 及欧洲央行参考汇率），支持离线缓存回退与 **`↻ 立即同步`** 按钮。
+- **当前会话支线问题（Side Questions）独立汇总与一键打开**：
+  - 当当前会话包含关联的 Antigravity 支线问题时，在当前会话（Tab 1）底部自动展示独立的 **支线问题（Side Questions）** 汇总卡片（无支线时自动隐藏），从 `conversation_summaries.db`（`conversation_parents` 与 Protobuf `raw_summary` `field 15.17`/`15.18`）提取官方支线标题，按实时活跃度排序并在超过 5 条时默认折叠展示 **Top 5**（支持展开为 **`400px` 可滚动列表**且在实时轮询中保持滚动位置）。
+  - 对每条支线严格执行分支去重（剔除克隆自主对话的历史步骤与父 `botId`），仅汇总支线自身的增量步数、Token、缓存命中率与费用，且不污染主会话总计与结账收工票根。
+  - 每行内置一键 **`↗ 打开会话`** 按钮直接在 Antigravity 中打开该支线对话；点击整行可在 Token Monitor 面板内独立查看详情，配合 **`支线问题`** 徽章、**`支线独立计费`** 费用隔离及顶部 **`← 返回主对话`** 横幅按钮。
+- **每日同步官方模型、价格与汇率（Google Markdoc + Gemini 4 1M 统一单价）**：
+  - 每天首次打开面板时自动同步现役模型单价与实时 `USD / CNY` 汇率（支持 `ai.google.dev` Google Markdoc `<noscript><pre>` 页面提取、`models.dev`、`litellm` 兜底及欧洲央行参考汇率，落盘至 `pricing_cache.json` `v2` 并无损迁移旧缓存），支持离线缓存回退（`8s` 超时）与 **`↻ 立即同步`** 按钮。
+  - 内置 Gemini 4 标准付费档费率采用 1M 统一上下文单价（`longContextTier: false`）与 95% 缓存折扣（`Gemini 4 Neon` `$3.00`/`$0.15`/`$15.00`、`Gemini 4 Carbon`/`Argon` `$2.00`/`$0.10`/`$10.00`、`Gemini 4 Hydrogen` `$1.50`/`$0.075`/`$7.50`），`Gemini 3.1 Pro` 保留 `>200k` 阶梯（`×2` / `×1.5`）。
   - 手动修改过的模型单价（带 `*` 标记）与手动固定汇率始终优先于自动同步值；展开下方费率表后可直接点击任意模型行切换编辑。
 - **多周期历史统计与分支去重**：
-  - 支持查看 **今日**（24 小时分时）、**近 7 天**、**近 30 天** 与 **全部历史** 用量趋势，概览 KPI 采用双行摘要展示（含已归档会话数与日均/输出用量），柱状图左侧固定显示紧凑 Y 轴刻度并支持鼠标按住横向拖动与滚轮横滑；周期模型明细表同样按规范名称合并展示（悬停提示显示合并的原始 slug），支持点击 **总计 / 费用** 列头排序。
+  - 支持查看 **今日**（24 小时分时）、**近 7 天**、**近 30 天** 与 **全部历史** 用量趋势，概览 KPI 采用双行摘要展示（含已归档会话数与日均/输出用量），柱状图左侧固定显示紧凑 Y 轴刻度并支持鼠标按住横向拖动与滚轮横滑；周期模型明细表同样按规范名称合并展示（悬停提示显示合并的原始 slug），内置分模型 **`命中率`（`Hit %`）** 列（位于 `缓存` 列右侧，悬停显示 `缓存读取 / 总输入 (%)`）并支持点击 **总计 / 费用** 列头排序。
   - 自动识别分支（Fork）、并行对比及回退重生的会话，避免继承的历史步骤被重复计费；`usage_ledger.json`（`v5`）会在启动时自动无损重建历史模型归因。
 - **中英双语切换与多种 Token 单位**：
   - 顶部栏设置按钮旁支持一键切换 **中文 / 英文**（`EN / 中`）。
@@ -199,7 +215,7 @@ node --test tests/parser.test.mjs
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.4.0.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.4.1.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 
