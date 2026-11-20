@@ -66,10 +66,17 @@ Description: Add header new-release notification pill button (#btn-update-pill).
             data-i18n-aria-label="header.settingsLabel"
             data-i18n-title="header.settingsLabel"
           >
-            <svg class="icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-              <path d="M6.7 1.8h2.6l.4 1.5c.4.1.8.3 1.1.5l1.4-.7 1.8 1.8-.7 1.4c.2.3.4.7.5 1.1l1.5.4v2.6l-1.5.4c-.1.4-.3.8-.5 1.1l.7 1.4-1.8 1.8-1.4-.7c-.3.2-.7.4-1.1.5l-.4 1.5H6.7l-.4-1.5c-.4-.1-.8-.3-1.1-.5l-1.4.7-1.8-1.8.7-1.4c-.2-.3-.4-.7-.5-1.1L.7 9.3V6.7l1.5-.4c.1-.4.3-.8.5-1.1L2 3.8 3.8 2l1.4.7c.3-.2.7-.4 1.1-.5l.4-1.5Z"/>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:19:20
+Description: Restyle settings gear SVG to v0.5.0 stroke-based .tm-icon style.
+============================================================================ -->
+            <svg class="tm-icon" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 1.8h2l.3 1.3c.4.1.7.3 1 .5l1.1-.6 1.6 1.6-.6 1.1c.2.3.4.6.5 1l1.3.3v2l-1.3.3c-.1.4-.3.7-.5 1l.6 1.1-1.6 1.6-1.1-.6c-.3.2-.6.4-1 .5l-.3 1.3H7l-.3-1.3c-.4-.1-.7-.3-1-.5l-1.1.6L3 11.4l.6-1.1c-.2-.3-.4-.6-.5-1L1.8 9V7l1.3-.3c.1-.4.3-.7.5-1L3 4.6 4.6 3l1.1.6c.3-.2.6-.4 1-.5L7 1.8Z"/>
               <circle cx="8" cy="8" r="2.2"/>
             </svg>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-20 10:19:20
+============================================================================ -->
           </button>
         </div>
       </div>
@@ -240,7 +247,14 @@ Description: Add official model/pricing sync status bar and manual sync trigger 
 ============================================================================ -->
             <div id="pricing-sync-bar" class="pricing-sync-bar">
               <span id="pricing-sync-status" class="pricing-sync-status muted-hint"></span>
-              <button id="btn-sync-pricing" type="button" class="mini-btn" data-i18n="settings.syncPricingBtn" data-i18n-title="settings.syncPricingTitle">↻ 立即同步</button>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:19:20
+Description: Remove Unicode refresh symbol from #btn-sync-pricing initial label; SVG icon is mounted by app.js.
+============================================================================ -->
+              <button id="btn-sync-pricing" type="button" class="mini-btn" data-i18n="settings.syncPricingBtn" data-i18n-title="settings.syncPricingTitle">立即同步</button>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-20 10:19:20
+============================================================================ -->
             </div>
 <!-- ============================================================================
 [MODIFIED END] 2026-11-17 11:35:00
@@ -290,7 +304,14 @@ Description: Add current plugin version status bar and manual update check butto
 ============================================================================ -->
           <div id="update-check-bar" class="pricing-sync-bar update-check-bar">
             <span id="update-version-status" class="pricing-sync-status muted-hint tabular-nums"></span>
-            <button id="btn-check-update" type="button" class="mini-btn" data-i18n="settings.checkUpdateBtn" data-i18n-title="settings.checkUpdateTitle">↻ 检查更新</button>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:19:20
+Description: Remove Unicode refresh symbol from #btn-check-update initial label; SVG icon is mounted by app.js.
+============================================================================ -->
+            <button id="btn-check-update" type="button" class="mini-btn" data-i18n="settings.checkUpdateBtn" data-i18n-title="settings.checkUpdateTitle">检查更新</button>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-20 10:19:20
+============================================================================ -->
           </div>
 <!-- ============================================================================
 [MODIFIED END] 2026-11-17 18:55:00
@@ -327,7 +348,18 @@ Description: Add current plugin version status bar and manual update check butto
       <!-- Tab 1: Current Conversation -->
       <section id="tab-current" class="tab-panel active" role="tabpanel" aria-labelledby="tabbtn-current">
         <div id="current-empty" class="card empty-state hidden">
-          <div class="empty-icon" aria-hidden="true">◎</div>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:19:20
+Description: Replace empty-state ◎ symbol with v0.5.0 stroke-based SVG icon container (also hydrated via icon('empty', 28) in app.js).
+============================================================================ -->
+          <div class="empty-icon" aria-hidden="true">
+            <svg class="tm-icon" viewBox="0 0 16 16" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 2.2a5.8 5.8 0 1 0 0 11.6A5.8 5.8 0 0 0 8 2.2ZM8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"/>
+            </svg>
+          </div>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-20 10:19:20
+============================================================================ -->
           <div class="empty-title" data-i18n="empty.title">暂无活跃会话数据</div>
           <div class="empty-desc" data-i18n="empty.desc">等待当前对话生成首个模型步骤，或前往「用量统计」选择历史会话进行诊断。</div>
           <button id="btn-goto-global" type="button" class="btn-secondary" data-i18n="empty.gotoGlobal">查看用量统计</button>

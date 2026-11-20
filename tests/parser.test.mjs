@@ -6138,11 +6138,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 // [MODIFIED BEGIN] 2026-11-19 20:31:27
 // Description: Bump current manifest version assertion from 0.4.0 to 0.4.1.
 // ============================================================================
-  // Manifests bumped to 0.4.1 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Bump current manifest version assertion from 0.4.1 to 0.5.0.
+// ============================================================================
+  // Manifests bumped to 0.5.0 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.4.1');
-  assert.equal(packageJson.version, '0.4.1');
+  assert.equal(pluginJson.version, '0.5.0');
+  assert.equal(packageJson.version, '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:31:27
 // ============================================================================
@@ -6288,7 +6295,14 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
 
   const heroValueRowBody = getRuleBody(/(?:^|\n)\s*\.hero-value-row\s*\{([^}]*)\}/);
   assert.match(heroValueRowBody, /flex-wrap\s*:\s*nowrap\b/);
-  assert.match(heroValueRowBody, /min-height\s*:\s*29px\b/);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:33:27
+// Description: Update Zero-CLS .hero-value-row min-height assertion from 29px to v0.5.0 32px hero scale.
+// ============================================================================
+  assert.match(heroValueRowBody, /min-height\s*:\s*32px\b/);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:33:27
+// ============================================================================
 
   const ctxScaleRowBody = getRuleBody(/(?:^|\n)\s*\.ctx-scale-row\s*\{([^}]*)\}/);
   assert.match(ctxScaleRowBody, /flex-wrap\s*:\s*nowrap\b/);
@@ -6403,18 +6417,25 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
 // [MODIFIED BEGIN] 2026-11-19 20:31:27
 // Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.4.0 to 0.4.1.
 // ============================================================================
-  // Version & docs consistency for current v0.4.1 release
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.4.1 to 0.5.0.
+// ============================================================================
+  // Version & docs consistency for current v0.5.0 release
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.4.1');
-  assert.equal(packageJson.version, '0.4.1');
-  assert.equal(pluginJson.description.includes('v0.4.1 beta'), true);
-  assert.equal(packageJson.description.includes('v0.4.1 beta'), true);
-  assert.equal(mainSource.includes("return '0.4.1'"), true);
-  assert.equal(releaseUpdaterSource.includes(": '0.4.1'"), true);
-  assert.equal(appSource.includes("'0.4.1'"), true);
-  assert.equal(skillMd.includes('# Token Monitor (v0.4.1 Beta)'), true);
-  assert.equal(readmeMd.includes('agy-token-monitor-v0.4.1.zip'), true);
+  assert.equal(pluginJson.version, '0.5.0');
+  assert.equal(packageJson.version, '0.5.0');
+  assert.equal(pluginJson.description.includes('v0.5.0 beta'), true);
+  assert.equal(packageJson.description.includes('v0.5.0 beta'), true);
+  assert.equal(mainSource.includes("return '0.5.0'"), true);
+  assert.equal(releaseUpdaterSource.includes(": '0.5.0'"), true);
+  assert.equal(appSource.includes("'0.5.0'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.5.0 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.5.0.zip'), true);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:31:27
 // ============================================================================
@@ -7452,7 +7473,14 @@ test('v0.2.8 createSystemProxyManager lifecycle, TTL cache, restore-before-set o
 // [MODIFIED BEGIN] 2026-11-19 20:31:27
 // Description: Update standalone /api/snapshot appVersion assertion to 0.4.1.
 // ============================================================================
-    assert.equal(snap.appVersion, '0.4.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Update standalone /api/snapshot appVersion assertion to 0.5.0.
+// ============================================================================
+    assert.equal(snap.appVersion, '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:31:27
 // ============================================================================
@@ -7890,13 +7918,20 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
   assert.ok(rollColMatch, 'styles.css must preserve .roll-col');
   assert.match(rollColMatch[1], /display\s*:\s*inline-grid\b/);
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:33:27
+// Description: Update toast tone token assertions from legacy --tm-amber/--tm-rose to v0.5.0 --tm-warning/--tm-danger.
+// ============================================================================
   const warnToastMatch = stylesNoComments.match(/(?:^|\n)\s*\.toast-banner\.is-warn\s*\{([^}]*)\}/);
   assert.ok(warnToastMatch, 'styles.css must define .toast-banner.is-warn');
-  assert.match(warnToastMatch[1], /--tm-amber\b/);
+  assert.match(warnToastMatch[1], /--tm-warning\b/);
 
   const errToastMatch = stylesNoComments.match(/(?:^|\n)\s*\.toast-banner\.is-error\s*\{([^}]*)\}/);
   assert.ok(errToastMatch, 'styles.css must define .toast-banner.is-error');
-  assert.match(errToastMatch[1], /--tm-rose\b/);
+  assert.match(errToastMatch[1], /--tm-danger\b/);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:33:27
+// ============================================================================
 
   // I18N zh/en parity + v0.2.8 update diagnostic keys
   const i18nStart = appSource.indexOf('const I18N = {');
@@ -8034,8 +8069,15 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
 // [MODIFIED BEGIN] 2026-11-19 20:31:27
 // Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.4.1.
 // ============================================================================
-  assert.equal(pluginJson.version, '0.4.1');
-  assert.equal(packageJson.version, '0.4.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.5.0.
+// ============================================================================
+  assert.equal(pluginJson.version, '0.5.0');
+  assert.equal(packageJson.version, '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:31:27
 // ============================================================================
@@ -8287,7 +8329,14 @@ test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showTo
 // [MODIFIED BEGIN] 2026-11-19 20:31:27
 // Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test to 0.4.1.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.4.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test to 0.5.0.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:31:27
 // ============================================================================
@@ -9809,7 +9858,14 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
 // [MODIFIED BEGIN] 2026-11-19 20:31:27
 // Description: Bump createReleaseUpdater default currentVersion assertion to 0.4.1.
 // ============================================================================
-  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.4.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Bump createReleaseUpdater default currentVersion assertion to 0.5.0.
+// ============================================================================
+  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:31:27
 // ============================================================================
@@ -10564,10 +10620,18 @@ test('v0.2.9 headless Node VM integration: Top-5 children folding, 400px scroll 
   assert.match(topExpandBtn.textContent, /12/);
   assert.match(bottomExpandBtn.textContent, /7/);
 
-  // Verify killed: true child in zh renders .child-status.ENDED ('● 已结束') and relative time
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:33:27
+// Description: Update v0.2.9 ended badge assertion to v0.5.0 clean text ('已结束', no leading ● prefix).
+// ============================================================================
+  // Verify killed: true child in zh renders .child-status.ENDED ('已结束', no ● prefix) and relative time
   const endedBadgesZh = cardChildren.querySelectorAll('.child-status.ENDED');
   assert.ok(endedBadgesZh.length >= 1, 'Ended worker in Top 5 must render .child-status.ENDED');
-  assert.equal(endedBadgesZh[0].textContent, '● 已结束');
+  assert.equal(endedBadgesZh[0].textContent, '已结束');
+  assert.doesNotMatch(endedBadgesZh[0].textContent, /^[●⚡🔧]/);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:33:27
+// ============================================================================
   const relTimesZh = cardChildren.querySelectorAll('.child-rel-time');
   assert.ok(relTimesZh.length === 5 && relTimesZh[0].textContent.length > 0, 'Each visible child must render relative time');
 
@@ -10636,9 +10700,17 @@ test('v0.2.9 headless Node VM integration: Top-5 children folding, 400px scroll 
   assert.equal(lastCanvasTexts.includes('Session Receipt'), true);
   assert.equal(lastCanvasTexts.includes('Session Total'), true);
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:33:27
+// Description: Update v0.2.9 English ended badge assertion to v0.5.0 clean text ('Ended', no leading ● prefix).
+// ============================================================================
   const endedBadgesEn = cardChildren.querySelectorAll('.child-status.ENDED');
   assert.ok(endedBadgesEn.length >= 1);
-  assert.equal(endedBadgesEn[0].textContent, '● Ended');
+  assert.equal(endedBadgesEn[0].textContent, 'Ended');
+  assert.doesNotMatch(endedBadgesEn[0].textContent, /^[●⚡🔧]/);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:33:27
+// ============================================================================
   const relTimesEn = cardChildren.querySelectorAll('.child-rel-time');
   assert.ok(relTimesEn.length === 5 && /ago|just now/i.test(relTimesEn[0].textContent));
 
@@ -11374,7 +11446,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-19 20:31:27
 // Description: Bump standalone /api/snapshot appVersion assertion to 0.4.1.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.4.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Bump standalone /api/snapshot appVersion assertion to 0.5.0.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:31:27
 // ============================================================================
@@ -11418,7 +11497,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-19 20:31:27
 // Description: Bump standalone /api/check-update appVersion assertion to 0.4.1.
 // ============================================================================
-      assert.equal(checkBody.appVersion, '0.4.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Bump standalone /api/check-update appVersion assertion to 0.5.0.
+// ============================================================================
+      assert.equal(checkBody.appVersion, '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:31:27
 // ============================================================================
@@ -11725,7 +11811,14 @@ test('v0.3.0 headless Node VM Settings tooltip proxy diagnostics and static I18N
 // [MODIFIED BEGIN] 2026-11-19 20:31:27
 // Description: Bump getCurrentAppVersion fallback assertion to 0.4.1.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.4.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Bump getCurrentAppVersion fallback assertion to 0.5.0.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:31:27
 // ============================================================================
@@ -12335,7 +12428,14 @@ test('v0.3.2 constant 43-char SHA-256 base64url /api/snapshot etag prevents HTTP
 // [MODIFIED BEGIN] 2026-11-19 20:31:27
 // Description: Update v0.3.2 ETag test standalone appVersion assertion to 0.4.1.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.4.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Update v0.3.2 ETag test standalone appVersion assertion to 0.5.0.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:31:27
 // ============================================================================
@@ -13206,7 +13306,14 @@ test('v0.4.0 backend DEFAULT_PREFS.pixelOfficeCollapsed, child activeToolLabel, 
 // [MODIFIED BEGIN] 2026-11-19 20:31:27
 // Description: Bump v0.4.0 backend standalone /api/snapshot appVersion assertion to 0.4.1.
 // ============================================================================
-      assert.equal(initialSnap.appVersion, '0.4.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Bump v0.4.0 backend standalone /api/snapshot appVersion assertion to 0.5.0.
+// ============================================================================
+      assert.equal(initialSnap.appVersion, '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:31:27
 // ============================================================================
@@ -14038,7 +14145,14 @@ test('v0.4.0 update modal nested markdown & section filtering, Pixel Office VM i
 // [MODIFIED BEGIN] 2026-11-19 20:31:27
 // Description: Bump v0.4.0 VM getCurrentAppVersion fallback assertion to 0.4.1.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.4.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Bump v0.4.0 VM getCurrentAppVersion fallback assertion to 0.5.0.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:31:27
 // ============================================================================
@@ -17487,7 +17601,14 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
 
   const exports = sandbox.__tmV041Exports;
   assert.ok(exports, 'VM execution must expose __tmV041Exports');
-  assert.equal(exports.getCurrentAppVersion(), '0.4.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Bump v0.4.1 VM getCurrentAppVersion fallback assertion to 0.5.0.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 
   exports.init();
   await new Promise((r) => setImmediate(r));
@@ -17746,7 +17867,17 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
   fetchedConvs.length = 0;
   const firstRow = sqCard.querySelector('.side-q-row');
   const firstOpenBtn = firstRow.querySelector('.side-q-open-btn');
-  assert.equal(firstOpenBtn?.textContent, '↗ 打开会话');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:33:27
+// Description: Update Side Questions open-session button assertion to v0.5.0 clean label ('打开会话') + .btn-soft + SVG .tm-icon.
+// ============================================================================
+  assert.equal(firstOpenBtn?.textContent, '打开会话');
+  assert.doesNotMatch(firstOpenBtn?.textContent || '', /^↗\s*/);
+  assert.equal(firstOpenBtn?.classList.contains('btn-soft'), true);
+  assert.ok(firstOpenBtn?.querySelector('.tm-icon'), '.side-q-open-btn must render SVG .tm-icon');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:33:27
+// ============================================================================
   const openClickEvt = firstOpenBtn.click();
   await new Promise((r) => setImmediate(r));
   assert.equal(openClickEvt.propagationStopped, true, '.side-q-open-btn must call stopPropagation()');
@@ -17775,7 +17906,12 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
   assert.equal(nonboundBanner.classList.contains('hidden'), false, '#nonbound-banner must be visible even when homeConvId === viewingId');
   assert.equal(nonboundBanner.classList.contains('is-side-question'), true);
   assert.equal(nonboundLabel.textContent, '支线问题：Side Question #1');
-  assert.equal(backBtn.textContent, '← 返回主对话');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:33:27
+// Description: Update #btn-back-bound assertions to v0.5.0 clean labels (no ← prefix) with SVG .tm-icon.
+// ============================================================================
+  assert.equal(backBtn.textContent, '返回主对话');
+  assert.ok(backBtn.querySelector('.tm-icon'), '#btn-back-bound must render back SVG .tm-icon');
   assert.equal(kindBadge.classList.contains('hidden'), false);
   assert.equal(kindBadge.textContent, '支线问题');
   assert.equal(costCard.querySelector('.child-cost-badge.is-side-question')?.textContent, '支线独立计费');
@@ -17785,7 +17921,11 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
   exports.renderHeader(sqDirectSnap);
   exports.renderCurrentTab(sqDirectSnap);
   assert.equal(nonboundLabel.textContent, 'Side Question: Side Question #1');
-  assert.equal(backBtn.textContent, '← Back to Main Chat');
+  assert.equal(backBtn.textContent, 'Back to Main Chat');
+  assert.ok(backBtn.querySelector('.tm-icon'), '#btn-back-bound must render back SVG .tm-icon in en');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:33:27
+// ============================================================================
   assert.equal(kindBadge.textContent, 'Side Q');
   assert.equal(costCard.querySelector('.child-cost-badge.is-side-question')?.textContent, 'Side Question Only');
 
@@ -17996,8 +18136,15 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
     assert.equal(rawJson.includes(modBeginMarker), false, `${label} must not contain comment annotations`);
     assert.doesNotThrow(() => JSON.parse(rawJson), `${label} must be valid strict JSON`);
   }
-  assert.equal(JSON.parse(pluginJsonRaw).version, '0.4.1');
-  assert.equal(JSON.parse(packageJsonRaw).version, '0.4.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Bump manifest version assertions in v0.4.1 static hygiene block to 0.5.0.
+// ============================================================================
+  assert.equal(JSON.parse(pluginJsonRaw).version, '0.5.0');
+  assert.equal(JSON.parse(packageJsonRaw).version, '0.5.0');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:33:24

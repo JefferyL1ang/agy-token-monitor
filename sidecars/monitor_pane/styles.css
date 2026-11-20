@@ -3,6 +3,10 @@
 Description: Implement adaptive dark/light theme styling, semantic accents, tabular-nums typography, sparklines, context usage monitor, subscription ROI, trend chart, and 280px-900px responsive layout for Token Monitor v1.1.
 ============================================================================ */
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:17:54
+Description: Introduce v0.5.0 design tokens (type scale, 4px spacing grid, radii, motion, semantic accents, inset/divider surfaces, --tm-sans, --tm-backdrop) synchronized across all 3 theme blocks, plus base .tm-icon and .pill-sm/.pill-md primitives.
+============================================================================ */
 :root {
   color-scheme: light;
   /* Host theme surfaces & typography with crisp light fallbacks */
@@ -31,21 +35,60 @@ Description: Add violet semantic accent token (--tm-violet) for light mode Side 
 [MODIFIED END] 2026-11-19 20:18:30
 ============================================================================ */
 
+  /* v0.5.0 Semantic colors (accent follows host --primary) */
+  --tm-accent: var(--tm-primary);
+  --tm-accent-soft: color-mix(in srgb, var(--tm-accent) 12%, transparent);
+  --tm-success: var(--tm-emerald);
+  --tm-warning: var(--tm-amber);
+  --tm-danger: var(--tm-rose);
+  --tm-branch: var(--tm-violet);
+
   /* Derived surfaces */
+  --tm-inset: color-mix(in srgb, var(--tm-fg) 4%, transparent);
+  --tm-divider: color-mix(in srgb, var(--tm-fg) 8%, transparent);
   --tm-hover: color-mix(in srgb, var(--tm-fg) 5%, transparent);
   --tm-press: color-mix(in srgb, var(--tm-fg) 9%, transparent);
-  --tm-subtle: color-mix(in srgb, var(--tm-fg) 4%, transparent);
+  --tm-subtle: var(--tm-inset);
   --tm-track: color-mix(in srgb, var(--tm-fg) 10%, transparent);
-  --tm-ring: color-mix(in srgb, var(--tm-cyan) 65%, transparent);
+  --tm-ring: color-mix(in srgb, var(--tm-accent) 60%, transparent);
+  --tm-backdrop: color-mix(in srgb, #000 40%, transparent);
   --tm-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.03);
 
+  /* Typography */
   --tm-font: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif);
+  --tm-sans: var(--tm-font);
   --tm-mono: var(--editor-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace);
 
-  --r-sm: 5px;
+  /* Type scale (7 integer sizes) */
+  --fs-micro: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 15px;
+  --fs-xl: 20px;
+  --fs-hero: 28px;
+
+  /* Spacing scale (4px grid) */
+  --sp-1: 2px;
+  --sp-2: 4px;
+  --sp-3: 6px;
+  --sp-4: 8px;
+  --sp-5: 10px;
+  --sp-6: 12px;
+  --sp-7: 16px;
+
+  /* Concentric radii */
+  --r-xs: 4px;
+  --r-sm: 6px;
   --r-md: 8px;
-  --r-lg: 11px;
+  --r-lg: 12px;
   --r-pill: 999px;
+
+  /* Motion tokens */
+  --dur-fast: 120ms;
+  --dur-base: 160ms;
+  --dur-slow: 320ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -73,10 +116,20 @@ Description: Add violet semantic accent token (--tm-violet) for system dark mode
 /* ============================================================================
 [MODIFIED END] 2026-11-19 20:18:30
 ============================================================================ */
+    --tm-accent: var(--tm-primary);
+    --tm-accent-soft: color-mix(in srgb, var(--tm-accent) 12%, transparent);
+    --tm-success: var(--tm-emerald);
+    --tm-warning: var(--tm-amber);
+    --tm-danger: var(--tm-rose);
+    --tm-branch: var(--tm-violet);
+    --tm-inset: color-mix(in srgb, var(--tm-fg) 4%, transparent);
+    --tm-divider: color-mix(in srgb, var(--tm-fg) 8%, transparent);
     --tm-hover: color-mix(in srgb, var(--tm-fg) 6%, transparent);
     --tm-press: color-mix(in srgb, var(--tm-fg) 11%, transparent);
-    --tm-subtle: color-mix(in srgb, var(--tm-fg) 5%, transparent);
+    --tm-subtle: var(--tm-inset);
     --tm-track: color-mix(in srgb, var(--tm-fg) 12%, transparent);
+    --tm-ring: color-mix(in srgb, var(--tm-accent) 60%, transparent);
+    --tm-backdrop: color-mix(in srgb, #000 40%, transparent);
     --tm-shadow: 0 1px 2px rgba(0, 0, 0, 0.28), 0 6px 16px rgba(0, 0, 0, 0.18);
   }
 }
@@ -105,10 +158,20 @@ Description: Add violet semantic accent token (--tm-violet) for explicit dark th
 /* ============================================================================
 [MODIFIED END] 2026-11-19 20:18:30
 ============================================================================ */
+  --tm-accent: var(--tm-primary);
+  --tm-accent-soft: color-mix(in srgb, var(--tm-accent) 12%, transparent);
+  --tm-success: var(--tm-emerald);
+  --tm-warning: var(--tm-amber);
+  --tm-danger: var(--tm-rose);
+  --tm-branch: var(--tm-violet);
+  --tm-inset: color-mix(in srgb, var(--tm-fg) 4%, transparent);
+  --tm-divider: color-mix(in srgb, var(--tm-fg) 8%, transparent);
   --tm-hover: color-mix(in srgb, var(--tm-fg) 6%, transparent);
   --tm-press: color-mix(in srgb, var(--tm-fg) 11%, transparent);
-  --tm-subtle: color-mix(in srgb, var(--tm-fg) 5%, transparent);
+  --tm-subtle: var(--tm-inset);
   --tm-track: color-mix(in srgb, var(--tm-fg) 12%, transparent);
+  --tm-ring: color-mix(in srgb, var(--tm-accent) 60%, transparent);
+  --tm-backdrop: color-mix(in srgb, #000 40%, transparent);
   --tm-shadow: 0 1px 2px rgba(0, 0, 0, 0.28), 0 6px 16px rgba(0, 0, 0, 0.18);
 }
 
@@ -129,7 +192,7 @@ Description: Add violet semantic accent token (--tm-violet) for explicit dark th
 
 ::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--tm-fg) 20%, transparent);
-  border-radius: 99px;
+  border-radius: var(--r-pill);
 }
 
 ::-webkit-scrollbar-track {
@@ -143,7 +206,7 @@ body {
   background: var(--tm-bg);
   color: var(--tm-fg);
   font-family: var(--tm-font);
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -177,6 +240,46 @@ button {
   font-family: var(--tm-mono);
 }
 
+.tm-icon {
+  display: inline-block;
+  flex: none;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -2px;
+}
+
+.pill-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 20px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.pill-md {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 24px;
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:17:54
+============================================================================ */
+
 .app-shell {
   width: 100%;
   max-width: 960px;
@@ -186,6 +289,10 @@ button {
   flex-direction: column;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:17:54
+Description: Refine header pills (pill-md metrics, semantic status colors with neutral grey idle, 7px circular --model-accent .model-dot), header action buttons, nonbound banner, and accent tab indicator using v0.5.0 tokens.
+============================================================================ */
 /* ---------------- Header ---------------- */
 .app-header {
   position: sticky;
@@ -194,14 +301,14 @@ button {
   background: color-mix(in srgb, var(--tm-bg) 92%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--tm-border);
-  padding: 10px 12px 0;
+  padding: var(--sp-5) var(--sp-6) 0;
 }
 
 .header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--sp-4);
 }
 
 /* ============================================================================
@@ -213,7 +320,7 @@ Description: Lock header pills to a single non-wrapping line and bound model pil
   align-items: center;
   flex-wrap: nowrap;
   overflow: hidden;
-  gap: 6px;
+  gap: var(--sp-3);
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -222,13 +329,15 @@ Description: Lock header pills to a single non-wrapping line and bound model pil
   display: inline-flex;
   align-items: center;
   flex: 0 1 auto;
-  gap: 6px;
+  gap: var(--sp-3);
   max-width: 100%;
   min-width: 0;
-  padding: 4px 9px;
+  height: 24px;
+  padding: 0 var(--sp-5);
   border-radius: var(--r-pill);
-  font-size: 12px;
+  font-size: var(--fs-sm);
   font-weight: 600;
+  line-height: 1;
   border: 1px solid transparent;
   white-space: nowrap;
   overflow: hidden;
@@ -251,9 +360,9 @@ Description: Lock header pills to a single non-wrapping line and bound model pil
 }
 
 .status-pill.status-generating {
-  color: var(--tm-amber);
-  background: color-mix(in srgb, var(--tm-amber) 14%, transparent);
-  border-color: color-mix(in srgb, var(--tm-amber) 34%, transparent);
+  color: var(--tm-accent);
+  background: var(--tm-accent-soft);
+  border-color: color-mix(in srgb, var(--tm-accent) 28%, transparent);
 }
 
 .status-pill.status-generating .status-dot {
@@ -261,9 +370,9 @@ Description: Lock header pills to a single non-wrapping line and bound model pil
 }
 
 .status-pill.status-tools {
-  color: var(--tm-cyan);
-  background: color-mix(in srgb, var(--tm-cyan) 14%, transparent);
-  border-color: color-mix(in srgb, var(--tm-cyan) 34%, transparent);
+  color: var(--tm-accent);
+  background: var(--tm-accent-soft);
+  border-color: color-mix(in srgb, var(--tm-accent) 28%, transparent);
 }
 
 .status-pill.status-tools .status-dot {
@@ -271,15 +380,15 @@ Description: Lock header pills to a single non-wrapping line and bound model pil
 }
 
 .status-pill.status-idle {
-  color: var(--tm-emerald);
-  background: color-mix(in srgb, var(--tm-emerald) 13%, transparent);
-  border-color: color-mix(in srgb, var(--tm-emerald) 28%, transparent);
+  color: var(--tm-muted-fg);
+  background: var(--tm-inset);
+  border-color: var(--tm-divider);
 }
 
 .status-pill.status-empty {
   color: var(--tm-muted-fg);
-  background: var(--tm-muted);
-  border-color: var(--tm-border);
+  background: var(--tm-inset);
+  border-color: var(--tm-divider);
 }
 
 @keyframes tm-pulse {
@@ -301,15 +410,17 @@ Description: Constrain .model-pill to max-width 48% with flex shrink and hidden 
   display: inline-flex;
   align-items: center;
   flex: 0 1 auto;
-  gap: 5px;
+  gap: var(--sp-3);
   max-width: 48%;
   min-width: 0;
-  padding: 4px 8px;
+  height: 24px;
+  padding: 0 var(--sp-5);
   border-radius: var(--r-pill);
   background: var(--tm-card);
   border: 1px solid var(--tm-border);
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: 500;
+  line-height: 1;
   color: var(--tm-fg);
   overflow: hidden;
 }
@@ -318,11 +429,17 @@ Description: Constrain .model-pill to max-width 48% with flex shrink and hidden 
 ============================================================================ */
 
 .model-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 2px;
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
   flex: none;
-  background: var(--tm-cyan);
+  background: var(--model-accent, var(--tm-muted-fg));
+  vertical-align: middle;
+}
+
+.model-pill .model-dot {
+  vertical-align: 0;
 }
 
 .model-text {
@@ -334,7 +451,7 @@ Description: Constrain .model-pill to max-width 48% with flex shrink and hidden 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--sp-2);
   flex: none;
 }
 
@@ -348,14 +465,18 @@ Description: Constrain .model-pill to max-width 48% with flex shrink and hidden 
   border: 1px solid var(--tm-border);
   background: var(--tm-card);
   color: var(--tm-muted-fg);
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .icon-btn:hover,
 .icon-btn[aria-expanded="true"] {
   color: var(--tm-fg);
   background: var(--tm-accent-host);
-  border-color: color-mix(in srgb, var(--tm-cyan) 45%, var(--tm-border));
+  border-color: color-mix(in srgb, var(--tm-accent) 45%, var(--tm-border));
+}
+
+.icon-btn:active {
+  transform: scale(0.97);
 }
 
 /* ============================================================================
@@ -368,21 +489,25 @@ Description: Style header EN/ZH language toggle button (.lang-btn).
   justify-content: center;
   min-width: 32px;
   height: 30px;
-  padding: 0 8px;
+  padding: 0 var(--sp-4);
   border-radius: var(--r-md);
   border: 1px solid var(--tm-border);
   background: var(--tm-card);
   color: var(--tm-muted-fg);
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: 700;
   letter-spacing: 0.02em;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .lang-btn:hover {
   color: var(--tm-fg);
   background: var(--tm-accent-host);
-  border-color: color-mix(in srgb, var(--tm-cyan) 45%, var(--tm-border));
+  border-color: color-mix(in srgb, var(--tm-accent) 45%, var(--tm-border));
+}
+
+.lang-btn:active {
+  transform: scale(0.97);
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 10:14:00
@@ -391,23 +516,23 @@ Description: Style header EN/ZH language toggle button (.lang-btn).
 .icon {
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.4;
+  stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 /* Non-bound banner */
 .nonbound-banner {
-  margin-top: 8px;
-  padding: 6px 10px;
+  margin-top: var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
   border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--tm-cyan) 12%, var(--tm-card));
-  border: 1px solid color-mix(in srgb, var(--tm-cyan) 32%, transparent);
+  background: color-mix(in srgb, var(--tm-accent) 12%, var(--tm-card));
+  border: 1px solid color-mix(in srgb, var(--tm-accent) 28%, transparent);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  font-size: 12px;
+  gap: var(--sp-4);
+  font-size: var(--fs-sm);
 }
 
 .nonbound-label {
@@ -420,40 +545,48 @@ Description: Style header EN/ZH language toggle button (.lang-btn).
 
 .back-btn {
   flex: none;
-  padding: 3px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-sm);
-  border: 1px solid color-mix(in srgb, var(--tm-cyan) 45%, transparent);
-  background: color-mix(in srgb, var(--tm-cyan) 18%, transparent);
-  color: var(--tm-cyan);
-  font-size: 11.5px;
+  border: 1px solid color-mix(in srgb, var(--tm-accent) 36%, transparent);
+  background: var(--tm-accent-soft);
+  color: var(--tm-accent);
+  font-size: var(--fs-sm);
   font-weight: 600;
+  transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .back-btn:hover {
-  background: color-mix(in srgb, var(--tm-cyan) 28%, transparent);
+  background: color-mix(in srgb, var(--tm-accent) 22%, transparent);
+}
+
+.back-btn:active {
+  transform: scale(0.97);
 }
 
 /* Tabs */
 .tabs {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 8px;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
 }
 
 .tab {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
   border: none;
   background: transparent;
   color: var(--tm-muted-fg);
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   font-weight: 600;
   border-bottom: 2px solid transparent;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
 }
 
 .tab:hover {
@@ -466,12 +599,19 @@ Description: Keep active tab style and remove obsolete navigation tab counter ba
 ============================================================================ */
 .tab.active {
   color: var(--tm-fg);
-  border-bottom-color: var(--tm-cyan);
+  border-bottom-color: var(--tm-accent);
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 20:29:15
 ============================================================================ */
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:17:54
+============================================================================ */
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:17:54
+Description: Standardize settings drawer controls (28px field inputs, --r-sm, accent focus ring) and unified button hierarchy (btn-primary, btn-secondary, btn-ghost, new btn-soft, mini-btn) with v0.5.0 tokens.
+============================================================================ */
 /* ---------------- Settings Drawer ---------------- */
 .settings-drawer {
   border-bottom: 1px solid var(--tm-border);
@@ -479,10 +619,10 @@ Description: Keep active tab style and remove obsolete navigation tab counter ba
 }
 
 .drawer-inner {
-  padding: 12px;
+  padding: var(--sp-6);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--sp-5);
 }
 
 .drawer-header {
@@ -490,37 +630,42 @@ Description: Keep active tab style and remove obsolete navigation tab counter ba
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 6px;
+  gap: var(--sp-3);
 }
 
 .drawer-title {
-  font-size: 13px;
+  font-size: var(--fs-md);
   font-weight: 700;
 }
 
 .drawer-subtitle {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
 }
 
 .preset-group {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  gap: var(--sp-3);
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:36:55
+Description: Keep .preset-btn, .btn-secondary, and .mini-btn transparent with --tm-border outline in all themes (fixing near-black filled look in dark mode), and enforce single-line ellipsis on 28px <select> / .field-input controls.
+============================================================================ */
 .preset-btn {
-  padding: 6px 8px;
+  padding: var(--sp-3) var(--sp-4);
   border-radius: var(--r-md);
   border: 1px solid var(--tm-border);
-  background: var(--tm-bg);
-  font-size: 11.5px;
+  background: transparent;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--tm-muted-fg);
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: background-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
 }
 
 .preset-btn:hover {
@@ -529,32 +674,32 @@ Description: Keep active tab style and remove obsolete navigation tab counter ba
 }
 
 .preset-btn.active {
-  color: var(--tm-cyan);
-  background: color-mix(in srgb, var(--tm-cyan) 14%, transparent);
-  border-color: color-mix(in srgb, var(--tm-cyan) 48%, transparent);
+  color: var(--tm-accent);
+  background: var(--tm-accent-soft);
+  border-color: color-mix(in srgb, var(--tm-accent) 44%, transparent);
 }
 
 .settings-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--sp-5);
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 8px;
+  gap: var(--sp-4);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--sp-2);
   min-width: 0;
 }
 
 .field-label {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
   font-weight: 500;
 }
@@ -562,25 +707,41 @@ Description: Keep active tab style and remove obsolete navigation tab counter ba
 .field-input {
   width: 100%;
   min-width: 0;
-  padding: 6px 8px;
+  height: 28px;
+  padding: 0 var(--sp-4);
   border-radius: var(--r-sm);
   border: 1px solid var(--tm-border);
   background: var(--tm-bg);
   color: var(--tm-fg);
-  font-size: 12px;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+
+select.field-input {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 26px;
 }
 
 .field-input:focus {
   outline: none;
-  border-color: var(--tm-cyan);
+  border-color: var(--tm-accent);
+  box-shadow: 0 0 0 2px var(--tm-accent-soft);
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:36:55
+============================================================================ */
 
 /* ============================================================================
 [MODIFIED BEGIN] 2026-11-17 15:47:00
 Description: Style read-only auto-synced FX rate input cleanly.
 ============================================================================ */
 .field-input[readonly] {
-  background: var(--tm-subtle);
+  background: var(--tm-inset);
   color: var(--tm-muted-fg);
   cursor: default;
 }
@@ -591,19 +752,19 @@ Description: Style read-only auto-synced FX rate input cleanly.
 .checkbox-row {
   display: flex;
   align-items: flex-start;
-  gap: 7px;
-  font-size: 12px;
+  gap: var(--sp-4);
+  font-size: var(--fs-sm);
   cursor: pointer;
 }
 
 .checkbox-row input {
-  margin-top: 2px;
-  accent-color: var(--tm-cyan);
+  margin-top: var(--sp-1);
+  accent-color: var(--tm-accent);
 }
 
 .muted-hint {
   color: var(--tm-muted-fg);
-  font-size: 11px;
+  font-size: var(--fs-xs);
 }
 
 .drawer-footer {
@@ -611,26 +772,26 @@ Description: Style read-only auto-synced FX rate input cleanly.
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--sp-4);
 }
 
 .settings-feedback {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   min-height: 16px;
 }
 
 .settings-feedback.is-error {
-  color: var(--tm-rose);
+  color: var(--tm-danger);
 }
 
 .settings-feedback.is-ok {
-  color: var(--tm-emerald);
+  color: var(--tm-success);
 }
 
 .drawer-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-3);
   margin-left: auto;
 }
 
@@ -638,18 +799,32 @@ Description: Style read-only auto-synced FX rate input cleanly.
 .btn-primary,
 .btn-secondary,
 .btn-ghost,
+.btn-soft,
 .mini-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
   border-radius: var(--r-md);
-  font-size: 12px;
+  font-size: var(--fs-sm);
   font-weight: 600;
-  padding: 6px 11px;
+  padding: var(--sp-3) var(--sp-6);
   border: 1px solid transparent;
-  transition: background-color 0.14s ease, border-color 0.14s ease, opacity 0.14s ease;
+  white-space: nowrap;
+  transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.btn-primary:active:not(:disabled),
+.btn-secondary:active:not(:disabled),
+.btn-ghost:active:not(:disabled),
+.btn-soft:active:not(:disabled),
+.mini-btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .btn-primary {
-  background: var(--tm-cyan);
-  color: #ffffff;
+  background: var(--tm-accent);
+  color: var(--tm-primary-fg);
 }
 
 .btn-primary:hover {
@@ -661,8 +836,12 @@ Description: Style read-only auto-synced FX rate input cleanly.
   cursor: wait;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:36:55
+Description: Use transparent background with --tm-border outline on .btn-secondary and .mini-btn so secondary/expand buttons stay light in dark mode.
+============================================================================ */
 .btn-secondary {
-  background: var(--tm-muted);
+  background: transparent;
   border-color: var(--tm-border);
   color: var(--tm-fg);
 }
@@ -673,7 +852,7 @@ Description: Style read-only auto-synced FX rate input cleanly.
 
 .btn-ghost {
   background: transparent;
-  border-color: var(--tm-border);
+  border-color: transparent;
   color: var(--tm-muted-fg);
 }
 
@@ -682,46 +861,75 @@ Description: Style read-only auto-synced FX rate input cleanly.
   background: var(--tm-hover);
 }
 
+.btn-soft {
+  background: var(--tm-accent-soft);
+  border-color: color-mix(in srgb, var(--tm-accent) 26%, transparent);
+  color: var(--tm-accent);
+}
+
+.btn-soft:hover {
+  background: color-mix(in srgb, var(--tm-accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--tm-accent) 44%, transparent);
+}
+
 .mini-btn {
-  padding: 3px 8px;
-  font-size: 11px;
+  height: 24px;
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-xs);
   border-radius: var(--r-sm);
   border: 1px solid var(--tm-border);
-  background: var(--tm-bg);
+  background: transparent;
   color: var(--tm-fg);
   white-space: nowrap;
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:36:55
+============================================================================ */
 
 .mini-btn:hover {
-  background: var(--tm-accent-host);
-  border-color: color-mix(in srgb, var(--tm-cyan) 42%, var(--tm-border));
+  background: var(--tm-hover);
+  border-color: color-mix(in srgb, var(--tm-accent) 42%, var(--tm-border));
 }
 
-.mini-btn.accent {
-  color: var(--tm-cyan);
-  border-color: color-mix(in srgb, var(--tm-cyan) 38%, transparent);
-  background: color-mix(in srgb, var(--tm-cyan) 10%, transparent);
+.mini-btn.accent,
+.mini-btn.btn-soft {
+  color: var(--tm-accent);
+  border-color: color-mix(in srgb, var(--tm-accent) 28%, transparent);
+  background: var(--tm-accent-soft);
 }
 
+.mini-btn.accent:hover,
+.mini-btn.btn-soft:hover {
+  background: color-mix(in srgb, var(--tm-accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--tm-accent) 44%, transparent);
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:17:54
+============================================================================ */
+
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:17:54
+Description: Apply v0.5.0 card spacing (--sp-6), muted .card-title-icon, split hero cost (.hero-currency / .hero-frac), pill-sm .checkout-btn & .child-cost-badge, borderless --tm-inset .sparkline & .mini-chip, and accent spark bars while preserving Zero-CLS geometry.
+============================================================================ */
 /* ---------------- Main Area & Cards ---------------- */
 .main-content {
-  padding: 10px 12px 18px;
+  padding: var(--sp-5) var(--sp-6) var(--sp-7);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--sp-6);
 }
 
 .view-stack {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--sp-6);
 }
 
 .card {
   background: var(--tm-card);
   border: 1px solid var(--tm-card-border);
   border-radius: var(--r-lg);
-  padding: 12px;
+  padding: var(--sp-6);
   box-shadow: var(--tm-shadow);
   min-width: 0;
 }
@@ -730,26 +938,34 @@ Description: Style read-only auto-synced FX rate input cleanly.
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--sp-4);
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin-bottom: var(--sp-5);
 }
 
 .card-title {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   font-weight: 700;
   color: var(--tm-muted-fg);
   letter-spacing: 0.02em;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-3);
+}
+
+.card-title-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--tm-muted-fg);
+  vertical-align: 0;
 }
 
 .card-title-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--tm-cyan);
+  background: var(--tm-muted-fg);
   flex: none;
 }
 
@@ -773,11 +989,11 @@ Description: Lock Tab 1 card headers, conversation strip, hero value row, and su
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--sp-4);
   flex-wrap: nowrap;
   overflow: hidden;
-  padding: 2px 2px 0;
-  font-size: 11.5px;
+  padding: var(--sp-1) var(--sp-1) 0;
+  font-size: var(--fs-sm);
 }
 
 .conv-title {
@@ -795,7 +1011,7 @@ Description: Lock Tab 1 card headers, conversation strip, hero value row, and su
   flex: 0 0 auto;
   color: var(--tm-muted-fg);
   font-family: var(--tm-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -805,7 +1021,7 @@ Description: Lock Tab 1 card headers, conversation strip, hero value row, and su
 .hero-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: var(--sp-6);
 }
 
 /* Primary KPI Metrics */
@@ -815,20 +1031,41 @@ Description: Lock Tab 1 card headers, conversation strip, hero value row, and su
   flex-wrap: nowrap;
   overflow: hidden;
   white-space: nowrap;
-  min-height: 29px;
-  gap: 6px;
-  margin-bottom: 8px;
+  min-height: 32px;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
 }
 
 .hero-value {
-  font-size: 26px;
+  font-size: var(--fs-hero);
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:59:40
+Description: Restore hero currency prefix (USD) to full hero size/weight/color per user feedback; only the fraction stays dimmed.
+============================================================================ */
+.hero-currency {
+  font-size: inherit;
+  color: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:59:40
+============================================================================ */
+
+.hero-frac {
+  color: var(--tm-muted-fg);
+  font-size: 0.62em;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
 .hero-unit {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--tm-muted-fg);
   font-weight: 600;
 }
@@ -840,9 +1077,9 @@ Description: Add Zero-CLS .hero-value-row.has-action layout and pill-styled .che
 .hero-value-row.has-action {
   align-items: center;
   justify-content: space-between;
-  min-height: 29px;
+  min-height: 32px;
   flex-wrap: nowrap;
-  gap: 8px;
+  gap: var(--sp-4);
 }
 
 .hero-value-row.has-action .hero-value {
@@ -855,24 +1092,25 @@ Description: Add Zero-CLS .hero-value-row.has-action layout and pill-styled .che
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 9px;
+  gap: var(--sp-2);
+  height: 20px;
+  padding: 0 var(--sp-4);
   border-radius: var(--r-pill);
-  border: 1px solid color-mix(in srgb, var(--tm-cyan) 36%, var(--tm-border));
-  background: color-mix(in srgb, var(--tm-cyan) 10%, var(--tm-card));
-  color: var(--tm-cyan);
+  border: 1px solid color-mix(in srgb, var(--tm-accent) 28%, transparent);
+  background: var(--tm-accent-soft);
+  color: var(--tm-accent);
   font-family: var(--tm-sans);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .checkout-btn:hover {
-  background: color-mix(in srgb, var(--tm-cyan) 18%, var(--tm-card));
-  border-color: color-mix(in srgb, var(--tm-cyan) 56%, var(--tm-border));
+  background: color-mix(in srgb, var(--tm-accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--tm-accent) 44%, transparent);
 }
 
 .checkout-btn:active {
@@ -885,10 +1123,10 @@ Description: Add Zero-CLS .hero-value-row.has-action layout and pill-styled .che
 .sub-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 12px;
-  font-size: 11.5px;
+  gap: var(--sp-3) var(--sp-6);
+  font-size: var(--fs-sm);
   color: var(--tm-muted-fg);
-  margin-bottom: 10px;
+  margin-bottom: var(--sp-5);
 }
 
 .sub-stats.is-single-line {
@@ -903,16 +1141,16 @@ Description: Add Zero-CLS .hero-value-row.has-action layout and pill-styled .che
 .sub-stats-speed {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 11.5px;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
   color: var(--tm-muted-fg);
-  margin-bottom: 10px;
+  margin-bottom: var(--sp-5);
 }
 
 .sub-stats-line {
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  gap: var(--sp-6);
   height: 18px;
   line-height: 18px;
   white-space: nowrap;
@@ -934,7 +1172,7 @@ Description: Add Zero-CLS .hero-value-row.has-action layout and pill-styled .che
 .sparkline-wrap {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--sp-2);
 }
 
 .sparkline {
@@ -942,10 +1180,10 @@ Description: Add Zero-CLS .hero-value-row.has-action layout and pill-styled .che
   align-items: flex-end;
   gap: 3px;
   height: 36px;
-  padding: 4px 6px;
+  padding: var(--sp-2) var(--sp-3);
   border-radius: var(--r-md);
-  background: var(--tm-subtle);
-  border: 1px solid var(--tm-border);
+  background: var(--tm-inset);
+  border: none;
 }
 
 /* ============================================================================
@@ -957,29 +1195,31 @@ Description: Upgrade sparkline bar height transition to 320ms cubic-bezier easin
   min-width: 4px;
   max-width: 16px;
   border-radius: 2px 2px 1px 1px;
-  background: color-mix(in srgb, var(--tm-cyan) 55%, transparent);
-  transition: height 320ms cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease;
+  background: color-mix(in srgb, var(--tm-accent) 45%, transparent);
+  transition: height var(--dur-slow) var(--ease-out), background-color var(--dur-base) var(--ease-out);
 }
 
 .spark-bar.latest {
-  background: var(--tm-cyan);
+  background: var(--tm-accent);
 }
 
 .spark-bar:hover {
-  background: var(--tm-emerald);
+  background: var(--tm-accent);
 }
 
 .spark-caption {
   display: flex;
   justify-content: space-between;
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
 }
 
 /* Scope Toggle Pill */
 .seg-toggle {
   display: inline-flex;
-  padding: 2px;
+  align-items: center;
+  padding: var(--sp-1);
+  gap: var(--sp-1);
   border-radius: var(--r-pill);
   background: var(--tm-muted);
   border: 1px solid var(--tm-border);
@@ -989,28 +1229,36 @@ Description: Upgrade sparkline bar height transition to 320ms cubic-bezier easin
   border: none;
   background: transparent;
   color: var(--tm-muted-fg);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
-  padding: 3px 8px;
+  padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-pill);
   white-space: nowrap;
+  transition: background-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
+}
+
+.seg-btn:hover {
+  color: var(--tm-fg);
 }
 
 .seg-btn.active {
   background: var(--tm-card);
   color: var(--tm-fg);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--tm-fg) 10%, transparent);
 }
 
 .child-cost-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
+  gap: var(--sp-2);
+  height: 20px;
+  padding: 0 var(--sp-4);
   border-radius: var(--r-pill);
-  background: var(--tm-subtle);
-  border: 1px solid var(--tm-border);
-  font-size: 11px;
+  background: var(--tm-inset);
+  border: none;
+  font-size: var(--fs-xs);
   font-weight: 600;
+  line-height: 1;
   color: var(--tm-muted-fg);
   white-space: nowrap;
 }
@@ -1021,22 +1269,23 @@ Description: Upgrade sparkline bar height transition to 320ms cubic-bezier easin
 .saved-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 9px;
+  gap: var(--sp-2);
+  min-height: 24px;
+  padding: var(--sp-1) var(--sp-5);
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--tm-emerald) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tm-emerald) 38%, transparent);
-  color: var(--tm-emerald);
-  font-size: 11.5px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  background: color-mix(in srgb, var(--tm-success) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tm-success) 26%, transparent);
+  color: var(--tm-success);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  margin-bottom: var(--sp-4);
   max-width: 100%;
 }
 
 .mini-chips {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  gap: var(--sp-3);
 }
 
 /* ============================================================================
@@ -1044,19 +1293,24 @@ Description: Upgrade sparkline bar height transition to 320ms cubic-bezier easin
 Description: Lock mini-chip and mini-chip-val to single-line clipped geometry to eliminate height jumps.
 ============================================================================ */
 .mini-chip {
-  padding: 6px 8px;
+  padding: var(--sp-3) var(--sp-4);
   border-radius: var(--r-md);
-  background: var(--tm-subtle);
-  border: 1px solid var(--tm-border);
+  background: var(--tm-inset);
+  border: none;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--sp-1);
   min-width: 0;
   overflow: hidden;
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+
+.mini-chip:hover {
+  background: var(--tm-hover);
 }
 
 .mini-chip-label {
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
   white-space: nowrap;
   overflow: hidden;
@@ -1064,7 +1318,7 @@ Description: Lock mini-chip and mini-chip-val to single-line clipped geometry to
 }
 
 .mini-chip-val {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   font-weight: 700;
   line-height: 18px;
   min-height: 18px;
@@ -1075,7 +1329,14 @@ Description: Lock mini-chip and mini-chip-val to single-line clipped geometry to
 /* ============================================================================
 [MODIFIED END] 2026-11-17 22:06:37
 ============================================================================ */
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:17:54
+============================================================================ */
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:20:56
+Description: Refine context bar (8px track, solid accent healthy seg, 2px overhang tick, unified soft-bg level-banner), pill-sm compact-btn, neutral cache-seg-miss, borderless --tm-inset spikes/child rows with --tm-divider hairlines, semantic kind-badge/child-status colors, and sticky-header hover-tinted data-table with neutral total-col.
+============================================================================ */
 /* ---------------- Context Usage Monitor Bar ---------------- */
 /* ============================================================================
 [MODIFIED BEGIN] 2026-11-17 10:14:00
@@ -1086,46 +1347,48 @@ states, compact header actions (.ctx-head-right, .summary-head-right, .unit-togg
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--sp-3);
   justify-content: flex-end;
 }
 
 .unit-toggle .seg-btn {
-  padding: 2px 6px;
-  font-size: 10.5px;
+  padding: var(--sp-1) var(--sp-3);
+  font-size: var(--fs-xs);
 }
 
 .ctx-head-right {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--sp-3);
   justify-content: flex-end;
 }
 
 .ctx-summary-num {
-  font-size: 13px;
+  font-size: var(--fs-md);
   font-weight: 700;
 }
 
 .compact-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
+  gap: var(--sp-2);
+  height: 20px;
+  padding: 0 var(--sp-4);
   border-radius: var(--r-pill);
-  border: 1px solid color-mix(in srgb, var(--tm-cyan) 36%, var(--tm-border));
-  background: color-mix(in srgb, var(--tm-cyan) 10%, var(--tm-card));
-  color: var(--tm-cyan);
-  font-size: 11px;
-  font-weight: 700;
+  border: 1px solid color-mix(in srgb, var(--tm-accent) 28%, transparent);
+  background: var(--tm-accent-soft);
+  color: var(--tm-accent);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1;
   white-space: nowrap;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .compact-btn:hover {
-  background: color-mix(in srgb, var(--tm-cyan) 18%, var(--tm-card));
-  border-color: color-mix(in srgb, var(--tm-cyan) 56%, var(--tm-border));
+  background: color-mix(in srgb, var(--tm-accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--tm-accent) 44%, transparent);
 }
 
 .compact-btn:active {
@@ -1133,39 +1396,41 @@ states, compact header actions (.ctx-head-right, .summary-head-right, .unit-togg
 }
 
 .compact-btn.is-warning {
-  color: var(--tm-amber);
-  background: color-mix(in srgb, var(--tm-amber) 15%, var(--tm-card));
-  border-color: color-mix(in srgb, var(--tm-amber) 48%, transparent);
+  color: var(--tm-warning);
+  background: color-mix(in srgb, var(--tm-warning) 14%, transparent);
+  border-color: color-mix(in srgb, var(--tm-warning) 36%, transparent);
 }
 
 .compact-btn.is-warning:hover {
-  background: color-mix(in srgb, var(--tm-amber) 24%, var(--tm-card));
+  background: color-mix(in srgb, var(--tm-warning) 22%, transparent);
+  border-color: color-mix(in srgb, var(--tm-warning) 50%, transparent);
 }
 
 .compact-btn.is-critical {
-  color: var(--tm-rose);
-  background: color-mix(in srgb, var(--tm-rose) 16%, var(--tm-card));
-  border-color: color-mix(in srgb, var(--tm-rose) 54%, transparent);
+  color: var(--tm-danger);
+  background: color-mix(in srgb, var(--tm-danger) 14%, transparent);
+  border-color: color-mix(in srgb, var(--tm-danger) 42%, transparent);
   animation: tm-compact-pulse 1.5s ease-in-out infinite;
 }
 
 .compact-btn.is-critical:hover {
-  background: color-mix(in srgb, var(--tm-rose) 25%, var(--tm-card));
+  background: color-mix(in srgb, var(--tm-danger) 22%, transparent);
+  border-color: color-mix(in srgb, var(--tm-danger) 56%, transparent);
 }
 
 .compact-btn.is-copied {
-  color: var(--tm-emerald);
-  background: color-mix(in srgb, var(--tm-emerald) 16%, var(--tm-card));
-  border-color: color-mix(in srgb, var(--tm-emerald) 48%, transparent);
+  color: var(--tm-success);
+  background: color-mix(in srgb, var(--tm-success) 14%, transparent);
+  border-color: color-mix(in srgb, var(--tm-success) 38%, transparent);
   animation: none;
 }
 
 @keyframes tm-compact-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--tm-rose) 30%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--tm-danger) 30%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--tm-rose) 0%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--tm-danger) 0%, transparent);
   }
 }
 /* ============================================================================
@@ -1174,12 +1439,12 @@ states, compact header actions (.ctx-head-right, .summary-head-right, .unit-togg
 
 .ctx-bar-wrap {
   position: relative;
-  margin: 4px 0 8px;
+  margin: var(--sp-2) 0 var(--sp-4);
 }
 
 .ctx-bar-track {
   position: relative;
-  height: 12px;
+  height: 8px;
   border-radius: var(--r-pill);
   background: var(--tm-track);
   overflow: hidden;
@@ -1192,33 +1457,33 @@ Description: Upgrade context usage bar transitions to 320ms cubic-bezier easing.
 ============================================================================ */
 .ctx-seg-healthy {
   height: 100%;
-  background: linear-gradient(90deg, var(--tm-emerald), var(--tm-cyan));
-  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  background: var(--tm-accent);
+  transition: width var(--dur-slow) var(--ease-out);
 }
 
 .ctx-seg-overflow {
   height: 100%;
-  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1), background-color 0.25s ease;
+  transition: width var(--dur-slow) var(--ease-out), background-color var(--dur-base) var(--ease-out);
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 21:28:45
 ============================================================================ */
 
 .ctx-seg-overflow.is-warning {
-  background: var(--tm-amber);
+  background: var(--tm-warning);
 }
 
 .ctx-seg-overflow.is-critical {
-  background: var(--tm-rose);
+  background: var(--tm-danger);
 }
 
 .ctx-soft-tick {
   position: absolute;
-  top: -3px;
-  bottom: -3px;
+  top: -2px;
+  bottom: -2px;
   width: 2px;
   background: var(--tm-fg);
-  opacity: 0.75;
+  opacity: 0.72;
   border-radius: 1px;
   pointer-events: none;
 }
@@ -1233,52 +1498,49 @@ Description: Prevent .ctx-scale-row from wrapping across lines on live token upd
   flex-wrap: nowrap;
   white-space: nowrap;
   overflow: hidden;
-  gap: 6px;
-  font-size: 11px;
+  gap: var(--sp-3);
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
-  margin-bottom: 9px;
+  margin-bottom: var(--sp-5);
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 22:06:37
 ============================================================================ */
 
 .level-banner {
-  padding: 7px 10px;
+  --banner-tone: var(--tm-muted-fg);
+  padding: var(--sp-4) var(--sp-5);
   border-radius: var(--r-md);
-  font-size: 12px;
+  font-size: var(--fs-sm);
   font-weight: 600;
-  border: 1px solid transparent;
+  color: var(--banner-tone);
+  background: color-mix(in srgb, var(--banner-tone) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--banner-tone) 26%, transparent);
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--sp-4);
 }
 
 .level-banner.HEALTHY {
-  color: var(--tm-emerald);
-  background: color-mix(in srgb, var(--tm-emerald) 12%, transparent);
-  border-color: color-mix(in srgb, var(--tm-emerald) 30%, transparent);
+  --banner-tone: var(--tm-success);
 }
 
 .level-banner.WARNING {
-  color: var(--tm-amber);
-  background: color-mix(in srgb, var(--tm-amber) 14%, transparent);
-  border-color: color-mix(in srgb, var(--tm-amber) 34%, transparent);
+  --banner-tone: var(--tm-warning);
 }
 
 .level-banner.CRITICAL {
-  color: var(--tm-rose);
-  background: color-mix(in srgb, var(--tm-rose) 14%, transparent);
-  border-color: color-mix(in srgb, var(--tm-rose) 38%, transparent);
+  --banner-tone: var(--tm-danger);
 }
 
 /* ---------------- Prompt Cache & Spikes ---------------- */
 .cache-seg-track {
-  height: 10px;
+  height: 8px;
   border-radius: var(--r-pill);
   background: var(--tm-track);
   overflow: hidden;
   display: flex;
-  margin-bottom: 8px;
+  margin-bottom: var(--sp-4);
 }
 
 /* ============================================================================
@@ -1287,14 +1549,14 @@ Description: Upgrade cache hit/miss segment transitions to 320ms cubic-bezier ea
 ============================================================================ */
 .cache-seg-hit {
   height: 100%;
-  background: var(--tm-emerald);
-  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  background: var(--tm-success);
+  transition: width var(--dur-slow) var(--ease-out);
 }
 
 .cache-seg-miss {
   height: 100%;
-  background: var(--tm-amber);
-  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  background: color-mix(in srgb, var(--tm-fg) 12%, transparent);
+  transition: width var(--dur-slow) var(--ease-out);
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 21:28:45
@@ -1303,22 +1565,22 @@ Description: Upgrade cache hit/miss segment transitions to 320ms cubic-bezier ea
 .cache-metrics-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-  gap: 6px;
-  margin-bottom: 10px;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
 }
 
 .spikes-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--tm-border);
-  margin-bottom: 6px;
+  gap: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--tm-divider);
+  margin-bottom: var(--sp-3);
 }
 
 .spikes-title {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--tm-muted-fg);
 }
@@ -1326,33 +1588,44 @@ Description: Upgrade cache hit/miss segment transitions to 320ms cubic-bezier ea
 .spikes-list {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0;
+  border-radius: var(--r-md);
+  overflow: hidden;
 }
 
 .spike-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: var(--r-sm);
-  background: var(--tm-subtle);
-  font-size: 11.5px;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: none;
+  background: var(--tm-inset);
+  font-size: var(--fs-sm);
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+
+.spike-row + .spike-row {
+  border-top: 1px solid var(--tm-divider);
+}
+
+.spike-row:hover {
+  background: var(--tm-hover);
 }
 
 .spike-left {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: var(--sp-3);
   min-width: 0;
   flex: 1 1 auto;
 }
 
 .spike-step {
   font-family: var(--tm-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 700;
-  color: var(--tm-cyan);
+  color: var(--tm-accent);
   flex: none;
 }
 
@@ -1367,95 +1640,109 @@ Description: Upgrade cache hit/miss segment transitions to 320ms cubic-bezier ea
   flex: none;
   text-align: right;
   font-weight: 700;
-  color: var(--tm-amber);
+  color: var(--tm-warning);
 }
 
 .spike-after {
   display: block;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   font-weight: 500;
   color: var(--tm-muted-fg);
 }
 
 /* ---------------- Children & Tables ---------------- */
 .children-section {
-  margin-bottom: 12px;
+  margin-bottom: var(--sp-6);
 }
 
 .section-subhead {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: 700;
   color: var(--tm-muted-fg);
-  margin-bottom: 6px;
+  margin-bottom: var(--sp-3);
 }
 
 .children-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--sp-3);
 }
 
 .child-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px 9px;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
   border-radius: var(--r-md);
-  background: var(--tm-subtle);
-  border: 1px solid var(--tm-border);
+  background: var(--tm-inset);
+  border: none;
+  transition: background-color var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out);
+}
+
+.child-row:hover {
+  background: var(--tm-hover);
 }
 
 .child-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: var(--sp-3);
   flex-wrap: wrap;
 }
 
 .child-id-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-3);
   min-width: 0;
   flex-wrap: wrap;
 }
 
 .child-name {
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .kind-badge {
-  padding: 1px 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 20px;
+  padding: 0 var(--sp-4);
   border-radius: var(--r-pill);
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
   text-transform: uppercase;
-  background: color-mix(in srgb, var(--tm-cyan) 14%, transparent);
-  color: var(--tm-cyan);
+  background: var(--tm-accent-soft);
+  color: var(--tm-accent);
 }
 
 .kind-badge.swarm {
-  background: color-mix(in srgb, var(--tm-emerald) 14%, transparent);
-  color: var(--tm-emerald);
+  background: color-mix(in srgb, var(--tm-success) 12%, transparent);
+  color: var(--tm-success);
 }
 
 .child-status {
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
   font-weight: 600;
 }
 
 .child-status.GENERATING {
-  color: var(--tm-amber);
+  color: var(--tm-accent);
 }
 
 .child-status.RUNNING_TOOLS {
-  color: var(--tm-cyan);
+  color: var(--tm-accent);
 }
 
 .child-status.IDLE {
-  color: var(--tm-emerald);
+  color: var(--tm-muted-fg);
 }
 
 .child-meta {
@@ -1463,21 +1750,27 @@ Description: Upgrade cache hit/miss segment transitions to 320ms cubic-bezier ea
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 6px;
-  font-size: 11px;
+  gap: var(--sp-3);
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
 }
 
 .child-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 10px;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-5);
+}
+
+.child-stats .model-dot {
+  margin-right: var(--sp-2);
+  vertical-align: -1px;
 }
 
 .child-actions {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--sp-3);
 }
 
 /* ============================================================================
@@ -1488,8 +1781,8 @@ Description: Add Top-5 active subagent/swarm folding header, 400px scrollable ex
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-3);
 }
 
 .children-head .section-subhead {
@@ -1499,40 +1792,40 @@ Description: Add Top-5 active subagent/swarm folding header, 400px scrollable ex
 .children-list.is-expanded {
   max-height: 400px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: var(--sp-2);
   overscroll-behavior: contain;
 }
 
 .children-toggle-bar {
-  margin-top: 6px;
+  margin-top: var(--sp-3);
   width: 100%;
-  padding: 5px 10px;
+  padding: var(--sp-3) var(--sp-5);
   border-radius: var(--r-md);
   border: 1px dashed var(--tm-border);
-  background: var(--tm-subtle);
+  background: var(--tm-inset);
   color: var(--tm-muted-fg);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   text-align: center;
   cursor: pointer;
-  transition: background-color 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  transition: background-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
 }
 
 .children-toggle-bar:hover {
-  color: var(--tm-cyan);
-  border-color: color-mix(in srgb, var(--tm-cyan) 42%, var(--tm-border));
+  color: var(--tm-accent);
+  border-color: color-mix(in srgb, var(--tm-accent) 42%, var(--tm-border));
   background: var(--tm-hover);
 }
 
 .child-top-right {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-4);
   flex: none;
 }
 
 .child-rel-time {
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
 }
 
@@ -1542,7 +1835,7 @@ Description: Add Top-5 active subagent/swarm folding header, 400px scrollable ex
 
 .child-row.is-ended {
   opacity: 0.86;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--dur-base) var(--ease-out), background-color var(--dur-base) var(--ease-out);
 }
 
 .child-row.is-ended:hover {
@@ -1561,34 +1854,50 @@ Description: Add Top-5 active subagent/swarm folding header, 400px scrollable ex
 [MODIFIED BEGIN] 2026-11-16 21:11:00
 Description: Style 7-column model breakdown tables with crisp .total-col emphasis, responsive cell padding for 340px-900px Aux Pane viewports, and unclipped raw .model-cell slugs (e.g. gemini-flash-worker-agy).
 ============================================================================ */
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:23:58
+Description: Tighten .data-table horizontal padding and add responsive .model-cell ellipsis max-width so the 8-column model breakdown fits cleanly at 480px without horizontal clipping.
+============================================================================ */
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
 }
 
 .data-table th,
 .data-table td {
-  padding: 6px 5px;
+  padding: var(--sp-3) var(--sp-2);
   text-align: left;
-  border-bottom: 1px solid var(--tm-border);
+  border-bottom: 1px solid var(--tm-divider);
   white-space: nowrap;
 }
 
 .data-table th:first-child,
 .data-table td:first-child {
-  padding-left: 2px;
+  padding-left: var(--sp-1);
 }
 
 .data-table th:last-child,
 .data-table td:last-child {
-  padding-right: 2px;
+  padding-right: var(--sp-1);
 }
 
 .data-table th {
-  font-size: 10.5px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--tm-card);
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--tm-muted-fg);
+}
+
+.data-table tbody tr {
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.data-table tbody tr:hover {
+  background: var(--tm-hover);
 }
 
 .data-table td.num,
@@ -1607,7 +1916,7 @@ Description: Style 7-column model breakdown tables with crisp .total-col emphasi
 }
 
 .data-table td.total-col {
-  background: color-mix(in srgb, var(--tm-cyan) 5%, transparent);
+  background: var(--tm-inset);
 }
 
 .data-table tbody tr:last-child td {
@@ -1617,18 +1926,60 @@ Description: Style 7-column model breakdown tables with crisp .total-col emphasi
 .model-cell {
   font-weight: 600;
   white-space: nowrap;
+  max-width: 168px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-@media (max-width: 480px) {
+.model-cell > .model-dot {
+  margin-right: var(--sp-3);
+  vertical-align: -1px;
+}
+
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:36:55
+Description: Tighten <=520px .data-table cell padding (--sp-1), --fs-xs th/td, 90px .model-cell ellipsis, and compact sort chevrons so Tab 1 8-column table fits at 480px without horizontal overflow.
+============================================================================ */
+@media (max-width: 520px) {
   .data-table {
-    font-size: 11px;
+    font-size: var(--fs-xs);
   }
 
   .data-table th,
   .data-table td {
-    padding: 5px 4px;
+    font-size: var(--fs-xs);
+    padding: var(--sp-3) var(--sp-1);
+  }
+
+  .data-table th:first-child,
+  .model-cell {
+    max-width: 90px;
+  }
+
+  .model-cell > .model-dot {
+    margin-right: var(--sp-2);
+  }
+
+  .th-sort-btn {
+    gap: var(--sp-1);
+  }
+
+  .sort-chevron-svg {
+    width: 8px;
   }
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:36:55
+============================================================================ */
+
+@media (min-width: 760px) {
+  .model-cell {
+    max-width: none;
+  }
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:23:58
+============================================================================ */
 /* ============================================================================
 [MODIFIED END] 2026-11-16 21:11:00
 ============================================================================ */
@@ -1652,7 +2003,7 @@ and stacked dual-chevron SVG indicators (.sort-chevron-svg / .is-lit / .is-dim).
   letter-spacing: inherit;
   white-space: nowrap;
   cursor: pointer;
-  transition: color 0.14s ease;
+  transition: color var(--dur-fast) var(--ease-out);
 }
 
 .th-sort-btn:hover {
@@ -1660,9 +2011,9 @@ and stacked dual-chevron SVG indicators (.sort-chevron-svg / .is-lit / .is-dim).
 }
 
 .th-sort-btn:focus-visible {
-  outline: 1.5px solid var(--tm-cyan);
+  outline: 2px solid var(--tm-ring);
   outline-offset: 2px;
-  border-radius: 3px;
+  border-radius: var(--r-xs);
 }
 
 .th-sort-btn.is-active {
@@ -1685,7 +2036,7 @@ and stacked dual-chevron SVG indicators (.sort-chevron-svg / .is-lit / .is-dim).
   stroke-linejoin: round;
   fill: none;
   opacity: 0.45;
-  transition: opacity 0.14s ease, color 0.14s ease;
+  transition: opacity var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 
 .th-sort-btn:hover .sort-chevron-up:not(.is-dim):not(.is-lit),
@@ -1696,7 +2047,7 @@ and stacked dual-chevron SVG indicators (.sort-chevron-svg / .is-lit / .is-dim).
 .sort-chevron-up.is-lit,
 .sort-chevron-down.is-lit {
   opacity: 1;
-  color: var(--tm-cyan);
+  color: var(--tm-accent);
 }
 
 .sort-chevron-up.is-dim,
@@ -1706,7 +2057,14 @@ and stacked dual-chevron SVG indicators (.sort-chevron-svg / .is-lit / .is-dim).
 /* ============================================================================
 [MODIFIED END] 2026-11-17 20:29:15
 ============================================================================ */
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:20:56
+============================================================================ */
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:20:56
+Description: Apply v0.5.0 tokens and borderless --tm-inset surfaces to Tab 2 KPI tiles, recent sessions, banners/empty/skeletons, >=420px card padding (--sp-7), drawer section headings (--fs-xs 600 muted), segmented .period-tabs/.period-btn parity, --fs-xl ROI hero, and accent trend bars.
+============================================================================ */
 /* ---------------- Tab 2: Today & Recent ---------------- */
 /* ============================================================================
 [MODIFIED BEGIN] 2026-11-17 22:06:37
@@ -1715,28 +2073,33 @@ Description: Widen Tab 2 KPI grid columns to 136px min, lock KPI tile/val clippi
 .kpi-strip {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
-  gap: 8px;
+  gap: var(--sp-4);
 }
 
 .kpi-tile {
-  padding: 9px 10px;
+  padding: var(--sp-4) var(--sp-5);
   border-radius: var(--r-md);
-  background: var(--tm-subtle);
-  border: 1px solid var(--tm-border);
+  background: var(--tm-inset);
+  border: none;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sp-1);
   min-width: 0;
   overflow: hidden;
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+
+.kpi-tile:hover {
+  background: var(--tm-hover);
 }
 
 .kpi-label {
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
 }
 
 .kpi-val {
-  font-size: 15px;
+  font-size: var(--fs-lg);
   font-weight: 700;
   line-height: 20px;
   min-height: 20px;
@@ -1746,8 +2109,8 @@ Description: Widen Tab 2 KPI grid columns to 136px min, lock KPI tile/val clippi
 }
 
 .kpi-sub {
-  font-size: 10.5px;
-  color: var(--tm-emerald);
+  font-size: var(--fs-xs);
+  color: var(--tm-success);
   font-weight: 600;
 }
 
@@ -1760,7 +2123,7 @@ Description: Widen Tab 2 KPI grid columns to 136px min, lock KPI tile/val clippi
 
 .kpi-sub-line {
   display: block;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   line-height: 15px;
   min-height: 15px;
   color: var(--tm-muted-fg);
@@ -1775,51 +2138,50 @@ Description: Widen Tab 2 KPI grid columns to 136px min, lock KPI tile/val clippi
 .recent-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--sp-3);
 }
 
 .recent-item {
   width: 100%;
   text-align: left;
-  padding: 9px 10px;
+  padding: var(--sp-4) var(--sp-5);
   border-radius: var(--r-md);
-  background: var(--tm-subtle);
-  border: 1px solid var(--tm-border);
+  background: var(--tm-inset);
+  border: none;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--sp-3);
   cursor: pointer;
-  transition: border-color 0.14s ease, background-color 0.14s ease;
+  transition: background-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
 }
 
 .recent-item:hover {
   background: var(--tm-hover);
-  border-color: color-mix(in srgb, var(--tm-cyan) 42%, var(--tm-border));
 }
 
 .recent-item.is-selected {
-  border-color: var(--tm-cyan);
-  background: color-mix(in srgb, var(--tm-cyan) 8%, var(--tm-subtle));
+  background: var(--tm-accent-soft);
+  box-shadow: inset 2px 0 0 var(--tm-accent);
 }
 
 .recent-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--sp-4);
 }
 
 .recent-title-wrap {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-3);
   min-width: 0;
   flex: 1 1 auto;
 }
 
 .recent-title {
   font-weight: 600;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1827,12 +2189,16 @@ Description: Widen Tab 2 KPI grid columns to 136px min, lock KPI tile/val clippi
 
 .today-pill {
   flex: none;
-  padding: 1px 5px;
-  border-radius: var(--r-sm);
-  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-micro);
   font-weight: 700;
-  background: color-mix(in srgb, var(--tm-emerald) 15%, transparent);
-  color: var(--tm-emerald);
+  line-height: 1;
+  background: color-mix(in srgb, var(--tm-success) 12%, transparent);
+  color: var(--tm-success);
 }
 
 .recent-meta {
@@ -1840,25 +2206,25 @@ Description: Widen Tab 2 KPI grid columns to 136px min, lock KPI tile/val clippi
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 4px 10px;
-  font-size: 11px;
+  gap: var(--sp-2) var(--sp-5);
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
 }
 
 .recent-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 10px;
+  gap: var(--sp-2) var(--sp-5);
 }
 
 /* ---------------- Banners, Empty & Skeletons ---------------- */
 .toast-banner {
-  padding: 7px 10px;
+  padding: var(--sp-4) var(--sp-5);
   border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--tm-emerald) 14%, var(--tm-card));
-  border: 1px solid color-mix(in srgb, var(--tm-emerald) 38%, transparent);
-  color: var(--tm-emerald);
-  font-size: 12px;
+  background: color-mix(in srgb, var(--tm-success) 12%, var(--tm-card));
+  border: 1px solid color-mix(in srgb, var(--tm-success) 28%, transparent);
+  color: var(--tm-success);
+  font-size: var(--fs-sm);
   font-weight: 600;
 }
 
@@ -1867,76 +2233,79 @@ Description: Widen Tab 2 KPI grid columns to 136px min, lock KPI tile/val clippi
 Description: Add .toast-banner.is-warn (amber) and .toast-banner.is-error (rose) tone styles.
 ============================================================================ */
 .toast-banner.is-warn {
-  background: color-mix(in srgb, var(--tm-amber) 14%, var(--tm-card));
-  border-color: color-mix(in srgb, var(--tm-amber) 38%, transparent);
-  color: var(--tm-amber);
+  background: color-mix(in srgb, var(--tm-warning) 12%, var(--tm-card));
+  border-color: color-mix(in srgb, var(--tm-warning) 28%, transparent);
+  color: var(--tm-warning);
 }
 
 .toast-banner.is-error {
-  background: color-mix(in srgb, var(--tm-rose) 14%, var(--tm-card));
-  border-color: color-mix(in srgb, var(--tm-rose) 38%, transparent);
-  color: var(--tm-rose);
+  background: color-mix(in srgb, var(--tm-danger) 12%, var(--tm-card));
+  border-color: color-mix(in srgb, var(--tm-danger) 28%, transparent);
+  color: var(--tm-danger);
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-18 10:23:36
 ============================================================================ */
 
 .error-banner {
-  padding: 8px 10px;
+  padding: var(--sp-4) var(--sp-5);
   border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--tm-rose) 14%, var(--tm-card));
-  border: 1px solid color-mix(in srgb, var(--tm-rose) 38%, transparent);
-  color: var(--tm-rose);
-  font-size: 12px;
+  background: color-mix(in srgb, var(--tm-danger) 12%, var(--tm-card));
+  border: 1px solid color-mix(in srgb, var(--tm-danger) 28%, transparent);
+  color: var(--tm-danger);
+  font-size: var(--fs-sm);
 }
 
 .empty-state {
   text-align: center;
-  padding: 28px 16px;
+  padding: 28px var(--sp-7);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-4);
 }
 
 .empty-icon {
-  font-size: 24px;
-  color: var(--tm-cyan);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-xl);
+  color: var(--tm-muted-fg);
 }
 
 .empty-title {
-  font-size: 14px;
+  font-size: var(--fs-lg);
   font-weight: 700;
 }
 
 .empty-desc {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--tm-muted-fg);
   max-width: 340px;
 }
 
 .empty-inline {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--tm-muted-fg);
-  padding: 4px 0;
+  padding: var(--sp-2) 0;
 }
 
 .loading-state {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--sp-6);
 }
 
 .skel-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: var(--sp-6);
 }
 
 .skel-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--sp-5);
 }
 
 .skel-line {
@@ -1969,16 +2338,16 @@ Description: Add .toast-banner.is-warn (amber) and .toast-banner.is-error (rose)
 /* ---------------- Responsive Breakpoints (280px -> 900px) ---------------- */
 @media (max-width: 340px) {
   .app-header {
-    padding: 8px 9px 0;
+    padding: var(--sp-4) var(--sp-5) 0;
   }
   .main-content {
-    padding: 8px 9px 16px;
+    padding: var(--sp-4) var(--sp-5) var(--sp-7);
   }
   .card {
-    padding: 10px;
+    padding: var(--sp-6);
   }
   .hero-value {
-    font-size: 22px;
+    font-size: var(--fs-xl);
   }
   .mini-chips {
     grid-template-columns: 1fr;
@@ -1988,12 +2357,19 @@ Description: Add .toast-banner.is-warn (amber) and .toast-banner.is-error (rose)
   }
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:36:55
+Description: Apply 16px (--sp-7) card padding only at >=520px (keeping 12px --sp-6 below 520px) so 480px tables and Pixel Office canvas have full breathing room.
+============================================================================ */
 @media (min-width: 520px) {
   .app-header {
-    padding: 10px 16px 0;
+    padding: var(--sp-5) var(--sp-7) 0;
   }
   .main-content {
-    padding: 12px 16px 22px;
+    padding: var(--sp-6) var(--sp-7) 22px;
+  }
+  .card {
+    padding: var(--sp-7);
   }
   .hero-grid,
   .skel-grid {
@@ -2003,28 +2379,28 @@ Description: Add .toast-banner.is-warn (amber) and .toast-banner.is-error (rose)
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:36:55
+============================================================================ */
 
 @media (min-width: 760px) {
   .app-header {
-    padding: 12px 20px 0;
+    padding: var(--sp-6) 20px 0;
   }
   .main-content {
-    padding: 14px 20px 26px;
-  }
-  .card {
-    padding: 14px 16px;
+    padding: var(--sp-7) 20px 26px;
   }
 }
 
 /* ---------------- v1.1 Drawer Sections, Subscription ROI & Multi-Period Trend ---------------- */
 .drawer-section {
-  padding: 9px 10px;
+  padding: var(--sp-5);
   border-radius: var(--r-md);
   background: var(--tm-bg);
-  border: 1px solid var(--tm-border);
+  border: 1px solid var(--tm-divider);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-4);
 }
 
 .drawer-section-head {
@@ -2032,32 +2408,32 @@ Description: Add .toast-banner.is-warn (amber) and .toast-banner.is-error (rose)
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--sp-3);
 }
 
 .drawer-section-title {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--tm-fg);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--tm-muted-fg);
 }
 
 .drawer-inline-actions {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--sp-3);
 }
 
 .drawer-left-actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--sp-4);
 }
 
 .mini-btn.is-armed {
-  color: var(--tm-rose);
-  border-color: color-mix(in srgb, var(--tm-rose) 50%, transparent);
-  background: color-mix(in srgb, var(--tm-rose) 14%, transparent);
+  color: var(--tm-danger);
+  border-color: color-mix(in srgb, var(--tm-danger) 44%, transparent);
+  background: color-mix(in srgb, var(--tm-danger) 12%, transparent);
 }
 
 .form-grid-2 {
@@ -2065,24 +2441,24 @@ Description: Add .toast-banner.is-warn (amber) and .toast-banner.is-error (rose)
 }
 
 .catalog-preview {
-  border-top: 1px dashed var(--tm-border);
-  padding-top: 7px;
+  border-top: 1px solid var(--tm-divider);
+  padding-top: var(--sp-4);
 }
 
 .catalog-summary {
   cursor: pointer;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: 600;
-  color: var(--tm-cyan);
+  color: var(--tm-accent);
   user-select: none;
 }
 
 .catalog-preview .table-scroll {
-  margin-top: 6px;
+  margin-top: var(--sp-3);
 }
 
 .data-table tr.is-overridden td:first-child {
-  color: var(--tm-amber);
+  color: var(--tm-warning);
 }
 
 /* ============================================================================
@@ -2096,15 +2472,15 @@ Description: Add styles for official pricing sync status bar (.pricing-sync-bar,
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 6px;
-  padding: 5px 8px;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   border-radius: var(--r-sm);
-  background: var(--tm-subtle);
-  border: 1px solid var(--tm-border);
+  background: var(--tm-inset);
+  border: none;
 }
 
 .pricing-sync-status {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
   min-width: 0;
   flex: 1 1 160px;
@@ -2112,12 +2488,12 @@ Description: Add styles for official pricing sync status bar (.pricing-sync-bar,
 }
 
 .pricing-sync-status.is-ok {
-  color: var(--tm-emerald);
+  color: var(--tm-success);
   font-weight: 500;
 }
 
 .pricing-sync-status.is-offline {
-  color: var(--tm-amber);
+  color: var(--tm-warning);
 }
 
 .mini-btn:disabled {
@@ -2127,7 +2503,7 @@ Description: Add styles for official pricing sync status bar (.pricing-sync-bar,
 
 .data-table tr.catalog-row {
   cursor: pointer;
-  transition: background-color 0.12s ease;
+  transition: background-color var(--dur-fast) var(--ease-out);
 }
 
 .data-table tr.catalog-row:hover,
@@ -2136,55 +2512,56 @@ Description: Add styles for official pricing sync status bar (.pricing-sync-bar,
 }
 
 .data-table tr.catalog-row.is-selected {
-  background: color-mix(in srgb, var(--tm-cyan) 12%, transparent);
+  background: var(--tm-accent-soft);
 }
 
 .data-table tr.catalog-row.is-selected td:first-child {
-  color: var(--tm-cyan);
+  color: var(--tm-accent);
   font-weight: 700;
 }
 
 .data-table tr.catalog-row.is-overridden.is-selected td:first-child {
-  color: var(--tm-amber);
+  color: var(--tm-warning);
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 11:35:00
 ============================================================================ */
 
 .sub-anchor-note {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
-  margin-bottom: 8px;
+  margin-bottom: var(--sp-4);
 }
 
-/* Multi-period switcher */
+/* Multi-period switcher (identical visual spec to .seg-toggle / .seg-btn) */
 .period-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--sp-4);
 }
 
 .period-tabs {
   display: inline-flex;
-  padding: 3px;
+  align-items: center;
+  padding: var(--sp-1);
+  gap: var(--sp-1);
   border-radius: var(--r-pill);
-  background: var(--tm-card);
+  background: var(--tm-muted);
   border: 1px solid var(--tm-border);
-  gap: 2px;
 }
 
 .period-btn {
   border: none;
   background: transparent;
   color: var(--tm-muted-fg);
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
   font-weight: 600;
-  padding: 4px 10px;
+  padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-pill);
   white-space: nowrap;
-  transition: background-color 0.14s ease, color 0.14s ease;
+  transition: background-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
 }
 
 .period-btn:hover {
@@ -2192,18 +2569,19 @@ Description: Add styles for official pricing sync status bar (.pricing-sync-bar,
 }
 
 .period-btn.active {
-  background: var(--tm-cyan);
-  color: #ffffff;
+  background: var(--tm-card);
+  color: var(--tm-fg);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--tm-fg) 10%, transparent);
 }
 
 .period-range-text {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
 }
 
 /* Subscription ROI card */
 .sub-roi-card {
-  border-color: color-mix(in srgb, var(--tm-emerald) 28%, var(--tm-card-border));
+  border-color: color-mix(in srgb, var(--tm-success) 26%, var(--tm-card-border));
 }
 
 .roi-hero-row {
@@ -2211,36 +2589,40 @@ Description: Add styles for official pricing sync status bar (.pricing-sync-bar,
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
 }
 
 .roi-hero {
-  font-size: 17px;
+  font-size: var(--fs-xl);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .roi-hero.is-paid {
-  color: var(--tm-emerald);
+  color: var(--tm-success);
 }
 
 .roi-mult-badge {
-  padding: 2px 9px;
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 var(--sp-5);
   border-radius: var(--r-pill);
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: 700;
-  background: color-mix(in srgb, var(--tm-emerald) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tm-emerald) 38%, transparent);
-  color: var(--tm-emerald);
+  line-height: 1;
+  background: color-mix(in srgb, var(--tm-success) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tm-success) 26%, transparent);
+  color: var(--tm-success);
 }
 
 .roi-track {
-  height: 9px;
+  height: 8px;
   border-radius: var(--r-pill);
   background: var(--tm-track);
   overflow: hidden;
-  margin-bottom: 7px;
+  margin-bottom: var(--sp-4);
 }
 
 /* ============================================================================
@@ -2250,19 +2632,19 @@ Description: Upgrade ROI progress bar width transition to 320ms cubic-bezier eas
 .roi-fill {
   height: 100%;
   border-radius: var(--r-pill);
-  background: linear-gradient(90deg, var(--tm-cyan), var(--tm-amber));
-  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  background: var(--tm-accent);
+  transition: width var(--dur-slow) var(--ease-out);
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 21:28:45
 ============================================================================ */
 
 .roi-fill.is-paid {
-  background: linear-gradient(90deg, var(--tm-cyan), var(--tm-emerald));
+  background: var(--tm-success);
 }
 
 .roi-caption {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
 }
 
@@ -2283,14 +2665,14 @@ and 72px .trend-bar-track with aligned 0%/50%/100% subtle reference lines.
   flex-direction: row;
   align-items: flex-start;
   border-radius: var(--r-md);
-  background: var(--tm-subtle);
-  border: 1px solid var(--tm-border);
+  background: var(--tm-inset);
+  border: none;
   overflow: hidden;
 }
 
 .trend-yaxis {
   flex: none;
-  padding: 8px 5px 6px 7px;
+  padding: var(--sp-4) var(--sp-3) var(--sp-3) var(--sp-4);
   user-select: none;
 }
 
@@ -2300,12 +2682,12 @@ and 72px .trend-bar-track with aligned 0%/50%/100% subtle reference lines.
   flex-direction: column;
   justify-content: space-between;
   align-items: flex-end;
-  padding-right: 4px;
-  border-right: 1px solid color-mix(in srgb, var(--tm-border) 68%, transparent);
+  padding-right: var(--sp-2);
+  border-right: 1px solid var(--tm-divider);
 }
 
 .trend-yaxis-tick {
-  font-size: 9.5px;
+  font-size: var(--fs-micro);
   line-height: 1;
   color: var(--tm-muted-fg);
   white-space: nowrap;
@@ -2319,7 +2701,7 @@ and 72px .trend-bar-track with aligned 0%/50%/100% subtle reference lines.
   border: none;
   border-radius: 0;
   background: transparent;
-  padding: 8px 6px 6px 2px;
+  padding: var(--sp-4) var(--sp-3) var(--sp-3) var(--sp-1);
   cursor: grab;
   scrollbar-width: thin;
 }
@@ -2346,7 +2728,7 @@ and 72px .trend-bar-track with aligned 0%/50%/100% subtle reference lines.
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--sp-2);
   cursor: pointer;
 }
 
@@ -2359,10 +2741,10 @@ and 72px .trend-bar-track with aligned 0%/50%/100% subtle reference lines.
   position: relative;
   width: 100%;
   height: 72px;
-  padding: 0 6px;
+  padding: 0 var(--sp-3);
   display: flex;
   align-items: flex-end;
-  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--tm-border) 82%, transparent);
+  box-shadow: inset 0 -1px 0 var(--tm-divider);
 }
 
 .trend-bar-track::before,
@@ -2376,12 +2758,12 @@ and 72px .trend-bar-track with aligned 0%/50%/100% subtle reference lines.
 
 .trend-bar-track::before {
   top: 0;
-  border-top: 1px dashed color-mix(in srgb, var(--tm-border) 38%, transparent);
+  border-top: 1px dashed var(--tm-divider);
 }
 
 .trend-bar-track::after {
   top: 50%;
-  border-top: 1px dashed color-mix(in srgb, var(--tm-border) 64%, transparent);
+  border-top: 1px dashed var(--tm-divider);
 }
 
 /* ============================================================================
@@ -2393,24 +2775,24 @@ Description: Upgrade trend bar height transition to 320ms cubic-bezier easing.
   z-index: 1;
   width: 100%;
   border-radius: 3px 3px 1px 1px;
-  background: color-mix(in srgb, var(--tm-cyan) 62%, transparent);
-  transition: height 320ms cubic-bezier(0.22, 1, 0.36, 1), background-color 0.15s ease;
+  background: color-mix(in srgb, var(--tm-accent) 45%, transparent);
+  transition: height var(--dur-slow) var(--ease-out), background-color var(--dur-base) var(--ease-out);
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 21:28:45
 ============================================================================ */
 
 .trend-col.is-zero .trend-bar-fill {
-  background: color-mix(in srgb, var(--tm-fg) 10%, transparent);
+  background: var(--tm-track);
 }
 
 .trend-col:hover .trend-bar-fill,
 .trend-col.is-selected .trend-bar-fill {
-  background: var(--tm-emerald);
+  background: var(--tm-accent);
 }
 
 .trend-col-label {
-  font-size: 10px;
+  font-size: var(--fs-micro);
   line-height: 1.2;
   color: var(--tm-muted-fg);
   white-space: nowrap;
@@ -2429,23 +2811,27 @@ Description: Upgrade trend bar height transition to 320ms cubic-bezier easing.
 ============================================================================ */
 
 .trend-detail {
-  margin-top: 6px;
-  padding: 5px 8px;
+  margin-top: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   border-radius: var(--r-sm);
-  background: var(--tm-subtle);
-  font-size: 11px;
+  background: var(--tm-inset);
+  font-size: var(--fs-xs);
   color: var(--tm-fg);
 }
 
 .archived-pill {
   flex: none;
-  padding: 1px 5px;
-  border-radius: var(--r-sm);
-  font-size: 10px;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  line-height: 1;
   background: var(--tm-muted);
   color: var(--tm-muted-fg);
-  border: 1px solid var(--tm-border);
+  border: none;
 }
 
 .recent-item.is-archived {
@@ -2454,10 +2840,16 @@ Description: Upgrade trend bar height transition to 320ms cubic-bezier easing.
 }
 
 .recent-item.is-archived:hover {
-  background: var(--tm-subtle);
-  border-color: var(--tm-border);
+  background: var(--tm-inset);
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:20:56
+============================================================================ */
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:23:58
+Description: Apply v0.5.0 tokens to update pill, update/receipt modals (--tm-backdrop + blur 4px, --fs-lg title, --fs-xs/--r-xs code chips), and slot-roll ticker (keeping .roll-col inline-grid and prefers-reduced-motion intact, replacing raw hex in mask-image).
+============================================================================ */
 /* ============================================================================
 [MODIFIED BEGIN] 2026-11-17 18:55:45
 Description: Add v0.2.4 release notification pill (.update-pill-btn), settings version check bar (.update-check-bar), and accessible release-notes & hot-update dialog (.update-modal-backdrop / .update-modal-card) styles.
@@ -2467,18 +2859,18 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: var(--sp-2);
   height: 30px;
-  padding: 0 9px;
+  padding: 0 var(--sp-5);
   border-radius: var(--r-pill);
-  border: 1px solid color-mix(in srgb, var(--tm-emerald) 44%, var(--tm-border));
-  background: color-mix(in srgb, var(--tm-emerald) 14%, var(--tm-card));
-  color: var(--tm-emerald);
-  font-size: 11.5px;
+  border: 1px solid color-mix(in srgb, var(--tm-success) 38%, var(--tm-border));
+  background: color-mix(in srgb, var(--tm-success) 12%, var(--tm-card));
+  color: var(--tm-success);
+  font-size: var(--fs-sm);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+  transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .update-pill-btn > * {
@@ -2486,8 +2878,8 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
 }
 
 .update-pill-btn:hover {
-  background: color-mix(in srgb, var(--tm-emerald) 23%, var(--tm-card));
-  border-color: color-mix(in srgb, var(--tm-cyan) 42%, var(--tm-emerald));
+  background: color-mix(in srgb, var(--tm-success) 20%, var(--tm-card));
+  border-color: color-mix(in srgb, var(--tm-success) 54%, var(--tm-border));
 }
 
 .update-pill-btn:active {
@@ -2499,24 +2891,24 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
   height: 6px;
   border-radius: 50%;
   flex: none;
-  background: var(--tm-emerald);
+  background: var(--tm-success);
   animation: tm-update-pulse 2s ease-in-out infinite;
 }
 
 @keyframes tm-update-pulse {
   0%, 100% {
     opacity: 1;
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--tm-emerald) 38%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--tm-success) 38%, transparent);
   }
   50% {
     opacity: 0.72;
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--tm-emerald) 0%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--tm-success) 0%, transparent);
   }
 }
 
 .update-check-bar {
   background: var(--tm-bg);
-  padding: 6px 9px;
+  padding: var(--sp-3) var(--sp-5);
   border-radius: var(--r-md);
 }
 
@@ -2528,20 +2920,20 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
 }
 
 .pricing-sync-status.is-clickable:hover {
-  color: var(--tm-cyan);
+  color: var(--tm-accent);
 }
 
 .update-modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(10, 14, 23, 0.48);
+  background: var(--tm-backdrop);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px;
+  padding: var(--sp-7);
 }
 
 .update-modal-card {
@@ -2561,16 +2953,16 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
-  padding: 12px 14px 10px;
-  border-bottom: 1px solid var(--tm-border);
+  gap: var(--sp-4);
+  padding: var(--sp-6) var(--sp-7) var(--sp-5);
+  border-bottom: 1px solid var(--tm-divider);
   flex: none;
 }
 
 .update-modal-title-group {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--sp-1);
   min-width: 0;
 }
 
@@ -2578,12 +2970,12 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--sp-3);
 }
 
 .update-modal-title {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-lg);
   font-weight: 700;
   line-height: 1.3;
   color: var(--tm-fg);
@@ -2592,19 +2984,21 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
 .update-modal-ver {
   display: inline-flex;
   align-items: center;
-  padding: 2px 7px;
+  height: 20px;
+  padding: 0 var(--sp-4);
   border-radius: var(--r-pill);
   font-family: var(--tm-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 700;
-  color: var(--tm-emerald);
-  background: color-mix(in srgb, var(--tm-emerald) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tm-emerald) 35%, transparent);
+  line-height: 1;
+  color: var(--tm-success);
+  background: color-mix(in srgb, var(--tm-success) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tm-success) 28%, transparent);
   white-space: nowrap;
 }
 
 .update-modal-date {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
 }
 
@@ -2616,12 +3010,12 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
   border: 1px solid transparent;
   background: transparent;
   color: var(--tm-muted-fg);
-  font-size: 17px;
+  font-size: var(--fs-lg);
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.14s ease, color 0.14s ease;
+  transition: background-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
 }
 
 .update-close-btn:hover:not(:disabled) {
@@ -2639,20 +3033,20 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
   flex: 1 1 auto;
   min-height: 68px;
   overflow-y: auto;
-  padding: 12px 14px;
+  padding: var(--sp-6) var(--sp-7);
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  font-size: 12.5px;
+  gap: var(--sp-4);
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--tm-fg);
 }
 
 .update-notes-h {
-  margin: 4px 0 0;
-  font-size: 12px;
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
   font-weight: 700;
-  color: var(--tm-cyan);
+  color: var(--tm-accent);
   letter-spacing: 0.01em;
 }
 
@@ -2662,10 +3056,10 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
 
 .update-notes-list {
   margin: 0;
-  padding-left: 17px;
+  padding-left: var(--sp-7);
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--sp-3);
 }
 
 .update-notes-item {
@@ -2681,65 +3075,65 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
 
 .update-notes-code {
   font-family: var(--tm-mono);
-  font-size: 11px;
-  padding: 1px 4px;
-  border-radius: 4px;
-  background: var(--tm-subtle);
-  border: 1px solid var(--tm-border);
+  font-size: var(--fs-xs);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-xs);
+  background: var(--tm-inset);
+  border: none;
 }
 
 .update-notes-empty {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--tm-muted-fg);
 }
 
 .update-modal-feedback {
   flex: none;
-  margin: 0 14px 10px;
-  padding: 8px 10px;
+  margin: 0 var(--sp-7) var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
   border-radius: var(--r-md);
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   line-height: 1.4;
-  border: 1px solid var(--tm-border);
-  background: var(--tm-subtle);
+  border: 1px solid var(--tm-divider);
+  background: var(--tm-inset);
   color: var(--tm-fg);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--sp-3);
 }
 
 .update-modal-feedback.is-progress {
-  border-color: color-mix(in srgb, var(--tm-cyan) 38%, transparent);
-  background: color-mix(in srgb, var(--tm-cyan) 11%, var(--tm-card));
-  color: var(--tm-cyan);
+  border-color: color-mix(in srgb, var(--tm-accent) 28%, transparent);
+  background: var(--tm-accent-soft);
+  color: var(--tm-accent);
   font-weight: 600;
 }
 
 .update-modal-feedback.is-error {
-  border-color: color-mix(in srgb, var(--tm-rose) 38%, transparent);
-  background: color-mix(in srgb, var(--tm-rose) 12%, var(--tm-card));
-  color: var(--tm-rose);
+  border-color: color-mix(in srgb, var(--tm-danger) 28%, transparent);
+  background: color-mix(in srgb, var(--tm-danger) 12%, var(--tm-card));
+  color: var(--tm-danger);
 }
 
 .update-fallback-link {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 9px;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-5);
   border-radius: var(--r-sm);
-  background: var(--tm-card);
-  border: 1px solid color-mix(in srgb, var(--tm-cyan) 42%, var(--tm-border));
-  color: var(--tm-cyan);
-  font-size: 11.5px;
+  background: var(--tm-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--tm-accent) 28%, transparent);
+  color: var(--tm-accent);
+  font-size: var(--fs-sm);
   font-weight: 600;
   text-decoration: none;
-  transition: background-color 0.14s ease, border-color 0.14s ease;
+  transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
 }
 
 .update-fallback-link:hover {
-  background: var(--tm-accent-host);
-  border-color: var(--tm-cyan);
+  background: color-mix(in srgb, var(--tm-accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--tm-accent) 44%, transparent);
 }
 
 .update-modal-footer {
@@ -2748,24 +3142,24 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 14px 12px;
-  border-top: 1px solid var(--tm-border);
-  background: color-mix(in srgb, var(--tm-subtle) 55%, var(--tm-card));
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-7) var(--sp-6);
+  border-top: 1px solid var(--tm-divider);
+  background: color-mix(in srgb, var(--tm-inset) 55%, var(--tm-card));
 }
 
 @media (max-width: 360px) {
   .update-pill-btn {
     height: 28px;
-    padding: 0 7px;
-    font-size: 11px;
-    gap: 4px;
+    padding: 0 var(--sp-4);
+    font-size: var(--fs-xs);
+    gap: var(--sp-2);
   }
 
   .lang-btn {
     height: 28px;
     min-width: 28px;
-    padding: 0 6px;
+    padding: 0 var(--sp-3);
   }
 
   .icon-btn {
@@ -2774,19 +3168,19 @@ Description: Add v0.2.4 release notification pill (.update-pill-btn), settings v
   }
 
   .update-modal-backdrop {
-    padding: 10px;
+    padding: var(--sp-5);
   }
 
   .update-modal-head,
   .update-notes-body,
   .update-modal-footer {
-    padding-left: 11px;
-    padding-right: 11px;
+    padding-left: var(--sp-6);
+    padding-right: var(--sp-6);
   }
 
   .update-modal-feedback {
-    margin-left: 11px;
-    margin-right: 11px;
+    margin-left: var(--sp-6);
+    margin-right: var(--sp-6);
   }
 
   .update-modal-footer .btn-ghost,
@@ -2814,10 +3208,10 @@ Description: Add #receipt-modal toolbar, scrollable thermal-receipt preview cont
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 6px;
-  padding: 8px 14px;
-  border-bottom: 1px solid var(--tm-border);
-  background: color-mix(in srgb, var(--tm-subtle) 45%, var(--tm-card));
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-7);
+  border-bottom: 1px solid var(--tm-divider);
+  background: color-mix(in srgb, var(--tm-inset) 45%, var(--tm-card));
 }
 
 .receipt-preview-wrap {
@@ -2825,7 +3219,7 @@ Description: Add #receipt-modal toolbar, scrollable thermal-receipt preview cont
   min-height: 160px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 12px 14px;
+  padding: var(--sp-6) var(--sp-7);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -2858,8 +3252,8 @@ Description: Style single .receipt-copy-btn in #receipt-modal footer for desktop
 @media (max-width: 360px) {
   .receipt-toolbar,
   .receipt-preview-wrap {
-    padding-left: 11px;
-    padding-right: 11px;
+    padding-left: var(--sp-6);
+    padding-right: var(--sp-6);
   }
 
   .receipt-modal-card .update-modal-footer .receipt-copy-btn,
@@ -2906,8 +3300,8 @@ Description: Replace position:absolute / inline-block slot-roll geometry with in
   line-height: inherit;
   overflow: hidden;
   overflow: clip;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
 }
 
 .roll-col.is-whole,
@@ -2940,19 +3334,19 @@ Description: Replace position:absolute / inline-block slot-roll geometry with in
 }
 
 .roll-val.is-up .roll-old {
-  animation: tm-roll-out-up 320ms cubic-bezier(0.22, 1, 0.36, 1) var(--roll-delay, 0ms) both;
+  animation: tm-roll-out-up var(--dur-slow) var(--ease-out) var(--roll-delay, 0ms) both;
 }
 
 .roll-val.is-up .roll-new {
-  animation: tm-roll-in-up 320ms cubic-bezier(0.22, 1, 0.36, 1) var(--roll-delay, 0ms) both;
+  animation: tm-roll-in-up var(--dur-slow) var(--ease-out) var(--roll-delay, 0ms) both;
 }
 
 .roll-val.is-down .roll-old {
-  animation: tm-roll-out-down 320ms cubic-bezier(0.22, 1, 0.36, 1) var(--roll-delay, 0ms) both;
+  animation: tm-roll-out-down var(--dur-slow) var(--ease-out) var(--roll-delay, 0ms) both;
 }
 
 .roll-val.is-down .roll-new {
-  animation: tm-roll-in-down 320ms cubic-bezier(0.22, 1, 0.36, 1) var(--roll-delay, 0ms) both;
+  animation: tm-roll-in-down var(--dur-slow) var(--ease-out) var(--roll-delay, 0ms) both;
 }
 
 @keyframes tm-roll-out-up {
@@ -3026,24 +3420,38 @@ Description: Replace position:absolute / inline-block slot-roll geometry with in
 /* ============================================================================
 [MODIFIED END] 2026-11-17 21:28:45
 ============================================================================ */
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:23:58
+============================================================================ */
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:23:58
+Description: Refine Pixel Office chrome & borderless --tm-inset inspector (pill-sm badges/toggle, --fs-lg name, --fs-xs mono slug, 10% --model-accent portrait, neutral idle status, neutral solid main badge), semantic cache-hit-col tiers (weights 500-700), and borderless --tm-inset Side Questions rows with branch-soft badges.
+============================================================================ */
 /* ============================================================================
 [MODIFIED BEGIN] 2026-11-19 11:49:06
 Description: Add adaptive light/dark theme and 280px-900px responsive styles for in-panel Pixel Office card, crisp pixelated canvas, collapsed zero-margin state, and agent slot inspector.
 ============================================================================ */
 /* ---------------- v0.4.0 In-Panel Pixel Office ---------------- */
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:36:55
+Description: Keep .pixel-office-card horizontal padding at <=12px (--sp-6) and remove .pixel-office-canvas-wrap border so canvas logicalWidth stays >=420px at 480px viewport (preserving single-row 4-subagent layout).
+============================================================================ */
 .pixel-office-card {
-  padding: 10px 12px;
+  padding: var(--sp-5) var(--sp-6);
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:36:55
+============================================================================ */
 
 .pixel-office-card .card-head {
-  margin-bottom: 8px;
-  gap: 6px;
+  margin-bottom: var(--sp-4);
+  gap: var(--sp-3);
 }
 
 .pixel-office-card.is-collapsed {
-  padding-top: 9px;
-  padding-bottom: 9px;
+  padding-top: var(--sp-5);
+  padding-bottom: var(--sp-5);
 }
 
 .pixel-office-card.is-collapsed .card-head {
@@ -3053,19 +3461,22 @@ Description: Add adaptive light/dark theme and 280px-900px responsive styles for
 .pixel-office-head-right {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--sp-3);
   flex: none;
 }
 
 .pixel-office-count {
   display: inline-flex;
   align-items: center;
-  padding: 2px 7px;
+  gap: var(--sp-2);
+  height: 20px;
+  padding: 0 var(--sp-4);
   border-radius: var(--r-pill);
-  background: var(--tm-subtle);
-  border: 1px solid var(--tm-border);
-  font-size: 11px;
+  background: var(--tm-inset);
+  border: none;
+  font-size: var(--fs-xs);
   font-weight: 600;
+  line-height: 1;
   color: var(--tm-muted-fg);
   white-space: nowrap;
 }
@@ -3073,35 +3484,52 @@ Description: Add adaptive light/dark theme and 280px-900px responsive styles for
 .pixel-office-overflow-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 6px;
+  gap: var(--sp-2);
+  height: 20px;
+  padding: 0 var(--sp-4);
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--tm-cyan) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tm-cyan) 36%, transparent);
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--tm-cyan);
+  background: var(--tm-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--tm-accent) 28%, transparent);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--tm-accent);
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.14s ease, border-color 0.14s ease;
+  transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .pixel-office-overflow-badge:hover {
-  background: color-mix(in srgb, var(--tm-cyan) 22%, transparent);
-  border-color: color-mix(in srgb, var(--tm-cyan) 56%, transparent);
+  background: color-mix(in srgb, var(--tm-accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--tm-accent) 44%, transparent);
+}
+
+.pixel-office-overflow-badge:active {
+  transform: scale(0.97);
 }
 
 .pixel-office-toggle-btn {
-  padding: 2px 8px;
-  font-size: 11px;
+  height: 20px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  line-height: 1;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:36:55
+Description: Remove horizontal border inset on .pixel-office-canvas-wrap to keep canvas logicalWidth >=420px at 480px viewport.
+============================================================================ */
 .pixel-office-canvas-wrap {
   position: relative;
   border-radius: var(--r-md);
   overflow: hidden;
-  border: 1px solid var(--tm-border);
-  background: var(--tm-subtle);
+  border: none;
+  background: var(--tm-inset);
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:36:55
+============================================================================ */
 
 .pixel-office-canvas {
   image-rendering: crisp-edges;
@@ -3113,8 +3541,8 @@ Description: Add adaptive light/dark theme and 280px-900px responsive styles for
 }
 
 .pixel-office-hint {
-  margin-top: 6px;
-  font-size: 10.5px;
+  margin-top: var(--sp-3);
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
   line-height: 1.35;
   overflow: hidden;
@@ -3123,21 +3551,21 @@ Description: Add adaptive light/dark theme and 280px-900px responsive styles for
 }
 
 .pixel-inspector {
-  margin-top: 8px;
-  padding: 9px 10px;
+  margin-top: var(--sp-4);
+  padding: var(--sp-5);
   border-radius: var(--r-md);
-  background: var(--tm-subtle);
-  border: 1px solid var(--tm-border);
+  background: var(--tm-inset);
+  border: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-4);
   min-width: 0;
 }
 
 .pixel-inspector-top {
   display: flex;
   align-items: flex-start;
-  gap: 9px;
+  gap: var(--sp-5);
   min-width: 0;
 }
 
@@ -3146,8 +3574,8 @@ Description: Add adaptive light/dark theme and 280px-900px responsive styles for
   height: 48px;
   flex: none;
   border-radius: var(--r-md);
-  border: 1px solid var(--tm-border);
-  background: var(--tm-card);
+  border: none;
+  background: color-mix(in srgb, var(--model-accent, var(--tm-fg)) 10%, var(--tm-card));
   image-rendering: crisp-edges;
   image-rendering: pixelated;
   display: block;
@@ -3158,14 +3586,14 @@ Description: Add adaptive light/dark theme and 280px-900px responsive styles for
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--sp-2);
 }
 
 .pixel-inspector-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 6px;
+  gap: var(--sp-3);
   min-width: 0;
 }
 
@@ -3173,13 +3601,14 @@ Description: Add adaptive light/dark theme and 280px-900px responsive styles for
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: var(--sp-3);
   min-width: 0;
 }
 
 .pixel-inspector-name {
-  font-size: 12.5px;
+  font-size: var(--fs-lg);
   font-weight: 700;
+  line-height: 1.25;
   color: var(--tm-fg);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3188,8 +3617,8 @@ Description: Add adaptive light/dark theme and 280px-900px responsive styles for
 }
 
 .kind-badge.main {
-  background: color-mix(in srgb, var(--tm-amber) 14%, transparent);
-  color: var(--tm-amber);
+  background: var(--tm-muted);
+  color: var(--tm-fg);
 }
 
 .pixel-inspector-close {
@@ -3201,12 +3630,12 @@ Description: Add adaptive light/dark theme and 280px-900px responsive styles for
   border: 1px solid transparent;
   background: transparent;
   color: var(--tm-muted-fg);
-  font-size: 15px;
+  font-size: var(--fs-lg);
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.14s ease, color 0.14s ease;
+  transition: background-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
 }
 
 .pixel-inspector-close:hover {
@@ -3228,16 +3657,17 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
 .pixel-inspector-persona-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--sp-2);
   max-width: 100%;
   min-width: 0;
-  padding: 2px 8px;
+  height: 20px;
+  padding: 0 var(--sp-4);
   border-radius: var(--r-pill);
   background: var(--tm-card);
-  border: 1px solid var(--tm-border);
-  font-size: 10.5px;
+  border: 1px solid var(--tm-divider);
+  font-size: var(--fs-xs);
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1;
   color: var(--tm-fg);
   white-space: nowrap;
   overflow: hidden;
@@ -3253,7 +3683,7 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
 .pixel-inspector-persona-dot {
   width: 7px;
   height: 7px;
-  border-radius: 2px;
+  border-radius: 50%;
   flex: none;
 }
 /* ============================================================================
@@ -3264,12 +3694,15 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
-  font-size: 11px;
+  gap: var(--sp-3);
+  font-size: var(--fs-xs);
   min-width: 0;
 }
 
 .pixel-inspector-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3278,15 +3711,15 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
 }
 
 .pixel-inspector-status.is-generating {
-  color: var(--tm-amber);
+  color: var(--tm-accent);
 }
 
 .pixel-inspector-status.is-tools {
-  color: var(--tm-cyan);
+  color: var(--tm-accent);
 }
 
 .pixel-inspector-status.is-idle {
-  color: var(--tm-emerald);
+  color: var(--tm-muted-fg);
 }
 
 .pixel-inspector-status.is-ended {
@@ -3295,7 +3728,7 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
 
 .pixel-inspector-model {
   font-family: var(--tm-mono);
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3303,17 +3736,22 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
   max-width: 100%;
 }
 
+.pixel-inspector-model > .model-dot {
+  margin-right: var(--sp-2);
+  vertical-align: -1px;
+}
+
 .pixel-inspector-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 5px;
+  gap: var(--sp-3);
 }
 
 .pixel-inspector-stat {
-  padding: 4px 7px;
+  padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-sm);
   background: var(--tm-card);
-  border: 1px solid var(--tm-border);
+  border: none;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -3321,7 +3759,7 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
 }
 
 .pixel-inspector-stat-label {
-  font-size: 10px;
+  font-size: var(--fs-micro);
   color: var(--tm-muted-fg);
   white-space: nowrap;
   overflow: hidden;
@@ -3329,7 +3767,7 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
 }
 
 .pixel-inspector-stat-val {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: 700;
   color: var(--tm-fg);
   white-space: nowrap;
@@ -3342,7 +3780,7 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--sp-3);
 }
 
 @media (max-width: 420px) {
@@ -3353,22 +3791,22 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
 
 @media (max-width: 340px) {
   .pixel-office-card {
-    padding: 9px 10px;
+    padding: var(--sp-6);
   }
 
   .pixel-office-card.is-collapsed {
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding-top: var(--sp-4);
+    padding-bottom: var(--sp-4);
   }
 
   .pixel-office-count {
-    font-size: 10.5px;
-    padding: 2px 6px;
+    font-size: var(--fs-xs);
+    padding: 0 var(--sp-3);
   }
 
   .pixel-inspector {
-    padding: 8px;
-    gap: 6px;
+    padding: var(--sp-4);
+    gap: var(--sp-3);
   }
 
   .pixel-inspector-portrait {
@@ -3377,16 +3815,23 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
   }
 }
 
-@media (min-width: 760px) {
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 10:36:55
+Description: Cap .pixel-office-card horizontal padding at 12px (--sp-6) even at >=520px (overriding .card's --sp-7) to preserve single-row Pixel Office layout at 480px+.
+============================================================================ */
+@media (min-width: 520px) {
   .pixel-office-card {
-    padding: 12px 14px;
+    padding: var(--sp-6);
   }
 
   .pixel-office-card.is-collapsed {
-    padding-top: 10px;
-    padding-bottom: 10px;
+    padding-top: var(--sp-5);
+    padding-bottom: var(--sp-5);
   }
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:36:55
+============================================================================ */
 /* ============================================================================
 [MODIFIED END] 2026-11-19 11:49:06
 ============================================================================ */
@@ -3405,11 +3850,11 @@ Description: Add v0.4.1 styles for per-model cache hit rate column (.data-table 
 }
 
 .data-table .cache-hit-col.is-high {
-  color: var(--tm-emerald);
+  color: var(--tm-success);
 }
 
 .data-table .cache-hit-col.is-mid {
-  color: var(--tm-cyan);
+  color: var(--tm-accent);
 }
 
 .data-table .cache-hit-col.is-low {
@@ -3419,7 +3864,7 @@ Description: Add v0.4.1 styles for per-model cache hit rate column (.data-table 
 
 .data-table .cache-hit-col.is-none {
   color: var(--tm-muted-fg);
-  font-weight: 400;
+  font-weight: 500;
   opacity: 0.72;
 }
 
@@ -3429,39 +3874,39 @@ Description: Add v0.4.1 styles for per-model cache hit rate column (.data-table 
   white-space: nowrap;
   text-transform: none;
   letter-spacing: 0.01em;
-  background: color-mix(in srgb, var(--tm-violet) 15%, transparent);
-  color: var(--tm-violet);
-  border: 1px solid color-mix(in srgb, var(--tm-violet) 32%, transparent);
+  background: color-mix(in srgb, var(--tm-branch) 12%, transparent);
+  color: var(--tm-branch);
+  border: none;
 }
 
 .nonbound-banner.is-side-question {
-  background: color-mix(in srgb, var(--tm-violet) 12%, var(--tm-card));
-  border-color: color-mix(in srgb, var(--tm-violet) 34%, transparent);
+  background: color-mix(in srgb, var(--tm-branch) 12%, var(--tm-card));
+  border-color: color-mix(in srgb, var(--tm-branch) 28%, transparent);
 }
 
 .nonbound-banner.is-side-question .back-btn {
-  border-color: color-mix(in srgb, var(--tm-violet) 45%, transparent);
-  background: color-mix(in srgb, var(--tm-violet) 16%, transparent);
-  color: var(--tm-violet);
+  border-color: color-mix(in srgb, var(--tm-branch) 36%, transparent);
+  background: color-mix(in srgb, var(--tm-branch) 12%, transparent);
+  color: var(--tm-branch);
 }
 
 .nonbound-banner.is-side-question .back-btn:hover {
-  background: color-mix(in srgb, var(--tm-violet) 26%, transparent);
+  background: color-mix(in srgb, var(--tm-branch) 22%, transparent);
 }
 
 .child-cost-badge.is-side-question {
-  background: color-mix(in srgb, var(--tm-violet) 13%, transparent);
-  border-color: color-mix(in srgb, var(--tm-violet) 34%, transparent);
-  color: var(--tm-violet);
+  background: color-mix(in srgb, var(--tm-branch) 12%, transparent);
+  border: none;
+  color: var(--tm-branch);
 }
 
 #card-side-questions .card-head {
   flex-wrap: wrap;
-  gap: 6px 8px;
+  gap: var(--sp-3) var(--sp-4);
 }
 
 #card-side-questions .card-title-dot {
-  background: var(--tm-violet);
+  background: var(--tm-muted-fg);
 }
 
 .side-questions-head-right {
@@ -3469,13 +3914,13 @@ Description: Add v0.4.1 styles for per-model cache hit rate column (.data-table 
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--sp-3);
   min-width: 0;
   flex: 0 1 auto;
 }
 
 .side-questions-summary {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--tm-muted-fg);
   white-space: nowrap;
@@ -3488,35 +3933,34 @@ Description: Add v0.4.1 styles for per-model cache hit rate column (.data-table 
 .side-questions-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--sp-3);
 }
 
 .side-questions-list.is-expanded {
   max-height: 400px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: var(--sp-2);
   overscroll-behavior: contain;
 }
 
 .side-q-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px 9px;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
   border-radius: var(--r-md);
-  background: var(--tm-subtle);
-  border: 1px solid var(--tm-border);
+  background: var(--tm-inset);
+  border: none;
   cursor: pointer;
-  transition: border-color 0.14s ease, background-color 0.14s ease;
+  transition: background-color var(--dur-base) var(--ease-out);
 }
 
 .side-q-row:hover {
   background: var(--tm-hover);
-  border-color: color-mix(in srgb, var(--tm-violet) 46%, var(--tm-border));
 }
 
 .side-q-row:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--tm-violet) 68%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--tm-branch) 64%, transparent);
   outline-offset: 1px;
 }
 
@@ -3524,7 +3968,7 @@ Description: Add v0.4.1 styles for per-model cache hit rate column (.data-table 
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--sp-4);
   min-width: 0;
 }
 
@@ -3532,7 +3976,7 @@ Description: Add v0.4.1 styles for per-model cache hit rate column (.data-table 
   flex: 1 1 auto;
   min-width: 0;
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--tm-fg);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3544,8 +3988,8 @@ Description: Add v0.4.1 styles for per-model cache hit rate column (.data-table 
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 6px 10px;
-  font-size: 11px;
+  gap: var(--sp-3) var(--sp-5);
+  font-size: var(--fs-xs);
   color: var(--tm-muted-fg);
 }
 
@@ -3553,27 +3997,35 @@ Description: Add v0.4.1 styles for per-model cache hit rate column (.data-table 
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 9px;
+  gap: var(--sp-2) var(--sp-5);
   min-width: 0;
+}
+
+.side-q-stats .model-dot {
+  margin-right: var(--sp-2);
+  vertical-align: -1px;
 }
 
 .side-q-open-btn {
   flex: none;
   margin-left: auto;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 @media (max-width: 340px) {
   .side-q-row {
-    padding: 7px 8px;
+    padding: var(--sp-4);
   }
 
   .side-q-meta {
-    gap: 5px 8px;
+    gap: var(--sp-2) var(--sp-4);
   }
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-19 20:18:30
+============================================================================ */
+/* ============================================================================
+[MODIFIED END] 2026-11-20 10:23:58
 ============================================================================ */
 
 /* ============================================================================

@@ -1,6 +1,6 @@
 # agy-token-monitor
 
-![Version](https://img.shields.io/badge/version-v0.4.1--beta-4285F4) ![Platform](https://img.shields.io/badge/Antigravity-Aux%20Pane-6366F1) ![Mode](https://img.shields.io/badge/mode-Read--Only-10B981)
+![Version](https://img.shields.io/badge/version-v0.5.0--beta-4285F4) ![Platform](https://img.shields.io/badge/Antigravity-Aux%20Pane-6366F1) ![Mode](https://img.shields.io/badge/mode-Read--Only-10B981)
 
 [English](#english) | [中文](#中文)
 
@@ -8,11 +8,17 @@
 
 ## English
 
-**agy-token-monitor** is a lightweight Token & Context monitor plugin built for **Antigravity** (`v0.4.1 beta`). It runs in the right-hand side panel with a low memory footprint, reading local session data in read-only mode without modifying any Antigravity databases, transcripts, or host settings.
+**agy-token-monitor** is a lightweight Token & Context monitor plugin built for **Antigravity** (`v0.5.0 beta`). It runs in the right-hand side panel with a low memory footprint, reading local session data in read-only mode without modifying any Antigravity databases, transcripts, or host settings.
 
 ### Changelog
 
-- **`v0.4.1` (Latest)**:
+- **v0.5.0 Visual Refresh (Latest)**:
+  - **Unified Type, Spacing & Color Tokens**: Standardized typography sizes, spacing steps, corner radii, and light/dark surfaces across the entire side panel for cleaner hierarchy and readability.
+  - **Calmer Color Meanings**: Idle status badges now use neutral grey, active generation and tool states share the accent color, and amber is reserved exclusively for real warnings.
+  - **Single-Color SVG Icons Replacing Emoji**: Replaced mixed emoji and symbol prefixes on card headers, status badges, and action buttons with crisp single-color stroke SVG icons.
+  - **Borderless Inset Blocks**: Secondary metric chips, subagent/side-question rows, and trend panels now sit on soft tint backgrounds with subtle dividers instead of nested borders.
+  - **Cleaner Cost Hero & Model Tables**: Dimmed the currency symbol and decimal portion on the Equivalent Cost hero number, moved the currency label (such as USD or CNY) into the model table Cost column header so cells stay numeric and compact, and added per-model color dots matching the Pixel Office palette.
+- **`v0.4.1`**:
   - **Independent Current Session Side Questions Card & One-Click Open**: Automatically discovers linked Antigravity Side Questions from `conversation_summaries.db` (`conversation_parents` + Protobuf `raw_summary` official titles) and renders a dedicated **Side Questions** summary card at the bottom of Current Session (auto-shown only when side questions exist, sorted by live activity with **Top-5** folding and `400px` scrollable expansion preserving scroll position). Displays fork-deduplicated incremental steps, tokens, cache hit rate, and cost (excluding cloned parent history without affecting main-session totals or checkout receipts), provides a one-click **`↗ Open`** button to jump straight into that Side Question in Antigravity, and supports in-panel inspection with a **`Side Q`** badge, **`Side Question Only`** isolated cost view, and a **`← Back to Main Chat`** banner button.
   - **Per-Model Cache Hit Rate (`Hit %` / `命中率`) in Both Model Distribution Tables**: Added a dedicated **`Hit %` (`命中率`)** column right after `Cache` across both **Current Session (Tab 1)** and **Usage Statistics (Tab 2)** model breakdown tables (`cacheRead / (uncachedInput + cacheRead)` with tiered color highlights and `Cache Read / Total Input (%)` hover tooltips).
 - **`v0.4.0`**:
@@ -76,7 +82,7 @@
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.4.1.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.5.0.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -147,11 +153,17 @@ node --test tests/parser.test.mjs
 
 ## 中文
 
-**agy-token-monitor** 是一个面向 **Antigravity** 的轻量级 Token 与上下文监控插件（`v0.4.1 beta`）。它运行在右侧辅助面板中，内存占用低，仅以只读方式读取本地会话数据，不修改任何 Antigravity 数据库、聊天记录或全局配置。
+**agy-token-monitor** 是一个面向 **Antigravity** 的轻量级 Token 与上下文监控插件（`v0.5.0 beta`）。它运行在右侧辅助面板中，内存占用低，仅以只读方式读取本地会话数据，不修改任何 Antigravity 数据库、聊天记录或全局配置。
 
 ### 更新日志
 
-- **`v0.4.1`（最新）**：
+- **v0.5.0 视觉精修（最新）**：
+  - **统一字号、间距与配色体系**：全站统一字体阶梯、间距节奏、同心圆角及深浅色主题表面色，信息主次更清晰。
+  - **更克制的状态用色**：空闲状态改为中性灰，生成与工具调用统一使用主题强调色，琥珀色仅保留给真正的告警提示。
+  - **单色线性 SVG 图标替换 Emoji**：卡片标题、状态徽章与操作按钮全面改用单色线性 SVG 图标，移除杂乱的 Emoji 与符号前缀。
+  - **无嵌套边框的内嵌区块**：次级指标胶囊、子代理与支线列表行、趋势容器改用柔和底色与细分隔线，减少视觉边框噪音。
+  - **更易读的费用主数字与模型明细表**：等效花费主数字弱化币种符号与小数部分以突出整数位；模型明细表将币种单位（如 USD / CNY）上提至「费用」列头，单元格仅展示数字更紧凑；同时在顶部模型胶囊与各处模型名称旁加入与像素工位一致的模型颜色圆点。
+- **`v0.4.1`**：
   - **当前会话支线问题（Side Questions）独立汇总与一键打开**：自动从 `conversation_summaries.db`（`conversation_parents` 与 Protobuf `raw_summary` 官方标题）发现主对话关联的 Antigravity 支线问题，并在当前会话（Tab 1）底部渲染独立的 **支线问题（Side Questions）** 汇总卡片（无支线时自动隐藏，按活跃度排序并默认 **Top 5** 折叠、支持展开为 `400px` 滚动列表且刷新保持滚动位置）。按分支去重仅统计各条支线的增量步数、Token、缓存命中率与费用（剔除主会话克隆历史，不污染主会话统计与收工票根）；每行提供显眼的一键 **`↗ 打开会话`** 按钮直达 Antigravity 支线会话，点击整行可在监控面板内查看支线详情，配以 **`支线问题`** 徽章、**`支线独立计费`** 标识与 **`← 返回主对话`** 横幅按钮。
   - **Tab 1 & Tab 2 双表新增分模型缓存命中率（`命中率` / `Hit %`）列**：在当前会话（Tab 1）与历史统计（Tab 2）两张模型用量分布表的 **`缓存`** 列右侧新增 **`命中率`（`Hit %`）** 列（`缓存读取 / (未缓存输入 + 缓存读取)`，支持分级高亮配色及 `缓存读取 / 总输入 (%)` 悬停明细）。
 - **`v0.4.0`**：
@@ -215,7 +227,7 @@ node --test tests/parser.test.mjs
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.4.1.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.5.0.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 

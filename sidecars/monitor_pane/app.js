@@ -244,9 +244,16 @@
   const I18N = {
     zh: {
       'header.waiting': '等待会话',
-      'header.generating': '⚡ Generating',
-      'header.tools': '🔧 Tools',
-      'header.idle': '● Idle',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove emoji/leading dot and localize header status labels to Chinese (zh).
+// ============================================================================
+      'header.generating': '生成中',
+      'header.tools': '执行工具',
+      'header.idle': '空闲',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'header.currentModel': '当前模型',
       'header.modelTitle': '当前模型: {model}',
       'header.settingsLabel': '计价与上下文设置',
@@ -310,17 +317,24 @@
       'cost.chipCacheRead': '缓存读取',
       'cost.chipUncached': '未缓存输入',
       'context.title': '上下文占用监控',
-      'context.compactBtn': '⚡ 压缩 /compact',
-      'context.compactCopied': '✓ 已复制',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove emoji/check prefixes from compact button and uppercase English prefixes from context banners (zh).
+// ============================================================================
+      'context.compactBtn': '压缩 /compact',
+      'context.compactCopied': '已复制',
       'context.compactTitle': '复制 /compact 命令并在聊天框发送',
       'context.compactToast': '已复制 /compact，在聊天输入框 Ctrl+V 回车即可压缩上下文',
       'context.compactFailed': '复制失败，请手动在聊天框输入 /compact',
       'context.tickTitle': '提醒线: {soft} ({pct}%)',
       'context.currentTok': '当前 {tokens} tok',
       'context.limitsRow': '提醒线 {soft} · 最大窗口 {hard}',
-      'context.healthy': 'HEALTHY · 上下文充裕 (提醒线 {soft} 已用 {softPct}%)',
-      'context.warning': 'WARNING · 已超提醒线 ({soft})，建议适时执行 /compact',
-      'context.critical': 'CRITICAL · 逼近最大窗口 ({hard})，强烈建议立即执行 /compact',
+      'context.healthy': '上下文充裕 (提醒线 {soft} 已用 {softPct}%)',
+      'context.warning': '已超提醒线 ({soft})，建议适时执行 /compact',
+      'context.critical': '逼近最大窗口 ({hard})，强烈建议立即执行 /compact',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 16:08:00
 // Description: Add post-compaction banner I18N string (zh).
@@ -341,9 +355,16 @@
       'childrenModels.title': '子代理 / Swarm 与模型分布',
       'childrenModels.membersCount': '{count} 个关联成员',
       'childrenModels.liveSubhead': 'Subagent / Swarm 实时状态',
-      'childrenModels.childGenerating': '⚡ Generating',
-      'childrenModels.childRunning': '🔧 Running',
-      'childrenModels.childIdle': '● Idle',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove emoji/dot and localize child status labels to Chinese (zh).
+// ============================================================================
+      'childrenModels.childGenerating': '生成中',
+      'childrenModels.childRunning': '执行工具',
+      'childrenModels.childIdle': '空闲',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'childrenModels.inspectBtn': '监控',
       'childrenModels.openChatBtn': '打开对话',
       'childrenModels.modelsSubhead': '按模型分布',
@@ -380,12 +401,26 @@
 // [MODIFIED BEGIN] 2026-11-17 20:29:41
 // Description: Refine zero-cost plan ROI headline wording for Free / Jio AI Pro (zh).
 // ============================================================================
-      'roi.freeHero': '🎉 零月费已抵扣 {cost}',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove celebratory emoji from ROI hero labels (zh).
+// ============================================================================
+      'roi.freeHero': '零月费已抵扣 {cost}',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:29:41
 // ============================================================================
       'roi.freeCaption': '{period}按量等效 {cost} · 订阅成本 {zero}',
-      'roi.netSaved': '🎉 已净省 {cost}',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove celebratory emoji from ROI netSaved label (zh).
+// ============================================================================
+      'roi.netSaved': '已净省 {cost}',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'roi.multBadge': '{mult}x 回本',
       'roi.paybackPct': '回本进度 {pct}%',
       'roi.toBreakEven': '还差 {cost} 回本',
@@ -434,9 +469,16 @@
       'global.badgeArchived': '已归档',
       'global.badgeToday': '今日',
       'global.openChat': '跳转对话',
-      'global.itemGenerating': '⚡ 生成中',
-      'global.itemTools': '🔧 工具中',
-      'global.itemIdle': '● 空闲',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove emoji/leading dot from Tab 2 conversation status labels (zh).
+// ============================================================================
+      'global.itemGenerating': '生成中',
+      'global.itemTools': '执行工具',
+      'global.itemIdle': '空闲',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'global.convsEmpty': '暂无匹配会话记录',
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:35:00
@@ -522,9 +564,16 @@
 // Description: Mention FX synchronization in sync button tooltips & toasts (zh).
 // ============================================================================
       'settings.catalogRowTip': '点击切换并编辑此模型单价',
-      'settings.syncPricingBtn': '↻ 立即同步',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove Unicode refresh symbol from pricing sync button labels (zh).
+// ============================================================================
+      'settings.syncPricingBtn': '立即同步',
       'settings.syncPricingTitle': '立即同步官方模型单价与最新 USD/CNY 汇率',
-      'settings.syncingBtn': '↻ 同步中…',
+      'settings.syncingBtn': '同步中…',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'settings.syncingOfficial': '正在同步官方定价与最新汇率…',
       'settings.syncDiscoveredPart': ' · +{count} 模型',
       'settings.syncOk': '已同步官方定价{fx} · {date} ({sources}){discovered}',
@@ -561,9 +610,16 @@
 // [MODIFIED BEGIN] 2026-11-17 18:57:00
 // Description: Add v0.2.4 release update pill, settings version check bar, and hot-update modal i18n keys (zh).
 // ============================================================================
-      'settings.checkUpdateBtn': '↻ 检查更新',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove Unicode refresh symbol from update check button labels (zh).
+// ============================================================================
+      'settings.checkUpdateBtn': '检查更新',
       'settings.checkUpdateTitle': '立即检查 GitHub Release 最新版本',
-      'settings.checkingUpdateBtn': '↻ 检查中…',
+      'settings.checkingUpdateBtn': '检查中…',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'settings.verChecking': '检查中...',
       'settings.verUpToDate': '当前版本 v{cur} · 已是最新',
       'settings.verAvailable': '当前版本 v{cur} · 可升级至 {tag}',
@@ -588,7 +644,14 @@
       'update.downloading': '正在下载更新包并校验完整性...',
       'update.restarting': '正在应用更新并刷新面板...',
       'update.applyFailed': '更新未完成：{msg}',
-      'update.updatedToast': '✓ 已更新至 v{ver}',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove leading check symbol from update toast (zh).
+// ============================================================================
+      'update.updatedToast': '已更新至 v{ver}',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:49:06
 // ============================================================================
@@ -632,8 +695,15 @@
       'childrenModels.collapse': '收起',
       'childrenModels.expandMoreFooter': '展开其余 {rest} 个成员（共 {total} 个）',
       'childrenModels.collapseFooter': '收起列表（仅展示前 {shown} 个近期活跃）',
-      'childrenModels.childEnded': '● 已结束',
-      'receipt.checkoutBtn': '🧾 结账',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove leading dot/emoji from childEnded and receipt.checkoutBtn (zh).
+// ============================================================================
+      'childrenModels.childEnded': '已结束',
+      'receipt.checkoutBtn': '结账',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'receipt.checkoutTitle': '生成当前会话收工票根 (PNG)',
       'receipt.modalTitle': '会话结账票根',
 // ============================================================================
@@ -650,7 +720,14 @@
       'receipt.modeFull': '完整',
       'receipt.copyBtn': '复制小票图片',
       'receipt.copyingBtn': '正在复制...',
-      'receipt.copiedToast': '✓ 小票图片已复制到剪贴板',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove leading check symbol from receipt.copiedToast (zh).
+// ============================================================================
+      'receipt.copiedToast': '小票图片已复制到剪贴板',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'receipt.copyFailedToast': '复制小票图片失败：{msg}',
       'receipt.unavailableToast': '当前暂无可生成票根的会话数据',
 // ============================================================================
@@ -675,11 +752,18 @@
       'pixelOffice.kindMain': '主对话',
       'pixelOffice.kindSwarm': 'Swarm',
       'pixelOffice.kindSubagent': 'Subagent',
-      'pixelOffice.statusGenerating': '⚡ 生成中',
-      'pixelOffice.statusTools': '🔧 执行工具',
-      'pixelOffice.statusToolsLabel': '🔧 {tool}',
-      'pixelOffice.statusIdle': '● 待命中',
-      'pixelOffice.statusEnded': '● 已结束',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove emoji/leading dot from Pixel Office status labels (zh).
+// ============================================================================
+      'pixelOffice.statusGenerating': '生成中',
+      'pixelOffice.statusTools': '执行工具',
+      'pixelOffice.statusToolsLabel': '{tool}',
+      'pixelOffice.statusIdle': '待命中',
+      'pixelOffice.statusEnded': '已结束',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'pixelOffice.closeInspector': '关闭工位详情',
       'pixelOffice.backToMain': '返回当前对话',
       'pixelOffice.inspectBtn': '监控详情',
@@ -702,7 +786,11 @@
       'sideQuestions.countBadge': '{count} 条',
       'sideQuestions.summaryMeta': '{tokens} · {cost}',
       'sideQuestions.summaryTip': '共 {count} 条支线增量 · {steps} 步 · 缓存命中 {hit}（已剔除主会话克隆历史）',
-      'sideQuestions.openBtn': '↗ 打开会话',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove Unicode arrows from sideQuestions open/back buttons and add table.costWithCurrency key (zh).
+// ============================================================================
+      'sideQuestions.openBtn': '打开会话',
       'sideQuestions.openTip': '在 Antigravity 中一键打开此支线会话',
       'sideQuestions.inspectTip': '点击在监控面板内查看此支线详情',
       'sideQuestions.expandAll': '展开全部 ({count})',
@@ -711,18 +799,29 @@
       'sideQuestions.collapseFooter': '收起至最近活跃 Top {shown}',
       'sideQuestions.badge': '支线问题',
       'sideQuestions.viewingBanner': '支线问题：{label}',
-      'sideQuestions.backToParent': '← 返回主对话',
+      'sideQuestions.backToParent': '返回主对话',
       'sideQuestions.isolatedCostBadge': '支线独立计费',
       'sideQuestions.hitStat': '命中 {pct}',
+      'table.costWithCurrency': '费用 ({currency})',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:10
 // ============================================================================
     },
     en: {
       'header.waiting': 'Waiting',
-      'header.generating': '⚡ Generating',
-      'header.tools': '🔧 Tools',
-      'header.idle': '● Idle',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove emoji/leading dot from header status labels (en).
+// ============================================================================
+      'header.generating': 'Generating',
+      'header.tools': 'Tools',
+      'header.idle': 'Idle',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'header.currentModel': 'Current Model',
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 13:28:17
@@ -793,17 +892,24 @@
       'cost.chipCacheRead': 'Cache Read',
       'cost.chipUncached': 'Uncached In',
       'context.title': 'Context Usage',
-      'context.compactBtn': '⚡ Compact',
-      'context.compactCopied': '✓ Copied',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove emoji/check prefixes from compact button and uppercase prefixes from context banners (en).
+// ============================================================================
+      'context.compactBtn': 'Compact',
+      'context.compactCopied': 'Copied',
       'context.compactTitle': 'Copy /compact command to paste in chat',
       'context.compactToast': 'Copied /compact — paste (Ctrl+V) and press Enter in chat',
       'context.compactFailed': 'Copy failed — please type /compact in chat',
       'context.tickTitle': 'Alert limit: {soft} ({pct}%)',
       'context.currentTok': 'Current {tokens} tok',
       'context.limitsRow': 'Alert {soft} · Max {hard}',
-      'context.healthy': 'HEALTHY · Context healthy ({softPct}% of {soft} alert limit)',
-      'context.warning': 'WARNING · Exceeded {soft} alert limit — consider /compact',
-      'context.critical': 'CRITICAL · Approaching {hard} max window — run /compact now',
+      'context.healthy': 'Context healthy ({softPct}% of {soft} alert limit)',
+      'context.warning': 'Exceeded {soft} alert limit — consider /compact',
+      'context.critical': 'Approaching {hard} max window — run /compact now',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 16:08:00
 // Description: Add post-compaction banner I18N string (en).
@@ -824,9 +930,16 @@
       'childrenModels.title': 'Subagents / Swarm & Models',
       'childrenModels.membersCount': '{count} members',
       'childrenModels.liveSubhead': 'Live Subagents / Swarm',
-      'childrenModels.childGenerating': '⚡ Generating',
-      'childrenModels.childRunning': '🔧 Running',
-      'childrenModels.childIdle': '● Idle',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove emoji/leading dot from child status labels (en).
+// ============================================================================
+      'childrenModels.childGenerating': 'Generating',
+      'childrenModels.childRunning': 'Running',
+      'childrenModels.childIdle': 'Idle',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'childrenModels.inspectBtn': 'Inspect',
       'childrenModels.openChatBtn': 'Open Chat',
       'childrenModels.modelsSubhead': 'By Model',
@@ -863,12 +976,26 @@
 // [MODIFIED BEGIN] 2026-11-17 20:29:41
 // Description: Refine zero-cost plan ROI headline wording for Free / Jio AI Pro (en).
 // ============================================================================
-      'roi.freeHero': '🎉 $0 plan covered {cost}',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove celebratory emoji from ROI hero labels (en).
+// ============================================================================
+      'roi.freeHero': '$0 plan covered {cost}',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:29:41
 // ============================================================================
       'roi.freeCaption': '{period} est. API {cost} · Plan cost {zero}',
-      'roi.netSaved': '🎉 Net Saved {cost}',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove celebratory emoji from ROI netSaved label (en).
+// ============================================================================
+      'roi.netSaved': 'Net Saved {cost}',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'roi.multBadge': '{mult}x ROI',
       'roi.paybackPct': 'Payback {pct}%',
       'roi.toBreakEven': '{cost} to break even',
@@ -917,9 +1044,16 @@
       'global.badgeArchived': 'Archived',
       'global.badgeToday': 'Today',
       'global.openChat': 'Open Chat',
-      'global.itemGenerating': '⚡ Generating',
-      'global.itemTools': '🔧 Tools',
-      'global.itemIdle': '● Idle',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove emoji/leading dot from Tab 2 conversation status labels (en).
+// ============================================================================
+      'global.itemGenerating': 'Generating',
+      'global.itemTools': 'Tools',
+      'global.itemIdle': 'Idle',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'global.convsEmpty': 'No matching conversations',
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:35:00
@@ -991,9 +1125,16 @@
 // Description: Mention FX synchronization in sync button tooltips & toasts (en).
 // ============================================================================
       'settings.catalogRowTip': 'Click to edit this model pricing',
-      'settings.syncPricingBtn': '↻ Sync Now',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove Unicode refresh symbol from pricing sync button labels (en).
+// ============================================================================
+      'settings.syncPricingBtn': 'Sync Now',
       'settings.syncPricingTitle': 'Sync latest official model rates & USD/CNY FX rate now',
-      'settings.syncingBtn': '↻ Syncing…',
+      'settings.syncingBtn': 'Syncing…',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'settings.syncingOfficial': 'Syncing official pricing & FX rate…',
       'settings.syncDiscoveredPart': ' · +{count} new',
       'settings.syncOk': 'Official pricing synced{fx} · {date} ({sources}){discovered}',
@@ -1030,9 +1171,16 @@
 // [MODIFIED BEGIN] 2026-11-17 18:57:00
 // Description: Add v0.2.4 release update pill, settings version check bar, and hot-update modal i18n keys (en).
 // ============================================================================
-      'settings.checkUpdateBtn': '↻ Check Update',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove Unicode refresh symbol from update check button labels (en).
+// ============================================================================
+      'settings.checkUpdateBtn': 'Check Update',
       'settings.checkUpdateTitle': 'Check GitHub Releases for updates now',
-      'settings.checkingUpdateBtn': '↻ Checking…',
+      'settings.checkingUpdateBtn': 'Checking…',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'settings.verChecking': 'Checking for updates...',
       'settings.verUpToDate': 'Current v{cur} · Up to date',
       'settings.verAvailable': 'Current v{cur} · Upgrade to {tag}',
@@ -1057,7 +1205,14 @@
       'update.downloading': 'Downloading & verifying update package...',
       'update.restarting': 'Applying update & reloading panel...',
       'update.applyFailed': 'Update failed: {msg}',
-      'update.updatedToast': '✓ Updated to v{ver}',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove leading check symbol from update toast (en).
+// ============================================================================
+      'update.updatedToast': 'Updated to v{ver}',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:49:06
 // ============================================================================
@@ -1101,8 +1256,15 @@
       'childrenModels.collapse': 'Collapse',
       'childrenModels.expandMoreFooter': 'Show {rest} more ({total} total)',
       'childrenModels.collapseFooter': 'Collapse (show top {shown} recent)',
-      'childrenModels.childEnded': '● Ended',
-      'receipt.checkoutBtn': '🧾 Checkout',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove leading dot/emoji from childEnded and receipt.checkoutBtn (en).
+// ============================================================================
+      'childrenModels.childEnded': 'Ended',
+      'receipt.checkoutBtn': 'Checkout',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'receipt.checkoutTitle': 'Generate session checkout receipt (PNG)',
       'receipt.modalTitle': 'Session Receipt',
 // ============================================================================
@@ -1119,7 +1281,14 @@
       'receipt.modeFull': 'Full',
       'receipt.copyBtn': 'Copy Receipt Image',
       'receipt.copyingBtn': 'Copying...',
-      'receipt.copiedToast': '✓ Receipt image copied to clipboard',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove leading check symbol from receipt.copiedToast (en).
+// ============================================================================
+      'receipt.copiedToast': 'Receipt image copied to clipboard',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'receipt.copyFailedToast': 'Failed to copy receipt image: {msg}',
       'receipt.unavailableToast': 'No active session data available for receipt',
 // ============================================================================
@@ -1144,11 +1313,18 @@
       'pixelOffice.kindMain': 'Main',
       'pixelOffice.kindSwarm': 'Swarm',
       'pixelOffice.kindSubagent': 'Subagent',
-      'pixelOffice.statusGenerating': '⚡ Generating',
-      'pixelOffice.statusTools': '🔧 Running Tools',
-      'pixelOffice.statusToolsLabel': '🔧 {tool}',
-      'pixelOffice.statusIdle': '● Idle',
-      'pixelOffice.statusEnded': '● Ended',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove emoji/leading dot from Pixel Office status labels (en).
+// ============================================================================
+      'pixelOffice.statusGenerating': 'Generating',
+      'pixelOffice.statusTools': 'Running Tools',
+      'pixelOffice.statusToolsLabel': '{tool}',
+      'pixelOffice.statusIdle': 'Idle',
+      'pixelOffice.statusEnded': 'Ended',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
       'pixelOffice.closeInspector': 'Close workstation inspector',
       'pixelOffice.backToMain': 'Back to Current',
       'pixelOffice.inspectBtn': 'Inspect',
@@ -1171,7 +1347,11 @@
       'sideQuestions.countBadge': '{count}',
       'sideQuestions.summaryMeta': '{tokens} · {cost}',
       'sideQuestions.summaryTip': '{count} side questions incremental · {steps} steps · {hit} cache hit (cloned parent history excluded)',
-      'sideQuestions.openBtn': '↗ Open',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:19:50
+// Description: Remove Unicode arrows from sideQuestions open/back buttons and add table.costWithCurrency key (en).
+// ============================================================================
+      'sideQuestions.openBtn': 'Open',
       'sideQuestions.openTip': 'Open this side question conversation in Antigravity',
       'sideQuestions.inspectTip': 'Click to inspect this side question inside Token Monitor',
       'sideQuestions.expandAll': 'Show All ({count})',
@@ -1180,9 +1360,13 @@
       'sideQuestions.collapseFooter': 'Collapse to Top {shown} Recent',
       'sideQuestions.badge': 'Side Q',
       'sideQuestions.viewingBanner': 'Side Question: {label}',
-      'sideQuestions.backToParent': '← Back to Main Chat',
+      'sideQuestions.backToParent': 'Back to Main Chat',
       'sideQuestions.isolatedCostBadge': 'Side Question Only',
       'sideQuestions.hitStat': 'Hit {pct}',
+      'table.costWithCurrency': 'Cost ({currency})',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:19:50
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:10
 // ============================================================================
@@ -1327,6 +1511,35 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-18 16:21:00
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:21:41
+// Description: Re-attach SVG icons to static back/refresh buttons after static i18n text hydration.
+// ============================================================================
+    const staticBackBtn = document.getElementById('btn-back-bound');
+    if (staticBackBtn) {
+      setIconButtonContent(staticBackBtn, 'back', staticBackBtn.textContent || t('header.backToCurrent'), 12);
+    }
+    const staticSyncBtn = document.getElementById('btn-sync-pricing');
+    if (staticSyncBtn) {
+      setIconButtonContent(
+        staticSyncBtn,
+        'refresh',
+        state.pricingSyncing ? t('settings.syncingBtn') : t('settings.syncPricingBtn'),
+        12,
+      );
+    }
+    const staticCheckBtn = document.getElementById('btn-check-update');
+    if (staticCheckBtn) {
+      setIconButtonContent(
+        staticCheckBtn,
+        'refresh',
+        state.updateChecking ? t('settings.checkingUpdateBtn') : t('settings.checkUpdateBtn'),
+        12,
+      );
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:21:41
+// ============================================================================
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:15:00
@@ -1428,6 +1641,102 @@
       parent.appendChild(document.createTextNode(String(child)));
     }
   }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:30:56
+// Description: Add v0.5.0 inline SVG stroke icon module (ICON_PATHS + icon() with safe fallback), model identity dot helpers (getModelAccent, createModelDot), and defensive icon-button helper (setIconButtonContent).
+// ============================================================================
+  const ICON_PATHS = Object.freeze({
+    speed: 'M2.5 11.5a5.5 5.5 0 1 1 11 0M8 9.5l3-3M7.5 11.5h1',
+    cost: 'M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2ZM9.8 6c-.3-.7-1-1-1.8-1-1 0-1.7.5-1.7 1.3 0 .8.6 1.1 1.7 1.4 1.1.3 1.8.6 1.8 1.5 0 .9-.8 1.5-1.8 1.5-.9 0-1.6-.4-1.9-1.1M8 4.2v.8M8 10.7v1.1',
+    context: 'M8 2.2 2 5.4 8 8.6l6-3.2L8 2.2ZM2 8.2l6 3.2 6-3.2M2 11l6 3.2 6-3.2',
+    cache: 'M3 4.2c0-1 2.2-1.8 5-1.8s5 .8 5 1.8-2.2 1.8-5 1.8-5-.8-5-1.8ZM3 4.2v7.6c0 1 2.2 1.8 5 1.8s5-.8 5-1.8V4.2M3 8c0 1 2.2 1.8 5 1.8s5-.8 5-1.8',
+    agents: 'M6 7.5a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6ZM1.8 13.5c.3-2 1.9-3.2 4.2-3.2s3.9 1.2 4.2 3.2M11 3.4a2 2 0 0 1 0 3.8M11.6 10.4c1.4.2 2.4 1.2 2.7 3.1',
+    branch: 'M4.5 2.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM4.5 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM11.5 4.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM4.5 5.5v5M11.5 7.5c0 2-1.5 3-4.5 3H4.5',
+    office: 'M2.5 3h11a1 1 0 0 1 1 1v6.2a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1ZM5.5 13.5h5M8 11.2v2.3',
+    trend: 'M2.5 13.5h11M4.2 11.2V8.2M8 11.2V4.5M11.8 11.2V6.4',
+    wallet: 'M2.2 4.5A1.3 1.3 0 0 1 3.5 3.2h8.5a1.3 1.3 0 0 1 1.3 1.3v7.2a1.3 1.3 0 0 1-1.3 1.3H3.5a1.3 1.3 0 0 1-1.3-1.3V4.5ZM10 7.2h3.3v2.4H10a1.2 1.2 0 0 1 0-2.4Z',
+    sparkle: 'M8 1.8 9.5 6.5 14.2 8 9.5 9.5 8 14.2 6.5 9.5 1.8 8 6.5 6.5 8 1.8Z',
+    wrench: 'M10.8 2.4a3.2 3.2 0 0 0-3.7 4.4l-4.2 4.2a1.3 1.3 0 1 0 1.8 1.8l4.2-4.2a3.2 3.2 0 0 0 4.4-3.7l-1.9 1.9-1.8-.6-.6-1.8 1.8-2Z',
+    external: 'M6.5 3.5H3.8A1.3 1.3 0 0 0 2.5 4.8v7.4a1.3 1.3 0 0 0 1.3 1.3h7.4a1.3 1.3 0 0 0 1.3-1.3V9.5M9.5 2.5h4v4M13.5 2.5 7.5 8.5',
+    back: 'M12.5 8h-9M7.2 4.2 3.5 8l3.7 3.8',
+    refresh: 'M13 8a5 5 0 1 1-1.3-3.4L13 6M13 2.8V6H9.8',
+    check: 'M3 8.5 6.4 11.8 13 4.5',
+    alert: 'M8 2.2 14 13H2L8 2.2ZM8 6.2v3.3M8 11.4h.01',
+    receipt: 'M4 2.2h8v11.6l-1.6-1.1-1.6 1.1L7.2 12.7 5.6 13.8 4 12.7V2.2ZM6.2 5.6h3.6M6.2 8.2h3.6M6.2 10.6h2.2',
+    compress: 'M3 5.5h10M3 10.5h10M8 1.8v2.6M6.2 2.8 8 4.6l1.8-1.8M8 14.2v-2.6M6.2 13.2 8 11.4l1.8 1.8',
+    gear: 'M7 1.8h2l.3 1.3c.4.1.7.3 1 .5l1.1-.6 1.6 1.6-.6 1.1c.2.3.4.6.5 1l1.3.3v2l-1.3.3c-.1.4-.3.7-.5 1l.6 1.1-1.6 1.6-1.1-.6c-.3.2-.6.4-1 .5l-.3 1.3H7l-.3-1.3c-.4-.1-.7-.3-1-.5l-1.1.6L3 11.4l.6-1.1c-.2-.3-.4-.6-.5-1L1.8 9V7l1.3-.3c.1-.4.3-.7.5-1L3 4.6 4.6 3l1.1.6c.3-.2.6-.4 1-.5L7 1.8ZM8 5.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Z',
+    empty: 'M8 2.2a5.8 5.8 0 1 0 0 11.6A5.8 5.8 0 0 0 8 2.2ZM8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z',
+  });
+
+  function icon(name, size = 14, className = '') {
+    const makeSvgEl = (tag) =>
+      typeof document.createElementNS === 'function'
+        ? document.createElementNS(SVG_NS, tag)
+        : document.createElement(tag);
+    const svg = makeSvgEl('svg');
+    svg.setAttribute('viewBox', '0 0 16 16');
+    svg.setAttribute('width', String(size));
+    svg.setAttribute('height', String(size));
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.5');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('class', className ? `tm-icon ${className}` : 'tm-icon');
+    const d = ICON_PATHS[name];
+    if (d) {
+      const p = makeSvgEl('path');
+      p.setAttribute('d', d);
+      svg.appendChild(p);
+    }
+    return svg;
+  }
+
+  function getModelAccent(primary, fallback = '') {
+    const resolve = window.TokenMonitorPixelOffice?.resolveCatArchetype;
+    if (typeof resolve !== 'function') return '';
+    const p = String(primary || '').trim();
+    const f = String(fallback || '').trim();
+    if ((!p || p === '—') && (!f || f === '—')) return '';
+    if (p && p !== '—') {
+      const arch = resolve(p);
+      if (arch?.deskAccent && (arch.id !== 'auto' || !f || f === '—')) {
+        return arch.deskAccent;
+      }
+    }
+    if (f && f !== '—') {
+      const archF = resolve(f);
+      if (archF?.deskAccent) return archF.deskAccent;
+    }
+    if (p && p !== '—') {
+      return resolve(p)?.deskAccent || '';
+    }
+    return '';
+  }
+
+  function createModelDot(primary, fallback = '') {
+    const accent = getModelAccent(primary, fallback);
+    return el('span', {
+      className: 'model-dot',
+      'aria-hidden': 'true',
+      style: accent ? { '--model-accent': accent } : null,
+    });
+  }
+
+  function setIconButtonContent(btn, iconName, text, size = 12) {
+    if (!btn) return;
+    const label = String(text ?? '');
+    if (typeof btn.replaceChildren === 'function') {
+      btn.replaceChildren(icon(iconName, size), document.createTextNode(label));
+    } else {
+      btn.textContent = label;
+    }
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:30:56
+// ============================================================================
 
   function setBoundedMotionMemory(map, key, value) {
     if (map.has(key)) {
@@ -1772,6 +2081,23 @@
     const code = currency || 'USD';
     return Math.abs(n) >= 1 ? `${code} ${n.toFixed(2)}` : `${code} ${n.toFixed(4)}`;
   }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:21:41
+// Description: Add currency-free numeric cost formatters mirroring fmtCost / fmtCostCompact for breakdown tables.
+// ============================================================================
+  function fmtCostNumber(val) {
+    const n = num(val, 0);
+    return n.toFixed(4);
+  }
+
+  function fmtCostCompactNumber(val) {
+    const n = num(val, 0);
+    return Math.abs(n) >= 1 ? n.toFixed(2) : n.toFixed(4);
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:21:41
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 20:29:41
@@ -2845,7 +3171,19 @@
     const isSyncing = Boolean(state.pricingSyncing || ps?.syncing);
     if (syncBtn) {
       syncBtn.disabled = isSyncing;
-      syncBtn.textContent = isSyncing ? t('settings.syncingBtn') : t('settings.syncPricingBtn');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:22:23
+// Description: Mount refresh SVG icon inside #btn-sync-pricing via setIconButtonContent.
+// ============================================================================
+      setIconButtonContent(
+        syncBtn,
+        'refresh',
+        isSyncing ? t('settings.syncingBtn') : t('settings.syncPricingBtn'),
+        12,
+      );
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:22:23
+// ============================================================================
     }
 
     statusEl.className = 'pricing-sync-status muted-hint';
@@ -3042,12 +3380,19 @@
 // [MODIFIED BEGIN] 2026-11-19 20:19:40
 // Description: Bump fallback app version from 0.4.0 to 0.4.1.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:38:48
+// Description: Bump fallback app version from 0.4.1 to 0.5.0.
+// ============================================================================
     const raw =
       state.snapshot?.appVersion ||
       state.snapshot?.updateStatus?.currentVersion ||
       state.activeUpdateStatus?.currentVersion ||
-      '0.4.1';
-    return String(raw).trim().replace(/^[vV]/, '') || '0.4.1';
+      '0.5.0';
+    return String(raw).trim().replace(/^[vV]/, '') || '0.5.0';
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:38:48
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:40
 // ============================================================================
@@ -3318,7 +3663,19 @@
 
     if (checkBtn) {
       checkBtn.disabled = isChecking || isApplying;
-      checkBtn.textContent = isChecking ? t('settings.checkingUpdateBtn') : t('settings.checkUpdateBtn');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:22:23
+// Description: Mount refresh SVG icon inside #btn-check-update via setIconButtonContent.
+// ============================================================================
+      setIconButtonContent(
+        checkBtn,
+        'refresh',
+        isChecking ? t('settings.checkingUpdateBtn') : t('settings.checkUpdateBtn'),
+        12,
+      );
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:22:23
+// ============================================================================
     }
 
     const hasUpdate = Boolean(us?.hasUpdate && (us?.latestTag || us?.latestVersion));
@@ -3393,15 +3750,24 @@
     const children = [el('span', { textContent: message })];
     const trimmedUrl = String(fallbackUrl || '').trim();
     if (/^https:\/\//i.test(trimmedUrl)) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:22:23
+// Description: Replace Unicode external arrow with stroke SVG external icon on update fallback link.
+// ============================================================================
       children.push(
         el('a', {
           className: 'update-fallback-link',
           href: trimmedUrl,
           target: '_blank',
           rel: 'noopener noreferrer',
-          textContent: `↗ ${t('update.fallbackLink')}`,
-        }),
+        },
+          icon('external', 12),
+          t('update.fallbackLink'),
+        ),
       );
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:22:23
+// ============================================================================
     }
     box.replaceChildren(...children);
   }
@@ -4050,6 +4416,31 @@
     else if (current) statusClass = 'status-idle';
 
     statusPill.className = `status-pill ${statusClass}`;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:30:56
+// Description: Sync status-pill stroke icon (sparkle/wrench) and model-dot --model-accent with defensive guards for minimal DOM hosts.
+// ============================================================================
+    const wantedStatusIcon =
+      current?.status === 'GENERATING'
+        ? 'sparkle'
+        : current?.status === 'RUNNING_TOOLS'
+          ? 'wrench'
+          : '';
+    if (typeof statusPill.querySelector === 'function' && typeof statusPill.insertBefore === 'function') {
+      const existingStatusIcon = statusPill.querySelector('.tm-icon');
+      if (wantedStatusIcon) {
+        if (!existingStatusIcon || existingStatusIcon.dataset?.iconName !== wantedStatusIcon) {
+          if (existingStatusIcon && typeof existingStatusIcon.remove === 'function') {
+            existingStatusIcon.remove();
+          }
+          const svgIcon = icon(wantedStatusIcon, 12);
+          if (svgIcon.dataset) svgIcon.dataset.iconName = wantedStatusIcon;
+          statusPill.insertBefore(svgIcon, statusText);
+        }
+      } else if (existingStatusIcon && typeof existingStatusIcon.remove === 'function') {
+        existingStatusIcon.remove();
+      }
+    }
     const nextText = formatStatusText(current);
     statusText.textContent = nextText;
     statusPill.title = nextText;
@@ -4058,6 +4449,25 @@
     const displayName = formatHeaderModelDisplay(current);
     const rawModel = String(current?.activeRawModel || current?.activeModel || '').trim();
     modelText.textContent = displayName;
+    const modelPillEl = $('model-pill');
+    const modelDot = typeof modelPillEl?.querySelector === 'function' ? modelPillEl.querySelector('.model-dot') : null;
+    if (modelDot && modelDot.style) {
+      const modelAccent = displayName !== '—' ? getModelAccent(displayName, rawModel) : '';
+      if (modelAccent) {
+        if (typeof modelDot.style.setProperty === 'function') {
+          modelDot.style.setProperty('--model-accent', modelAccent);
+        } else {
+          modelDot.style['--model-accent'] = modelAccent;
+        }
+      } else if (typeof modelDot.style.removeProperty === 'function') {
+        modelDot.style.removeProperty('--model-accent');
+      } else {
+        delete modelDot.style['--model-accent'];
+      }
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:30:56
+// ============================================================================
     if (displayName !== '—') {
       const showRaw = Boolean(
         rawModel &&
@@ -4097,12 +4507,24 @@
         : t('header.viewing', { label });
       $('nonbound-label').title = `${label} (${viewingId})`;
       if (backBtn) {
-        backBtn.textContent = isSideQuestionWithParent
-          ? t('sideQuestions.backToParent')
-          : t('header.backToCurrent');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:22:23
+// Description: Mount back SVG icon inside #btn-back-bound instead of plain text/arrow.
+// ============================================================================
+        setIconButtonContent(
+          backBtn,
+          'back',
+          isSideQuestionWithParent
+            ? t('sideQuestions.backToParent')
+            : t('header.backToCurrent'),
+          12,
+        );
       }
     } else if (backBtn) {
-      backBtn.textContent = t('header.backToCurrent');
+      setIconButtonContent(backBtn, 'back', t('header.backToCurrent'), 12);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:22:23
+// ============================================================================
     }
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:40
@@ -4143,10 +4565,17 @@
     for (const node of childTimers) {
       const since = Number(node.dataset.childSince);
       if (!Number.isFinite(since) || since <= 0) continue;
-      const next = `⚡ ${fmtElapsed(since)}`;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:22:23
+// Description: Update child timer text without emoji prefix (sparkle SVG sits beside timer span).
+// ============================================================================
+      const next = fmtElapsed(since);
       if (node.textContent !== next) {
         node.textContent = next;
       }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:22:23
+// ============================================================================
     }
   }
 
@@ -4230,7 +4659,14 @@
     card.replaceChildren(
       el('div', { className: 'card-head' },
         el('div', { className: 'card-title' },
-          el('span', { className: 'card-title-dot' }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:22:23
+// Description: Replace .card-title-dot with speed SVG icon in renderSpeedCard.
+// ============================================================================
+          icon('speed', 14, 'card-title-icon'),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:22:23
+// ============================================================================
           t('speed.title'),
         ),
         renderRollingText(
@@ -4394,10 +4830,26 @@
           }),
         );
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:22:23
+// Description: Split hero cost into .hero-currency + rolling integer/fraction parts, replace card-title-dot with cost icon, and add .btn-soft + receipt icon to #btn-checkout.
+// ============================================================================
+    const fullCostText = fmtCost(costActual, currency);
+    const costMatch = fullCostText.match(/^([^0-9]*?)([0-9,]+)(\.[0-9]+)?$/);
+    const heroCostNode = costMatch
+      ? el('span', { className: 'hero-value' },
+          costMatch[1] ? el('span', { className: 'hero-currency', textContent: costMatch[1] }) : null,
+          renderRollingText('cur:cost:hero:int', costMatch[2], costActual),
+          costMatch[3]
+            ? renderRollingText('cur:cost:hero:frac', costMatch[3], costActual, { className: 'hero-frac' })
+            : null,
+        )
+      : renderRollingText('cur:cost:hero', fullCostText, costActual, { className: 'hero-value' });
+
     card.replaceChildren(
       el('div', { className: 'card-head' },
         el('div', { className: 'card-title' },
-          el('span', { className: 'card-title-dot' }),
+          icon('cost', 14, 'card-title-icon'),
           t('cost.title'),
         ),
         headRight,
@@ -4407,18 +4859,23 @@
 // Description: Render Zero-CLS .hero-value-row.has-action with right-aligned #btn-checkout button in renderCostCard.
 // ============================================================================
       el('div', { className: 'hero-value-row has-action tabular-nums' },
-        renderRollingText('cur:cost:hero', fmtCost(costActual, currency), costActual, { className: 'hero-value' }),
+        heroCostNode,
         el('button', {
           id: 'btn-checkout',
           type: 'button',
-          className: 'checkout-btn',
-          textContent: t('receipt.checkoutBtn'),
+          className: 'checkout-btn btn-soft',
           title: t('receipt.checkoutTitle'),
           onClick: () => openReceiptModal(),
-        }),
+        },
+          icon('receipt', 13),
+          t('receipt.checkoutBtn'),
+        ),
       ),
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:41:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:22:23
 // ============================================================================
       el('div', { className: 'sub-stats tabular-nums is-single-line' },
 // ============================================================================
@@ -4527,8 +4984,13 @@
       CRITICAL: t('context.critical', { hard: fmtTokens(hardLimit) }),
     };
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:11
+// Description: Add .btn-soft and compress/check SVG icon to compact button in renderContextCard.
+// ============================================================================
     const compactClasses = [
       'compact-btn',
+      'btn-soft',
       level === 'WARNING' ? 'is-warning' : level === 'CRITICAL' ? 'is-critical' : '',
       isCopied ? 'is-copied' : '',
     ].filter(Boolean).join(' ');
@@ -4537,7 +4999,6 @@
       type: 'button',
       className: compactClasses,
       title: t('context.compactTitle'),
-      textContent: isCopied ? t('context.compactCopied') : t('context.compactBtn'),
       onClick: async () => {
         const copied = await copyTextToClipboard('/compact');
         state.compactCopiedUntil = Date.now() + 1800;
@@ -4567,7 +5028,13 @@
 // [MODIFIED END] 2026-11-18 10:23:36
 // ============================================================================
       },
-    });
+    },
+      icon(isCopied ? 'check' : 'compress', 13),
+      isCopied ? t('context.compactCopied') : t('context.compactBtn'),
+    );
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:11
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 21:28:45
@@ -4590,7 +5057,14 @@
     card.replaceChildren(
       el('div', { className: 'card-head' },
         el('div', { className: 'card-title' },
-          el('span', { className: 'card-title-dot' }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:11
+// Description: Replace .card-title-dot with context SVG icon in renderContextCard.
+// ============================================================================
+          icon('context', 14, 'card-title-icon'),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:11
+// ============================================================================
           t('context.title'),
         ),
         el('div', { className: 'ctx-head-right' },
@@ -4641,7 +5115,12 @@
 // [MODIFIED BEGIN] 2026-11-17 16:08:00
 // Description: Render post-compaction banner inside .level-banner when ctx.compactedPendingTurn is true.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:11
+// Description: Prepend check/alert SVG icon in context .level-banner (uppercase prefixes dropped from I18N).
+// ============================================================================
       el('div', { className: `level-banner ${level}` },
+        icon(Boolean(ctx.compactedPendingTurn) || level === 'HEALTHY' ? 'check' : 'alert', 14),
         el('span', {
           textContent: Boolean(ctx.compactedPendingTurn)
             ? t('context.compactedBanner', {
@@ -4651,6 +5130,9 @@
             : levelMessages[level],
         }),
       ),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 16:08:00
 // ============================================================================
@@ -4748,7 +5230,14 @@
     card.replaceChildren(
       el('div', { className: 'card-head' },
         el('div', { className: 'card-title' },
-          el('span', { className: 'card-title-dot' }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:11
+// Description: Replace .card-title-dot with cache SVG icon in renderCacheCard.
+// ============================================================================
+          icon('cache', 14, 'card-title-icon'),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:11
+// ============================================================================
           t('cache.title'),
         ),
         renderRollingText('cur:cache:headRate', t('cache.hitRate', { pct: hitPct.toFixed(1) }), hitPct, {
@@ -5070,7 +5559,14 @@
     const nodes = [
       el('div', { className: 'card-head' },
         el('div', { className: 'card-title' },
-          el('span', { className: 'card-title-dot' }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:11
+// Description: Replace .card-title-dot with agents SVG icon in renderChildrenAndModelsCard.
+// ============================================================================
+          icon('agents', 14, 'card-title-icon'),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:11
+// ============================================================================
           t('childrenModels.title'),
         ),
         sortedChildren.length > 0
@@ -5135,24 +5631,40 @@
           const isKilled = Boolean(ch.killed);
           const kind = ch.kind === 'swarm' ? 'swarm' : 'subagent';
           const status = ch.status || 'IDLE';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:11
+// Description: Render child status with stroke SVG icons (sparkle/wrench) and separate [data-child-since] timer span without emoji.
+// ============================================================================
           const statusSpan = isKilled
             ? el('span', {
                 className: 'child-status tabular-nums ENDED',
                 textContent: t('childrenModels.childEnded'),
               })
-            : el('span', {
-                className: `child-status tabular-nums ${status}`,
-                textContent: status === 'GENERATING' && ch.generatingSinceMs
-                  ? `⚡ ${fmtElapsed(ch.generatingSinceMs)}`
-                  : status === 'GENERATING'
-                    ? t('childrenModels.childGenerating')
-                    : status === 'RUNNING_TOOLS'
-                      ? t('childrenModels.childRunning')
-                      : t('childrenModels.childIdle'),
-              });
-          if (!isKilled && status === 'GENERATING' && ch.generatingSinceMs) {
-            statusSpan.dataset.childSince = String(ch.generatingSinceMs);
-          }
+            : status === 'GENERATING' && ch.generatingSinceMs
+              ? el('span', { className: 'child-status tabular-nums GENERATING' },
+                  icon('sparkle', 12),
+                  el('span', {
+                    dataset: { childSince: String(ch.generatingSinceMs) },
+                    textContent: fmtElapsed(ch.generatingSinceMs),
+                  }),
+                )
+              : status === 'GENERATING'
+                ? el('span', { className: 'child-status tabular-nums GENERATING' },
+                    icon('sparkle', 12),
+                    t('childrenModels.childGenerating'),
+                  )
+                : status === 'RUNNING_TOOLS'
+                  ? el('span', { className: 'child-status tabular-nums RUNNING_TOOLS' },
+                      icon('wrench', 12),
+                      t('childrenModels.childRunning'),
+                    )
+                  : el('span', {
+                      className: `child-status tabular-nums ${status}`,
+                      textContent: t('childrenModels.childIdle'),
+                    });
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:11
+// ============================================================================
 
           const updatedAtNum = Number(ch.updatedAtMs);
           const hasValidUpdatedAt = Number.isFinite(updatedAtNum) && updatedAtNum > 0;
@@ -5183,7 +5695,17 @@
             ),
             el('div', { className: 'child-meta' },
               el('div', { className: 'child-stats tabular-nums' },
-                el('span', { textContent: ch.model || 'Auto' }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:28:34
+// Description: Prepend model identity .model-dot next to child row model name.
+// ============================================================================
+                el('span', null,
+                  createModelDot(ch.modelLabel || ch.model, ch.rawModel),
+                  ch.model || 'Auto',
+                ),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:28:34
+// ============================================================================
                 el('span', { title: fmtInt(ch.contextTotal), textContent: `Ctx ${fmtTokens(ch.contextTotal)}` }),
                 el('span', { textContent: `${fmtRate(ch.latestTokPerSec)} tok/s` }),
                 el('span', { title: fmtInt(ch.outputTokens), textContent: `Out ${fmtTokens(ch.outputTokens)}` }),
@@ -5302,10 +5824,17 @@
                     baseTitle: t('childrenModels.colTotalTip'),
                     extraClass: 'total-col',
                   }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:11
+// Description: Move currency unit into Tab 1 model table Cost header via table.costWithCurrency.
+// ============================================================================
                   createSortableHeaderCell({
                     colKey: 'cost',
-                    label: t('childrenModels.colCost'),
+                    label: t('table.costWithCurrency', { currency }),
                   }),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:11
+// ============================================================================
                 ),
               ),
               el('tbody', null,
@@ -5321,8 +5850,15 @@
 // Description: Compute and render per-model cache hit rate cell in Tab 1 model table.
 // ============================================================================
                   const hitMeta = getModelRowCacheHitMeta(row);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:28:34
+// Description: Add model identity .model-dot directly inside Tab 1 td.model-cell (matches .model-cell > .model-dot & ellipsis) and show numeric-only cost cell.
+// ============================================================================
                   return el('tr', null,
-                    el('td', { className: 'model-cell', title: rateTip, textContent: displayModel }),
+                    el('td', { className: 'model-cell', title: rateTip },
+                      createModelDot(row.profileId || displayModel, Array.isArray(row.rawModels) ? row.rawModels[0] : ''),
+                      displayModel,
+                    ),
                     el('td', { className: 'num', textContent: fmtInt(row.stepsCount) }),
                     el('td', { className: 'num', title: fmtInt(row.inputUncachedTokens), textContent: fmtTokens(row.inputUncachedTokens) }),
                     el('td', { className: 'num', title: fmtInt(row.cacheReadTokens), textContent: fmtTokens(row.cacheReadTokens) }),
@@ -5333,8 +5869,11 @@
                     }),
                     el('td', { className: 'num', title: fmtInt(row.outputTokens), textContent: fmtTokens(row.outputTokens) }),
                     el('td', { className: 'num total-col', title: fmtInt(totalTok), textContent: fmtTokens(totalTok) }),
-                    el('td', { className: 'num', textContent: fmtCost(row.costActual, currency) }),
+                    el('td', { className: 'num', title: fmtCost(row.costActual, currency), textContent: fmtCostNumber(row.costActual) }),
                   );
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:20:30
 // ============================================================================
@@ -5487,7 +6026,14 @@
 
     const headEl = el('div', { className: 'card-head' },
       el('div', { className: 'card-title' },
-        el('span', { className: 'card-title-dot' }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:58
+// Description: Replace .card-title-dot with branch SVG icon in renderSideQuestionsCard.
+// ============================================================================
+        icon('branch', 14, 'card-title-icon'),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:58
+// ============================================================================
         t('sideQuestions.title'),
         el('span', {
           className: 'kind-badge side-question tabular-nums',
@@ -5521,19 +6067,35 @@
           localizeConvTitle(sq.title) ||
           t('common.sessionPrefix', { id: shortId(sq.conversationId) });
         const status = sq.status || 'IDLE';
-        const statusSpan = el('span', {
-          className: `child-status tabular-nums ${status}`,
-          textContent: status === 'GENERATING' && sq.generatingSinceMs
-            ? `⚡ ${fmtElapsed(sq.generatingSinceMs)}`
-            : status === 'GENERATING'
-              ? t('childrenModels.childGenerating')
-              : status === 'RUNNING_TOOLS'
-                ? t('childrenModels.childRunning')
-                : t('childrenModels.childIdle'),
-        });
-        if (status === 'GENERATING' && sq.generatingSinceMs) {
-          statusSpan.dataset.childSince = String(sq.generatingSinceMs);
-        }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:58
+// Description: Render Side Question status with stroke SVG icons and separate [data-child-since] timer span.
+// ============================================================================
+        const statusSpan = status === 'GENERATING' && sq.generatingSinceMs
+          ? el('span', { className: 'child-status tabular-nums GENERATING' },
+              icon('sparkle', 12),
+              el('span', {
+                dataset: { childSince: String(sq.generatingSinceMs) },
+                textContent: fmtElapsed(sq.generatingSinceMs),
+              }),
+            )
+          : status === 'GENERATING'
+            ? el('span', { className: 'child-status tabular-nums GENERATING' },
+                icon('sparkle', 12),
+                t('childrenModels.childGenerating'),
+              )
+            : status === 'RUNNING_TOOLS'
+              ? el('span', { className: 'child-status tabular-nums RUNNING_TOOLS' },
+                  icon('wrench', 12),
+                  t('childrenModels.childRunning'),
+                )
+              : el('span', {
+                  className: `child-status tabular-nums ${status}`,
+                  textContent: t('childrenModels.childIdle'),
+                });
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:58
+// ============================================================================
 
         const updatedAtNum = Number(sq.updatedAtMs);
         const hasValidUpdatedAt = Number.isFinite(updatedAtNum) && updatedAtNum > 0;
@@ -5583,7 +6145,14 @@
           ),
           el('div', { className: 'side-q-meta' },
             el('div', { className: 'side-q-stats tabular-nums' },
-              el('span', { textContent: sqModel, title: sqModelTip }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:28:34
+// Description: Add model identity .model-dot to side-question rows and .btn-soft + external icon to open-session button.
+// ============================================================================
+              el('span', { title: sqModelTip },
+                createModelDot(sqModel, sq.rawModel),
+                sqModel,
+              ),
               el('span', { textContent: t('global.stepsCount', { count: fmtInt(sq.stepsCount) }) }),
               el('span', { title: fmtInt(sqTotalTokens), textContent: fmtTokens(sqTotalTokens) }),
               sqHitMeta.hasInput
@@ -5596,8 +6165,7 @@
             ),
             el('button', {
               type: 'button',
-              className: 'mini-btn accent side-q-open-btn',
-              textContent: t('sideQuestions.openBtn'),
+              className: 'mini-btn accent btn-soft side-q-open-btn',
               title: t('sideQuestions.openTip'),
               onClick: (e) => {
                 e.stopPropagation();
@@ -5606,7 +6174,13 @@
               onKeyDown: (e) => {
                 e.stopPropagation();
               },
-            }),
+            },
+              icon('external', 12),
+              t('sideQuestions.openBtn'),
+            ),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:58
+// ============================================================================
           ),
         );
       }),
@@ -5855,19 +6429,27 @@
 // [MODIFIED END] 2026-11-19 13:28:17
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:58
+// Description: Pass deskAccent via --model-accent on portraitCanvas and add stroke icon metadata for Pixel Inspector status.
+// ============================================================================
+    const deskAccent = arch?.deskAccent || getModelAccent(modelPillLabel, rawSlug);
     let statusText = t('pixelOffice.statusIdle');
     let statusClass = 'is-idle';
+    let statusIconName = '';
     if (slot.killed || slot.status === 'ENDED') {
       statusText = t('pixelOffice.statusEnded');
       statusClass = 'is-ended';
     } else if (slot.status === 'GENERATING') {
       statusText = t('pixelOffice.statusGenerating');
       statusClass = 'is-generating';
+      statusIconName = 'sparkle';
     } else if (slot.status === 'RUNNING_TOOLS') {
       statusText = slot.activeToolLabel
         ? t('pixelOffice.statusToolsLabel', { tool: slot.activeToolLabel })
         : t('pixelOffice.statusTools');
       statusClass = 'is-tools';
+      statusIconName = 'wrench';
     }
 
     const portraitCanvas = el('canvas', {
@@ -5875,7 +6457,11 @@
       width: 96,
       height: 96,
       'aria-hidden': 'true',
+      style: deskAccent ? { '--model-accent': deskAccent } : null,
     });
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:58
+// ============================================================================
     portraitCanvas.width = 96;
     portraitCanvas.height = 96;
 
@@ -5914,10 +6500,19 @@
         }),
         el('button', {
           type: 'button',
-          className: 'mini-btn',
-          textContent: t('pixelOffice.openChatBtn'),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:58
+// Description: Add .btn-soft + external icon to Pixel Inspector Open Chat button.
+// ============================================================================
+          className: 'mini-btn btn-soft',
           onClick: () => openConversationInHost(slot.conversationId),
-        }),
+        },
+          icon('external', 12),
+          t('pixelOffice.openChatBtn'),
+        ),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:58
+// ============================================================================
       );
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 20:21:00
@@ -5931,17 +6526,26 @@
           : (state.homeConvId || (isSideQuestionView ? current?.parentConversationId : ''));
       if (backTargetId) {
         actions.push(
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:58
+// Description: Prepend back SVG icon to Pixel Inspector back button.
+// ============================================================================
           el('button', {
             type: 'button',
             className: 'mini-btn accent',
-            textContent: isSideQuestionView ? t('sideQuestions.backToParent') : t('pixelOffice.backToMain'),
             onClick: () => {
               if (backTargetId !== selectedConv) {
                 clearCurrentSessionMotionMemory();
               }
               selectConversation(backTargetId);
             },
-          }),
+          },
+            icon('back', 12),
+            isSideQuestionView ? t('sideQuestions.backToParent') : t('pixelOffice.backToMain'),
+          ),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:58
+// ============================================================================
         );
       }
     }
@@ -5977,19 +6581,30 @@
 // [MODIFIED BEGIN] 2026-11-19 13:28:17
 // Description: Render canonical model pill only (omit .pixel-inspector-trait) and display rawSlug in .pixel-inspector-model.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:58
+// Description: Use .model-dot with --model-accent (deskAccent) in Pixel Inspector model chip and prepend stroke status icon.
+// ============================================================================
           el('div', { className: 'pixel-inspector-persona-row' },
             el('span', { className: 'pixel-inspector-persona-badge', title: modelPillLabel },
               el('span', {
-                className: 'pixel-inspector-persona-dot',
-                style: arch?.dot ? { backgroundColor: arch.dot } : null,
+                className: 'model-dot',
+                'aria-hidden': 'true',
+                style: deskAccent ? { '--model-accent': deskAccent } : null,
               }),
               el('span', { textContent: modelPillLabel }),
             ),
           ),
           el('div', { className: 'pixel-inspector-status-row' },
-            el('span', { className: `pixel-inspector-status ${statusClass}`, textContent: statusText, title: statusText }),
+            el('span', { className: `pixel-inspector-status ${statusClass}`, title: statusText },
+              statusIconName ? icon(statusIconName, 12) : null,
+              statusText,
+            ),
             el('span', { className: 'pixel-inspector-model', textContent: rawSlug, title: rawSlug }),
           ),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:58
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:28:17
 // ============================================================================
@@ -6147,7 +6762,14 @@
 
     const headEl = el('div', { className: 'card-head' },
       el('div', { className: 'card-title' },
-        el('span', { className: 'card-title-dot' }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:23:58
+// Description: Replace .card-title-dot with office SVG icon in renderPixelOfficeCard.
+// ============================================================================
+        icon('office', 14, 'card-title-icon'),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:58
+// ============================================================================
         t('pixelOffice.title'),
       ),
       el('div', { className: 'pixel-office-head-right' },
@@ -6595,7 +7217,14 @@
       subRoiCard = el('article', { className: 'card sub-roi-card' },
         el('div', { className: 'card-head' },
           el('div', { className: 'card-title' },
-            el('span', { className: 'card-title-dot' }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:24:50
+// Description: Replace .card-title-dot with wallet SVG icon in Tab 2 ROI card.
+// ============================================================================
+            icon('wallet', 14, 'card-title-icon'),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:24:50
+// ============================================================================
             t('roi.title'),
           ),
           el('button', {
@@ -6677,7 +7306,14 @@
     const summaryCard = el('article', { className: 'card' },
       el('div', { className: 'card-head' },
         el('div', { className: 'card-title' },
-          el('span', { className: 'card-title-dot' }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:24:50
+// Description: Replace .card-title-dot with cost SVG icon in Tab 2 Usage Summary card.
+// ============================================================================
+          icon('cost', 14, 'card-title-icon'),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:24:50
+// ============================================================================
           t('global.summaryTitle', { period: periodTitle }),
         ),
         el('div', { className: 'summary-head-right' },
@@ -6918,7 +7554,14 @@
     const trendCard = el('article', { className: 'card' },
       el('div', { className: 'card-head' },
         el('div', { className: 'card-title' },
-          el('span', { className: 'card-title-dot' }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:24:50
+// Description: Replace .card-title-dot with trend SVG icon in Tab 2 Trend card.
+// ============================================================================
+          icon('trend', 14, 'card-title-icon'),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:24:50
+// ============================================================================
           trendTitle,
         ),
         metricToggle,
@@ -6957,7 +7600,14 @@
     const modelCard = el('article', { className: 'card' },
       el('div', { className: 'card-head' },
         el('div', { className: 'card-title' },
-          el('span', { className: 'card-title-dot' }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:24:50
+// Description: Replace .card-title-dot with agents SVG icon in Tab 2 Model Breakdown card.
+// ============================================================================
+          icon('agents', 14, 'card-title-icon'),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:24:50
+// ============================================================================
           t('global.modelsTitle', { period: periodTitle }),
         ),
       ),
@@ -6985,10 +7635,17 @@
                     baseTitle: t('childrenModels.colTotalTip'),
                     extraClass: 'total-col',
                   }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:24:50
+// Description: Move currency unit into Tab 2 model table Cost header via table.costWithCurrency.
+// ============================================================================
                   createSortableHeaderCell({
                     colKey: 'cost',
-                    label: t('childrenModels.colCost'),
+                    label: t('table.costWithCurrency', { currency }),
                   }),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:24:50
+// ============================================================================
                 ),
               ),
               el('tbody', null,
@@ -7004,8 +7661,15 @@
 // Description: Compute and render per-model cache hit rate cell in Tab 2 model table.
 // ============================================================================
                   const hitMeta = getModelRowCacheHitMeta(row);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:28:34
+// Description: Add model identity .model-dot directly inside Tab 2 td.model-cell (matches .model-cell > .model-dot & ellipsis) and show numeric-only cost cell.
+// ============================================================================
                   return el('tr', null,
-                    el('td', { className: 'model-cell', title: rateTip, textContent: displayModel }),
+                    el('td', { className: 'model-cell', title: rateTip },
+                      createModelDot(row.profileId || displayModel, Array.isArray(row.rawModels) ? row.rawModels[0] : ''),
+                      displayModel,
+                    ),
                     el('td', { className: 'num', textContent: fmtInt(row.conversationsCount) }),
                     el('td', { className: 'num', title: fmtInt(row.inputTokens), textContent: fmtTokens(row.inputTokens) }),
                     el('td', { className: 'num', title: fmtInt(row.cacheReadTokens), textContent: fmtTokens(row.cacheReadTokens) }),
@@ -7016,8 +7680,11 @@
                     }),
                     el('td', { className: 'num', title: fmtInt(row.outputTokens), textContent: fmtTokens(row.outputTokens) }),
                     el('td', { className: 'num total-col', title: fmtInt(totalTok), textContent: fmtTokens(totalTok) }),
-                    el('td', { className: 'num', textContent: fmtCostCompact(row.costActual, currency) }),
+                    el('td', { className: 'num', title: fmtCost(row.costActual, currency), textContent: fmtCostCompactNumber(row.costActual) }),
                   );
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:24:50
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:21:00
 // ============================================================================
@@ -7078,7 +7745,14 @@
     const recentCard = el('article', { className: 'card' },
       el('div', { className: 'card-head' },
         el('div', { className: 'card-title' },
-          el('span', { className: 'card-title-dot' }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:24:50
+// Description: Replace .card-title-dot with receipt SVG icon in Tab 2 Recent/Top Conversations card.
+// ============================================================================
+          icon('receipt', 14, 'card-title-icon'),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:24:50
+// ============================================================================
           listMode === 'top'
             ? t('global.topConvsTitle', { period: periodTitle, count: listItems.length })
             : t('global.recentConvsTitle', { count: listItems.length }),
@@ -7142,17 +7816,32 @@
                 ),
                 el('div', { className: 'recent-meta tabular-nums' },
                   el('div', { className: 'recent-stats' },
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:24:50
+// Description: Prepend sparkle/wrench SVG icons on Tab 2 conversation status and add .model-dot next to model name.
+// ============================================================================
                     onDisk
-                      ? el('span', {
-                          className: `child-status ${itemStatus}`,
-                          textContent: itemStatus === 'GENERATING'
+                      ? el('span', { className: `child-status ${itemStatus}` },
+                          itemStatus === 'GENERATING'
+                            ? icon('sparkle', 12)
+                            : itemStatus === 'RUNNING_TOOLS'
+                              ? icon('wrench', 12)
+                              : null,
+                          itemStatus === 'GENERATING'
                             ? t('global.itemGenerating')
                             : itemStatus === 'RUNNING_TOOLS'
                               ? t('global.itemTools')
                               : t('global.itemIdle'),
-                        })
+                        )
                       : null,
-                    el('span', { textContent: item.activeModel || 'Auto' }),
+                    el('span', null,
+                      createModelDot(item.activeModel),
+                      ' ',
+                      item.activeModel || 'Auto',
+                    ),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:28:34
+// ============================================================================
                     ws ? el('span', { textContent: ws }) : null,
                     el('span', { textContent: fmtRelTime(item.updatedAtMs) }),
                   ),
@@ -7471,6 +8160,19 @@
     }
 
     applyStaticTranslations();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:30:56
+// Description: Mount v0.5.0 stroke empty-state SVG icon via icon('empty', 28) on startup with defensive querySelector guard.
+// ============================================================================
+    const emptyIconHost = typeof document.querySelector === 'function'
+      ? document.querySelector('#current-empty .empty-icon')
+      : null;
+    if (emptyIconHost && typeof emptyIconHost.replaceChildren === 'function') {
+      emptyIconHost.replaceChildren(icon('empty', 28));
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:30:56
+// ============================================================================
 
     if (pendingUpdatedVer) {
       const cleanVer = pendingUpdatedVer.trim().replace(/^[vV]/, '');
