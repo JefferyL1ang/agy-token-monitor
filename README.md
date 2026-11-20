@@ -1,6 +1,6 @@
 # agy-token-monitor
 
-![Version](https://img.shields.io/badge/version-v0.5.0--beta-4285F4) ![Platform](https://img.shields.io/badge/Antigravity-Aux%20Pane-6366F1) ![Mode](https://img.shields.io/badge/mode-Read--Only-10B981)
+![Version](https://img.shields.io/badge/version-v0.5.1--beta-4285F4) ![Platform](https://img.shields.io/badge/Antigravity-Aux%20Pane-6366F1) ![Mode](https://img.shields.io/badge/mode-Read--Only-10B981)
 
 [English](#english) | [中文](#中文)
 
@@ -8,11 +8,17 @@
 
 ## English
 
-**agy-token-monitor** is a lightweight Token & Context monitor plugin built for **Antigravity** (`v0.5.0 beta`). It runs in the right-hand side panel with a low memory footprint, reading local session data in read-only mode without modifying any Antigravity databases, transcripts, or host settings.
+**agy-token-monitor** is a lightweight Token & Context monitor plugin built for **Antigravity** (`v0.5.1 beta`). It runs in the right-hand side panel with a low memory footprint, reading local session data in read-only mode without modifying any Antigravity databases, transcripts, or host settings.
 
 ### Changelog
 
-- **v0.5.0 Visual Refresh (Latest)**:
+- **v0.5.1 Performance, Polish & Project Insights (Latest)**:
+  - **Much Faster with Big Swarm Sessions**: Removed redundant full-disk scans per child session and eliminated per-poll summary map cloning, cutting large Swarm session refresh time by over 90% and making Usage Statistics refresh noticeably snappier.
+  - **Lower Background CPU, GPU & Disk Usage**: Automatically pauses snapshot polling when the panel is hidden, renders only the active tab with signature-skip caching on Tab 2, stops the 100ms live timer when idle, watches only active non-ended sessions on disk, redraws idle Pixel Office cats at their real 3-second frame pace without reallocating canvas memory, and stops animations when reduced motion is enabled.
+  - **More Reliable Saving on Windows**: Added safe fallback writes with automatic temp-file cleanup when antivirus or another process briefly locks settings, pricing cache, or ledger files, and widened streaming ledger saves to every 8 seconds (flushing immediately on exit).
+  - **Clearer Light-Mode Colours & Keyboard Improvements**: Deepened light-mode semantic text colors to meet WCAG AA readability, aligned Pixel Office status dots and portrait tinting with the panel palette, added Escape closing for Settings and Pixel Inspector (without blocking search box clearing), restored modal focus on close, fixed keyboard bubbling on Tab 2 Open buttons, and let trend chart bars respond to keyboard focus and click-again unpinning.
+  - **New By Project Breakdown & Session Search**: Added a **By Project** table in Usage Statistics (5 columns with Top-8 folding and a muted Ungrouped catch-all row) following the selected period, plus an in-memory search box, model dropdown, and Active-only toggle on the Tab 2 session list that keeps typing focus across live polls.
+- **v0.5.0 Visual Refresh**:
   - **Unified Type, Spacing & Color Tokens**: Standardized typography sizes, spacing steps, corner radii, and light/dark surfaces across the entire side panel for cleaner hierarchy and readability.
   - **Calmer Color Meanings**: Idle status badges now use neutral grey, active generation and tool states share the accent color, and amber is reserved exclusively for real warnings.
   - **Single-Color SVG Icons Replacing Emoji**: Replaced mixed emoji and symbol prefixes on card headers, status badges, and action buttons with crisp single-color stroke SVG icons.
@@ -82,7 +88,7 @@
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.5.0.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.5.1.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -153,11 +159,17 @@ node --test tests/parser.test.mjs
 
 ## 中文
 
-**agy-token-monitor** 是一个面向 **Antigravity** 的轻量级 Token 与上下文监控插件（`v0.5.0 beta`）。它运行在右侧辅助面板中，内存占用低，仅以只读方式读取本地会话数据，不修改任何 Antigravity 数据库、聊天记录或全局配置。
+**agy-token-monitor** 是一个面向 **Antigravity** 的轻量级 Token 与上下文监控插件（`v0.5.1 beta`）。它运行在右侧辅助面板中，内存占用低，仅以只读方式读取本地会话数据，不修改任何 Antigravity 数据库、聊天记录或全局配置。
 
 ### 更新日志
 
-- **v0.5.0 视觉精修（最新）**：
+- **v0.5.1 性能优化与项目统计（最新）**：
+  - **大型 Swarm 会话刷新大幅提速**：移除每个子代理重复全盘扫描与用量统计重复克隆摘要表，大型 Swarm 会话单次刷新耗时降低超 90%，切换与刷新「用量统计」明显更流畅。
+  - **更低的后台 CPU、显卡与磁盘占用**：面板隐藏或切到后台时自动暂停轮询，仅渲染当前可见页并为「用量统计」加上内容无变化跳过；对话空闲时关闭 100ms 计时器，后台文件监听只盯活跃未结束会话；像素工位全员空闲时按 3 秒实际换帧节奏重绘且不再反复重分配画布显存，开启系统「减弱动态效果」后全面静止。
+  - **Windows 保存更稳妥**：为设置、价格缓存与历史账本的原子写入增加文件短暂占用时的安全回退与临时文件清理，并将流式输出期间的账本落盘节流放宽至 8 秒（退出时仍立即刷盘）。
+  - **更清晰的浅色模式配色与键盘体验**：加深浅色模式下强调、成功、警告与危险文字颜色达到清晰可读标准，统一像素工位状态圆点与头像模型浅底；支持按 Esc 逐层关闭弹窗、设置抽屉与猫咪详情卡（且不干扰搜索框清空），关闭弹窗后焦点回到原按钮，修复 Tab 2 打开会话按钮键盘冒泡，趋势柱支持键盘聚焦预览与再次点击取消固定。
+  - **新增按项目分布与会话搜索筛选**：「用量统计」在按模型分布下方新增 **按项目分布** 表格（含项目、会话、总计、命中率、费用 5 列，默认折叠 Top 8，未归属项目柔化显示为「未分组」并随周期联动）；历史会话列表顶部新增纯内存搜索框、模型下拉筛选与「只看进行中」开关，实时刷新时持续保持输入焦点与内容。
+- **v0.5.0 视觉精修**：
   - **统一字号、间距与配色体系**：全站统一字体阶梯、间距节奏、同心圆角及深浅色主题表面色，信息主次更清晰。
   - **更克制的状态用色**：空闲状态改为中性灰，生成与工具调用统一使用主题强调色，琥珀色仅保留给真正的告警提示。
   - **单色线性 SVG 图标替换 Emoji**：卡片标题、状态徽章与操作按钮全面改用单色线性 SVG 图标，移除杂乱的 Emoji 与符号前缀。
@@ -227,7 +239,7 @@ node --test tests/parser.test.mjs
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.5.0.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.5.1.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 

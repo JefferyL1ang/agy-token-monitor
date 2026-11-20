@@ -1355,12 +1355,22 @@
     ctx.fillRect(x + 8, y + 15, 6, 2);
   }
 
-  function getStatusDotColor(status) {
-    if (status === 'GENERATING') return '#10B981';
-    if (status === 'RUNNING_TOOLS') return '#F59E0B';
-    if (status === 'ENDED') return '#64748B';
-    return '#38BDF8';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:27
+// Description: Align Pixel Office nameplate status dot colors with v0.5.0 semantics (active=accent blue, idle=neutral grey, ended=faded grey) with light/dark contrast.
+// ============================================================================
+  function getStatusDotColor(status, dark) {
+    if (status === 'GENERATING' || status === 'RUNNING_TOOLS') {
+      return dark ? '#38BDF8' : '#0369A1';
+    }
+    if (status === 'ENDED') {
+      return dark ? '#475569' : '#94A3B8';
+    }
+    return dark ? '#94A3B8' : '#64748B';
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:27
+// ============================================================================
 
   function drawToolBubble(ctx, cx, bubbleY, maxW, label, accent, dark) {
     const fontPx = 9.5;
@@ -1484,9 +1494,16 @@
     ctx.lineWidth = isSel ? 1.5 : 1;
     safeStrokeRect(ctx, tx + 0.5, ty + 0.5, tagW - 1, tagH - 1);
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:27
+// Description: Pass theme dark flag to getStatusDotColor for v0.5.0 semantic nameplate dots.
+// ============================================================================
     // Live status dot
-    ctx.fillStyle = getStatusDotColor(status);
+    ctx.fillStyle = getStatusDotColor(status, dark);
     ctx.fillRect(tx + 4, ty + Math.floor((tagH - 5) / 2), 5, 5);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:27
+// ============================================================================
 
     // Nameplate text
     let label = '';
@@ -1791,8 +1808,21 @@
       return { hitBoxes: [], logicalWidth, logicalHeight };
     }
 
-    canvas.width = Math.round(logicalWidth * dpr);
-    canvas.height = Math.round(logicalHeight * dpr);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:27
+// Description: Avoid per-frame GPU backing-store reallocation by assigning canvas.width/height only when target pixel dimensions actually change (A6).
+// ============================================================================
+    const targetPhysW = Math.round(logicalWidth * dpr);
+    const targetPhysH = Math.round(logicalHeight * dpr);
+    if (canvas.width !== targetPhysW) {
+      canvas.width = targetPhysW;
+    }
+    if (canvas.height !== targetPhysH) {
+      canvas.height = targetPhysH;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:27
+// ============================================================================
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       return { hitBoxes: [], logicalWidth, logicalHeight };
@@ -1936,15 +1966,23 @@
     const spriteKey = `${isMain ? 'main' : 'sub'}:${arch.id}:${status}:${frame}`;
     const sprite = spritePack.cache ? spritePack.cache.get(spriteKey) : null;
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:27
+// Description: Keep inspector portrait canvas background transparent via clearRect so the CSS 10% --model-accent tint shows through behind the pixel sprite and grid (B3).
+// ============================================================================
     ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = dark ? '#0F172A' : '#F1F5F9';
-    ctx.fillRect(0, 0, w, h);
+    if (typeof ctx.clearRect === 'function') {
+      ctx.clearRect(0, 0, w, h);
+    }
 
-    // Subtle 16px pixel grid backdrop
-    ctx.fillStyle = dark ? 'rgba(51, 65, 85, 0.25)' : 'rgba(148, 163, 184, 0.20)';
+    // Subtle 16px pixel grid over transparent backdrop
+    ctx.fillStyle = dark ? 'rgba(148, 163, 184, 0.14)' : 'rgba(100, 116, 139, 0.12)';
     const step = Math.max(8, Math.floor(w / 6));
     for (let gx = step; gx < w; gx += step) ctx.fillRect(gx, 0, 1, h);
     for (let gy = step; gy < h; gy += step) ctx.fillRect(0, gy, w, 1);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:27
+// ============================================================================
 
     // Subtle model accent corner pixels
     ctx.fillStyle = arch.dot;

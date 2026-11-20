@@ -6142,11 +6142,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump current manifest version assertion from 0.4.1 to 0.5.0.
 // ============================================================================
-  // Manifests bumped to 0.5.0 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump current manifest version assertion from 0.5.0 to 0.5.1.
+// ============================================================================
+  // Manifests bumped to 0.5.1 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.5.0');
-  assert.equal(packageJson.version, '0.5.0');
+  assert.equal(pluginJson.version, '0.5.1');
+  assert.equal(packageJson.version, '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -6421,18 +6428,25 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.4.1 to 0.5.0.
 // ============================================================================
-  // Version & docs consistency for current v0.5.0 release
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.5.0 to 0.5.1.
+// ============================================================================
+  // Version & docs consistency for current v0.5.1 release
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.5.0');
-  assert.equal(packageJson.version, '0.5.0');
-  assert.equal(pluginJson.description.includes('v0.5.0 beta'), true);
-  assert.equal(packageJson.description.includes('v0.5.0 beta'), true);
-  assert.equal(mainSource.includes("return '0.5.0'"), true);
-  assert.equal(releaseUpdaterSource.includes(": '0.5.0'"), true);
-  assert.equal(appSource.includes("'0.5.0'"), true);
-  assert.equal(skillMd.includes('# Token Monitor (v0.5.0 Beta)'), true);
-  assert.equal(readmeMd.includes('agy-token-monitor-v0.5.0.zip'), true);
+  assert.equal(pluginJson.version, '0.5.1');
+  assert.equal(packageJson.version, '0.5.1');
+  assert.equal(pluginJson.description.includes('v0.5.1 beta'), true);
+  assert.equal(packageJson.description.includes('v0.5.1 beta'), true);
+  assert.equal(mainSource.includes("return '0.5.1'"), true);
+  assert.equal(releaseUpdaterSource.includes(": '0.5.1'"), true);
+  assert.equal(appSource.includes("'0.5.1'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.5.1 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.5.1.zip'), true);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -7477,7 +7491,14 @@ test('v0.2.8 createSystemProxyManager lifecycle, TTL cache, restore-before-set o
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Update standalone /api/snapshot appVersion assertion to 0.5.0.
 // ============================================================================
-    assert.equal(snap.appVersion, '0.5.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Update standalone /api/snapshot appVersion assertion to 0.5.1.
+// ============================================================================
+    assert.equal(snap.appVersion, '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -8073,8 +8094,15 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.5.0.
 // ============================================================================
-  assert.equal(pluginJson.version, '0.5.0');
-  assert.equal(packageJson.version, '0.5.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.5.1.
+// ============================================================================
+  assert.equal(pluginJson.version, '0.5.1');
+  assert.equal(packageJson.version, '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -8333,7 +8361,14 @@ test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showTo
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test to 0.5.0.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test to 0.5.1.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -9862,7 +9897,14 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump createReleaseUpdater default currentVersion assertion to 0.5.0.
 // ============================================================================
-  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.5.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump createReleaseUpdater default currentVersion assertion to 0.5.1.
+// ============================================================================
+  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -11450,7 +11492,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump standalone /api/snapshot appVersion assertion to 0.5.0.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.5.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump standalone /api/snapshot appVersion assertion to 0.5.1.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -11501,7 +11550,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump standalone /api/check-update appVersion assertion to 0.5.0.
 // ============================================================================
-      assert.equal(checkBody.appVersion, '0.5.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump standalone /api/check-update appVersion assertion to 0.5.1.
+// ============================================================================
+      assert.equal(checkBody.appVersion, '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -11815,7 +11871,14 @@ test('v0.3.0 headless Node VM Settings tooltip proxy diagnostics and static I18N
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump getCurrentAppVersion fallback assertion to 0.5.0.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump getCurrentAppVersion fallback assertion to 0.5.1.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -12432,7 +12495,14 @@ test('v0.3.2 constant 43-char SHA-256 base64url /api/snapshot etag prevents HTTP
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Update v0.3.2 ETag test standalone appVersion assertion to 0.5.0.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.5.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Update v0.3.2 ETag test standalone appVersion assertion to 0.5.1.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -13310,7 +13380,14 @@ test('v0.4.0 backend DEFAULT_PREFS.pixelOfficeCollapsed, child activeToolLabel, 
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump v0.4.0 backend standalone /api/snapshot appVersion assertion to 0.5.0.
 // ============================================================================
-      assert.equal(initialSnap.appVersion, '0.5.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump v0.4.0 backend standalone /api/snapshot appVersion assertion to 0.5.1.
+// ============================================================================
+      assert.equal(initialSnap.appVersion, '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -14149,7 +14226,14 @@ test('v0.4.0 update modal nested markdown & section filtering, Pixel Office VM i
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump v0.4.0 VM getCurrentAppVersion fallback assertion to 0.5.0.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump v0.4.0 VM getCurrentAppVersion fallback assertion to 0.5.1.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -14325,20 +14409,27 @@ test('v0.4.0 update modal nested markdown & section filtering, Pixel Office VM i
   assert.equal(exports.state.pixelOfficeTimer, null);
   assert.deepEqual(postedPrefs[postedPrefs.length - 1], { pixelOfficeCollapsed: true });
 
-  // Uncollapse with idle slots -> runs at 500ms, then tab switch & visibilitychange stop loop cleanly
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:45:47
+// Description: A6 — Update Pixel Office idle cadence assertion from 500ms to 3000ms (3s frame step).
+// ============================================================================
+  // Uncollapse with idle slots -> runs at 3000ms (3s idle cadence), then tab switch & visibilitychange stop loop cleanly
   sampleSnap.current.status = 'IDLE';
   sampleSnap.current.children = [];
   exports.state.pixelOfficeCollapsed = false;
   exports.state.pixelOfficeSelectedKey = '';
   exports.renderCurrentTab(sampleSnap);
-  assert.equal(exports.state.pixelOfficeIntervalMs, 500);
+  assert.equal(exports.state.pixelOfficeIntervalMs, 3000);
 
   exports.setActiveTab('global');
   assert.equal(exports.state.pixelOfficeIntervalMs, 0);
   assert.equal(exports.state.pixelOfficeTimer, null);
 
   exports.setActiveTab('current');
-  assert.equal(exports.state.pixelOfficeIntervalMs, 500);
+  assert.equal(exports.state.pixelOfficeIntervalMs, 3000);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:45:47
+// ============================================================================
 
   fakeDocument.hidden = true;
   for (const fn of docListeners.get('visibilitychange') || []) fn();
@@ -17605,7 +17696,14 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump v0.4.1 VM getCurrentAppVersion fallback assertion to 0.5.0.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump v0.4.1 VM getCurrentAppVersion fallback assertion to 0.5.1.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -18140,12 +18238,792 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump manifest version assertions in v0.4.1 static hygiene block to 0.5.0.
 // ============================================================================
-  assert.equal(JSON.parse(pluginJsonRaw).version, '0.5.0');
-  assert.equal(JSON.parse(packageJsonRaw).version, '0.5.0');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump manifest version assertions in v0.4.1 static hygiene block to 0.5.1.
+// ============================================================================
+  assert.equal(JSON.parse(pluginJsonRaw).version, '0.5.1');
+  assert.equal(JSON.parse(packageJsonRaw).version, '0.5.1');
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:33:24
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:45:47
+// Description: Add v0.5.1 headless VM behavioral test covering A4 (hidden poll pause, active-tab-only render, Tab 2 signature skip), A5 (on-demand stopwatch, setIconButtonContent sig skip), A6 (Pixel Office 3s idle cadence + prefers-reduced-motion), B5 (Escape stack + modal focus restore + Tab 2 Open Chat keydown stopPropagation), B6 (cache track tooltip localization + .btn-soft/external icon), B7 (trend bar focus + click-again unpin), C1 (By Project 5-col table + Top-8 fold + Ungrouped), and C2 (persistent Tab 2 filter bar preserving input identity/focus/value across live polls).
+// ============================================================================
+test('v0.5.1 headless VM: A4/A5/A6 render & timer gating, B5/B6/B7 a11y & UI polish, C1 By Project Top-8 fold, and C2 persistent session filter bar', async () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = join(testDir, '..');
+  const paneDir = join(repoRoot, 'sidecars', 'monitor_pane');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+  const pixelSource = readFileSync(join(paneDir, 'pixel_office.js'), 'utf-8');
+
+  class FakeClassList {
+    constructor(owner) {
+      this._owner = owner;
+      this._set = new Set();
+    }
+    _syncFromString(str) {
+      this._set = new Set(String(str || '').split(/\s+/).filter(Boolean));
+    }
+    _syncToOwner() {
+      this._owner._className = [...this._set].join(' ');
+    }
+    add(...cls) {
+      for (const c of cls) if (c) this._set.add(c);
+      this._syncToOwner();
+    }
+    remove(...cls) {
+      for (const c of cls) this._set.delete(c);
+      this._syncToOwner();
+    }
+    toggle(c, force) {
+      if (force === undefined) {
+        if (this._set.has(c)) this._set.delete(c);
+        else this._set.add(c);
+      } else if (force) {
+        this._set.add(c);
+      } else {
+        this._set.delete(c);
+      }
+      this._syncToOwner();
+      return this._set.has(c);
+    }
+    contains(c) {
+      return this._set.has(c);
+    }
+  }
+
+  class FakeNode {
+    constructor(tag) {
+      this.tagName = String(tag || 'DIV').toUpperCase();
+      this.children = [];
+      this.childNodes = this.children;
+      this.parentElement = null;
+      this._textContent = '';
+      this._className = '';
+      this.classList = new FakeClassList(this);
+      this.dataset = {};
+      this.style = {
+        setProperty(k, v) { this[k] = String(v); },
+        removeProperty(k) { delete this[k]; },
+      };
+      this.attributes = new Map();
+      this.listeners = new Map();
+      this.title = '';
+      this.value = '';
+      this.placeholder = '';
+      this.disabled = false;
+      this.scrollTop = 0;
+      this.scrollLeft = 0;
+      this.scrollWidth = 0;
+      this.width = 0;
+      this.height = 0;
+      this.isConnected = true;
+      this.offsetParent = {};
+      this.replaceChildrenCalls = 0;
+      this.focusCalls = 0;
+    }
+    get id() { return this.attributes.get('id') || ''; }
+    set id(v) { this.attributes.set('id', String(v || '')); }
+    get className() { return this._className; }
+    set className(v) {
+      this._className = String(v || '');
+      this.classList._syncFromString(this._className);
+    }
+    get childElementCount() {
+      return this.children.filter((c) => c.tagName !== '#TEXT').length;
+    }
+    get textContent() {
+      if (this.children.length > 0) {
+        return this.children.map((c) => c.textContent).join('');
+      }
+      return this._textContent;
+    }
+    set textContent(v) {
+      this._textContent = String(v ?? '');
+      this.children.length = 0;
+    }
+    setAttribute(name, val) {
+      const k = String(name);
+      const v = String(val);
+      if (k === 'class') { this.className = v; return; }
+      if (k === 'title') this.title = v;
+      if (k === 'value') this.value = v;
+      this.attributes.set(k, v);
+    }
+    getAttribute(name) {
+      if (name === 'class') return this._className;
+      return this.attributes.has(name) ? this.attributes.get(name) : null;
+    }
+    removeAttribute(name) { this.attributes.delete(name); }
+    appendChild(child) {
+      if (!child) return child;
+      child.parentElement = this;
+      this.children.push(child);
+      return child;
+    }
+    insertBefore(newNode, refNode) {
+      if (!newNode) return newNode;
+      newNode.parentElement = this;
+      const idx = this.children.indexOf(refNode);
+      if (idx >= 0) this.children.splice(idx, 0, newNode);
+      else this.children.push(newNode);
+      return newNode;
+    }
+    remove() {
+      if (!this.parentElement) return;
+      const idx = this.parentElement.children.indexOf(this);
+      if (idx >= 0) this.parentElement.children.splice(idx, 1);
+      this.parentElement = null;
+    }
+    replaceChildren(...nodes) {
+      this.replaceChildrenCalls += 1;
+      for (const old of this.children) old.parentElement = null;
+      this.children.length = 0;
+      this._textContent = '';
+      for (const n of nodes) {
+        if (n !== null && n !== undefined && n !== false) {
+          this.appendChild(typeof n === 'string' ? fakeDocument.createTextNode(n) : n);
+        }
+      }
+    }
+    contains(target) {
+      if (target === this) return true;
+      for (const c of this.children) {
+        if (c === target || (typeof c.contains === 'function' && c.contains(target))) return true;
+      }
+      return false;
+    }
+    focus() {
+      this.focusCalls += 1;
+      fakeDocument.activeElement = this;
+    }
+    addEventListener(type, fn) {
+      if (!this.listeners.has(type)) this.listeners.set(type, []);
+      this.listeners.get(type).push(fn);
+    }
+    dispatchEvent(type, ev = {}) {
+      const event = {
+        type,
+        target: ev.target || this,
+        key: ev.key || '',
+        shiftKey: Boolean(ev.shiftKey),
+        propagationStopped: false,
+        defaultPrevented: false,
+        stopPropagation() { this.propagationStopped = true; },
+        preventDefault() { this.defaultPrevented = true; },
+      };
+      let cur = this;
+      while (cur) {
+        for (const fn of cur.listeners.get(type) || []) fn(event);
+        if (event.propagationStopped) break;
+        cur = cur.parentElement;
+      }
+      return event;
+    }
+    click() { return this.dispatchEvent('click'); }
+    getContext() {
+      return {
+        imageSmoothingEnabled: false,
+        setTransform() {},
+        clearRect() {},
+        fillRect() {},
+        strokeRect() {},
+        beginPath() {},
+        moveTo() {},
+        lineTo() {},
+        closePath() {},
+        fill() {},
+        stroke() {},
+        arc() {},
+        roundRect() {},
+        drawImage() {},
+        fillText() {},
+        measureText: (txt) => ({ width: String(txt || '').length * 6 }),
+        save() {},
+        restore() {},
+      };
+    }
+    _matches(sel) {
+      const s = String(sel || '').trim();
+      if (!s) return false;
+      if (s.startsWith('#')) return this.id === s.slice(1);
+      const parts = s.split('.');
+      const tagPart = parts[0];
+      if (tagPart && this.tagName !== tagPart.toUpperCase()) return false;
+      for (let i = 1; i < parts.length; i++) {
+        if (!this.classList.contains(parts[i])) return false;
+      }
+      return true;
+    }
+    querySelectorAll(selector) {
+      const out = [];
+      const selectors = String(selector).split(',').map((p) => p.trim()).filter(Boolean);
+      const walk = (node) => {
+        for (const c of node.children) {
+          if (c.tagName !== '#TEXT') {
+            for (const s of selectors) {
+              const chain = s.split(/\s+/);
+              if (c._matches(chain[chain.length - 1])) {
+                let ok = true;
+                if (chain.length > 1) {
+                  let anc = c.parentElement;
+                  for (let k = chain.length - 2; k >= 0; k--) {
+                    while (anc && !anc._matches(chain[k])) anc = anc.parentElement;
+                    if (!anc) { ok = false; break; }
+                    anc = anc.parentElement;
+                  }
+                }
+                if (ok) { out.push(c); break; }
+              }
+            }
+            walk(c);
+          }
+        }
+      };
+      walk(this);
+      return out;
+    }
+    querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
+  }
+
+  const elementsById = new Map();
+  const rootBody = new FakeNode('BODY');
+  const docListeners = new Map();
+  let reducedMotion = false;
+  let intervalSeq = 1;
+  const activeIntervals = new Map();
+  let timeoutSeq = 1;
+  const activeTimeouts = new Map();
+  const fetchCalls = [];
+  const toggledChats = [];
+
+  const fakeDocument = {
+    hidden: false,
+    readyState: 'complete',
+    activeElement: null,
+    documentElement: new FakeNode('HTML'),
+    body: rootBody,
+    createElement(tag) { return new FakeNode(tag); },
+    createElementNS(_ns, tag) { return new FakeNode(tag); },
+    createTextNode(txt) {
+      const n = new FakeNode('#TEXT');
+      n._textContent = String(txt ?? '');
+      return n;
+    },
+    getElementById(id) {
+      const k = String(id);
+      if (!elementsById.has(k)) {
+        const n = new FakeNode('DIV');
+        n.id = k;
+        rootBody.appendChild(n);
+        elementsById.set(k, n);
+      }
+      return elementsById.get(k);
+    },
+    querySelector(sel) { return rootBody.querySelector(sel); },
+    querySelectorAll(sel) { return rootBody.querySelectorAll(sel); },
+    addEventListener(type, fn) {
+      if (!docListeners.has(type)) docListeners.set(type, []);
+      docListeners.get(type).push(fn);
+    },
+  };
+
+  const makeSnap = (rev = 1, status = 'IDLE') => {
+    const workspaces = Array.from({ length: 10 }, (_, idx) => ({
+      workspace: idx === 0 ? '' : `F:\\Work\\project-${String(idx).padStart(2, '0')}`,
+      conversationsCount: 10 - idx,
+      stepsCount: (10 - idx) * 4,
+      inputTokens: (10 - idx) * 1000,
+      cacheReadTokens: (10 - idx) * 3000,
+      outputTokens: (10 - idx) * 500,
+      totalTokens: (10 - idx) * 4500,
+      cacheHitRatePct: 75,
+      costActual: Number(((10 - idx) * 0.5 + rev * 0.01).toFixed(4)),
+    }));
+    const recentConvs = [
+      {
+        conversationId: 'conv-alpha-11111111',
+        title: 'Alpha Refactor',
+        workspace: 'F:\\Work\\alpha-repo',
+        activeModel: 'Gemini 4 Neon',
+        status: 'GENERATING',
+        onDisk: true,
+        isToday: true,
+        updatedAtMs: Date.now() - 2000,
+        contextTotal: 32000,
+        latestTokPerSec: 88,
+        outputTokens: 1200 + rev * 10,
+        totalTokens: 50000 + rev * 10,
+        costActual: 0.42 + rev * 0.01,
+      },
+      {
+        conversationId: 'conv-beta-22222222',
+        title: 'Beta Bugfix',
+        workspace: 'F:\\Work\\beta-repo',
+        activeModel: 'Claude Opus 5.5',
+        status: 'IDLE',
+        onDisk: true,
+        isToday: true,
+        updatedAtMs: Date.now() - 60000,
+        contextTotal: 14000,
+        latestTokPerSec: 60,
+        outputTokens: 800,
+        totalTokens: 20000,
+        costActual: 0.18,
+      },
+      {
+        conversationId: 'conv-gamma-33333333',
+        title: 'Gamma Tool Run',
+        workspace: 'F:\\Work\\gamma-repo',
+        activeModel: 'Gemini 4 Neon',
+        status: 'RUNNING_TOOLS',
+        onDisk: true,
+        isToday: false,
+        updatedAtMs: Date.now() - 120000,
+        contextTotal: 9000,
+        latestTokPerSec: 70,
+        outputTokens: 400,
+        totalTokens: 12000,
+        costActual: 0.09,
+      },
+    ];
+    const makePeriod = (rangeKey, wsSlice) => ({
+      rangeKey,
+      startDate: '2026-11-20',
+      endDate: '2026-11-20',
+      spanDaysCount: 1,
+      activeDaysCount: 1,
+      conversationsCount: 3,
+      archivedConversationsCount: 0,
+      stepsCount: 12,
+      inputTokens: 15000,
+      cacheReadTokens: 45000,
+      outputTokens: 2400 + rev * 10,
+      totalTokens: 62400 + rev * 10,
+      cacheHitRatePct: 75,
+      costActual: 0.69 + rev * 0.01,
+      avgDailyCost: 0.69 + rev * 0.01,
+      avgDailyTokens: 62400 + rev * 10,
+      trendGranularity: 'hour',
+      series: [
+        { key: '09', label: '09:00', rangeText: '09:00 - 10:00', costActual: 0.25, totalTokens: 20000, outputTokens: 900 },
+        { key: '10', label: '10:00', rangeText: '10:00 - 11:00', costActual: 0.44 + rev * 0.01, totalTokens: 42400, outputTokens: 1500 },
+      ],
+      byModel: [
+        {
+          profileId: 'gemini-4-neon',
+          model: 'Gemini 4 Neon',
+          rawModels: ['gemini-4-neon'],
+          conversationsCount: 2,
+          inputTokens: 10000,
+          cacheReadTokens: 30000,
+          outputTokens: 1600,
+          totalTokens: 41600,
+          cacheHitRatePct: 75,
+          costActual: 0.51,
+        },
+      ],
+      byWorkspace: wsSlice,
+      topConversations: recentConvs,
+      subscription: null,
+    });
+    return {
+      etag: `etag-v051-${rev}-${status}`,
+      serverTimeMs: Date.now(),
+      boundConversationId: 'conv-alpha-11111111',
+      appVersion: '0.5.1',
+      prefs: {
+        currency: 'USD',
+        language: 'zh',
+        tokenUnit: 'auto',
+        modelSortBy: 'cost',
+        modelSortDir: 'desc',
+        pixelOfficeCollapsed: false,
+      },
+      current: {
+        conversationId: 'conv-alpha-11111111',
+        title: 'Alpha Refactor',
+        workspace: 'F:\\Work\\alpha-repo',
+        status,
+        generatingSinceMs: status === 'GENERATING' ? Date.now() - 3500 : null,
+        activeModel: 'Gemini 4 Neon',
+        activeRawModel: 'gemini-4-neon',
+        speed: { latestStepTokPerSec: 88, weightedAvgTokPerSec: 82, peakTokPerSec: 95, recentSteps: [] },
+        context: {
+          contextTotal: 32000,
+          contextMax: 512000,
+          contextWarn: 409600,
+          usageLevel: 'HEALTHY',
+          cacheReadTokens: 30000,
+          inputUncachedTokens: 10000,
+          cacheHitRatePct: 75,
+          netTokenDelta: 400,
+          topSpikes: [],
+        },
+        totals: {
+          withChildren: { stepsCount: 10, totalTokens: 50000, costActual: 0.42 },
+          mainOnly: { stepsCount: 8, totalTokens: 40000, costActual: 0.35 },
+        },
+        children: [
+          {
+            conversationId: 'child-worker-1',
+            name: 'worker-1',
+            kind: 'swarm',
+            status: 'IDLE',
+            killed: false,
+            model: 'Gemini 4 Hydrogen',
+            rawModel: 'gemini-flash-worker-agy',
+            contextTotal: 8000,
+            latestTokPerSec: 50,
+            outputTokens: 300,
+            costActual: 0.07,
+            updatedAtMs: Date.now() - 5000,
+          },
+        ],
+        byModel: [],
+        sideQuestions: [],
+      },
+      global: {
+        todayDate: '2026-11-20',
+        recentConversations: recentConvs,
+        todayByWorkspace: workspaces,
+        periods: {
+          today: makePeriod('today', workspaces),
+          '7d': makePeriod('7d', workspaces.slice(0, 3)),
+          '30d': makePeriod('30d', workspaces),
+          all: makePeriod('all', workspaces),
+        },
+      },
+    };
+  };
+
+  let nextPollSnap = makeSnap(1, 'IDLE');
+
+  const sandbox = {
+    window: null,
+    document: fakeDocument,
+    Node: FakeNode,
+    MutationObserver: class { observe() {} },
+    AbortController: globalThis.AbortController,
+    URLSearchParams: globalThis.URLSearchParams,
+    console,
+    Date,
+    Math,
+    Number,
+    String,
+    Array,
+    Object,
+    Set,
+    Map,
+    JSON,
+    Promise,
+    Error,
+    RegExp,
+    Intl,
+    encodeURIComponent,
+    decodeURIComponent,
+    sessionStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    setInterval(fn, ms) {
+      const id = intervalSeq++;
+      activeIntervals.set(id, { fn, ms });
+      return id;
+    },
+    clearInterval(id) { activeIntervals.delete(id); },
+    setTimeout(fn, ms) {
+      const id = timeoutSeq++;
+      activeTimeouts.set(id, { fn, ms });
+      return id;
+    },
+    clearTimeout(id) { activeTimeouts.delete(id); },
+    requestAnimationFrame(fn) { fn(); return 1; },
+    getComputedStyle() {
+      return { color: 'rgb(15, 23, 42)', backgroundColor: 'rgb(255, 255, 255)' };
+    },
+    navigator: { clipboard: {} },
+    addEventListener() {},
+    removeEventListener() {},
+    innerWidth: 480,
+    devicePixelRatio: 1,
+    matchMedia(q) {
+      return {
+        matches: String(q).includes('prefers-reduced-motion') ? reducedMotion : false,
+        addEventListener() {},
+      };
+    },
+    fetch: async (url) => {
+      fetchCalls.push(String(url));
+      return { ok: true, status: 200, json: async () => nextPollSnap, text: async () => JSON.stringify(nextPollSnap) };
+    },
+  };
+  sandbox.window = sandbox;
+  sandbox.sidecar = {
+    conversationId: 'conv-alpha-11111111',
+    fetch: sandbox.fetch,
+    ui: {
+      toggleConversation(id) { toggledChats.push(id); },
+    },
+  };
+  sandbox.TokenMonitorReceipt = {
+    buildReceiptViewModel: () => ({ title: 'Receipt' }),
+    renderReceiptCanvas: () => ({ toDataURL: () => 'data:image/png;base64,AA==' }),
+  };
+
+  vm.createContext(sandbox);
+  vm.runInContext(pixelSource, sandbox);
+
+  const exportTail = appSource.replace(
+    /if\s*\(document\.readyState\s*===\s*'loading'\)/,
+    'globalThis.__tmV051 = { state, init, pollSnapshot, renderHeader, renderCurrentTab, renderGlobalTab, renderCacheCard, renderChildrenAndModelsCard, setActiveTab, setDrawerOpen, openReceiptModal, closeReceiptModal, setIconButtonContent, syncStopwatchLoop, syncPixelOfficeLoop, tickLiveStopwatch };\n  if (document.readyState === \'loading\')',
+  );
+  // Prevent auto-init at load time so we control init explicitly
+  const controlledSrc = exportTail.replace(
+    /if\s*\(document\.readyState\s*===\s*'loading'\)\s*\{[\s\S]*?\}\s*else\s*\{\s*init\(\);\s*\}/,
+    '/* manual init in test */',
+  );
+  vm.runInContext(controlledSrc, sandbox);
+  const api = sandbox.__tmV051;
+  assert.ok(api, 'VM must expose __tmV051');
+
+  // Start app (status = IDLE)
+  api.init();
+  await new Promise((r) => setImmediate(r));
+
+  // A4: Poll on Tab 1 must NOT render hidden Tab 2 (#global-content remains empty)
+  const globalContent = fakeDocument.getElementById('global-content');
+  assert.equal(globalContent.childElementCount, 0, 'A4: Tab 2 must not be rendered while Tab 1 is active');
+  assert.equal(fetchCalls.length, 1);
+
+  // A5: Stopwatch timer stays null at IDLE; starts on GENERATING; self-stops back at IDLE
+  assert.equal(api.state.stopwatchTimer, null, 'A5: stopwatchTimer must remain null when IDLE');
+  nextPollSnap = makeSnap(2, 'GENERATING');
+  await api.pollSnapshot(true);
+  assert.ok(api.state.stopwatchTimer !== null, 'A5: stopwatchTimer must start when status is GENERATING');
+  nextPollSnap = makeSnap(3, 'IDLE');
+  await api.pollSnapshot(true);
+  assert.equal(api.state.stopwatchTimer, null, 'A5: stopwatchTimer must stop when returning to IDLE');
+
+  // A5: setIconButtonContent skips replaceChildren on matching signature
+  const testBtn = fakeDocument.createElement('button');
+  api.setIconButtonContent(testBtn, 'refresh', 'Sync Now', 12);
+  const callsAfterFirst = testBtn.replaceChildrenCalls;
+  api.setIconButtonContent(testBtn, 'refresh', 'Sync Now', 12);
+  assert.equal(testBtn.replaceChildrenCalls, callsAfterFirst, 'A5: identical setIconButtonContent call must skip DOM rebuild');
+  api.setIconButtonContent(testBtn, 'refresh', 'Syncing...', 12);
+  assert.equal(testBtn.replaceChildrenCalls, callsAfterFirst + 1, 'A5: changed label must update button DOM');
+
+  // A6: Pixel Office idle cadence = 3000ms (tick += 6), reduced-motion stops loop
+  assert.equal(api.state.pixelOfficeIntervalMs, 3000, 'A6: idle Pixel Office cadence must be 3000ms');
+  const tickBefore = api.state.pixelOfficeTick;
+  const idleIntervalObj = activeIntervals.get(api.state.pixelOfficeTimer);
+  assert.ok(idleIntervalObj && idleIntervalObj.ms === 3000);
+  idleIntervalObj.fn();
+  assert.equal(api.state.pixelOfficeTick, tickBefore + 6, 'A6: idle 3000ms tick must advance by 6 to toggle idle frame');
+  reducedMotion = true;
+  api.syncPixelOfficeLoop();
+  assert.equal(api.state.pixelOfficeIntervalMs, 0, 'A6: prefers-reduced-motion must stop Pixel Office loop');
+  assert.equal(api.state.pixelOfficeTimer, null);
+  reducedMotion = false;
+  api.syncPixelOfficeLoop();
+
+  // A4: document.hidden pauses polling & visibilitychange visible triggers immediate fetch
+  fakeDocument.hidden = true;
+  for (const fn of docListeners.get('visibilitychange') || []) fn();
+  assert.equal(api.state.pollTimer, null, 'A4: pollTimer must be cleared while document.hidden');
+  const fetchesBeforeHidden = fetchCalls.length;
+  await api.pollSnapshot(false);
+  assert.equal(fetchCalls.length, fetchesBeforeHidden, 'A4: pollSnapshot(false) must skip fetch while hidden');
+  fakeDocument.hidden = false;
+  for (const fn of docListeners.get('visibilitychange') || []) fn();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(fetchCalls.length, fetchesBeforeHidden + 1, 'A4: visibility restore must trigger immediate fetch');
+
+  // B6: Cache track localized tooltip (zh & en) + child Open Chat button uses .btn-soft + SVG icon
+  const cacheTrackZh = fakeDocument.getElementById('card-cache').querySelector('.cache-seg-track');
+  assert.ok(cacheTrackZh?.title.includes('缓存读取'), 'B6: zh cache track title must be localized');
+  const childOpenBtn = fakeDocument.getElementById('card-children-models').querySelector('.child-actions .mini-btn.btn-soft');
+  assert.ok(childOpenBtn && childOpenBtn.querySelector('.tm-icon'), 'B6: child Open Chat button must use .btn-soft + SVG icon');
+
+  // B5: Escape closes one layer at a time (receipt modal -> settings drawer -> Pixel Inspector) and restores focus
+  const triggerBtn = fakeDocument.getElementById('btn-checkout');
+  triggerBtn.focus();
+  api.openReceiptModal();
+  assert.equal(api.state.receiptModalOpen, true);
+  api.setDrawerOpen(true);
+  api.state.pixelOfficeSelectedKey = 'main';
+  const dispatchEsc = () => {
+    const ev = { key: 'Escape', defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
+    for (const fn of docListeners.get('keydown') || []) fn(ev);
+    return ev;
+  };
+  dispatchEsc();
+  assert.equal(api.state.receiptModalOpen, false, 'B5: 1st Esc closes receipt modal');
+  assert.equal(fakeDocument.activeElement, triggerBtn, 'B5: closing modal restores focus to trigger');
+  assert.equal(api.state.drawerOpen, true, 'B5: 1st Esc must NOT also close settings drawer underneath');
+  dispatchEsc();
+  assert.equal(api.state.drawerOpen, false, 'B5: 2nd Esc closes settings drawer');
+  assert.equal(fakeDocument.activeElement, fakeDocument.getElementById('btn-settings'), 'B5: closing drawer restores focus to #btn-settings');
+  assert.equal(api.state.pixelOfficeSelectedKey, 'main');
+  dispatchEsc();
+  assert.equal(api.state.pixelOfficeSelectedKey, '', 'B5: 3rd Esc clears Pixel Office inspector selection');
+
+  // Switch to Tab 2 -> renders immediately (A4), check C1 + C2 + B5 + B6 + B7
+  api.setActiveTab('global');
+  assert.ok(globalContent.childElementCount > 0, 'A4: switching to Tab 2 renders global content immediately');
+
+  // A4: Tab 2 signature-skip on unchanged snapshot
+  const topStackBefore = api.state.globalDom.topStack;
+  const topRebuildsBefore = topStackBefore.replaceChildrenCalls;
+  const listRebuildsBefore = api.state.globalDom.recentListWrap.replaceChildrenCalls;
+  api.renderGlobalTab(api.state.snapshot);
+  assert.equal(topStackBefore.replaceChildrenCalls, topRebuildsBefore, 'A4: unchanged snapshot must skip Tab 2 topStack rebuild');
+  assert.equal(api.state.globalDom.recentListWrap.replaceChildrenCalls, listRebuildsBefore, 'A4: unchanged snapshot must skip Tab 2 list rebuild');
+
+  // C1: #card-global-projects renders 5 cols, maps '' -> 未分组, folds 10 -> Top 8, expands to 10, follows period
+  const projCard = globalContent.querySelector('#card-global-projects');
+  assert.ok(projCard, 'C1: #card-global-projects must render in Tab 2');
+  const projHeaders = projCard.querySelectorAll('thead th');
+  assert.equal(projHeaders.length, 5, 'C1: By Project table must have 5 columns');
+  assert.equal(projHeaders[0].textContent, '项目');
+  assert.equal(projHeaders[4].textContent, '费用 (USD)');
+  let projRows = projCard.querySelectorAll('tbody tr');
+  assert.equal(projRows.length, 8, 'C1: 10 projects must fold to Top 8 by default');
+  assert.equal(projRows[0].querySelector('td.project-cell')?.textContent, '未分组', 'C1: empty workspace must label as 未分组 in zh');
+  assert.equal(projRows[0].querySelector('td.project-cell')?.classList.contains('is-ungrouped'), true, 'C1/#282: empty workspace row must carry .is-ungrouped');
+  assert.equal(projRows[1].querySelector('td.project-cell')?.classList.contains('is-ungrouped'), false, 'C1/#282: real project row must NOT carry .is-ungrouped');
+  const projToggle = projCard.querySelector('.children-toggle-bar');
+  assert.ok(projToggle, 'C1: fold toggle button must render when >8 projects');
+  projToggle.click();
+  projRows = globalContent.querySelector('#card-global-projects').querySelectorAll('tbody tr');
+  assert.equal(projRows.length, 10, 'C1: clicking toggle must expand all 10 projects');
+
+  // Switch to 7d period -> follows period (3 projects, no fold button, resets workspacesExpanded)
+  const periodBtns = globalContent.querySelectorAll('.period-btn');
+  periodBtns[1].click();
+  assert.equal(api.state.workspacesExpanded, false, 'C1: switching period resets workspacesExpanded');
+  assert.equal(globalContent.querySelector('#card-global-projects').querySelectorAll('tbody tr').length, 3, 'C1: By Project must follow selected 7d period');
+  periodBtns[0].click();
+
+  // B7: Trend bar focus updates detailStrip; click pins; second click unpins
+  const trendCols = globalContent.querySelectorAll('.trend-col');
+  const detailStrip = globalContent.querySelector('.trend-detail');
+  assert.equal(trendCols.length, 2);
+  trendCols[0].dispatchEvent('focus');
+  assert.ok(detailStrip.textContent.includes('09:00'), 'B7: focusing trend bar updates detailStrip');
+  trendCols[0].click();
+  assert.equal(api.state.selectedSeriesIdx, 0, 'B7: 1st click pins bucket 0');
+  trendCols[0].click();
+  assert.equal(api.state.selectedSeriesIdx, null, 'B7: 2nd click unpins back to default latest bucket');
+  assert.ok(detailStrip.textContent.includes('10:00'));
+
+  // C2: Persistent filter bar (search + model + active-only + empty state + identity preserved across live polls!)
+  const filterBar = globalContent.querySelector('.list-filter-bar');
+  const searchInput = filterBar?.querySelector('.list-search-input');
+  const modelSelect = filterBar?.querySelector('.list-filter-select');
+  const activeChip = filterBar?.querySelector('.list-filter-chip');
+  assert.ok(filterBar && searchInput && modelSelect && activeChip, 'C2: filter bar controls must exist');
+
+  // Active-only chip filters to GENERATING + RUNNING_TOOLS (2 of 3)
+  activeChip.click();
+  assert.equal(activeChip.classList.contains('active'), true);
+  assert.equal(globalContent.querySelectorAll('.recent-item').length, 2, 'C2: active-only filter must show 2 active sessions');
+
+  // Model filter + search input (focus & identity preserved across live poll!)
+  searchInput.focus();
+  searchInput.value = 'gamma';
+  searchInput.dispatchEvent('input');
+  assert.equal(globalContent.querySelectorAll('.recent-item').length, 1, 'C2: search "gamma" must narrow to 1 matching session');
+
+  // Simulate live poll arriving while user is typing in searchInput
+  nextPollSnap = makeSnap(99, 'IDLE');
+  await api.pollSnapshot(true);
+  assert.equal(globalContent.querySelector('.list-search-input'), searchInput, 'C2: live poll MUST NOT rebuild .list-search-input');
+  assert.equal(searchInput.value, 'gamma', 'C2: live poll MUST preserve search input value');
+  assert.equal(fakeDocument.activeElement, searchInput, 'C2: live poll MUST preserve search input focus');
+
+  // Zero-match filter shows .list-filter-empty
+  searchInput.value = 'no-such-session-xyz';
+  searchInput.dispatchEvent('input');
+  assert.ok(globalContent.querySelector('.list-filter-empty'), 'C2: zero-match filter must render .list-filter-empty');
+
+  // Clear filters and verify B5/B6 on Tab 2 Open Chat button (btn-soft + SVG + keydown stopPropagation)
+  searchInput.value = '';
+  searchInput.dispatchEvent('input');
+  activeChip.click();
+  modelSelect.value = 'Claude Opus 5.5';
+  modelSelect.dispatchEvent('change');
+  assert.equal(globalContent.querySelectorAll('.recent-item').length, 1, 'C2: model select must filter to Claude Opus 5.5');
+  modelSelect.value = '';
+  modelSelect.dispatchEvent('change');
+
+  const recentOpenBtn = globalContent.querySelector('.recent-item .recent-top .mini-btn.btn-soft');
+  assert.ok(recentOpenBtn && recentOpenBtn.querySelector('.tm-icon'), 'B6: Tab 2 Open Chat button must use .btn-soft + SVG icon');
+  const fetchesBeforeKey = fetchCalls.length;
+  const keyEv = recentOpenBtn.dispatchEvent('keydown', { key: 'Enter' });
+  assert.equal(keyEv.propagationStopped, true, 'B5: Tab 2 Open Chat button must stop keydown propagation');
+  assert.equal(fetchCalls.length, fetchesBeforeKey, 'B5: Enter on Open Chat button must NOT trigger selectConversation');
+
+  // #283 fix verifications: (1) Esc inside .list-search-input is not swallowed when drawer open;
+  // (2) Esc on Tab 2 does not clear hidden Tab 1 pixelOfficeSelectedKey;
+  // (3) buildGlobalTopSig detects real period.subscription field changes (proratedFee/paybackPct).
+  api.setDrawerOpen(true);
+  const escInSearch = { key: 'Escape', target: searchInput, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
+  for (const fn of docListeners.get('keydown') || []) fn(escInSearch);
+  assert.equal(escInSearch.defaultPrevented, false, '#283: Esc inside .list-search-input must not call preventDefault');
+  assert.equal(api.state.drawerOpen, true, '#283: Esc inside .list-search-input must not close settings drawer');
+  api.setDrawerOpen(false);
+
+  api.state.pixelOfficeSelectedKey = 'main';
+  dispatchEsc();
+  assert.equal(api.state.pixelOfficeSelectedKey, 'main', '#283: Esc on Tab 2 must not deselect hidden Tab 1 Pixel Office');
+  api.state.pixelOfficeSelectedKey = '';
+
+  const subSnap = makeSnap(100, 'IDLE');
+  subSnap.global.periods.today.subscription = {
+    planId: 'ai_pro',
+    planLabel: 'Google AI Pro',
+    isAutoDetected: true,
+    monthlyFee: 19.99,
+    proratedFee: 0.67,
+    tokenCost: 0.5,
+    netSavings: -0.17,
+    roiMultiplier: 0.75,
+    proratedDays: 1,
+    paybackPct: 75,
+    isPaidOff: false,
+  };
+  api.state.snapshot = subSnap;
+  api.renderGlobalTab(subSnap);
+  const topBeforeSubMut = api.state.globalDom.topStack.replaceChildrenCalls;
+  subSnap.global.periods.today.subscription = {
+    ...subSnap.global.periods.today.subscription,
+    proratedFee: 1.33,
+    tokenCost: 2.0,
+    roiMultiplier: 1.5,
+    proratedDays: 2,
+    paybackPct: 150,
+    isPaidOff: true,
+  };
+  api.renderGlobalTab(subSnap);
+  assert.equal(api.state.globalDom.topStack.replaceChildrenCalls, topBeforeSubMut + 1, '#283: subscription field updates must invalidate globalTop sig');
+
+  // English localization check for C1 & B6
+  api.state.lang = 'en';
+  api.renderGlobalTab(api.state.snapshot);
+  assert.equal(globalContent.querySelector('#card-global-projects td.project-cell')?.textContent, 'Ungrouped', 'C1: empty workspace must label as Ungrouped in en');
+  api.renderCacheCard(api.state.snapshot.current);
+  assert.ok(fakeDocument.getElementById('card-cache').querySelector('.cache-seg-track')?.title.includes('Cache Read'));
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:45:47
 // ============================================================================

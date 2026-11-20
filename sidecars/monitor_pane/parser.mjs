@@ -9,7 +9,24 @@
 // ============================================================================
 
 import { execFile } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Import mkdirSync, renameSync, unlinkSync, and writeFileSync for
+// the shared Windows-safe atomic file writer (writeAtomicFileSafe / writeAtomicJsonSafe).
+// ============================================================================
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -405,7 +422,21 @@ export const DEFAULT_PREFS = Object.freeze({
 
 const transcriptCache = new Map(); // cacheId -> { key, parsed }
 const MAX_TRANSCRIPT_CACHE = 128;
-const summariesDbCache = new Map(); // sumDbPath -> { key, byConvId }
+const summariesDbCache = new Map(); // sumDbPath -> { key, bundle }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Add bounded caches for combined multi-dir summaries bundles,
+// mtime-validated roster files, and short-TTL brain-dir swarm listings (A1/A2).
+// ============================================================================
+const combinedSummariesBundleCache = new Map(); // combinedKey -> frozen bundle
+const MAX_COMBINED_SUMMARIES_CACHE = 16;
+const rosterFileCache = new Map(); // membersPath -> { key, roster }
+const MAX_ROSTER_FILE_CACHE = 512;
+const swarmsListCache = new Map(); // brainDir -> { brainMtimeMs, fetchedAtMs, entries }
+const SWARM_LIST_CACHE_TTL_MS = 2000;
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 17:19:56
 // Description: Add module-level subagentDescCache for O(1) parent-subagent
@@ -608,7 +639,114 @@ export function clearParserCache() {
 // ============================================================================
 // [MODIFIED END] 2026-11-17 17:19:56
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Clear combinedSummariesBundleCache, rosterFileCache, and
+// swarmsListCache inside clearParserCache() for deterministic test isolation.
+// ============================================================================
+  combinedSummariesBundleCache.clear();
+  rosterFileCache.clear();
+  swarmsListCache.clear();
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
 }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Add shared Windows-safe atomic file/JSON writer with EPERM/EACCES/EBUSY
+// fallback and guaranteed .tmp cleanup for state, ledger, and pricing cache writes (B1).
+// ============================================================================
+const WINDOWS_RETRYABLE_RENAME_CODES = new Set(['EPERM', 'EACCES', 'EBUSY']);
+
+export function writeAtomicFileSafe(targetPath, content, options = {}) {
+  const {
+    encoding = 'utf-8',
+    tmpSuffix = `.${process.pid}.tmp`,
+    fsOps = null,
+  } = options || {};
+  const mkdirFn = fsOps?.mkdirSync || mkdirSync;
+  const writeFn = fsOps?.writeFileSync || writeFileSync;
+  const renameFn = fsOps?.renameSync || renameSync;
+  const existsFn = fsOps?.existsSync || existsSync;
+  const unlinkFn = fsOps?.unlinkSync || unlinkSync;
+
+  const dir = dirname(targetPath);
+  mkdirFn(dir, { recursive: true });
+  const tmpPath = `${targetPath}${tmpSuffix}`;
+  try {
+    writeFn(tmpPath, content, encoding);
+    try {
+      renameFn(tmpPath, targetPath);
+      return { ok: true, usedFallback: false };
+    } catch (renameErr) {
+      try {
+        if (existsFn(tmpPath)) unlinkFn(tmpPath);
+      } catch {
+        // Ignore temp cleanup failure.
+      }
+      if (renameErr && WINDOWS_RETRYABLE_RENAME_CODES.has(renameErr.code)) {
+        writeFn(targetPath, content, encoding);
+        return { ok: true, usedFallback: true, fallbackCode: renameErr.code };
+      }
+      throw renameErr;
+    }
+  } catch (err) {
+    try {
+      if (existsFn(tmpPath)) unlinkFn(tmpPath);
+    } catch {
+      // Ignore temp cleanup failure.
+    }
+    throw err;
+  }
+}
+
+export function writeAtomicJsonSafe(targetPath, payload, options = {}) {
+  const space = options?.pretty ? 2 : undefined;
+  const serialized = JSON.stringify(payload, null, space);
+  return writeAtomicFileSafe(targetPath, serialized, options);
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:28
+// Description: Export syncWatchState() helper to synchronize watchedConvIds
+// with active conversation IDs and prune stale watcherLastStat/watcherSeenSteps (A3).
+// ============================================================================
+export function syncWatchState(watchedSet, statMap, seenMap, nextIds) {
+  const allowed = new Set();
+  for (const id of nextIds || []) {
+    if (isValidConversationId(id)) allowed.add(id);
+  }
+  for (const existing of [...watchedSet]) {
+    if (!allowed.has(existing)) {
+      watchedSet.delete(existing);
+    }
+  }
+  for (const id of allowed) {
+    watchedSet.add(id);
+  }
+  if (statMap && typeof statMap.keys === 'function') {
+    for (const id of [...statMap.keys()]) {
+      if (!watchedSet.has(id)) {
+        statMap.delete(id);
+      }
+    }
+  }
+  if (seenMap && typeof seenMap.keys === 'function') {
+    for (const id of [...seenMap.keys()]) {
+      if (!watchedSet.has(id)) {
+        seenMap.delete(id);
+      }
+    }
+  }
+  return watchedSet;
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:28
+// ============================================================================
 
 function safeReaddir(dirPath) {
   try {
@@ -1628,49 +1766,32 @@ export function parseRawSummarySideQuestions(rawSummaryBuf) {
  * Reads `<appData>/conversation_summaries.db` in read-only mode (cached by `.db` + `.db-wal` stat),
  * returning `{ byConvId, sideQuestionsByParent, sideQuestionParentById }`.
  */
-function readConversationSummariesBundle(appDataDirs) {
-  const combinedByConvId = new Map();
-  const combinedParentMaps = new Map(); // parentId -> Map<sqLower, { conversationId, title }>
-  const combinedParentCanonical = new Map(); // parentLower -> parentId
-  const combinedParentById = new Map(); // sqId -> { parentId, title }
-  const combinedSqLowerIndex = new Map(); // sqLower -> sqId
-
-  const mergeSideQuestionLink = (parentId, sqId, title = '') => {
-    if (!isValidConversationId(parentId) || !isValidConversationId(sqId)) return;
-    const parentLower = parentId.toLowerCase();
-    const sqLower = sqId.toLowerCase();
-    if (parentLower === sqLower) return;
-
-    const canonicalParent = combinedParentCanonical.get(parentLower) || parentId;
-    if (!combinedParentCanonical.has(parentLower)) {
-      combinedParentCanonical.set(parentLower, canonicalParent);
-    }
-
-    const cleanTitle = typeof title === 'string' ? title.trim() : '';
-
-    let childMap = combinedParentMaps.get(canonicalParent);
-    if (!childMap) {
-      childMap = new Map();
-      combinedParentMaps.set(canonicalParent, childMap);
-    }
-    const prevChild = childMap.get(sqLower);
-    if (!prevChild) {
-      childMap.set(sqLower, { conversationId: sqId, title: cleanTitle });
-    } else if (cleanTitle && !prevChild.title) {
-      prevChild.title = cleanTitle;
-    }
-
-    const existingSqKey = combinedSqLowerIndex.get(sqLower);
-    if (!existingSqKey) {
-      combinedSqLowerIndex.set(sqLower, sqId);
-      combinedParentById.set(sqId, { parentId: canonicalParent, title: cleanTitle });
-    } else {
-      const prevRev = combinedParentById.get(existingSqKey);
-      if (prevRev && cleanTitle && !prevRev.title) {
-        prevRev.title = cleanTitle;
-      }
-    }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Make cached conversation_summaries bundles read-only via
+// freezeReadOnlyMap() and return cached single/multi-dir bundles directly on
+// cache hit without O(N) per-call Map cloning (A2).
+// ============================================================================
+function freezeReadOnlyMap(map) {
+  const throwImmutable = () => {
+    throw new TypeError('Cached summaries map is read-only');
   };
+  Object.defineProperties(map, {
+    set: { value: throwImmutable, enumerable: false, configurable: false },
+    delete: { value: throwImmutable, enumerable: false, configurable: false },
+    clear: { value: throwImmutable, enumerable: false, configurable: false },
+  });
+  return Object.freeze(map);
+}
+
+const EMPTY_SUMMARIES_BUNDLE = Object.freeze({
+  byConvId: freezeReadOnlyMap(new Map()),
+  sideQuestionsByParent: freezeReadOnlyMap(new Map()),
+  sideQuestionParentById: freezeReadOnlyMap(new Map()),
+});
+
+export function readConversationSummariesBundle(appDataDirs) {
+  const activeEntries = [];
 
   for (const appData of appDataDirs || []) {
     const sumDbPath = join(appData, 'conversation_summaries.db');
@@ -1681,12 +1802,7 @@ function readConversationSummariesBundle(appDataDirs) {
     const statKey = `${dbStat.mtimeMs}:${dbStat.size}|${walStat.mtimeMs}:${walStat.size}`;
 
     let cached = summariesDbCache.get(sumDbPath);
-    if (
-      !cached ||
-      cached.key !== statKey ||
-      !cached.sideQuestionsByParent ||
-      !cached.sideQuestionParentById
-    ) {
+    if (!cached || cached.key !== statKey || !cached.bundle) {
       let db = null;
       try {
         db = new DatabaseSync(sumDbPath, { readOnly: true, timeout: 2500 });
@@ -1791,15 +1907,20 @@ function readConversationSummariesBundle(appDataDirs) {
           const cid = typeof r.conversation_id === 'string' ? r.conversation_id.trim() : '';
           if (!isValidConversationId(cid)) continue;
           dbParentCanonical.set(cid.toLowerCase(), cid);
-          byConvId.set(cid, {
-            title: typeof r.title === 'string' && r.title.trim() ? oneLine(r.title, 64) : '',
-            preview:
-              typeof r.preview === 'string' && r.preview.trim() ? oneLine(r.preview, 56) : '',
-            workspace: parseWorkspaceUrisField(r.workspace_uris),
-            agentName: typeof r.agent_name === 'string' ? r.agent_name.trim() : '',
-            parentConversationId:
-              typeof r.parent_conversation_id === 'string' ? r.parent_conversation_id.trim() : '',
-          });
+          byConvId.set(
+            cid,
+            Object.freeze({
+              title: typeof r.title === 'string' && r.title.trim() ? oneLine(r.title, 64) : '',
+              preview:
+                typeof r.preview === 'string' && r.preview.trim() ? oneLine(r.preview, 56) : '',
+              workspace: parseWorkspaceUrisField(r.workspace_uris),
+              agentName: typeof r.agent_name === 'string' ? r.agent_name.trim() : '',
+              parentConversationId:
+                typeof r.parent_conversation_id === 'string'
+                  ? r.parent_conversation_id.trim()
+                  : '',
+            }),
+          );
 
           if (r.raw_summary) {
             const rawSq = parseRawSummarySideQuestions(r.raw_summary);
@@ -1818,14 +1939,24 @@ function readConversationSummariesBundle(appDataDirs) {
 
         const sideQuestionsByParent = new Map();
         for (const [parentId, childMap] of dbParentMaps) {
-          sideQuestionsByParent.set(parentId, [...childMap.values()]);
+          sideQuestionsByParent.set(
+            parentId,
+            Object.freeze([...childMap.values()].map((item) => Object.freeze({ ...item }))),
+          );
+        }
+        for (const [sqId, rev] of dbParentById) {
+          dbParentById.set(sqId, Object.freeze({ ...rev }));
         }
 
+        const bundle = Object.freeze({
+          byConvId: freezeReadOnlyMap(byConvId),
+          sideQuestionsByParent: freezeReadOnlyMap(sideQuestionsByParent),
+          sideQuestionParentById: freezeReadOnlyMap(dbParentById),
+        });
         cached = {
+          path: sumDbPath,
           key: statKey,
-          byConvId,
-          sideQuestionsByParent,
-          sideQuestionParentById: dbParentById,
+          bundle,
         };
         summariesDbCache.set(sumDbPath, cached);
       } catch {
@@ -1841,39 +1972,113 @@ function readConversationSummariesBundle(appDataDirs) {
       }
     }
 
-    if (cached?.byConvId) {
-      for (const [cid, meta] of cached.byConvId) {
-        if (!combinedByConvId.has(cid)) {
-          combinedByConvId.set(cid, meta);
-          combinedParentCanonical.set(cid.toLowerCase(), cid);
-        }
+    if (cached?.bundle) {
+      activeEntries.push(cached);
+    }
+  }
+
+  if (activeEntries.length === 0) {
+    return EMPTY_SUMMARIES_BUNDLE;
+  }
+  if (activeEntries.length === 1) {
+    return activeEntries[0].bundle;
+  }
+
+  const combinedKey = activeEntries.map((entry) => `${entry.path}=${entry.key}`).join('||');
+  const combinedHit = combinedSummariesBundleCache.get(combinedKey);
+  if (combinedHit) {
+    combinedSummariesBundleCache.delete(combinedKey);
+    combinedSummariesBundleCache.set(combinedKey, combinedHit);
+    return combinedHit;
+  }
+
+  const combinedByConvId = new Map();
+  const combinedParentMaps = new Map(); // parentId -> Map<sqLower, { conversationId, title }>
+  const combinedParentCanonical = new Map(); // parentLower -> parentId
+  const combinedParentById = new Map(); // sqId -> { parentId, title }
+  const combinedSqLowerIndex = new Map(); // sqLower -> sqId
+
+  const mergeSideQuestionLink = (parentId, sqId, title = '') => {
+    if (!isValidConversationId(parentId) || !isValidConversationId(sqId)) return;
+    const parentLower = parentId.toLowerCase();
+    const sqLower = sqId.toLowerCase();
+    if (parentLower === sqLower) return;
+
+    const canonicalParent = combinedParentCanonical.get(parentLower) || parentId;
+    if (!combinedParentCanonical.has(parentLower)) {
+      combinedParentCanonical.set(parentLower, canonicalParent);
+    }
+
+    const cleanTitle = typeof title === 'string' ? title.trim() : '';
+
+    let childMap = combinedParentMaps.get(canonicalParent);
+    if (!childMap) {
+      childMap = new Map();
+      combinedParentMaps.set(canonicalParent, childMap);
+    }
+    const prevChild = childMap.get(sqLower);
+    if (!prevChild) {
+      childMap.set(sqLower, { conversationId: sqId, title: cleanTitle });
+    } else if (cleanTitle && !prevChild.title) {
+      prevChild.title = cleanTitle;
+    }
+
+    const existingSqKey = combinedSqLowerIndex.get(sqLower);
+    if (!existingSqKey) {
+      combinedSqLowerIndex.set(sqLower, sqId);
+      combinedParentById.set(sqId, { parentId: canonicalParent, title: cleanTitle });
+    } else {
+      const prevRev = combinedParentById.get(existingSqKey);
+      if (prevRev && cleanTitle && !prevRev.title) {
+        prevRev.title = cleanTitle;
       }
     }
-    if (cached?.sideQuestionsByParent) {
-      for (const [parentId, list] of cached.sideQuestionsByParent) {
-        for (const item of list) {
-          mergeSideQuestionLink(parentId, item.conversationId, item.title);
-        }
+  };
+
+  for (const entry of activeEntries) {
+    const b = entry.bundle;
+    for (const [cid, meta] of b.byConvId) {
+      if (!combinedByConvId.has(cid)) {
+        combinedByConvId.set(cid, meta);
+        combinedParentCanonical.set(cid.toLowerCase(), cid);
       }
     }
-    if (cached?.sideQuestionParentById) {
-      for (const [sqId, meta] of cached.sideQuestionParentById) {
-        mergeSideQuestionLink(meta.parentId, sqId, meta.title);
+    for (const [parentId, list] of b.sideQuestionsByParent) {
+      for (const item of list) {
+        mergeSideQuestionLink(parentId, item.conversationId, item.title);
       }
+    }
+    for (const [sqId, meta] of b.sideQuestionParentById) {
+      mergeSideQuestionLink(meta.parentId, sqId, meta.title);
     }
   }
 
   const combinedSideQuestionsByParent = new Map();
   for (const [parentId, childMap] of combinedParentMaps) {
-    combinedSideQuestionsByParent.set(parentId, [...childMap.values()]);
+    combinedSideQuestionsByParent.set(
+      parentId,
+      Object.freeze([...childMap.values()].map((item) => Object.freeze({ ...item }))),
+    );
+  }
+  for (const [sqId, rev] of combinedParentById) {
+    combinedParentById.set(sqId, Object.freeze({ ...rev }));
   }
 
-  return {
-    byConvId: combinedByConvId,
-    sideQuestionsByParent: combinedSideQuestionsByParent,
-    sideQuestionParentById: combinedParentById,
-  };
+  const frozenCombined = Object.freeze({
+    byConvId: freezeReadOnlyMap(combinedByConvId),
+    sideQuestionsByParent: freezeReadOnlyMap(combinedSideQuestionsByParent),
+    sideQuestionParentById: freezeReadOnlyMap(combinedParentById),
+  });
+  if (combinedSummariesBundleCache.size >= MAX_COMBINED_SUMMARIES_CACHE) {
+    const oldestKey = combinedSummariesBundleCache.keys().next().value;
+    if (oldestKey !== undefined) combinedSummariesBundleCache.delete(oldestKey);
+  }
+  combinedSummariesBundleCache.set(combinedKey, frozenCombined);
+  return frozenCombined;
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
 
 /**
  * Reads `<appData>/conversation_summaries.db` in read-only mode, cached by `.db` + `.db-wal` stat.
@@ -3527,42 +3732,143 @@ function accumulateStepsInto(
   }
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Mtime-cache readRosterSafe(), add O(1) readOwnSwarmCoordinatorInfo(),
+// add short-TTL + mtime-validated listAllSwarms() cache, and export
+// findSwarmMembership() so full-disk fallback runs only when needed (A1).
+// ============================================================================
 function readRosterSafe(membersPath) {
-  if (!existsSync(membersPath)) return null;
+  const st = statOf(membersPath);
+  if (st.size < 0) {
+    rosterFileCache.delete(membersPath);
+    return null;
+  }
+  const key = `${st.mtimeMs}:${st.size}`;
+  const hit = rosterFileCache.get(membersPath);
+  if (hit && hit.key === key) {
+    rosterFileCache.delete(membersPath);
+    rosterFileCache.set(membersPath, hit);
+    return hit.roster;
+  }
   try {
     const raw = JSON.parse(readFileSync(membersPath, 'utf-8'));
     if (!raw || typeof raw !== 'object') return null;
     const members = raw.members && typeof raw.members === 'object' ? raw.members : {};
-    return { title: typeof raw.title === 'string' ? raw.title : '', members };
+    const roster = { title: typeof raw.title === 'string' ? raw.title : '', members };
+    if (rosterFileCache.size >= MAX_ROSTER_FILE_CACHE) {
+      const oldestKey = rosterFileCache.keys().next().value;
+      if (oldestKey !== undefined) rosterFileCache.delete(oldestKey);
+    }
+    rosterFileCache.set(membersPath, { key, roster });
+    return roster;
   } catch {
     return null;
   }
 }
 
+function readOwnSwarmCoordinatorInfo(convId, appDataDirs) {
+  const ownPaths = resolveConversationPaths(convId, appDataDirs);
+  if (!ownPaths) return null;
+  const ownRoster = readRosterSafe(ownPaths.swarmMembersPath);
+  if (!ownRoster) return null;
+  return { coordinatorId: convId, roster: ownRoster, isCoordinator: true };
+}
+
 function listAllSwarms(appDataDirs) {
   const swarms = [];
   const seen = new Set();
-  for (const appData of appDataDirs) {
-    for (const id of safeReaddir(join(appData, 'brain'))) {
-      if (!isValidConversationId(id) || seen.has(id)) continue;
-      const membersPath = join(appData, 'brain', id, '.system_generated', 'swarm', 'members.json');
-      const roster = readRosterSafe(membersPath);
-      if (roster) {
-        seen.add(id);
-        swarms.push({ coordinatorId: id, appData, roster });
+  const nowMs = Date.now();
+  for (const appData of appDataDirs || []) {
+    const brainDir = join(appData, 'brain');
+    const brainStat = statOf(brainDir);
+    if (brainStat.size < 0) {
+      swarmsListCache.delete(brainDir);
+      continue;
+    }
+
+    const cached = swarmsListCache.get(brainDir);
+    let entries = null;
+    if (
+      cached &&
+      cached.brainMtimeMs === brainStat.mtimeMs &&
+      nowMs - cached.fetchedAtMs < SWARM_LIST_CACHE_TTL_MS
+    ) {
+      let allFresh = true;
+      const refreshed = [];
+      for (const item of cached.entries) {
+        const st = statOf(item.membersPath);
+        if (st.size < 0) {
+          allFresh = false;
+          break;
+        }
+        const mKey = `${st.mtimeMs}:${st.size}`;
+        if (mKey === item.rosterKey) {
+          refreshed.push(item);
+        } else {
+          const updatedRoster = readRosterSafe(item.membersPath);
+          if (updatedRoster) {
+            refreshed.push({
+              coordinatorId: item.coordinatorId,
+              appData,
+              membersPath: item.membersPath,
+              rosterKey: mKey,
+              roster: updatedRoster,
+            });
+          } else {
+            allFresh = false;
+            break;
+          }
+        }
       }
+      if (allFresh) {
+        cached.entries = refreshed;
+        entries = refreshed;
+      }
+    }
+
+    if (!entries) {
+      entries = [];
+      for (const id of safeReaddir(brainDir)) {
+        if (!isValidConversationId(id)) continue;
+        const membersPath = join(brainDir, id, '.system_generated', 'swarm', 'members.json');
+        const st = statOf(membersPath);
+        if (st.size < 0) continue;
+        const roster = readRosterSafe(membersPath);
+        if (roster) {
+          entries.push({
+            coordinatorId: id,
+            appData,
+            membersPath,
+            rosterKey: `${st.mtimeMs}:${st.size}`,
+            roster,
+          });
+        }
+      }
+      swarmsListCache.set(brainDir, {
+        brainMtimeMs: brainStat.mtimeMs,
+        fetchedAtMs: nowMs,
+        entries,
+      });
+    }
+
+    for (const item of entries) {
+      if (seen.has(item.coordinatorId)) continue;
+      seen.add(item.coordinatorId);
+      swarms.push({
+        coordinatorId: item.coordinatorId,
+        appData: item.appData,
+        roster: item.roster,
+      });
     }
   }
   return swarms;
 }
 
-function findSwarmMembership(convId, appDataDirs) {
-  const ownPaths = resolveConversationPaths(convId, appDataDirs);
-  if (ownPaths) {
-    const ownRoster = readRosterSafe(ownPaths.swarmMembersPath);
-    if (ownRoster) {
-      return { coordinatorId: convId, roster: ownRoster, isCoordinator: true };
-    }
+export function findSwarmMembership(convId, appDataDirs) {
+  const ownCoord = readOwnSwarmCoordinatorInfo(convId, appDataDirs);
+  if (ownCoord) {
+    return ownCoord;
   }
   for (const s of listAllSwarms(appDataDirs)) {
     for (const [name, member] of Object.entries(s.roster.members)) {
@@ -3579,6 +3885,9 @@ function findSwarmMembership(convId, appDataDirs) {
   }
   return null;
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
 
 function parseSubagentSpecsFromCall(tc) {
   const args = tc?.args && typeof tc.args === 'object' ? tc.args : {};
@@ -3762,7 +4071,15 @@ function extractSubagentCallDescriptors(parsed, modelByStepIdx) {
  * Discovers subagents and swarm members for a conversation, avoiding cycles.
  */
 export function resolveChildrenAndSwarm(convId, parsed, modelByStepIdx, appDataDirs) {
-  const swarmInfo = findSwarmMembership(convId, appDataDirs);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Read only convId's own roster for the coordinator check in
+// resolveChildrenAndSwarm() instead of triggering full-disk listAllSwarms() (A1).
+// ============================================================================
+  const swarmInfo = readOwnSwarmCoordinatorInfo(convId, appDataDirs);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
   const directDescriptors = [];
   const seen = new Set([convId.toLowerCase()]);
 
@@ -4028,10 +4345,18 @@ export function createMetadataStore(options = {}) {
 // Description: Skip agentapi execFile fallback when hasFallback is true and
 // conversation metadata is missing from conversation_summaries.db.
 // ============================================================================
-  function get(convId, { schedule = true, hasFallback = false, appDataDirs } = {}) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Accept optional pre-fetched summariesMap in metadataStore.get()
+// so summarizeGlobalAndRecent/buildPeriodSummary reuse one cached map (A2).
+// ============================================================================
+  function get(convId, { schedule = true, hasFallback = false, appDataDirs, summariesMap } = {}) {
     if (!isValidConversationId(convId)) return { title: '', workspace: '' };
-    const dirs = appDataDirs || discoverAppDataDirs(options);
-    const summaries = readConversationSummariesMap(dirs);
+    const summaries =
+      summariesMap || readConversationSummariesMap(appDataDirs || discoverAppDataDirs(options));
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
     if (summaries.has(convId)) {
       const s = summaries.get(convId);
       return {
@@ -5295,11 +5620,19 @@ export function analyzeConversation(convId, options = {}) {
     parsed,
   });
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Only include non-ended (!killed) children in _activeWatchIds so
+// the 400ms background watcher stops polling historical killed workers (A3).
+// ============================================================================
   const activeWatchIds = [
     convId,
-    ...children.map((c) => c.conversationId),
+    ...children.filter((c) => !c.killed).map((c) => c.conversationId),
     ...sideQuestions.map((sq) => sq.conversationId),
   ];
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:21:11
 // ============================================================================
@@ -6186,6 +6519,15 @@ export function createUsageLedger(initialData = null) {
       candidates,
       onDiskCount: candidates.length,
       pendingRebuildCount: Math.max(0, needRebuild.length - batch.length),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Return read-only summariesMap from ledger.sync() so
+// summarizeGlobalAndRecent() reuses one cached map across all period rollups (A2).
+// ============================================================================
+      summariesMap,
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
     };
 // ============================================================================
 // [MODIFIED END] 2026-11-17 17:19:56
@@ -6230,6 +6572,15 @@ function buildPeriodSummary({
   metadataStore,
   appDataDirs,
   ledger,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Accept reused summariesMap in buildPeriodSummary() (A2) and
+// initialize byWorkspaceMap for per-period project/workspace aggregation (C1).
+// ============================================================================
+  summariesMap,
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
 }) {
   const pricingByModel = new Map();
   const getPricing = (modelName) => {
@@ -6241,6 +6592,14 @@ function buildPeriodSummary({
 
   const activeDayKeys = new Set();
   const byModelMap = new Map();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Track per-workspace aggregates alongside byModelMap in buildPeriodSummary() (C1).
+// ============================================================================
+  const byWorkspaceMap = new Map();
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
   const convSummaries = [];
   const dayBuckets = new Map();
   const hourBuckets = Array.from({ length: 24 }, (_, h) => ({
@@ -6377,7 +6736,7 @@ function buildPeriodSummary({
 
       const meta =
         conv.onDisk !== false
-          ? metadataStore?.get?.(convId, { schedule: false, appDataDirs }) || {
+          ? metadataStore?.get?.(convId, { schedule: false, appDataDirs, summariesMap }) || {
               title: '',
               workspace: '',
             }
@@ -6390,6 +6749,34 @@ function buildPeriodSummary({
         conv.workspace = meta.workspace;
         ledger?.markDirty?.();
       }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Accumulate per-workspace conversation, step, token, and cost
+// totals (empty workspace mapped to '') inside buildPeriodSummary() (C1).
+// ============================================================================
+      const wsKey = typeof conv.workspace === 'string' ? conv.workspace.trim() : '';
+      let wsEntry = byWorkspaceMap.get(wsKey);
+      if (!wsEntry) {
+        wsEntry = {
+          workspace: wsKey,
+          conversationsCount: 0,
+          stepsCount: 0,
+          inputTokens: 0,
+          cacheReadTokens: 0,
+          outputTokens: 0,
+          costActual: 0,
+        };
+        byWorkspaceMap.set(wsKey, wsEntry);
+      }
+      wsEntry.conversationsCount += 1;
+      wsEntry.stepsCount += convSteps;
+      wsEntry.inputTokens += convIn;
+      wsEntry.cacheReadTokens += convCache;
+      wsEntry.outputTokens += convOut;
+      wsEntry.costActual += convCost;
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
       const title = conv.title || conv.fallbackTitle || convId.slice(0, 8);
       convSummaries.push({
         conversationId: convId,
@@ -6530,6 +6917,36 @@ function buildPeriodSummary({
   convSummaries.sort((a, b) => b.costActual - a.costActual || b.totalTokens - a.totalTokens);
   const topConversations = convSummaries.slice(0, 20);
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Finalize and sort byWorkspace rows (with cacheHitRatePct, sorted
+// by costActual desc then totalTokens desc) and expose on period summary (C1).
+// ============================================================================
+  const byWorkspace = [...byWorkspaceMap.values()]
+    .map((w) => {
+      const totalIn = w.inputTokens + w.cacheReadTokens;
+      return {
+        workspace: w.workspace,
+        conversationsCount: w.conversationsCount,
+        stepsCount: w.stepsCount,
+        inputTokens: w.inputTokens,
+        cacheReadTokens: w.cacheReadTokens,
+        outputTokens: w.outputTokens,
+        totalTokens: totalIn + w.outputTokens,
+        cacheHitRatePct: totalIn > 0 ? (w.cacheReadTokens / totalIn) * 100 : 0,
+        costActual: w.costActual,
+      };
+    })
+    .sort(
+      (a, b) =>
+        b.costActual - a.costActual ||
+        b.totalTokens - a.totalTokens ||
+        a.workspace.localeCompare(b.workspace),
+    );
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
+
   return {
     rangeKey,
     label,
@@ -6554,6 +6971,14 @@ function buildPeriodSummary({
     trendGranularity,
     series,
     byModel,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Include byWorkspace breakdown in period summary payload (C1).
+// ============================================================================
+    byWorkspace,
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
     topConversations,
     subscription: computeSubscriptionComparison(costActual, proratedDays, subInfo),
   };
@@ -6584,7 +7009,16 @@ export function summarizeGlobalAndRecent(options = {}) {
 // Description: Forward chunked batching options to ledger.sync() and validate
 // date keys (>= 2000-01-01) when tracking earliestDate.
 // ============================================================================
-  const { onDiskCount, pendingRebuildCount = 0 } = ledger.sync({
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Capture summariesMap returned by ledger.sync() so
+// summarizeGlobalAndRecent() reuses one read-only map across all rollups (A2).
+// ============================================================================
+  const {
+    onDiskCount,
+    pendingRebuildCount = 0,
+    summariesMap: syncedSummariesMap,
+  } = ledger.sync({
     appDataDirs,
     env: options.env,
     homeDir: options.homeDir,
@@ -6593,6 +7027,10 @@ export function summarizeGlobalAndRecent(options = {}) {
     maxRebuildBatch: options.maxRebuildBatch,
     priorityConvId: options.priorityConvId,
   });
+  const summariesMap = syncedSummariesMap || readConversationSummariesMap(appDataDirs);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
 
   const conversations = ledger.getData().conversations;
   const observedProfiles = new Set();
@@ -6686,6 +7124,11 @@ export function summarizeGlobalAndRecent(options = {}) {
   const start30d = shiftLocalDate(todayDate, -29);
   const allSpanDays = Math.max(1, daysBetweenLocalDates(earliestDate, todayDate) + 1);
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Pass reused summariesMap to all 4 buildPeriodSummary() calls
+// and recentTop20 metadataStore lookups (A2).
+// ============================================================================
   const todayPeriod = buildPeriodSummary({
     rangeKey: 'today',
     label: '今日',
@@ -6699,6 +7142,7 @@ export function summarizeGlobalAndRecent(options = {}) {
     metadataStore: options.metadataStore,
     appDataDirs,
     ledger,
+    summariesMap,
   });
 
   const period7d = buildPeriodSummary({
@@ -6714,6 +7158,7 @@ export function summarizeGlobalAndRecent(options = {}) {
     metadataStore: options.metadataStore,
     appDataDirs,
     ledger,
+    summariesMap,
   });
 
   const period30d = buildPeriodSummary({
@@ -6729,6 +7174,7 @@ export function summarizeGlobalAndRecent(options = {}) {
     metadataStore: options.metadataStore,
     appDataDirs,
     ledger,
+    summariesMap,
   });
 
   const periodAll = buildPeriodSummary({
@@ -6744,7 +7190,11 @@ export function summarizeGlobalAndRecent(options = {}) {
     metadataStore: options.metadataStore,
     appDataDirs,
     ledger,
+    summariesMap,
   });
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
 
   // Top 20 most recently updated on-disk conversations with lifetime totals.
   onDiskEntries.sort((a, b) => (b[1].updatedAtMs || 0) - (a[1].updatedAtMs || 0));
@@ -6765,6 +7215,14 @@ export function summarizeGlobalAndRecent(options = {}) {
       schedule: true,
       hasFallback: Boolean(conv.title || conv.fallbackTitle),
       appDataDirs,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Reuse pre-fetched summariesMap in recentTop20 metadata lookup (A2).
+// ============================================================================
+      summariesMap,
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
     }) || {
       title: '',
       workspace: '',
@@ -6822,6 +7280,14 @@ export function summarizeGlobalAndRecent(options = {}) {
     todayCostActual: todayPeriod.costActual,
     todayCostSavedByCache: todayPeriod.costSavedByCache,
     todayByModel: todayPeriod.byModel,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:35:18
+// Description: Expose todayByWorkspace alongside todayByModel on global summary (C1).
+// ============================================================================
+    todayByWorkspace: todayPeriod.byWorkspace,
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:35:18
+// ============================================================================
     recentConversations,
     subscription: subInfo,
 // ============================================================================

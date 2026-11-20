@@ -6,15 +6,28 @@
 // new model auto-discovery, local observed slug promotion, and atomic cache.
 // ============================================================================
 
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:39:50
+// Description: Drop direct mkdirSync/renameSync/writeFileSync imports and import
+// shared Windows-safe writeAtomicJsonSafe() from parser.mjs (B1).
+// ============================================================================
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 15:15:00
 // Description: Import compareModelsByPerformance for performance-tier catalog sorting.
 // ============================================================================
-import { MODEL_PRICING_CATALOG, compareModelsByPerformance, formatLocalDate } from './parser.mjs';
+import {
+  MODEL_PRICING_CATALOG,
+  compareModelsByPerformance,
+  formatLocalDate,
+  writeAtomicJsonSafe,
+} from './parser.mjs';
 // ============================================================================
 // [MODIFIED END] 2026-11-17 15:15:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:39:50
 // ============================================================================
 
 const DEFAULT_GOOGLE_PRICING_URL = 'https://ai.google.dev/gemini-api/docs/pricing';
@@ -1685,17 +1698,22 @@ function loadPricingCache(cachePath) {
   }
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:39:50
+// Description: Persist pricing cache via shared writeAtomicJsonSafe() for
+// Windows EPERM/EACCES/EBUSY fallback and guaranteed .tmp cleanup (B1).
+// ============================================================================
 function persistPricingCache(stateDir, cachePath, cache) {
   if (!stateDir || !cachePath) return;
   try {
-    mkdirSync(stateDir, { recursive: true });
-    const tmpPath = `${cachePath}.tmp`;
-    writeFileSync(tmpPath, JSON.stringify(cache, null, 2), 'utf-8');
-    renameSync(tmpPath, cachePath);
+    writeAtomicJsonSafe(cachePath, cache, { pretty: true });
   } catch (err) {
     console.error(`[monitor_pane] failed to persist pricing cache: ${err.message}`);
   }
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:39:50
+// ============================================================================
 
 /**
  * Creates the dual-channel pricing synchronization manager with daily cadence,

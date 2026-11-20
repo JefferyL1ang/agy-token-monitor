@@ -21,7 +21,15 @@ import { createHash, randomUUID } from 'node:crypto';
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:30
 // ============================================================================
-import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:39:50
+// Description: Drop direct mkdirSync/renameSync/writeFileSync imports now that
+// state and ledger writes go through shared writeAtomicJsonSafe() (B1).
+// ============================================================================
+import { existsSync, readFileSync, statSync } from 'node:fs';
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:39:50
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:45:00
 // Description: Import homedir to resolve user sidecar_sdk path portably.
@@ -79,6 +87,15 @@ import {
   parseTranscript,
   resolveConversationPaths,
   summarizeGlobalAndRecent,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:39:50
+// Description: Import shared Windows-safe writeAtomicJsonSafe() and syncWatchState() from parser.mjs (A3/B1).
+// ============================================================================
+  syncWatchState,
+  writeAtomicJsonSafe,
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:39:50
+// ============================================================================
 } from './parser.mjs';
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 11:42:00
@@ -149,7 +166,14 @@ function readPluginVersion(rootDir) {
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump fallback plugin version string to 0.5.0.
 // ============================================================================
-  return '0.5.0';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump fallback plugin version string to 0.5.1.
+// ============================================================================
+  return '0.5.1';
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -664,37 +688,35 @@ let stateDirty = false;
 let lastSavedMs = 0;
 let lastLedgerSavedMs = 0;
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:39:50
+// Description: Use shared writeAtomicJsonSafe() with Windows EPERM/EACCES/EBUSY
+// fallback + .tmp cleanup for state and ledger persistence (B1).
+// ============================================================================
 function writeAtomicJson(targetPath, payload) {
-  mkdirSync(stateDir, { recursive: true });
-  const tmpPath = `${targetPath}.tmp`;
-  writeFileSync(tmpPath, JSON.stringify(payload), 'utf-8');
-  renameSync(tmpPath, targetPath);
+  writeAtomicJsonSafe(targetPath, payload);
 }
 
 function persistStateNow() {
   try {
-    mkdirSync(stateDir, { recursive: true });
-    const tmpPath = `${statePath}.tmp`;
-    writeFileSync(
-      tmpPath,
-      JSON.stringify(
-        {
-          prefsSchemaVersion: PREFS_SCHEMA_VERSION,
-          stepEndTimes: state.stepEndTimes,
-          prefs: state.prefs,
-        },
-        null,
-        2,
-      ),
-      'utf-8',
+    writeAtomicJsonSafe(
+      statePath,
+      {
+        prefsSchemaVersion: PREFS_SCHEMA_VERSION,
+        stepEndTimes: state.stepEndTimes,
+        prefs: state.prefs,
+      },
+      { pretty: true },
     );
-    renameSync(tmpPath, statePath);
     stateDirty = false;
     lastSavedMs = Date.now();
   } catch (err) {
     console.error(`[monitor_pane] failed to persist state: ${err.message}`);
   }
 }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:39:50
+// ============================================================================
 
 if (loadedState.migrated) {
   persistStateNow();
@@ -990,6 +1012,19 @@ if (isValidConversationId(app.config.conversationId)) {
 const watcherLastStat = new Map(); // convId -> statKey
 const watcherSeenSteps = new Map(); // convId -> Set<step_index>
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:39:50
+// Description: Replace unbounded watchedConvIds growth with syncWatchedConvIds()
+// delegating to syncWatchState() so only active/non-ended conversations remain
+// watched and stale entries are pruned from watcherLastStat and watcherSeenSteps (A3).
+// ============================================================================
+function syncWatchedConvIds(nextIds) {
+  syncWatchState(watchedConvIds, watcherLastStat, watcherSeenSteps, nextIds);
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:39:50
+// ============================================================================
+
 function statSig(filePath) {
   if (!filePath) return { mtimeMs: 0, size: -1 };
   try {
@@ -1159,6 +1194,15 @@ const codeReloadTimer = !isStandalone
 // ============================================================================
 const SNAPSHOT_SYNC_BATCH = 25;
 const BG_LEDGER_BATCH = 25;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:39:50
+// Description: Throttle periodic streaming usage_ledger.json flushes to 8s
+// while retaining immediate flush on rebuild completion, resync, and shutdown (B1).
+// ============================================================================
+const LEDGER_PERSIST_THROTTLE_MS = 8000;
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:39:50
+// ============================================================================
 let bgLedgerTimer = null;
 let isShuttingDown = false;
 
@@ -1174,9 +1218,16 @@ function scheduleBackgroundLedgerPump() {
         maxRebuildBatch: BG_LEDGER_BATCH,
       });
       if (res.pendingRebuildCount > 0) {
-        if (usageLedger.isDirty() && Date.now() - lastLedgerSavedMs >= 2000) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:39:50
+// Description: Apply LEDGER_PERSIST_THROTTLE_MS (8s) during background rebuild batches (B1).
+// ============================================================================
+        if (usageLedger.isDirty() && Date.now() - lastLedgerSavedMs >= LEDGER_PERSIST_THROTTLE_MS) {
           persistLedgerNow();
         }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:39:50
+// ============================================================================
         prefsVersion += 1;
         scheduleBackgroundLedgerPump();
       } else {
@@ -1221,7 +1272,12 @@ app.api(
         scheduleBackgroundLedgerPump();
       }
 
-      if (usageLedger.isDirty() && Date.now() - lastLedgerSavedMs >= 2000) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:39:50
+// Description: Throttle streaming ledger persistence to LEDGER_PERSIST_THROTTLE_MS (8s)
+// and defer watchedConvIds update to syncWatchedConvIds() after currentRaw builds (A3/B1).
+// ============================================================================
+      if (usageLedger.isDirty() && Date.now() - lastLedgerSavedMs >= LEDGER_PERSIST_THROTTLE_MS) {
         persistLedgerNow();
       }
 
@@ -1230,8 +1286,9 @@ app.api(
         boundConversationId ||
         globalRaw.recentConversations[0]?.conversationId ||
         '';
-
-      if (targetConv) watchedConvIds.add(targetConv);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:39:50
+// ============================================================================
 
       let currentRaw = null;
       if (targetConv) {
@@ -1345,11 +1402,19 @@ app.api(
         prefsVersion += 1;
       });
 
-      if (currentRaw?._activeWatchIds) {
-        for (const id of currentRaw._activeWatchIds) {
-          if (isValidConversationId(id)) watchedConvIds.add(id);
-        }
-      }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:39:50
+// Description: Sync watchedConvIds to only current/bound conv + non-ended active
+// watch IDs and prune stale watcherLastStat/watcherSeenSteps entries (A3).
+// ============================================================================
+      syncWatchedConvIds([
+        boundConversationId,
+        targetConv,
+        ...(Array.isArray(currentRaw?._activeWatchIds) ? currentRaw._activeWatchIds : []),
+      ]);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:39:50
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 19:00:30

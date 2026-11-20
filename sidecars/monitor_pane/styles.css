@@ -18,14 +18,21 @@ Description: Introduce v0.5.0 design tokens (type scale, 4px spacing grid, radii
   --tm-border: var(--border, rgba(15, 23, 42, 0.11));
   --tm-card-border: var(--card-border, var(--border, rgba(15, 23, 42, 0.10)));
   --tm-accent-host: var(--accent, #e4eaf3);
-  --tm-primary: var(--primary, #0284c7);
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 15:35:27
+Description: Darken light-mode semantic tokens (--tm-primary/--tm-emerald/--tm-amber/--tm-rose/--tm-cyan) so all tinted badges and banners meet WCAG AA >= 4.5:1 contrast (B2).
+============================================================================ */
+  --tm-primary: var(--primary, #0369a1);
   --tm-primary-fg: var(--primary-foreground, #ffffff);
 
-  /* Semantic status & diagnostic accents (light mode) */
-  --tm-emerald: #059669;
-  --tm-amber: #d97706;
-  --tm-rose: #e11d48;
-  --tm-cyan: #0284c7;
+  /* Semantic status & diagnostic accents (light mode, WCAG AA >= 4.5:1 on soft tints) */
+  --tm-emerald: #046c4e;
+  --tm-amber: #a14a07;
+  --tm-rose: #be123c;
+  --tm-cyan: #0369a1;
+/* ============================================================================
+[MODIFIED END] 2026-11-20 15:35:27
+============================================================================ */
 /* ============================================================================
 [MODIFIED BEGIN] 2026-11-19 20:18:30
 Description: Add violet semantic accent token (--tm-violet) for light mode Side Questions UI.
@@ -1972,11 +1979,41 @@ Description: Tighten <=520px .data-table cell padding (--sp-1), --fs-xs th/td, 9
 [MODIFIED END] 2026-11-20 10:36:55
 ============================================================================ */
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 15:35:27
+Description: Give 5-column By Project table .project-cell wider responsive max-width than 8-column .model-cell (C1).
+============================================================================ */
+.data-table td.project-cell {
+  max-width: 200px;
+}
+
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 15:54:32
+Description: Style catch-all Ungrouped project row (.project-cell.is-ungrouped) muted with lighter weight (500, --tm-muted-fg) so it visually yields to named projects.
+============================================================================ */
+.data-table td.project-cell.is-ungrouped {
+  font-weight: 500;
+  color: var(--tm-muted-fg);
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-20 15:54:32
+============================================================================ */
+
+@media (max-width: 520px) {
+  .data-table td.project-cell {
+    max-width: 140px;
+  }
+}
+
 @media (min-width: 760px) {
-  .model-cell {
+  .model-cell,
+  .data-table td.project-cell {
     max-width: none;
   }
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-20 15:35:27
+============================================================================ */
 /* ============================================================================
 [MODIFIED END] 2026-11-20 10:23:58
 ============================================================================ */
@@ -2133,6 +2170,128 @@ Description: Widen Tab 2 KPI grid columns to 136px min, lock KPI tile/val clippi
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 22:06:37
+============================================================================ */
+
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 15:35:27
+Description: Style Tab 2 session filter bar (.list-filter-bar, .list-search-input, .list-filter-select, .list-filter-chip/.active, .list-filter-empty) with 28px controls and design tokens only (C2).
+============================================================================ */
+.list-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.list-search-input {
+  flex: 1 1 140px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--tm-border);
+  background: var(--tm-bg);
+  color: var(--tm-fg);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+
+.list-search-input::placeholder {
+  color: var(--tm-muted-fg);
+}
+
+.list-search-input:focus {
+  outline: none;
+  border-color: var(--tm-accent);
+  box-shadow: 0 0 0 2px var(--tm-accent-soft);
+}
+
+.list-filter-select {
+  flex: 0 1 150px;
+  min-width: 96px;
+  max-width: 100%;
+  height: 28px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--tm-border);
+  background: var(--tm-bg);
+  color: var(--tm-fg);
+  font-size: var(--fs-sm);
+  line-height: 26px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+
+.list-filter-select:focus {
+  outline: none;
+  border-color: var(--tm-accent);
+  box-shadow: 0 0 0 2px var(--tm-accent-soft);
+}
+
+.list-filter-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  height: 28px;
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--tm-border);
+  background: transparent;
+  color: var(--tm-muted-fg);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.list-filter-chip:hover {
+  background: var(--tm-hover);
+  color: var(--tm-fg);
+}
+
+.list-filter-chip:active {
+  transform: scale(0.97);
+}
+
+.list-filter-chip.active {
+  background: var(--tm-accent-soft);
+  border-color: color-mix(in srgb, var(--tm-accent) 36%, transparent);
+  color: var(--tm-accent);
+}
+
+.list-filter-chip.active:hover {
+  background: color-mix(in srgb, var(--tm-accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--tm-accent) 48%, transparent);
+}
+
+.list-filter-empty {
+  text-align: center;
+  padding: var(--sp-6) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--tm-inset);
+}
+
+@media (max-width: 340px) {
+  .list-search-input {
+    flex: 1 1 100%;
+  }
+
+  .list-filter-select {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-20 15:35:27
 ============================================================================ */
 
 .recent-list {
@@ -3416,6 +3575,21 @@ Description: Replace position:absolute / inline-block slot-roll geometry with in
   .trend-bar-fill {
     transition: none !important;
   }
+
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 15:35:27
+Description: Disable all 4 remaining infinite keyframe animations (status dot pulse, critical compact pulse, skeleton shimmer, update pill dot pulse) under prefers-reduced-motion (B4).
+============================================================================ */
+  .status-pill.status-generating .status-dot,
+  .status-pill.status-tools .status-dot,
+  .compact-btn.is-critical,
+  .skel-line,
+  .update-pill-dot {
+    animation: none !important;
+  }
+/* ============================================================================
+[MODIFIED END] 2026-11-20 15:35:27
+============================================================================ */
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 21:28:45
@@ -3862,11 +4036,17 @@ Description: Add v0.4.1 styles for per-model cache hit rate column (.data-table 
   font-weight: 500;
 }
 
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-20 15:35:27
+Description: Remove opacity dimming on .data-table .cache-hit-col.is-none so no-data cells meet WCAG AA >= 4.5:1 contrast in both light and dark themes (B2).
+============================================================================ */
 .data-table .cache-hit-col.is-none {
   color: var(--tm-muted-fg);
   font-weight: 500;
-  opacity: 0.72;
 }
+/* ============================================================================
+[MODIFIED END] 2026-11-20 15:35:27
+============================================================================ */
 
 /* ---------------- v0.4.1 Side Questions Card & Inspection Badges ---------------- */
 .kind-badge.side-question {

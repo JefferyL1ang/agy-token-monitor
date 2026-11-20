@@ -8,9 +8,11 @@ description: >-
   bilingual EN/ZH UI, selectable token units, session total token consumption and one-click session checkout receipt
   clipboard copy in Equivalent Cost, Current Session Side Questions independent summary card with Top-5 folding,
   fork-deduplicated incremental cost/tokens, one-click open in Antigravity, and in-panel inspection (`Back to Main Chat`),
-  per-model cache hit rate (`Hit %` / `命中率`) across both Tab 1 & Tab 2 model distribution tables, unified v0.5.0
-  visual design (consistent type/spacing/color tokens, single-color SVG icons, calmer status colors, borderless inset
-  panels, and per-model color dots), Top-5
+  per-model cache hit rate (`Hit %` / `命中率`) across both Tab 1 & Tab 2 model distribution tables, per-project
+  usage breakdown (`By Project` / `按项目分布` with Top-8 fold) and live in-memory session search/filter on Tab 2,
+  unified v0.5.1 visual design & performance polish (consistent type/spacing/color tokens with WCAG AA light-mode
+  contrast, single-color SVG icons, calmer status colors, borderless inset panels, per-model color dots, faster
+  big-Swarm refresh, lower idle CPU/disk usage, and keyboard accessibility), Top-5
   recent-active subagent/swarm folding and aggregation, daily official Google Markdoc model/pricing/FX auto-sync
   (Gemini 4 flat 1M context & 95% cache rates, cache v2) with Scheme A canonical model attribution & merging
   (`Gemini 4 Neon`, `Gemini 4 Hydrogen`, `Gemini 4 Carbon`, etc., following SQLite `displayModel` for
@@ -23,13 +25,13 @@ description: >-
   check or install plugin updates, compare token cost vs subscription price, or open the Token Monitor panel.
 ---
 
-# Token Monitor (v0.5.0 Beta)
+# Token Monitor (v0.5.1 Beta)
 
 The `agy-token-monitor` plugin provides a real-time, pure read-only Auxiliary Pane (`Token Monitor`) backed by the `monitor_pane` sidecar.
 
 ## What Token Monitor Tracks
 
-- **Unified Visual Design (v0.5.0)**: Uses a consistent type, spacing, and color token system across light and dark themes with calmer status semantics (neutral grey for idle, accent for live activity, amber reserved for warnings), single-color inline SVG icons replacing emoji, borderless inset surfaces for secondary metrics and lists, a clearer cost hero with dimmed currency and fractional digits, currency labels moved to model table headers, and per-model color dots matching the Pixel Office palette.
+- **Unified Visual Design, Performance & Project Insights (v0.5.1)**: Uses a consistent type, spacing, and WCAG AA light/dark color token system with calmer status semantics (neutral grey for idle, accent for live activity, amber reserved for warnings), single-color inline SVG icons replacing emoji, borderless inset surfaces, dimmed cost hero decimals, and per-model color dots matching the Pixel Office palette. Includes fast big-Swarm refresh, hidden-tab poll pausing, on-demand idle timers, Windows-safe atomic saves, full keyboard accessibility, a per-period **By Project (`按项目分布`)** 5-column breakdown card (Top-8 folding) in Tab 2, and a persistent in-memory search/model/active-only filter bar for the Tab 2 session list.
 
 - **Interactive Pixel Office (`像素工位`)**: Zero-dependency Canvas 2D workstation card (`pixel_office.js`) at the top of Tab 1 featuring a **`32×32` Main Cat** and **`24×24` Subagent/Swarm Cats** across **9 model-specific personas** (`Gemini 4 Carbon`, `Gemini 4 Neon`, `Gemini 4 Argon`, `Gemini 4 Hydrogen`, `Gemini 3.1 Pro`, `Gemini 3.8 Flash`, `Claude Opus 5.5`, `Claude Sonnet 5.5`, `GPT-OSS 120B`) plus an **`Auto` fallback cat** (`160` lazily baked sprites). Uses **round-scoped subagent filtering** (`selectRoundChildren`) so the studio shows only active/current-round subagents while working — or the last completed round plus alive/standing workers when idle — hiding older retired subagents from prior rounds while keeping full worker history in the breakdown table below. Enforces a **`1 Main + Max 8 Subagents`** workstation cap per displayed round with a clickable **`+N`** archive pill that expands & scrolls to the subagents/models card, drives live typing cadence from `tok/s` (`GENERATING`), floating tool bubbles (`RUNNING_TOOLS` via `activeToolLabel`), `IDLE`, and `ENDED` sleeping cats with `zZ` (pausing at `0 fps` when hidden, off-tab, or collapsed), offers a streamlined click-to-inspect `48×48` portrait badge showing the canonical model pill (without cat nicknames or trait descriptions), the raw model slug alongside the status line (e.g. `● 待命中   gemini-flash-worker-agy`), live stats (`Ctx`, `tok/s`, `Out`, Cost), & direct conversation navigation (`监控详情` / `打开会话` / `返回当前对话`), and persists a **Collapse/Expand (`收起` / `展开`)** header toggle (`pixelOfficeCollapsed`).
 - **Live Speed & Status (`tok/s`)**: Current generation state (`GENERATING` 100ms stopwatch, `RUNNING_TOOLS` progress, or `IDLE`), active model timeline, latest `tok/s`, weighted average, peak speed, and recent 20-step sparkline — computed using SQLite `completedAtMs` timestamps (avoiding streaming timestamp spikes) and scoped to the active model.

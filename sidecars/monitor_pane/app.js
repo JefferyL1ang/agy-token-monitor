@@ -71,6 +71,14 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:10
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:34:38
+// Description: Add v0.5.1 collapsed By Project display limit constant.
+// ============================================================================
+  const MAX_COLLAPSED_WORKSPACES = 8;
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:34:38
+// ============================================================================
 
   const state = {
     homeConvId: boundConvId,
@@ -183,6 +191,15 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:10
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:34:38
+// Description: Add Tab 2 top-section and session-list dirty signatures for A4/C2 memoization.
+// ============================================================================
+      globalTop: '',
+      globalList: '',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:34:38
+// ============================================================================
     },
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:07:46
@@ -238,6 +255,20 @@
     sideQuestionsScrollTop: 0,
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:10
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:34:38
+// Description: Add v0.5.1 state for on-demand stopwatch timer, modal focus return, By Project folding, and Tab 2 session filter bar persistence.
+// ============================================================================
+    stopwatchTimer: null,
+    modalReturnFocusEl: null,
+    workspacesExpanded: false,
+    globalSearchQuery: '',
+    globalModelFilter: '',
+    globalActiveOnly: false,
+    globalDom: null,
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:34:38
 // ============================================================================
   };
 
@@ -807,6 +838,27 @@
 // [MODIFIED END] 2026-11-20 10:19:50
 // ============================================================================
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:34:38
+// Description: Add v0.5.1 bilingual i18n keys for cache track tooltip (B6), By Project table (C1), and Tab 2 session search/filter bar (C2) (zh).
+// ============================================================================
+      'cache.trackTip': '缓存读取 {cached} / 未缓存输入 {uncached}',
+      'projects.title': '按项目分布 · {period}',
+      'projects.colProject': '项目',
+      'projects.colChats': '会话',
+      'projects.ungrouped': '未分组',
+      'projects.empty': '该周期内暂无项目用量记录',
+      'projects.expandMoreFooter': '展开其余 {rest} 个项目（共 {total} 个）',
+      'projects.collapseFooter': '收起至前 {shown} 个项目',
+      'global.searchPlaceholder': '搜索会话标题或项目...',
+      'global.searchAria': '搜索会话列表',
+      'global.filterAllModels': '全部模型',
+      'global.filterModelAria': '按模型筛选会话',
+      'global.filterActiveOnly': '只看进行中',
+      'global.filterEmpty': '没有符合筛选条件的会话',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:34:38
+// ============================================================================
+// ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:10
 // ============================================================================
     },
@@ -1368,6 +1420,27 @@
 // [MODIFIED END] 2026-11-20 10:19:50
 // ============================================================================
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:34:38
+// Description: Add v0.5.1 bilingual i18n keys for cache track tooltip (B6), By Project table (C1), and Tab 2 session search/filter bar (C2) (en).
+// ============================================================================
+      'cache.trackTip': 'Cache Read {cached} / Uncached {uncached}',
+      'projects.title': 'By Project · {period}',
+      'projects.colProject': 'Project',
+      'projects.colChats': 'Chats',
+      'projects.ungrouped': 'Ungrouped',
+      'projects.empty': 'No project usage in this period',
+      'projects.expandMoreFooter': 'Show {rest} more projects ({total} total)',
+      'projects.collapseFooter': 'Collapse to Top {shown} Projects',
+      'global.searchPlaceholder': 'Search chats or projects...',
+      'global.searchAria': 'Search sessions',
+      'global.filterAllModels': 'All Models',
+      'global.filterModelAria': 'Filter sessions by model',
+      'global.filterActiveOnly': 'Active only',
+      'global.filterEmpty': 'No sessions match the current filters',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:34:38
+// ============================================================================
+// ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:10
 // ============================================================================
     },
@@ -1487,10 +1560,22 @@
       langBtn.title = tip;
       langBtn.setAttribute('aria-label', tip);
     }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:38:42
+// Description: Clear dataset.btnSig when hydrating static [data-i18n] text so icon buttons re-mount SVG cleanly.
+// ============================================================================
     for (const node of document.querySelectorAll('[data-i18n]')) {
       const key = node.getAttribute('data-i18n');
-      if (key) node.textContent = t(key);
+      if (key) {
+        node.textContent = t(key);
+        if (node.dataset && 'btnSig' in node.dataset) {
+          delete node.dataset.btnSig;
+        }
+      }
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:38:42
+// ============================================================================
     for (const node of document.querySelectorAll('[data-i18n-title]')) {
       const key = node.getAttribute('data-i18n-title');
       if (key) node.title = t(key);
@@ -1666,6 +1751,14 @@
     receipt: 'M4 2.2h8v11.6l-1.6-1.1-1.6 1.1L7.2 12.7 5.6 13.8 4 12.7V2.2ZM6.2 5.6h3.6M6.2 8.2h3.6M6.2 10.6h2.2',
     compress: 'M3 5.5h10M3 10.5h10M8 1.8v2.6M6.2 2.8 8 4.6l1.8-1.8M8 14.2v-2.6M6.2 13.2 8 11.4l1.8 1.8',
     gear: 'M7 1.8h2l.3 1.3c.4.1.7.3 1 .5l1.1-.6 1.6 1.6-.6 1.1c.2.3.4.6.5 1l1.3.3v2l-1.3.3c-.1.4-.3.7-.5 1l.6 1.1-1.6 1.6-1.1-.6c-.3.2-.6.4-1 .5l-.3 1.3H7l-.3-1.3c-.4-.1-.7-.3-1-.5l-1.1.6L3 11.4l.6-1.1c-.2-.3-.4-.6-.5-1L1.8 9V7l1.3-.3c.1-.4.3-.7.5-1L3 4.6 4.6 3l1.1.6c.3-.2.6-.4 1-.5L7 1.8ZM8 5.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Z',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:38:42
+// Description: Add folder stroke icon for Tab 2 By Project (C1) card.
+// ============================================================================
+    folder: 'M2.2 4.2A1.2 1.2 0 0 1 3.4 3h3l1.3 1.5h4.9A1.2 1.2 0 0 1 13.8 5.7v6.1A1.2 1.2 0 0 1 12.6 13H3.4a1.2 1.2 0 0 1-1.2-1.2V4.2Z',
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:38:42
+// ============================================================================
     empty: 'M8 2.2a5.8 5.8 0 1 0 0 11.6A5.8 5.8 0 0 0 8 2.2ZM8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z',
   });
 
@@ -1725,15 +1818,25 @@
     });
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:34:38
+// Description: A5 — Skip redundant button DOM rebuilds in setIconButtonContent using dataset.btnSig.
+// ============================================================================
   function setIconButtonContent(btn, iconName, text, size = 12) {
     if (!btn) return;
     const label = String(text ?? '');
+    const sig = `${iconName}|${size}|${label}`;
+    if (btn.dataset && btn.dataset.btnSig === sig) return;
+    if (btn.dataset) btn.dataset.btnSig = sig;
     if (typeof btn.replaceChildren === 'function') {
       btn.replaceChildren(icon(iconName, size), document.createTextNode(label));
     } else {
       btn.textContent = label;
     }
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:34:38
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:30:56
 // ============================================================================
@@ -1773,6 +1876,15 @@
     state.cardRenderSigs.sideQuestions = '';
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:40
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:34:38
+// Description: Reset Tab 2 globalTop and globalList signatures in resetCardRenderSigs().
+// ============================================================================
+    state.cardRenderSigs.globalTop = '';
+    state.cardRenderSigs.globalList = '';
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:34:38
 // ============================================================================
   }
 
@@ -2570,9 +2682,24 @@
     panelCurr.classList.toggle('active', isCurr);
     panelGlobal.classList.toggle('hidden', isCurr);
     panelGlobal.classList.toggle('active', !isCurr);
-    if (!isCurr) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:38:42
+// Description: A4 & A5 — Render the newly activated tab on switch (with signature memoization) and sync stopwatch loop.
+// ============================================================================
+    if (isCurr) {
+      if (state.snapshot) {
+        renderCurrentTab(state.snapshot);
+      }
+    } else {
+      if (state.snapshot) {
+        renderGlobalTab(state.snapshot);
+      }
       syncTrendScrollPosition();
     }
+    syncStopwatchLoop();
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:38:42
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 11:49:06
 // Description: Redraw Pixel Office on returning to Current tab and sync animation loop across tab switches.
@@ -3280,10 +3407,17 @@
 // [MODIFIED END] 2026-11-18 15:27:50
 // ============================================================================
       lastEtag = '';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: A4 — Reset render signatures and re-render only the active tab after manual pricing sync.
+// ============================================================================
+      resetCardRenderSigs();
       if (state.snapshot) {
-        renderCurrentTab(state.snapshot);
-        renderGlobalTab(state.snapshot);
+        renderActiveTab(state.snapshot);
       }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
+// ============================================================================
       if (data?.ok) {
         const discoveredCount = num(data?.pricingSync?.discoveredCount, 0);
         showToast(
@@ -3384,12 +3518,19 @@
 // [MODIFIED BEGIN] 2026-11-20 10:38:48
 // Description: Bump fallback app version from 0.4.1 to 0.5.0.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:55:43
+// Description: Bump fallback app version from 0.5.0 to 0.5.1.
+// ============================================================================
     const raw =
       state.snapshot?.appVersion ||
       state.snapshot?.updateStatus?.currentVersion ||
       state.activeUpdateStatus?.currentVersion ||
-      '0.5.0';
-    return String(raw).trim().replace(/^[vV]/, '') || '0.5.0';
+      '0.5.1';
+    return String(raw).trim().replace(/^[vV]/, '') || '0.5.1';
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:55:43
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:38:48
 // ============================================================================
@@ -3812,9 +3953,53 @@
     syncUpdateModalControls();
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:38:42
+// Description: B5 — Add modal focus capture/restore and Tab focus-trap helpers for accessible dialogs.
+// ============================================================================
+  function captureModalReturnFocus() {
+    const active = typeof document !== 'undefined' ? document.activeElement : null;
+    state.modalReturnFocusEl = active && typeof active.focus === 'function' ? active : null;
+  }
+
+  function restoreModalReturnFocus(fallbackId = '') {
+    const target =
+      (state.modalReturnFocusEl && state.modalReturnFocusEl.isConnected !== false ? state.modalReturnFocusEl : null) ||
+      (fallbackId ? $(fallbackId) : null);
+    state.modalReturnFocusEl = null;
+    if (target && typeof target.focus === 'function') {
+      try {
+        target.focus();
+      } catch {
+        // Ignore focus errors in headless environments
+      }
+    }
+  }
+
+  function trapModalTabKey(modalEl, event) {
+    if (!modalEl || typeof modalEl.querySelectorAll !== 'function') return;
+    const focusables = Array.from(
+      modalEl.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+    ).filter((node) => !node.classList?.contains('hidden') && node.offsetParent !== null);
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey) {
+      if (active === first || !modalEl.contains?.(active)) {
+        event.preventDefault();
+        last.focus();
+      }
+    } else if (active === last || !modalEl.contains?.(active)) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   function openUpdateModal(customStatus = null) {
     const us = customStatus || getEffectiveUpdateStatus();
     if (!us) return;
+    captureModalReturnFocus();
     state.activeUpdateStatus = us;
     state.updateModalOpen = true;
     if (!state.updateApplying) {
@@ -3829,7 +4014,11 @@
     if (state.updateApplying) return;
     state.updateModalOpen = false;
     $('update-modal')?.classList.add('hidden');
+    restoreModalReturnFocus('btn-update-pill');
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:38:42
+// ============================================================================
 
   async function handleSkipUpdateClick() {
     if (state.updateApplying) return;
@@ -4246,6 +4435,10 @@
       : t('receipt.copyBtn');
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:38:42
+// Description: B5 — Capture trigger focus when opening #receipt-modal and restore focus on close.
+// ============================================================================
   function openReceiptModal() {
     const current = state.snapshot?.current;
     const receiptApi = window.TokenMonitorReceipt;
@@ -4253,6 +4446,7 @@
       showToast(t('receipt.unavailableToast'), 'warn');
       return;
     }
+    captureModalReturnFocus();
     state.receiptScope = current.receipt?.today?.hasData ? 'today' : 'all';
     state.receiptModalOpen = true;
     renderReceiptModal();
@@ -4264,7 +4458,11 @@
   function closeReceiptModal() {
     state.receiptModalOpen = false;
     $('receipt-modal')?.classList.add('hidden');
+    restoreModalReturnFocus('btn-checkout');
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:38:42
+// ============================================================================
 
   async function handleCopyReceiptClick() {
     if (state.receiptCopying) return;
@@ -4545,13 +4743,62 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:29:41
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: A5 — Sync on-demand stopwatch timer when header status changes.
+// ============================================================================
+    syncStopwatchLoop();
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
+// ============================================================================
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:15:00
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:38:42
+// Description: A5 — Run the 100ms live stopwatch interval only when live timer targets exist and self-stop at idle.
+// ============================================================================
+  function hasLiveStopwatchTargets() {
+    if (document.hidden) return false;
+    const current = state.snapshot?.current;
+    if (!current) return false;
+    if (current.status === 'GENERATING' && current.generatingSinceMs) return true;
+    if (state.activeTab !== 'current') return false;
+    if (
+      Array.isArray(current.children) &&
+      current.children.some((c) => !c.killed && c.status === 'GENERATING' && c.generatingSinceMs)
+    ) {
+      return true;
+    }
+    if (
+      Array.isArray(current.sideQuestions) &&
+      current.sideQuestions.some((sq) => sq.status === 'GENERATING' && sq.generatingSinceMs)
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  function syncStopwatchLoop() {
+    if (!hasLiveStopwatchTargets()) {
+      if (state.stopwatchTimer) {
+        clearInterval(state.stopwatchTimer);
+        state.stopwatchTimer = null;
+      }
+      return;
+    }
+    if (!state.stopwatchTimer) {
+      state.stopwatchTimer = setInterval(tickLiveStopwatch, STOPWATCH_INTERVAL_MS);
+    }
+  }
+
   function tickLiveStopwatch() {
-    if (document.hidden) return;
+    if (!hasLiveStopwatchTargets()) {
+      syncStopwatchLoop();
+      return;
+    }
     const current = state.snapshot?.current;
     if (current?.status === 'GENERATING' && current?.generatingSinceMs) {
       const nextText = formatStatusText(current);
@@ -4561,23 +4808,21 @@
       }
     }
 
-    const childTimers = document.querySelectorAll('[data-child-since]');
-    for (const node of childTimers) {
-      const since = Number(node.dataset.childSince);
-      if (!Number.isFinite(since) || since <= 0) continue;
-// ============================================================================
-// [MODIFIED BEGIN] 2026-11-20 10:22:23
-// Description: Update child timer text without emoji prefix (sparkle SVG sits beside timer span).
-// ============================================================================
-      const next = fmtElapsed(since);
-      if (node.textContent !== next) {
-        node.textContent = next;
+    if (state.activeTab === 'current') {
+      const childTimers = document.querySelectorAll('[data-child-since]');
+      for (const node of childTimers) {
+        const since = Number(node.dataset.childSince);
+        if (!Number.isFinite(since) || since <= 0) continue;
+        const next = fmtElapsed(since);
+        if (node.textContent !== next) {
+          node.textContent = next;
+        }
       }
-// ============================================================================
-// [MODIFIED END] 2026-11-20 10:22:23
-// ============================================================================
     }
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:38:42
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:15:00
@@ -5252,7 +5497,14 @@
 // ============================================================================
         }),
       ),
-      el('div', { className: 'cache-seg-track', title: `Cache Read ${fmtInt(cacheRead)} / Uncached ${fmtInt(uncached)}` },
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:38:42
+// Description: B6 — Localize cache segment track hover tooltip via cache.trackTip.
+// ============================================================================
+      el('div', { className: 'cache-seg-track', title: t('cache.trackTip', { cached: fmtInt(cacheRead), uncached: fmtInt(uncached) }) },
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:38:42
+// ============================================================================
         applySmoothBarSize(el('div', { className: 'cache-seg-hit' }), 'cur:cache:barHit', 'width', hitBarPct),
         applySmoothBarSize(el('div', { className: 'cache-seg-miss' }), 'cur:cache:barMiss', 'width', missBarPct),
       ),
@@ -5330,10 +5582,16 @@
       state.snapshot.prefs.modelSortBy = state.modelSortBy;
       state.snapshot.prefs.modelSortDir = state.modelSortDir;
     }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: A4 — Render only the active tab on model sort toggle (inactive tab updates via signature on tab switch).
+// ============================================================================
     if (state.snapshot) {
-      renderCurrentTab(state.snapshot);
-      renderGlobalTab(state.snapshot);
+      renderActiveTab(state.snapshot);
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
+// ============================================================================
     patchPrefs({
       modelSortBy: state.modelSortBy,
       modelSortDir: state.modelSortDir,
@@ -5729,12 +5987,21 @@
 // [MODIFIED END] 2026-11-17 21:28:45
 // ============================================================================
                 }),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:38:42
+// Description: B6 — Align child row Open Chat button with v0.5.0 .btn-soft + external stroke SVG icon.
+// ============================================================================
                 el('button', {
                   type: 'button',
-                  className: 'mini-btn',
-                  textContent: t('childrenModels.openChatBtn'),
+                  className: 'mini-btn btn-soft',
                   onClick: () => openConversationInHost(ch.conversationId),
-                }),
+                },
+                  icon('external', 12),
+                  t('childrenModels.openChatBtn'),
+                ),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:38:42
+// ============================================================================
               ),
             ),
           );
@@ -6287,9 +6554,22 @@
     }
   }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:38:42
+// Description: A6 — Redraw idle Pixel Office at 3s frame cadence (tick += 6) and stop loop under prefers-reduced-motion.
+// ============================================================================
+  function isReducedMotionPreferred() {
+    return Boolean(
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    );
+  }
+
   function syncPixelOfficeLoop() {
     const shouldRun = Boolean(
       !document.hidden &&
+      !isReducedMotionPreferred() &&
       state.activeTab === 'current' &&
       !state.pixelOfficeCollapsed &&
       state.snapshot?.current &&
@@ -6300,21 +6580,26 @@
       stopPixelOfficeLoop();
       return;
     }
-    const nextMs = state.pixelOfficeModel?.hasActive ? 110 : 500;
+    const isActive = Boolean(state.pixelOfficeModel?.hasActive);
+    const nextMs = isActive ? 110 : 3000;
     if (state.pixelOfficeTimer && state.pixelOfficeIntervalMs === nextMs) {
       return;
     }
     stopPixelOfficeLoop();
     state.pixelOfficeIntervalMs = nextMs;
+    const tickStep = isActive ? 1 : 6;
     state.pixelOfficeTimer = setInterval(() => {
-      if (document.hidden || state.activeTab !== 'current' || state.pixelOfficeCollapsed) {
+      if (document.hidden || isReducedMotionPreferred() || state.activeTab !== 'current' || state.pixelOfficeCollapsed) {
         stopPixelOfficeLoop();
         return;
       }
-      state.pixelOfficeTick = (state.pixelOfficeTick + 1) & 0x7fffffff;
+      state.pixelOfficeTick = (state.pixelOfficeTick + tickStep) & 0x7fffffff;
       drawPixelOfficeFrame();
     }, nextMs);
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:38:42
+// ============================================================================
 
   function expandChildrenFromPixelOffice() {
     state.childrenExpanded = true;
@@ -6926,9 +7211,34 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:21:00
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: A5 — Sync on-demand stopwatch timer after rendering Tab 1 cards.
+// ============================================================================
+    syncStopwatchLoop();
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
+// ============================================================================
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:15:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: A4 — Helper to render only the currently visible tab (Tab 1 or Tab 2).
+// ============================================================================
+  function renderActiveTab(snap) {
+    if (!snap) return;
+    if (state.activeTab === 'current') {
+      renderCurrentTab(snap);
+    } else if (state.isDraggingTrend) {
+      state.pendingGlobalRerender = true;
+    } else {
+      renderGlobalTab(snap);
+    }
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
 // ============================================================================
 
 // ============================================================================
@@ -7058,9 +7368,82 @@
     }
   }
 
-  // ---------------- Render Tab 2: Multi-Period Usage Statistics ----------------
-  function renderGlobalTab(snap) {
-    const container = $('global-content');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:43:31
+// Description: A4 & C2 — Add persistent Tab 2 DOM container helper (ensureGlobalDom), dirty-signature builders (buildGlobalTopSig / buildGlobalListSig), and in-memory session-list filter helpers so typing in the search box never loses focus/caret/value across polls.
+// ============================================================================
+  function ensureGlobalDom(container) {
+    if (!container) return null;
+    const isMounted = Boolean(
+      state.globalDom &&
+      state.globalDom.rootContainer === container &&
+      (typeof container.contains === 'function'
+        ? container.contains(state.globalDom.recentCard)
+        : Array.isArray(container.children) && container.children.includes(state.globalDom.recentCard)),
+    );
+    if (isMounted) return state.globalDom;
+
+    const topStack = el('div', { className: 'view-stack' });
+    const recentHead = el('div', { className: 'card-head' });
+    const searchInput = el('input', {
+      type: 'search',
+      className: 'list-search-input',
+      autocomplete: 'off',
+      spellcheck: 'false',
+    });
+    searchInput.value = state.globalSearchQuery;
+
+    const modelSelect = el('select', { className: 'list-filter-select' });
+    const activeChip = el('button', {
+      type: 'button',
+      className: `list-filter-chip${state.globalActiveOnly ? ' active' : ''}`,
+      'aria-pressed': String(state.globalActiveOnly),
+    });
+
+    const filterBar = el('div', { className: 'list-filter-bar' }, searchInput, modelSelect, activeChip);
+    const recentListWrap = el('div', { className: 'recent-list-wrap' });
+    const recentCard = el('article', { className: 'card' }, recentHead, filterBar, recentListWrap);
+
+    const triggerListFilter = () => {
+      const snap = state.snapshot || state.globalLastSnap;
+      if (snap) renderGlobalSessionListSection(dom, snap);
+    };
+
+    searchInput.addEventListener('input', () => {
+      state.globalSearchQuery = String(searchInput.value || '');
+      triggerListFilter();
+    });
+    modelSelect.addEventListener('change', () => {
+      state.globalModelFilter = String(modelSelect.value || '');
+      triggerListFilter();
+    });
+    activeChip.addEventListener('click', () => {
+      state.globalActiveOnly = !state.globalActiveOnly;
+      activeChip.classList.toggle('active', state.globalActiveOnly);
+      activeChip.setAttribute('aria-pressed', String(state.globalActiveOnly));
+      triggerListFilter();
+    });
+
+    const dom = {
+      rootContainer: container,
+      topStack,
+      recentCard,
+      recentHead,
+      filterBar,
+      searchInput,
+      modelSelect,
+      activeChip,
+      recentListWrap,
+      modelOptionsSig: '',
+    };
+    state.globalDom = dom;
+    state.cardRenderSigs.globalTop = '';
+    state.cardRenderSigs.globalList = '';
+    container.replaceChildren(topStack, recentCard);
+    return dom;
+  }
+
+  function resolveGlobalPeriodContext(snap) {
     const g = snap?.global || {};
     const currency = snap?.prefs?.currency || 'USD';
     const periods = g.periods || {};
@@ -7088,6 +7471,7 @@
       trendGranularity: 'hour',
       series: [],
       byModel: Array.isArray(g.todayByModel) ? g.todayByModel : [],
+      byWorkspace: Array.isArray(g.todayByWorkspace) ? g.todayByWorkspace : [],
       topConversations: [],
       subscription: null,
     };
@@ -7097,6 +7481,364 @@
     const periodTitle = getPeriodLabel(effectiveRangeKey);
     const recent = Array.isArray(g.recentConversations) ? g.recentConversations : [];
     const viewingId = snap?.current?.conversationId || selectedConv;
+    return { g, currency, periods, periodKey, period, effectiveRangeKey, periodTitle, recent, viewingId };
+  }
+
+  function buildGlobalTopSig(ctx) {
+    const { g, currency, periodKey, effectiveRangeKey, period } = ctx;
+    const sub = period.subscription || null;
+    const series = Array.isArray(period.series) ? period.series : [];
+    const byModel = Array.isArray(period.byModel) ? period.byModel : [];
+    const byWs = Array.isArray(period.byWorkspace) ? period.byWorkspace : [];
+    return JSON.stringify([
+      state.lang,
+      state.tokenUnit,
+      currency,
+      periodKey,
+      effectiveRangeKey,
+      state.trendMetric,
+      state.modelSortBy,
+      state.modelSortDir,
+      state.workspacesExpanded,
+      Boolean(g.ledgerSync?.syncing || g.ledgerSync?.pendingCount),
+      period.startDate || '',
+      period.endDate || '',
+      num(period.spanDaysCount, 0),
+      num(period.activeDaysCount, 0),
+      num(period.conversationsCount, 0),
+      num(period.archivedConversationsCount, 0),
+      num(period.stepsCount, 0),
+      num(period.inputTokens, 0),
+      num(period.cacheReadTokens, 0),
+      num(period.outputTokens, 0),
+      num(period.totalTokens, 0),
+      num(period.cacheHitRatePct, 0),
+      num(period.costActual, 0),
+      num(period.avgDailyCost, 0),
+      num(period.avgDailyTokens, 0),
+      period.trendGranularity || '',
+      sub
+        ? [
+            sub.planId,
+            sub.planLabel,
+            Boolean(sub.isAutoDetected),
+            num(sub.monthlyFee, 0),
+            num(sub.proratedFee, 0),
+            num(sub.tokenCost, 0),
+            num(sub.netSavings, 0),
+            num(sub.roiMultiplier, 0),
+            num(sub.proratedDays, 0),
+            num(sub.paybackPct, 0),
+            Boolean(sub.isPaidOff),
+          ]
+        : null,
+      series.map((b) => [
+        b.key || b.label || '',
+        b.rangeText || '',
+        num(b.costActual, 0),
+        num(b.totalTokens, 0),
+        num(b.outputTokens, 0),
+      ]),
+      byModel.map((r) => [
+        r.profileId || r.model || '',
+        r.model || '',
+        Array.isArray(r.rawModels) ? r.rawModels.join(',') : '',
+        num(r.conversationsCount, 0),
+        num(r.inputTokens, 0),
+        num(r.cacheReadTokens, 0),
+        num(r.outputTokens, 0),
+        num(r.totalTokens, 0),
+        r.cacheHitRatePct ?? '',
+        num(r.costActual, 0),
+      ]),
+      byWs.map((w) => [
+        w.workspace || '',
+        num(w.conversationsCount, 0),
+        num(w.inputTokens, 0),
+        num(w.cacheReadTokens, 0),
+        num(w.outputTokens, 0),
+        num(w.totalTokens, 0),
+        w.cacheHitRatePct ?? '',
+        num(w.costActual, 0),
+      ]),
+    ]);
+  }
+
+  function renderGlobalSessionListSection(dom, snap, preCtx = null) {
+    if (!dom) return;
+    const ctx = preCtx || resolveGlobalPeriodContext(snap);
+    const { currency, period, periodTitle, recent, viewingId } = ctx;
+    const listMode = state.convListMode === 'top' ? 'top' : 'recent';
+    const topConvs = Array.isArray(period.topConversations) ? period.topConversations : [];
+    const listItems = listMode === 'top' ? topConvs : recent;
+
+    // Keep persistent filter controls' labels & options synchronized in place without destroying DOM/focus.
+    const nextPlaceholder = t('global.searchPlaceholder');
+    if (dom.searchInput.placeholder !== nextPlaceholder) {
+      dom.searchInput.placeholder = nextPlaceholder;
+    }
+    const nextSearchAria = t('global.searchAria');
+    if (dom.searchInput.getAttribute('aria-label') !== nextSearchAria) {
+      dom.searchInput.setAttribute('aria-label', nextSearchAria);
+    }
+    if (document.activeElement !== dom.searchInput && dom.searchInput.value !== state.globalSearchQuery) {
+      dom.searchInput.value = state.globalSearchQuery;
+    }
+
+    const nextModelAria = t('global.filterModelAria');
+    if (dom.modelSelect.getAttribute('aria-label') !== nextModelAria) {
+      dom.modelSelect.setAttribute('aria-label', nextModelAria);
+    }
+    const modelSet = new Set();
+    for (const item of listItems) {
+      modelSet.add(String(item?.activeModel || 'Auto'));
+    }
+    if (state.globalModelFilter) {
+      modelSet.add(state.globalModelFilter);
+    }
+    const sortedModels = Array.from(modelSet).sort((a, b) => a.localeCompare(b));
+    const nextModelOptSig = `${state.lang}|${sortedModels.join('\u0001')}`;
+    if (dom.modelOptionsSig !== nextModelOptSig) {
+      dom.modelOptionsSig = nextModelOptSig;
+      const optAll = el('option', { value: '', textContent: t('global.filterAllModels') });
+      optAll.value = '';
+      const modelOpts = sortedModels.map((m) => {
+        const opt = el('option', { value: m, textContent: m });
+        opt.value = m;
+        return opt;
+      });
+      dom.modelSelect.replaceChildren(optAll, ...modelOpts);
+      dom.modelSelect.value = state.globalModelFilter;
+    } else if (dom.modelSelect.value !== state.globalModelFilter) {
+      dom.modelSelect.value = state.globalModelFilter;
+    }
+
+    const nextActiveLabel = t('global.filterActiveOnly');
+    if (dom.activeChip.textContent !== nextActiveLabel) {
+      dom.activeChip.textContent = nextActiveLabel;
+    }
+    dom.activeChip.classList.toggle('active', state.globalActiveOnly);
+    dom.activeChip.setAttribute('aria-pressed', String(state.globalActiveOnly));
+
+    const queryLower = state.globalSearchQuery.trim().toLowerCase();
+    const modelFilter = state.globalModelFilter;
+    const activeOnly = state.globalActiveOnly;
+    const hasActiveFilter = Boolean(queryLower || modelFilter || activeOnly);
+
+    dom.filterBar.classList.toggle('hidden', listItems.length === 0 && !hasActiveFilter);
+
+    const listSig = JSON.stringify([
+      state.lang,
+      state.tokenUnit,
+      currency,
+      listMode,
+      periodTitle,
+      viewingId || '',
+      queryLower,
+      modelFilter,
+      activeOnly,
+      listItems.map((item) => [
+        item.conversationId || '',
+        item.onDisk !== false,
+        Boolean(item.isToday),
+        item.status || 'IDLE',
+        item.activeModel || 'Auto',
+        item.workspace || '',
+        item.title || '',
+        num(item.updatedAtMs, 0),
+        num(item.contextTotal, 0),
+        num(item.latestTokPerSec, 0),
+        num(item.outputTokens, 0),
+        num(item.totalTokens, 0),
+        num(item.costActual, 0),
+      ]),
+    ]);
+    if (dom.recentListWrap.childElementCount > 0 && state.cardRenderSigs.globalList === listSig) {
+      return;
+    }
+    state.cardRenderSigs.globalList = listSig;
+
+    const filteredItems = hasActiveFilter
+      ? listItems.filter((item) => {
+          const onDisk = item.onDisk !== false;
+          const itemStatus = item.status || 'IDLE';
+          if (activeOnly && (!onDisk || (itemStatus !== 'GENERATING' && itemStatus !== 'RUNNING_TOOLS'))) {
+            return false;
+          }
+          const itemModel = String(item.activeModel || 'Auto');
+          if (modelFilter && itemModel !== modelFilter) {
+            return false;
+          }
+          if (queryLower) {
+            const locTitle = localizeConvTitle(item.title) || t('common.sessionPrefix', { id: shortId(item.conversationId) });
+            const ws = workspaceBase(item.workspace);
+            const hay = `${locTitle}\n${item.title || ''}\n${ws}\n${item.workspace || ''}\n${itemModel}\n${item.conversationId || ''}`.toLowerCase();
+            if (!hay.includes(queryLower)) return false;
+          }
+          return true;
+        })
+      : listItems;
+
+    const countDisplay = hasActiveFilter
+      ? `${filteredItems.length}/${listItems.length}`
+      : listItems.length;
+
+    const listToggle = el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('global.convSortAria') },
+      el('button', {
+        type: 'button',
+        className: `seg-btn${listMode === 'recent' ? ' active' : ''}`,
+        textContent: t('global.sortRecent'),
+        onClick: () => {
+          if (state.convListMode !== 'recent') {
+            state.convListMode = 'recent';
+            const s = state.snapshot || state.globalLastSnap;
+            if (s) renderGlobalSessionListSection(dom, s);
+          }
+        },
+      }),
+      el('button', {
+        type: 'button',
+        className: `seg-btn${listMode === 'top' ? ' active' : ''}`,
+        textContent: t('global.sortTop'),
+        onClick: () => {
+          if (state.convListMode !== 'top') {
+            state.convListMode = 'top';
+            const s = state.snapshot || state.globalLastSnap;
+            if (s) renderGlobalSessionListSection(dom, s);
+          }
+        },
+      }),
+    );
+
+    dom.recentHead.replaceChildren(
+      el('div', { className: 'card-title' },
+        icon('receipt', 14, 'card-title-icon'),
+        listMode === 'top'
+          ? t('global.topConvsTitle', { period: periodTitle, count: countDisplay })
+          : t('global.recentConvsTitle', { count: countDisplay }),
+      ),
+      listToggle,
+    );
+
+    const listBodyNode = filteredItems.length > 0
+      ? el('div', { className: 'recent-list' },
+          filteredItems.map((item) => {
+            const onDisk = item.onDisk !== false;
+            const isSelected = onDisk && viewingId && item.conversationId === viewingId;
+            const title = localizeConvTitle(item.title) || t('common.sessionPrefix', { id: shortId(item.conversationId) });
+            const ws = workspaceBase(item.workspace);
+            const itemStatus = item.status || 'IDLE';
+            const itemTotalTok = num(item.totalTokens, num(item.outputTokens, 0));
+
+            const rowProps = {
+              className: `recent-item${isSelected ? ' is-selected' : ''}${onDisk ? '' : ' is-archived'}`,
+              title: `${title}\n${item.workspace || ''}\n${item.conversationId}`,
+            };
+            if (onDisk) {
+              rowProps.role = 'button';
+              rowProps.tabIndex = 0;
+              rowProps.onClick = () => selectConversation(item.conversationId);
+              rowProps.onKeyDown = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  selectConversation(item.conversationId);
+                }
+              };
+            }
+
+            return el('div', rowProps,
+              el('div', { className: 'recent-top' },
+                el('div', { className: 'recent-title-wrap' },
+                  !onDisk
+                    ? el('span', { className: 'archived-pill', textContent: t('global.badgeArchived') })
+                    : item.isToday
+                      ? el('span', { className: 'today-pill', textContent: t('global.badgeToday') })
+                      : null,
+                  el('span', { className: 'recent-title', textContent: title }),
+                ),
+                onDisk
+                  ? el('button', {
+                      type: 'button',
+                      className: 'mini-btn btn-soft',
+                      onClick: (e) => {
+                        e.stopPropagation();
+                        openConversationInHost(item.conversationId);
+                      },
+                      onKeyDown: (e) => {
+                        e.stopPropagation();
+                      },
+                    },
+                      icon('external', 12),
+                      t('global.openChat'),
+                    )
+                  : null,
+              ),
+              el('div', { className: 'recent-meta tabular-nums' },
+                el('div', { className: 'recent-stats' },
+                  onDisk
+                    ? el('span', { className: `child-status ${itemStatus}` },
+                        itemStatus === 'GENERATING'
+                          ? icon('sparkle', 12)
+                          : itemStatus === 'RUNNING_TOOLS'
+                            ? icon('wrench', 12)
+                            : null,
+                        itemStatus === 'GENERATING'
+                          ? t('global.itemGenerating')
+                          : itemStatus === 'RUNNING_TOOLS'
+                            ? t('global.itemTools')
+                            : t('global.itemIdle'),
+                      )
+                    : null,
+                  el('span', null,
+                    createModelDot(item.activeModel),
+                    ' ',
+                    item.activeModel || 'Auto',
+                  ),
+                  ws ? el('span', { textContent: ws }) : null,
+                  el('span', { textContent: fmtRelTime(item.updatedAtMs) }),
+                ),
+                el('div', { className: 'recent-stats' },
+                  onDisk ? el('span', { title: fmtInt(item.contextTotal), textContent: `Ctx ${fmtTokens(item.contextTotal)}` }) : null,
+                  onDisk ? el('span', { textContent: `${fmtRate(item.latestTokPerSec)} tok/s` }) : null,
+                  el('span', { title: fmtInt(item.outputTokens), textContent: `Out ${fmtTokens(item.outputTokens)}` }),
+                  el('span', { title: fmtInt(itemTotalTok), textContent: `${t('global.itemTotalPrefix')} ${fmtTokens(itemTotalTok)}` }),
+                  el('span', { textContent: fmtCostCompact(item.costActual, currency) }),
+                ),
+              ),
+            );
+          }),
+        )
+      : el('div', {
+          className: listItems.length > 0 ? 'empty-inline list-filter-empty' : 'empty-inline',
+          textContent: listItems.length > 0 ? t('global.filterEmpty') : t('global.convsEmpty'),
+        });
+
+    dom.recentListWrap.replaceChildren(listBodyNode);
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:43:31
+// ============================================================================
+
+  // ---------------- Render Tab 2: Multi-Period Usage Statistics ----------------
+  function renderGlobalTab(snap) {
+    const container = $('global-content');
+    if (!container) return;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:43:31
+// Description: A4 — Mount persistent Tab 2 DOM skeleton and skip rebuilding upper Tab 2 cards when globalTop signature is unchanged.
+// ============================================================================
+    state.globalLastSnap = snap;
+    const dom = ensureGlobalDom(container);
+    if (!dom) return;
+    const ctx = resolveGlobalPeriodContext(snap);
+    const { g, currency, periodKey, period, effectiveRangeKey, periodTitle } = ctx;
+    const topSig = buildGlobalTopSig(ctx);
+    const needTopRender = dom.topStack.childElementCount === 0 || state.cardRenderSigs.globalTop !== topSig;
+    if (needTopRender) {
+      state.cardRenderSigs.globalTop = topSig;
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:43:31
+// ============================================================================
 
     // 1. Period Switcher Bar
     const periodDefs = [
@@ -7120,7 +7862,9 @@
             if (state.globalPeriod !== d.key) {
               state.globalPeriod = d.key;
               state.selectedSeriesIdx = null;
-              if (state.snapshot) renderGlobalTab(state.snapshot);
+              state.workspacesExpanded = false;
+              const s = state.snapshot || state.globalLastSnap;
+              if (s) renderGlobalTab(s);
             }
           },
         })),
@@ -7272,10 +8016,17 @@
             const unitSelect = $('pref-token-unit');
             if (unitSelect) unitSelect.value = u.key;
             if (state.snapshot?.prefs) state.snapshot.prefs.tokenUnit = u.key;
-            if (state.snapshot) {
-              renderCurrentTab(state.snapshot);
-              renderGlobalTab(state.snapshot);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:43:31
+// Description: A4 — Re-render only the active tab on token unit toggle (inactive tab updates on switch via cleared sigs).
+// ============================================================================
+            const s = state.snapshot || state.globalLastSnap;
+            if (s) {
+              renderActiveTab(s);
             }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:43:31
+// ============================================================================
             patchPrefs({ tokenUnit: u.key });
           }
         },
@@ -7497,23 +8248,40 @@
             const hPct = v > 0 ? Math.min(100, Math.max(5, Math.round((v / axisMax) * 100))) : 3;
             const isZero = v <= 0;
             const isSelected = idx === activeIdx;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:43:31
+// Description: B7 — Sync Tab 2 trend detail strip on keyboard focus and allow clicking the pinned bar again to unpin back to the default latest bucket.
+// ============================================================================
             const barBtn = el('button', {
               type: 'button',
               className: `trend-col${isWeekly ? ' is-weekly' : ''}${isZero ? ' is-zero' : ''}${isSelected ? ' is-selected' : ''}`,
+              'aria-pressed': String(isSelected),
               title: formatBucketDetail(bucket),
               onMouseEnter: () => {
                 if (!state.isDraggingTrend) {
                   detailStrip.textContent = formatBucketDetail(bucket);
                 }
               },
-              onClick: () => {
-                state.selectedSeriesIdx = idx;
+              onFocus: () => {
                 detailStrip.textContent = formatBucketDetail(bucket);
+              },
+              onClick: () => {
+                const nextIdx = state.selectedSeriesIdx === idx ? null : idx;
+                state.selectedSeriesIdx = nextIdx;
+                const effectiveIdx = nextIdx !== null ? nextIdx : defaultActiveIdx;
+                detailStrip.textContent = effectiveIdx >= 0
+                  ? formatBucketDetail(series[effectiveIdx])
+                  : t('global.trendEmptyDetail');
                 barBtn.parentElement?.querySelectorAll('.trend-col').forEach((n, i) => {
-                  n.classList.toggle('is-selected', i === idx);
+                  const sel = i === effectiveIdx;
+                  n.classList.toggle('is-selected', sel);
+                  n.setAttribute('aria-pressed', String(sel));
                 });
               },
             },
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:43:31
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 21:28:45
 // Description: Apply smooth bar height gliding to Tab 2 trend bars via applySmoothBarSize.
@@ -7708,167 +8476,106 @@
     // ============================================================================
 
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:43:31
+// Description: C1 — Render Tab 2 By Project (#card-global-projects) 5-column breakdown card with Top-8 fold right after Model Breakdown, and mount topStack before refreshing persistent session-list section (A4/C2).
+// ============================================================================
+      // 5b. By Project / Workspace Breakdown Card (C1)
+      const workspaces = Array.isArray(period.byWorkspace) ? period.byWorkspace : [];
+      const canToggleWorkspaces = workspaces.length > MAX_COLLAPSED_WORKSPACES;
+      const visibleWorkspaces = canToggleWorkspaces && !state.workspacesExpanded
+        ? workspaces.slice(0, MAX_COLLAPSED_WORKSPACES)
+        : workspaces;
+      const hiddenWorkspacesCount = Math.max(0, workspaces.length - visibleWorkspaces.length);
+
+      const projectCard = el('article', { className: 'card', id: 'card-global-projects' },
+        el('div', { className: 'card-head' },
+          el('div', { className: 'card-title' },
+            icon('folder', 14, 'card-title-icon'),
+            t('projects.title', { period: periodTitle }),
+          ),
+        ),
+        workspaces.length > 0
+          ? el('div', { className: 'table-scroll' },
+              el('table', { className: 'data-table tabular-nums' },
+                el('thead', null,
+                  el('tr', null,
+                    el('th', { textContent: t('projects.colProject') }),
+                    el('th', { className: 'num', textContent: t('projects.colChats') }),
+                    el('th', { className: 'num total-col', textContent: t('childrenModels.colTotal') }),
+                    el('th', {
+                      className: 'num cache-hit-col',
+                      title: t('childrenModels.colCacheHitTip'),
+                      textContent: t('childrenModels.colCacheHit'),
+                    }),
+                    el('th', { className: 'num cost-col', textContent: t('table.costWithCurrency', { currency }) }),
+                  ),
+                ),
+                el('tbody', null,
+                  visibleWorkspaces.map((row) => {
+                    const rawWs = String(row.workspace || '').trim();
+                    const wsLabel = rawWs ? (workspaceBase(rawWs) || rawWs) : t('projects.ungrouped');
+                    const totalTok = num(
+                      row.totalTokens,
+                      num(row.inputTokens, 0) + num(row.cacheReadTokens, 0) + num(row.outputTokens, 0),
+                    );
+                    const hitMeta = getModelRowCacheHitMeta(row);
+                    return el('tr', null,
+                      el('td', {
+                        className: rawWs ? 'model-cell project-cell' : 'model-cell project-cell is-ungrouped',
+                        title: rawWs || wsLabel,
+                        textContent: wsLabel,
+                      }),
+                      el('td', { className: 'num', textContent: fmtInt(row.conversationsCount) }),
+                      el('td', { className: 'num total-col', title: fmtInt(totalTok), textContent: fmtTokens(totalTok) }),
+                      el('td', {
+                        className: `num cache-hit-col ${hitMeta.tierClass}`,
+                        title: hitMeta.title || undefined,
+                        textContent: hitMeta.text,
+                      }),
+                      el('td', { className: 'num cost-col', title: fmtCost(row.costActual, currency), textContent: fmtCostCompactNumber(row.costActual) }),
+                    );
+                  }),
+                ),
+              ),
+            )
+          : el('div', { className: 'empty-inline', textContent: t('projects.empty') }),
+        canToggleWorkspaces
+          ? el('button', {
+              type: 'button',
+              className: 'children-toggle-bar',
+              textContent: state.workspacesExpanded
+                ? t('projects.collapseFooter', { shown: MAX_COLLAPSED_WORKSPACES })
+                : t('projects.expandMoreFooter', { rest: hiddenWorkspacesCount, total: workspaces.length }),
+              onClick: () => {
+                state.workspacesExpanded = !state.workspacesExpanded;
+                const s = state.snapshot || state.globalLastSnap;
+                if (s) renderGlobalTab(s);
+              },
+            })
+          : null,
+      );
+
+      const topNodes = [periodBar, subRoiCard, summaryCard, trendCard, modelCard, projectCard].filter(Boolean);
+      dom.topStack.replaceChildren(...topNodes);
+      syncTrendScrollPosition();
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:43:31
+// ============================================================================
+
+// ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:15:00
 // Description: Localize Recent/Top 20 conversations card, sync trend scroll position,
 // sync language/tokenUnit preferences in pollSnapshot, and bind EN/ZH header toggle.
 // ============================================================================
-    // 6. Conversations List Card (Recent Active | Top Cost in Period)
-    const listMode = state.convListMode === 'top' ? 'top' : 'recent';
-    const topConvs = Array.isArray(period.topConversations) ? period.topConversations : [];
-    const listItems = listMode === 'top' ? topConvs : recent;
-
-    const listToggle = el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('global.convSortAria') },
-      el('button', {
-        type: 'button',
-        className: `seg-btn${listMode === 'recent' ? ' active' : ''}`,
-        textContent: t('global.sortRecent'),
-        onClick: () => {
-          if (state.convListMode !== 'recent') {
-            state.convListMode = 'recent';
-            if (state.snapshot) renderGlobalTab(state.snapshot);
-          }
-        },
-      }),
-      el('button', {
-        type: 'button',
-        className: `seg-btn${listMode === 'top' ? ' active' : ''}`,
-        textContent: t('global.sortTop'),
-        onClick: () => {
-          if (state.convListMode !== 'top') {
-            state.convListMode = 'top';
-            if (state.snapshot) renderGlobalTab(state.snapshot);
-          }
-        },
-      }),
-    );
-
-    const recentCard = el('article', { className: 'card' },
-      el('div', { className: 'card-head' },
-        el('div', { className: 'card-title' },
 // ============================================================================
-// [MODIFIED BEGIN] 2026-11-20 10:24:50
-// Description: Replace .card-title-dot with receipt SVG icon in Tab 2 Recent/Top Conversations card.
+// [MODIFIED BEGIN] 2026-11-20 15:43:31
+// Description: A4, B5, B6 & C2 — Delegate Tab 2 Conversations list card rendering to persistent filter-bar section (renderGlobalSessionListSection).
 // ============================================================================
-          icon('receipt', 14, 'card-title-icon'),
+    renderGlobalSessionListSection(dom, snap, ctx);
 // ============================================================================
-// [MODIFIED END] 2026-11-20 10:24:50
+// [MODIFIED END] 2026-11-20 15:43:31
 // ============================================================================
-          listMode === 'top'
-            ? t('global.topConvsTitle', { period: periodTitle, count: listItems.length })
-            : t('global.recentConvsTitle', { count: listItems.length }),
-        ),
-        listToggle,
-      ),
-      listItems.length > 0
-        ? el('div', { className: 'recent-list' },
-            listItems.map((item) => {
-              const onDisk = item.onDisk !== false;
-              const isSelected = onDisk && viewingId && item.conversationId === viewingId;
-              const title = localizeConvTitle(item.title) || t('common.sessionPrefix', { id: shortId(item.conversationId) });
-              const ws = workspaceBase(item.workspace);
-              const itemStatus = item.status || 'IDLE';
-// ============================================================================
-// [MODIFIED BEGIN] 2026-11-17 11:35:00
-// Description: Compute per-conversation totalTokens for Tab 2 list items.
-// ============================================================================
-              const itemTotalTok = num(item.totalTokens, num(item.outputTokens, 0));
-// ============================================================================
-// [MODIFIED END] 2026-11-17 11:35:00
-// ============================================================================
-
-              const rowProps = {
-                className: `recent-item${isSelected ? ' is-selected' : ''}${onDisk ? '' : ' is-archived'}`,
-                title: `${title}\n${item.workspace || ''}\n${item.conversationId}`,
-              };
-              if (onDisk) {
-                rowProps.role = 'button';
-                rowProps.tabIndex = 0;
-                rowProps.onClick = () => selectConversation(item.conversationId);
-                rowProps.onKeyDown = (e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    selectConversation(item.conversationId);
-                  }
-                };
-              }
-
-              return el('div', rowProps,
-                el('div', { className: 'recent-top' },
-                  el('div', { className: 'recent-title-wrap' },
-                    !onDisk
-                      ? el('span', { className: 'archived-pill', textContent: t('global.badgeArchived') })
-                      : item.isToday
-                        ? el('span', { className: 'today-pill', textContent: t('global.badgeToday') })
-                        : null,
-                    el('span', { className: 'recent-title', textContent: title }),
-                  ),
-                  onDisk
-                    ? el('button', {
-                        type: 'button',
-                        className: 'mini-btn',
-                        textContent: t('global.openChat'),
-                        onClick: (e) => {
-                          e.stopPropagation();
-                          openConversationInHost(item.conversationId);
-                        },
-                      })
-                    : null,
-                ),
-                el('div', { className: 'recent-meta tabular-nums' },
-                  el('div', { className: 'recent-stats' },
-// ============================================================================
-// [MODIFIED BEGIN] 2026-11-20 10:24:50
-// Description: Prepend sparkle/wrench SVG icons on Tab 2 conversation status and add .model-dot next to model name.
-// ============================================================================
-                    onDisk
-                      ? el('span', { className: `child-status ${itemStatus}` },
-                          itemStatus === 'GENERATING'
-                            ? icon('sparkle', 12)
-                            : itemStatus === 'RUNNING_TOOLS'
-                              ? icon('wrench', 12)
-                              : null,
-                          itemStatus === 'GENERATING'
-                            ? t('global.itemGenerating')
-                            : itemStatus === 'RUNNING_TOOLS'
-                              ? t('global.itemTools')
-                              : t('global.itemIdle'),
-                        )
-                      : null,
-                    el('span', null,
-                      createModelDot(item.activeModel),
-                      ' ',
-                      item.activeModel || 'Auto',
-                    ),
-// ============================================================================
-// [MODIFIED END] 2026-11-20 10:28:34
-// ============================================================================
-                    ws ? el('span', { textContent: ws }) : null,
-                    el('span', { textContent: fmtRelTime(item.updatedAtMs) }),
-                  ),
-                  el('div', { className: 'recent-stats' },
-                    onDisk ? el('span', { title: fmtInt(item.contextTotal), textContent: `Ctx ${fmtTokens(item.contextTotal)}` }) : null,
-                    onDisk ? el('span', { textContent: `${fmtRate(item.latestTokPerSec)} tok/s` }) : null,
-                    el('span', { title: fmtInt(item.outputTokens), textContent: `Out ${fmtTokens(item.outputTokens)}` }),
-// ============================================================================
-// [MODIFIED BEGIN] 2026-11-17 11:35:00
-// Description: Display per-conversation Total Tokens alongside Ctx / tok/s / Out in Tab 2 rows.
-// ============================================================================
-                    el('span', { title: fmtInt(itemTotalTok), textContent: `${t('global.itemTotalPrefix')} ${fmtTokens(itemTotalTok)}` }),
-// ============================================================================
-// [MODIFIED END] 2026-11-17 11:35:00
-// ============================================================================
-                    el('span', { textContent: fmtCostCompact(item.costActual, currency) }),
-                  ),
-                ),
-              );
-            }),
-          )
-        : el('div', { className: 'empty-inline', textContent: t('global.convsEmpty') }),
-    );
-
-    const nodes = [periodBar, subRoiCard, summaryCard, trendCard, modelCard, recentCard].filter(Boolean);
-    container.replaceChildren(...nodes);
-    syncTrendScrollPosition();
   }
 
   // ---------------- Polling Loop ----------------
@@ -7883,7 +8590,20 @@
 // [MODIFIED BEGIN] 2026-11-17 19:00:00
 // Description: Pause scheduled normal polling while sidecar hot-update restart is in progress.
 // ============================================================================
-    if (state.updateApplying) return;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: A4 — Pause scheduled snapshot polling while document.hidden is true.
+// ============================================================================
+    if (state.updateApplying || document.hidden) {
+      if (state.pollTimer) {
+        clearTimeout(state.pollTimer);
+        state.pollTimer = null;
+      }
+      return;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:00
 // ============================================================================
@@ -7906,6 +8626,14 @@
     if (state.updateApplying) return;
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:00
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: A4 — Skip background snapshot fetch while document.hidden unless forced.
+// ============================================================================
+    if (document.hidden && !force) return;
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
 // ============================================================================
     if (state.pollInFlight) {
       if (state.inFlightConv === selectedConv) {
@@ -8072,13 +8800,16 @@
 // [MODIFIED END] 2026-11-17 19:00:00
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: A4 & A5 — Render header + only the active tab on snapshot arrival and sync stopwatch loop.
+// ============================================================================
       renderHeader(data);
-      renderCurrentTab(data);
-      if (state.isDraggingTrend) {
-        state.pendingGlobalRerender = true;
-      } else {
-        renderGlobalTab(data);
-      }
+      renderActiveTab(data);
+      syncStopwatchLoop();
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-18 11:43:00
 // Description: Sync open #receipt-modal on snapshot arrival only when receipt-relevant data signature changes to prevent flickering.
@@ -8208,9 +8939,15 @@
 // [MODIFIED END] 2026-11-17 22:07:46
 // ============================================================================
         try {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: A4 — Render only the active tab on language toggle (inactive tab refreshes on switch via cleared sigs).
+// ============================================================================
           renderHeader(state.snapshot);
-          renderCurrentTab(state.snapshot);
-          renderGlobalTab(state.snapshot);
+          renderActiveTab(state.snapshot);
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
+// ============================================================================
         } finally {
           state.suppressMotionOnce = false;
         }
@@ -8382,12 +9119,13 @@
         closeUpdateModal();
       }
     });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && state.updateModalOpen && !state.updateApplying) {
-        e.preventDefault();
-        closeUpdateModal();
-      }
-    });
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: B5 — Consolidate #update-modal Escape handling into the single priority keydown handler below so one Escape press closes only one layer.
+// ============================================================================
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
+// ============================================================================
     renderUpdateCheckStatus();
 // ============================================================================
 // [MODIFIED END] 2026-11-17 19:00:00
@@ -8435,28 +9173,97 @@
         closeReceiptModal();
       }
     });
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: B5 — Unified Tab focus-trap for open dialogs and Escape handling for receipt modal, settings drawer, and Pixel Office inspector.
+// ============================================================================
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && state.receiptModalOpen) {
+      if (e.key === 'Tab') {
+        if (state.receiptModalOpen) {
+          trapModalTabKey($('receipt-modal'), e);
+        } else if (state.updateModalOpen) {
+          trapModalTabKey($('update-modal'), e);
+        }
+        return;
+      }
+      if (e.key !== 'Escape') return;
+      if (state.receiptModalOpen) {
         e.preventDefault();
         closeReceiptModal();
+      } else if (state.updateModalOpen && !state.updateApplying) {
+        e.preventDefault();
+        closeUpdateModal();
+      } else if (e.target?.classList?.contains?.('list-search-input')) {
+        return;
+      } else if (state.drawerOpen) {
+        e.preventDefault();
+        setDrawerOpen(false);
+        $('btn-settings')?.focus?.();
+      } else if (
+        state.activeTab === 'current' &&
+        !state.pixelOfficeCollapsed &&
+        state.pixelOfficeSelectedKey
+      ) {
+        e.preventDefault();
+        state.pixelOfficeSelectedKey = '';
+        const latestCurrent = state.snapshot?.current || state.pixelOfficeLastCurrent;
+        const latestPrefs = state.snapshot?.prefs || state.pixelOfficeLastPrefs;
+        if (latestCurrent) {
+          renderPixelOfficeCard(latestCurrent, latestPrefs);
+        }
       }
     });
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:43:00
 // ============================================================================
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: A4, A5 & A6 — Pause polling & timers on document.hidden, fetch+render immediately on visible, and subscribe to prefers-reduced-motion changes.
+// ============================================================================
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
+      if (document.hidden) {
+        if (state.pollTimer) {
+          clearTimeout(state.pollTimer);
+          state.pollTimer = null;
+        }
+      } else {
         tickLiveStopwatch();
-// ============================================================================
-// [MODIFIED BEGIN] 2026-11-19 11:49:06
-// Description: Redraw Pixel Office on visibility restore and pause/resume loop cleanly, plus debounced resize redraw.
-// ============================================================================
+        if (state.snapshot) {
+          renderActiveTab(state.snapshot);
+        }
         drawPixelOfficeFrame();
+        if (!state.pollInFlight && !state.updateApplying) {
+          pollSnapshot(false);
+        }
       }
+      syncStopwatchLoop();
       syncPixelOfficeLoop();
     });
 
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      const reducedMotionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const onReducedMotionChange = () => {
+        syncPixelOfficeLoop();
+        drawPixelOfficeFrame();
+      };
+      if (typeof reducedMotionMq?.addEventListener === 'function') {
+        reducedMotionMq.addEventListener('change', onReducedMotionChange);
+      } else if (typeof reducedMotionMq?.addListener === 'function') {
+        reducedMotionMq.addListener(onReducedMotionChange);
+      }
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-19 11:49:06
+// Description: Debounced resize redraw for Pixel Office canvas.
+// ============================================================================
     if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
       let pixelOfficeResizeTimer = null;
       window.addEventListener('resize', () => {
@@ -8478,8 +9285,15 @@
 // Description: Trigger initial snapshot poll once and rely on serial scheduleNextPoll
 // instead of overlapping setInterval polling (keep stopwatch interval).
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 15:40:24
+// Description: A5 — Replace always-on 100ms stopwatch setInterval with on-demand syncStopwatchLoop().
+// ============================================================================
     pollSnapshot(true);
-    setInterval(tickLiveStopwatch, STOPWATCH_INTERVAL_MS);
+    syncStopwatchLoop();
+// ============================================================================
+// [MODIFIED END] 2026-11-20 15:40:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 17:18:17
 // ============================================================================
