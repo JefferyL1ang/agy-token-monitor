@@ -1,6 +1,6 @@
 # agy-token-monitor
 
-![Version](https://img.shields.io/badge/version-v0.5.2--beta-4285F4) ![Platform](https://img.shields.io/badge/Antigravity-Aux%20Pane-6366F1) ![Mode](https://img.shields.io/badge/mode-Read--Only-10B981)
+![Version](https://img.shields.io/badge/version-v0.5.3--beta-4285F4) ![Platform](https://img.shields.io/badge/Antigravity-Aux%20Pane-6366F1) ![Mode](https://img.shields.io/badge/mode-Read--Only-10B981)
 
 [English](#english) | [中文](#中文)
 
@@ -8,11 +8,18 @@
 
 ## English
 
-**agy-token-monitor** is a lightweight Token & Context monitor plugin built for **Antigravity** (`v0.5.2 beta`). It runs in the right-hand side panel with a low memory footprint, reading local session data in read-only mode without modifying any Antigravity databases, transcripts, or host settings.
+**agy-token-monitor** is a lightweight Token & Context monitor plugin built for **Antigravity** (`v0.5.3 beta`). It runs in the right-hand side panel with a low memory footprint, reading local session data in read-only mode without modifying any Antigravity databases, transcripts, or host settings.
 
 ### Changelog
 
-- **v0.5.2 Cache Pricing & Provider Accuracy (Latest)**:
+- **v0.5.3 Collapsible Cards Across All Panels (Latest)**:
+  - **Collapse Any Card Across Both Tabs**: Every card in Current Session and Usage Statistics (all 13 cards, unified with Pixel Office) can now be collapsed or expanded individually so you can focus on the metrics you need most.
+  - **Compact Collapsed Summary Header**: When collapsed, each card folds into a clean single-row header showing its key live metric — such as speed, cost, context percentage, cache hit rate, worker/model counts, or session count — while keeping healthy, warning, and critical alert colors clearly visible.
+  - **Clickable Header & Rotating Chevron Icon**: Click anywhere on a card header (without blocking action buttons, switches, or links inside it) or use the compact rotating chevron button on the right to collapse and expand smoothly.
+  - **Persistent State & Automatic Pixel Office Migration**: Collapsed card states are saved automatically in `monitor_state.json` under `collapsedCards` and kept in two-way sync with legacy `pixelOfficeCollapsed`, migrating existing Pixel Office preferences seamlessly.
+  - **On-Demand Expand All Bar**: Whenever one or more visible cards on the active tab are collapsed, a lightweight bar appears at the top of that tab with a one-click Expand all button (and disappears completely when all cards are open).
+  - **Zero Idle Overhead for Collapsed Cards**: Collapsed cards skip body DOM updates and pause Pixel Office rendering to avoid wasted CPU work, while preserving Tab 2 search and filter inputs when expanded again.
+- **v0.5.2 Cache Pricing & Provider Accuracy**:
   - **Accurate Claude Opus 5.5, Sonnet 5.5 & GPT-OSS 120B Cache-Read Pricing**: Fixed the LiteLLM fallback sync to read the real `cache_read_input_token_cost` field (with legacy fallback) so Claude Opus 5.5 (`$0.20/1M`), Claude Sonnet 5.5 (`$0.10/1M`), and GPT-OSS 120B (`$0.075/1M`) charge their true cached input prices instead of full input prices (eliminating up to 20x cache-read cost inflation).
   - **Official Provider Priority Over Resellers**: Ranked official Google, Vertex AI, Anthropic, and OpenAI feeds strictly above third-party resellers like DeepInfra and OpenRouter so Gemini 3.1 Pro preserves its official `>200k` long-context tier and GPT-OSS 120B prefers providers with genuine cache discounts.
   - **Family Cache-Discount Fallback**: When an upstream feed omits cache-read pricing, Gemini, Claude (`5%` for Opus/Sonnet 5.5, `10%` for other Claude models), and GPT-OSS (`50%`) now fall back to safe family cache rates instead of charging full input price.
@@ -93,7 +100,7 @@
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.5.2.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.5.3.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -164,11 +171,18 @@ node --test tests/parser.test.mjs
 
 ## 中文
 
-**agy-token-monitor** 是一个面向 **Antigravity** 的轻量级 Token 与上下文监控插件（`v0.5.2 beta`）。它运行在右侧辅助面板中，内存占用低，仅以只读方式读取本地会话数据，不修改任何 Antigravity 数据库、聊天记录或全局配置。
+**agy-token-monitor** 是一个面向 **Antigravity** 的轻量级 Token 与上下文监控插件（`v0.5.3 beta`）。它运行在右侧辅助面板中，内存占用低，仅以只读方式读取本地会话数据，不修改任何 Antigravity 数据库、聊天记录或全局配置。
 
 ### 更新日志
 
-- **v0.5.2 缓存定价与数据源准确性修复（最新）**：
+- **v0.5.3 全局卡片自由折叠（最新）**：
+  - **双标签全部 13 张卡片均可自由折叠**：当前会话（Tab 1）与用量统计（Tab 2）全部 13 张卡片均已统一支持独立折叠与展开（与像素工位保持统一交互），方便按需精简右侧面板视图。
+  - **收起态核心指标与告警摘要**：卡片折叠后收拢为紧凑单行标题栏，右侧实时显示关键指标（如速率、花费、上下文占比、缓存命中率、子代理/模型数或会话数），并保留正常、提醒与告警配色，关键状态一目了然。
+  - **可点击标题栏与旋转箭头图标**：直接点击卡片标题栏空白区域或右侧旋转箭头按钮即可平滑折叠/展开，同时不影响标题栏内按钮、切换开关与链接的正常点击。
+  - **折叠状态持久化与像素工位自动迁移**：折叠布局自动保存到 `monitor_state.json` 的 `collapsedCards` 字段，并与旧版 `pixelOfficeCollapsed` 双向同步，升级后自动继承原有的像素工位收起状态。
+  - **按需出现的全部展开栏**：仅当当前标签页至少有 1 张可见卡片处于折叠状态时，顶部才会显示轻量的「全部展开」提示条，卡片全部展开时不占任何版面空间。
+  - **折叠零闲置开销**：折叠后的卡片自动跳过主体内容渲染并在像素工位收起时暂停绘制，减少无谓的 CPU 与重绘开销；历史会话卡片折叠后重新展开仍完整保留已输入的搜索词与筛选条件。
+- **v0.5.2 缓存定价与数据源准确性修复**：
   - **修复 Claude Opus 5.5、Sonnet 5.5 与 GPT-OSS 120B 缓存读取计费**：修正 LiteLLM 兜底数据源读取缓存价格字段名偏差的问题（支持 `cache_read_input_token_cost` 并保留旧字段兼容），使 Claude Opus 5.5（`$0.20/1M`）、Claude Sonnet 5.5（`$0.10/1M`）与 GPT-OSS 120B（`$0.075/1M`）恢复真实缓存折扣价，避免缓存读取按全额输入价计算造成最高 20 倍费用虚高。
   - **官方渠道优先于第三方转售商**：调整数据源优先级，使 Google、Vertex AI、Anthropic 与 OpenAI 官方渠道严格高于 DeepInfra、OpenRouter 等第三方转售商，确保 Gemini 3.1 Pro 保留官方 `>200k` 长上下文分档，并让 GPT-OSS 120B 优先选择带真实缓存折扣的数据源。
   - **按模型家族兜底缓存折扣**：当上游数据源缺少缓存读取单价字段时，Gemini、Claude（Opus/Sonnet 5.5 按 `5%`，其余 Claude 模型按 `10%`）与 GPT-OSS（按 `50%`）自动回退到各自家族的安全默认缓存折扣，不再误按 100% 输入价计费。
@@ -249,7 +263,7 @@ node --test tests/parser.test.mjs
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.5.2.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.5.3.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 

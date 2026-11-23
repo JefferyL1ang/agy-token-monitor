@@ -79,6 +79,36 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:34:38
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Add v0.5.3 unified collapsible card ID registries for Tab 1 (7 cards) and Tab 2 (6 cards).
+// ============================================================================
+  const CURRENT_TAB_CARD_IDS = Object.freeze([
+    'pixel-office',
+    'speed',
+    'cost',
+    'context',
+    'cache',
+    'children-models',
+    'side-questions',
+  ]);
+  const GLOBAL_TAB_CARD_IDS = Object.freeze([
+    'global-roi',
+    'global-summary',
+    'global-trend',
+    'global-models',
+    'global-projects',
+    'global-recent',
+  ]);
+  const COLLAPSIBLE_CARD_IDS = Object.freeze([
+    ...CURRENT_TAB_CARD_IDS,
+    ...GLOBAL_TAB_CARD_IDS,
+  ]);
+  const COLLAPSIBLE_CARD_ID_SET = new Set(COLLAPSIBLE_CARD_IDS);
+  const INTERACTIVE_HEADER_TAGS = new Set(['BUTTON', 'A', 'INPUT', 'SELECT', 'LABEL']);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
   const state = {
     homeConvId: boundConvId,
@@ -231,7 +261,27 @@
 // [MODIFIED BEGIN] 2026-11-19 11:49:06
 // Description: Add in-panel Pixel Office runtime, selection, timer, and canvas state fields.
 // ============================================================================
-    pixelOfficeCollapsed: false,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Add unified collapsedCards map and back pixelOfficeCollapsed with a live getter/setter so pixel-office state never desyncs.
+// ============================================================================
+    collapsedCards: {},
+    get pixelOfficeCollapsed() {
+      return Boolean(this.collapsedCards && this.collapsedCards['pixel-office']);
+    },
+    set pixelOfficeCollapsed(val) {
+      if (!this.collapsedCards || typeof this.collapsedCards !== 'object') {
+        this.collapsedCards = {};
+      }
+      if (val) {
+        this.collapsedCards['pixel-office'] = true;
+      } else {
+        delete this.collapsedCards['pixel-office'];
+      }
+    },
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
     pixelOfficeSelectedKey: '',
     pixelOfficeTick: 0,
     pixelOfficeTimer: null,
@@ -859,6 +909,32 @@
 // [MODIFIED END] 2026-11-20 15:34:38
 // ============================================================================
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Add v0.5.3 bilingual i18n keys for unified collapsible card labels, Expand All bar, and concise collapsed summaries (zh).
+// ============================================================================
+      'card.collapseLabel': '折叠 {title}',
+      'card.expandLabel': '展开 {title}',
+      'card.collapsedBarOne': '已折叠 {count} 张卡片',
+      'card.collapsedBarMany': '已折叠 {count} 张卡片',
+      'card.expandAllBtn': '全部展开',
+      'pixelOffice.collapsedMainOnly': '仅主代理',
+      'childrenModels.collapsedWithChildren': '{children} 个 · {models} 模型',
+      'childrenModels.collapsedWithChildrenOneModel': '{children} 个 · {models} 模型',
+      'childrenModels.collapsedModelsOne': '{count} 模型',
+      'childrenModels.collapsedModelsMany': '{count} 模型',
+      'roi.collapsedFree': '已抵扣 {cost}',
+      'global.modelsCollapsedOne': '{count} 模型',
+      'global.modelsCollapsedMany': '{count} 模型',
+      'projects.collapsedOne': '{count} 项目',
+      'projects.collapsedMany': '{count} 项目',
+      'global.recentConvsShortTitle': '近期会话列表',
+      'global.topConvsShortTitle': '{period}高消耗会话',
+      'global.recentCollapsedOne': '{count} 条',
+      'global.recentCollapsedMany': '{count} 条',
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
+// ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:10
 // ============================================================================
     },
@@ -1441,6 +1517,32 @@
 // [MODIFIED END] 2026-11-20 15:34:38
 // ============================================================================
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Add v0.5.3 bilingual i18n keys for unified collapsible card labels, Expand All bar, and concise collapsed summaries (en).
+// ============================================================================
+      'card.collapseLabel': 'Collapse {title}',
+      'card.expandLabel': 'Expand {title}',
+      'card.collapsedBarOne': '{count} card collapsed',
+      'card.collapsedBarMany': '{count} cards collapsed',
+      'card.expandAllBtn': 'Expand all',
+      'pixelOffice.collapsedMainOnly': 'Main Only',
+      'childrenModels.collapsedWithChildren': '{children} sub · {models} models',
+      'childrenModels.collapsedWithChildrenOneModel': '{children} sub · {models} model',
+      'childrenModels.collapsedModelsOne': '{count} model',
+      'childrenModels.collapsedModelsMany': '{count} models',
+      'roi.collapsedFree': 'Covered {cost}',
+      'global.modelsCollapsedOne': '{count} model',
+      'global.modelsCollapsedMany': '{count} models',
+      'projects.collapsedOne': '{count} project',
+      'projects.collapsedMany': '{count} projects',
+      'global.recentConvsShortTitle': 'Recent Sessions',
+      'global.topConvsShortTitle': '{period} Top Cost',
+      'global.recentCollapsedOne': '{count} chat',
+      'global.recentCollapsedMany': '{count} chats',
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
+// ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:10
 // ============================================================================
     },
@@ -1759,6 +1861,14 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:38:42
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Add chevron stroke icon for v0.5.3 unified collapsible card headers.
+// ============================================================================
+    chevron: 'M4 6l4 4 4-4',
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
     empty: 'M8 2.2a5.8 5.8 0 1 0 0 11.6A5.8 5.8 0 0 0 8 2.2ZM8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z',
   });
 
@@ -1839,6 +1949,257 @@
 // ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:30:56
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Add v0.5.3 unified collapsible card state helpers, tab-scoped Expand All controller, interactive header click guard, and buildCollapsibleCardHead builder.
+// ============================================================================
+  function isCardCollapsed(cardId) {
+    return Boolean(
+      COLLAPSIBLE_CARD_ID_SET.has(cardId) &&
+      state.collapsedCards &&
+      state.collapsedCards[cardId] === true,
+    );
+  }
+
+  function setLocalCardCollapsed(cardId, collapsed) {
+    if (!COLLAPSIBLE_CARD_ID_SET.has(cardId)) return false;
+    if (!state.collapsedCards || typeof state.collapsedCards !== 'object') {
+      state.collapsedCards = {};
+    }
+    const next = Boolean(collapsed);
+    if (next) {
+      state.collapsedCards[cardId] = true;
+    } else {
+      delete state.collapsedCards[cardId];
+    }
+    if (state.snapshot?.prefs) {
+      const prevMap =
+        state.snapshot.prefs.collapsedCards &&
+        typeof state.snapshot.prefs.collapsedCards === 'object' &&
+        !Array.isArray(state.snapshot.prefs.collapsedCards)
+          ? { ...state.snapshot.prefs.collapsedCards }
+          : {};
+      if (next) prevMap[cardId] = true;
+      else delete prevMap[cardId];
+      state.snapshot.prefs.collapsedCards = prevMap;
+      if (cardId === 'pixel-office') {
+        state.snapshot.prefs.pixelOfficeCollapsed = next;
+      }
+    }
+    return next;
+  }
+
+  function getVisibleCollapsedCardIds(tab, snap = null, preCtx = null) {
+    const targetSnap = snap || state.snapshot || (tab === 'global' ? state.globalLastSnap : null);
+    if (tab === 'global') {
+      const ctx = preCtx || (targetSnap ? resolveGlobalPeriodContext(targetSnap) : null);
+      const hasRoi = Boolean(ctx?.period?.subscription);
+      return GLOBAL_TAB_CARD_IDS.filter((id) => {
+        if (!isCardCollapsed(id)) return false;
+        if (id === 'global-roi' && !hasRoi) return false;
+        return true;
+      });
+    }
+    const current = targetSnap?.current || null;
+    if (!current) return [];
+    const hasPixelOffice = Boolean(window.TokenMonitorPixelOffice);
+    const hasSideQuestions = Array.isArray(current.sideQuestions) && current.sideQuestions.length > 0;
+    return CURRENT_TAB_CARD_IDS.filter((id) => {
+      if (!isCardCollapsed(id)) return false;
+      if (id === 'pixel-office' && !hasPixelOffice) return false;
+      if (id === 'side-questions' && !hasSideQuestions) return false;
+      return true;
+    });
+  }
+
+  function populateCollapsedBar(bar, tab, count) {
+    if (!bar) return;
+    if (count <= 0) {
+      bar.classList.add('hidden');
+      if (bar.dataset) delete bar.dataset.barSig;
+      if (bar.childElementCount > 0) bar.replaceChildren();
+      return;
+    }
+    bar.classList.remove('hidden');
+    const sig = `${tab}|${state.lang}|${count}`;
+    if (bar.dataset && bar.dataset.barSig === sig && bar.childElementCount > 0) {
+      return;
+    }
+    if (bar.dataset) bar.dataset.barSig = sig;
+    const text = count === 1
+      ? t('card.collapsedBarOne', { count })
+      : t('card.collapsedBarMany', { count });
+    bar.replaceChildren(
+      el('span', { className: 'collapsed-bar-text', textContent: text }),
+      el('button', {
+        type: 'button',
+        className: 'collapsed-expand-all-btn',
+        textContent: t('card.expandAllBtn'),
+        onClick: () => expandAllTabCards(tab),
+      }),
+    );
+  }
+
+  function renderCurrentCollapsedBar(current) {
+    const bar = $('current-collapsed-bar');
+    if (!bar) return;
+    const collapsedIds = current ? getVisibleCollapsedCardIds('current', { current }) : [];
+    populateCollapsedBar(bar, 'current', collapsedIds.length);
+  }
+
+  function toggleCardCollapsed(cardId) {
+    if (!COLLAPSIBLE_CARD_ID_SET.has(cardId)) return;
+    const next = !isCardCollapsed(cardId);
+    setLocalCardCollapsed(cardId, next);
+    if (cardId === 'pixel-office' && next) {
+      stopPixelOfficeLoop();
+    }
+    resetCardRenderSigs();
+    const snap = state.snapshot || (state.activeTab === 'global' ? state.globalLastSnap : null);
+    if (snap) {
+      renderActiveTab(snap);
+    } else if (cardId === 'pixel-office' && state.pixelOfficeLastCurrent) {
+      renderPixelOfficeCard(state.pixelOfficeLastCurrent, state.pixelOfficeLastPrefs);
+      renderCurrentCollapsedBar(state.pixelOfficeLastCurrent);
+    }
+    if (cardId === 'pixel-office') {
+      if (next) stopPixelOfficeLoop();
+      else syncPixelOfficeLoop();
+    }
+    const patch = { collapsedCards: { [cardId]: next } };
+    if (cardId === 'pixel-office') {
+      patch.pixelOfficeCollapsed = next;
+    }
+    patchPrefs(patch);
+  }
+
+  function expandAllTabCards(tab) {
+    const targetTab = tab === 'global' ? 'global' : 'current';
+    const snap = state.snapshot || (targetTab === 'global' ? state.globalLastSnap : null);
+    const collapsedIds = getVisibleCollapsedCardIds(targetTab, snap);
+    if (collapsedIds.length === 0) return;
+
+    const patchCollapsed = {};
+    let touchedPixelOffice = false;
+    for (const id of collapsedIds) {
+      setLocalCardCollapsed(id, false);
+      patchCollapsed[id] = false;
+      if (id === 'pixel-office') touchedPixelOffice = true;
+    }
+
+    resetCardRenderSigs();
+    if (snap) {
+      renderActiveTab(snap);
+    }
+    if (touchedPixelOffice) {
+      syncPixelOfficeLoop();
+    }
+
+    const patch = { collapsedCards: patchCollapsed };
+    if (touchedPixelOffice) {
+      patch.pixelOfficeCollapsed = false;
+    }
+    patchPrefs(patch);
+  }
+
+  function isInteractiveHeaderClick(target, headEl) {
+    if (!target) return false;
+    if (typeof target.closest === 'function') {
+      const collapseBtn = target.closest('.card-collapse-btn');
+      if (collapseBtn && (!headEl || typeof headEl.contains !== 'function' || headEl.contains(collapseBtn))) {
+        return false;
+      }
+      const interactive = target.closest('button, a, input, select, label, .seg-toggle');
+      if (interactive && interactive !== headEl) {
+        if (!headEl || typeof headEl.contains !== 'function' || headEl.contains(interactive)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    let cur = target;
+    while (cur && cur !== headEl) {
+      if (cur.classList?.contains?.('card-collapse-btn')) {
+        return false;
+      }
+      const tag = String(cur.tagName || '').toUpperCase();
+      if (INTERACTIVE_HEADER_TAGS.has(tag) || cur.classList?.contains?.('seg-toggle')) {
+        return true;
+      }
+      cur = cur.parentNode || cur.parentElement || null;
+    }
+    return false;
+  }
+
+  function createCollapseButton(cardId, titleText, collapsed, buttonId = '') {
+    const labelKey = collapsed ? 'card.expandLabel' : 'card.collapseLabel';
+    const label = t(labelKey, { title: titleText });
+    return el('button', {
+      id: buttonId || undefined,
+      type: 'button',
+      className: 'card-collapse-btn',
+      'aria-expanded': String(!collapsed),
+      'aria-label': label,
+      title: label,
+      onClick: (e) => {
+        e?.stopPropagation?.();
+        toggleCardCollapsed(cardId);
+      },
+    },
+      icon('chevron', 14, 'card-collapse-chevron'),
+    );
+  }
+
+  function buildCollapsibleCardHeadChildren({
+    cardId,
+    iconName,
+    titleText,
+    ariaTitle = '',
+    titleExtra = null,
+    expandedRight = null,
+    collapsedSummary = '',
+    collapsedSummaryTone = '',
+    collapsedSummaryTitle = '',
+    buttonId = '',
+  }) {
+    const collapsed = isCardCollapsed(cardId);
+    const titleEl = el('div', { className: 'card-title' },
+      icon(iconName, 14, 'card-title-icon'),
+      titleText,
+      titleExtra,
+    );
+    const summaryNode = collapsed && collapsedSummary
+      ? el('span', {
+          className: [
+            'card-collapsed-summary',
+            'tabular-nums',
+            collapsedSummaryTone || '',
+          ].filter(Boolean).join(' '),
+          textContent: collapsedSummary,
+          title: collapsedSummaryTitle || collapsedSummary,
+        })
+      : null;
+    const btnTitle = ariaTitle || titleText;
+    const rightChildren = collapsed
+      ? [summaryNode, createCollapseButton(cardId, btnTitle, true, buttonId)]
+      : [expandedRight, createCollapseButton(cardId, btnTitle, false, buttonId)];
+    const rightEl = el('div', { className: 'card-head-right' }, ...rightChildren);
+    return [titleEl, rightEl];
+  }
+
+  function buildCollapsibleCardHead(opts) {
+    const headEl = el('div', { className: 'card-head is-collapsible' });
+    headEl.replaceChildren(...buildCollapsibleCardHeadChildren(opts));
+    headEl.addEventListener('click', (e) => {
+      if (isInteractiveHeaderClick(e?.target, headEl)) return;
+      toggleCardCollapsed(opts.cardId);
+    });
+    return headEl;
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
 // ============================================================================
 
   function setBoundedMotionMemory(map, key, value) {
@@ -3526,12 +3887,19 @@
 // [MODIFIED BEGIN] 2026-11-23 10:31:22
 // Description: Bump fallback app version from 0.5.1 to 0.5.2.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Bump fallback app version from 0.5.2 to 0.5.3.
+// ============================================================================
     const raw =
       state.snapshot?.appVersion ||
       state.snapshot?.updateStatus?.currentVersion ||
       state.activeUpdateStatus?.currentVersion ||
-      '0.5.2';
-    return String(raw).trim().replace(/^[vV]/, '') || '0.5.2';
+      '0.5.3';
+    return String(raw).trim().replace(/^[vV]/, '') || '0.5.3';
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:31:22
 // ============================================================================
@@ -4850,30 +5218,50 @@
     const latestStepDetail = outTok > 0 && Number.isFinite(durSec) && durSec > 0
       ? `${fmtInt(outTok)} tok / ${durSec.toFixed(1)}s`
       : '—';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Support unified collapsible state, concise tok/s collapsed summary, and body-skip in renderSpeedCard.
+// ============================================================================
+    const collapsed = isCardCollapsed('speed');
+    card.classList.toggle('is-collapsed', collapsed);
+    const speedCollapsedSummary = latestRate !== '—' ? `${latestRate} tok/s` : '—';
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 22:07:46
 // Description: Add dirty-signature memoization in renderSpeedCard to skip unchanged DOM rebuilds.
 // ============================================================================
-    const sig = JSON.stringify([
-      state.lang,
-      current.conversationId || '',
-      num(speed.measuredStepsCount, 0),
-      num(speed.latestStepTokPerSec, 0),
-      num(speed.weightedAvgTokPerSec, 0),
-      num(speed.peakTokPerSec, 0),
-      outTok,
-      Number.isFinite(durSec) ? durSec : null,
-      recent.map((s, idx) => [
-        num(s?.stepIndex, idx),
-        num(s?.tokPerSec, 0),
-        num(s?.outputTokens, 0),
-        num(s?.durationSec, 0),
-        s?.model || '',
-      ]),
-    ]);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Include collapsed state in renderSpeedCard dirty signature and short-circuit collapsed body rendering.
+// ============================================================================
+    const sig = collapsed
+      ? JSON.stringify([true, state.lang, current.conversationId || '', speedCollapsedSummary])
+      : JSON.stringify([
+          false,
+          state.lang,
+          current.conversationId || '',
+          num(speed.measuredStepsCount, 0),
+          num(speed.latestStepTokPerSec, 0),
+          num(speed.weightedAvgTokPerSec, 0),
+          num(speed.peakTokPerSec, 0),
+          outTok,
+          Number.isFinite(durSec) ? durSec : null,
+          recent.map((s, idx) => [
+            num(s?.stepIndex, idx),
+            num(s?.tokPerSec, 0),
+            num(s?.outputTokens, 0),
+            num(s?.durationSec, 0),
+            s?.model || '',
+          ]),
+        ]);
     if (card.childElementCount > 0 && state.cardRenderSigs.speed === sig) return;
     state.cardRenderSigs.speed = sig;
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:07:46
 // ============================================================================
@@ -4888,6 +5276,32 @@
 // [MODIFIED BEGIN] 2026-11-17 22:07:46
 // Description: Key sparkline bars by stable stepIndex, align header steps badge right, and lock Speed sub-stats to 2 fixed .sub-stats-line rows inside .sub-stats-speed.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Render unified collapsible header via buildCollapsibleCardHead and skip Speed body DOM when collapsed.
+// ============================================================================
+    const headEl = buildCollapsibleCardHead({
+      cardId: 'speed',
+      iconName: 'speed',
+      titleText: t('speed.title'),
+      expandedRight: collapsed
+        ? null
+        : renderRollingText(
+            'cur:speed:steps',
+            t('speed.measuredSteps', { count: fmtInt(speed.measuredStepsCount) }),
+            num(speed.measuredStepsCount, 0),
+            { className: 'muted-hint tabular-nums', alignEnd: true },
+          ),
+      collapsedSummary: speedCollapsedSummary,
+    });
+    if (collapsed) {
+      card.replaceChildren(headEl);
+      return;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
+
     const maxRate = recent.reduce((m, s) => Math.max(m, num(s.tokPerSec, 0)), 0);
     const sparkBars = recent.length > 0
       ? recent.map((s, idx) => {
@@ -4909,25 +5323,21 @@
       : [el('span', { className: 'empty-inline', textContent: t('speed.empty') })];
 
     card.replaceChildren(
-      el('div', { className: 'card-head' },
-        el('div', { className: 'card-title' },
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 10:22:23
 // Description: Replace .card-title-dot with speed SVG icon in renderSpeedCard.
 // ============================================================================
-          icon('speed', 14, 'card-title-icon'),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Mount unified collapsible header node in renderSpeedCard.
+// ============================================================================
+      headEl,
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:22:23
 // ============================================================================
-          t('speed.title'),
-        ),
-        renderRollingText(
-          'cur:speed:steps',
-          t('speed.measuredSteps', { count: fmtInt(speed.measuredStepsCount) }),
-          num(speed.measuredStepsCount, 0),
-          { className: 'muted-hint tabular-nums', alignEnd: true },
-        ),
-      ),
       el('div', { className: 'hero-value-row tabular-nums' },
         renderRollingText(
           'cur:speed:latest',
@@ -5006,38 +5416,79 @@
       scopeData.totalTokens,
       num(scopeData.inputUncachedTokens, 0) + num(scopeData.cacheReadTokens, 0) + num(scopeData.outputTokens, 0),
     );
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Support unified collapsible state, compact cost summary, and body-skip in renderCostCard.
+// ============================================================================
+    const collapsed = isCardCollapsed('cost');
+    card.classList.toggle('is-collapsed', collapsed);
+    const costCollapsedSummary = fmtCostCompact(costActual, currency);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 22:07:46
 // Description: Add dirty-signature memoization and single-line sub-stats lock in renderCostCard.
 // ============================================================================
-    const sig = JSON.stringify([
-      state.lang,
-      state.tokenUnit,
-      currency,
-      num(prefs?.cnyRate, 0),
-      current.conversationId || '',
-      isChildView,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Include collapsed state in renderCostCard dirty signature and short-circuit collapsed body rendering.
+// ============================================================================
+    const sig = collapsed
+      ? JSON.stringify([
+          true,
+          state.lang,
+          currency,
+          num(prefs?.cnyRate, 0),
+          current.conversationId || '',
+          isChildView,
+          scopeKey,
+          costActual,
+        ])
+      : JSON.stringify([
+          false,
+          state.lang,
+          state.tokenUnit,
+          currency,
+          num(prefs?.cnyRate, 0),
+          current.conversationId || '',
+          isChildView,
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 20:19:40
 // Description: Include childKind in Cost card dirty signature and show Side Question Only isolated cost badge when viewing a Side Question.
 // ============================================================================
-      current?.childKind || '',
+          current?.childKind || '',
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:40
 // ============================================================================
-      hasChildren ? current.children.length : 0,
-      scopeKey,
-      costActual,
-      totalTokens,
-      num(scopeData.stepsCount, 0),
-      num(scopeData.cacheHitRatePct, 0),
-      num(scopeData.outputTokens, 0),
-      num(scopeData.cacheReadTokens, 0),
-      num(scopeData.inputUncachedTokens, 0),
-    ]);
+          hasChildren ? current.children.length : 0,
+          scopeKey,
+          costActual,
+          totalTokens,
+          num(scopeData.stepsCount, 0),
+          num(scopeData.cacheHitRatePct, 0),
+          num(scopeData.outputTokens, 0),
+          num(scopeData.cacheReadTokens, 0),
+          num(scopeData.inputUncachedTokens, 0),
+        ]);
     if (card.childElementCount > 0 && state.cardRenderSigs.cost === sig) return;
     state.cardRenderSigs.cost = sig;
+
+    if (collapsed) {
+      card.replaceChildren(
+        buildCollapsibleCardHead({
+          cardId: 'cost',
+          iconName: 'cost',
+          titleText: t('cost.title'),
+          collapsedSummary: costCollapsedSummary,
+        }),
+      );
+      return;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
     const headRight = isChildView
 // ============================================================================
@@ -5099,13 +5550,20 @@
       : renderRollingText('cur:cost:hero', fullCostText, costActual, { className: 'hero-value' });
 
     card.replaceChildren(
-      el('div', { className: 'card-head' },
-        el('div', { className: 'card-title' },
-          icon('cost', 14, 'card-title-icon'),
-          t('cost.title'),
-        ),
-        headRight,
-      ),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Use buildCollapsibleCardHead in renderCostCard.
+// ============================================================================
+      buildCollapsibleCardHead({
+        cardId: 'cost',
+        iconName: 'cost',
+        titleText: t('cost.title'),
+        expandedRight: headRight,
+        collapsedSummary: costCollapsedSummary,
+      }),
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-18 11:41:00
 // Description: Render Zero-CLS .hero-value-row.has-action with right-aligned #btn-checkout button in renderCostCard.
@@ -5196,29 +5654,75 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:28:17
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Support unified collapsible state, semantic warning/critical tone summary, and body-skip in renderContextCard.
+// ============================================================================
+    const collapsed = isCardCollapsed('context');
+    card.classList.toggle('is-collapsed', collapsed);
+    const ctxCollapsedSummary = `${hardPct.toFixed(1)}%`;
+    const ctxCollapsedTone =
+      level === 'CRITICAL' ? 'is-critical' : level === 'WARNING' ? 'is-warning' : 'is-healthy';
+    const ctxCollapsedTitle = `${fmtTokens(currentTotal)} / ${fmtTokens(hardLimit)} (${hardPct.toFixed(1)}%)`;
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 22:07:46
 // Description: Add dirty-signature memoization in renderContextCard (including tokenUnit and compactCopied state).
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Include collapsed state in renderContextCard dirty signature and short-circuit collapsed body rendering.
+// ============================================================================
     const isCopied = state.compactCopiedUntil > Date.now();
-    const sig = JSON.stringify([
-      state.lang,
-      state.tokenUnit,
-      current.conversationId || '',
-      isCopied,
-      currentTotal,
-      softLimit,
-      hardLimit,
-      hardPct,
-      softPct,
-      level,
-      Boolean(ctx.compactedPendingTurn),
-      num(ctx.compactedPreTotal, 0),
-      num(ctx.compactionSummaryTokens, currentTotal),
-    ]);
+    const sig = collapsed
+      ? JSON.stringify([
+          true,
+          state.lang,
+          state.tokenUnit,
+          current.conversationId || '',
+          currentTotal,
+          hardLimit,
+          hardPct,
+          level,
+        ])
+      : JSON.stringify([
+          false,
+          state.lang,
+          state.tokenUnit,
+          current.conversationId || '',
+          isCopied,
+          currentTotal,
+          softLimit,
+          hardLimit,
+          hardPct,
+          softPct,
+          level,
+          Boolean(ctx.compactedPendingTurn),
+          num(ctx.compactedPreTotal, 0),
+          num(ctx.compactionSummaryTokens, currentTotal),
+        ]);
     if (card.childElementCount > 0 && state.cardRenderSigs.context === sig) return;
     state.cardRenderSigs.context = sig;
+
+    if (collapsed) {
+      card.replaceChildren(
+        buildCollapsibleCardHead({
+          cardId: 'context',
+          iconName: 'context',
+          titleText: t('context.title'),
+          collapsedSummary: ctxCollapsedSummary,
+          collapsedSummaryTone: ctxCollapsedTone,
+          collapsedSummaryTitle: ctxCollapsedTitle,
+        }),
+      );
+      return;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:07:46
 // ============================================================================
@@ -5248,6 +5752,14 @@
     ].filter(Boolean).join(' ');
 
     const compactBtn = el('button', {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Assign stable #btn-compact ID to context /compact button.
+// ============================================================================
+      id: 'btn-compact',
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
       type: 'button',
       className: compactClasses,
       title: t('context.compactTitle'),
@@ -5307,19 +5819,19 @@
     }
 
     card.replaceChildren(
-      el('div', { className: 'card-head' },
-        el('div', { className: 'card-title' },
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 10:23:11
 // Description: Replace .card-title-dot with context SVG icon in renderContextCard.
 // ============================================================================
-          icon('context', 14, 'card-title-icon'),
 // ============================================================================
-// [MODIFIED END] 2026-11-20 10:23:11
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Use buildCollapsibleCardHead in renderContextCard.
 // ============================================================================
-          t('context.title'),
-        ),
-        el('div', { className: 'ctx-head-right' },
+      buildCollapsibleCardHead({
+        cardId: 'context',
+        iconName: 'context',
+        titleText: t('context.title'),
+        expandedRight: el('div', { className: 'ctx-head-right' },
           renderRollingText(
             'cur:ctx:summary',
             `${fmtTokens(currentTotal)} / ${fmtTokens(hardLimit)} (${hardPct.toFixed(1)}%)`,
@@ -5339,7 +5851,16 @@
           ),
           compactBtn,
         ),
-      ),
+        collapsedSummary: ctxCollapsedSummary,
+        collapsedSummaryTone: ctxCollapsedTone,
+        collapsedSummaryTitle: ctxCollapsedTitle,
+      }),
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:11
+// ============================================================================
       el('div', { className: 'ctx-bar-wrap' },
         el('div', { className: 'ctx-bar-track', role: 'progressbar', 'aria-valuenow': Math.round(hardPct), 'aria-valuemin': 0, 'aria-valuemax': 100 },
           applySmoothBarSize(
@@ -5399,34 +5920,75 @@
     const hitPct = num(ctx.latestCacheHitRatePct, 0);
     const netDelta = num(ctx.latestNetDelta, 0);
     const spikes = Array.isArray(ctx.topSpikes) ? ctx.topSpikes : [];
+    const totalLatest = cacheRead + uncached;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Support unified collapsible state, hit-rate semantic tier summary, and body-skip in renderCacheCard.
+// ============================================================================
+    const collapsed = isCardCollapsed('cache');
+    card.classList.toggle('is-collapsed', collapsed);
+    const cacheCollapsedSummary = fmtPct(hitPct);
+    const cacheCollapsedTone = hitPct >= 75
+      ? 'is-healthy'
+      : hitPct >= 40
+        ? 'is-warning'
+        : (hitPct > 0 || totalLatest > 0)
+          ? 'is-critical'
+          : '';
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 22:07:46
 // Description: Add dirty-signature memoization in renderCacheCard.
 // ============================================================================
-    const sig = JSON.stringify([
-      state.lang,
-      state.tokenUnit,
-      state.spikesExpanded,
-      current.conversationId || '',
-      cacheRead,
-      uncached,
-      hitPct,
-      netDelta,
-      spikes.map((sp) => [
-        num(sp?.stepIndex, 0),
-        num(sp?.deltaTokens, 0),
-        num(sp?.totalAfter, 0),
-        sp?.triggerSummary || '',
-      ]),
-    ]);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Include collapsed state in renderCacheCard dirty signature and short-circuit collapsed body rendering.
+// ============================================================================
+    const sig = collapsed
+      ? JSON.stringify([true, state.lang, current.conversationId || '', hitPct, totalLatest])
+      : JSON.stringify([
+          false,
+          state.lang,
+          state.tokenUnit,
+          state.spikesExpanded,
+          current.conversationId || '',
+          cacheRead,
+          uncached,
+          hitPct,
+          netDelta,
+          spikes.map((sp) => [
+            num(sp?.stepIndex, 0),
+            num(sp?.deltaTokens, 0),
+            num(sp?.totalAfter, 0),
+            sp?.triggerSummary || '',
+          ]),
+        ]);
     if (card.childElementCount > 0 && state.cardRenderSigs.cache === sig) return;
     state.cardRenderSigs.cache = sig;
+
+    if (collapsed) {
+      card.replaceChildren(
+        buildCollapsibleCardHead({
+          cardId: 'cache',
+          iconName: 'cache',
+          titleText: t('cache.title'),
+          collapsedSummary: cacheCollapsedSummary,
+          collapsedSummaryTone: cacheCollapsedTone,
+          collapsedSummaryTitle: t('cache.hitRate', { pct: hitPct.toFixed(1) }),
+        }),
+      );
+      return;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:07:46
 // ============================================================================
 
-    const totalLatest = cacheRead + uncached;
     const hitBarPct = totalLatest > 0 ? (cacheRead / totalLatest) * 100 : 0;
     const missBarPct = totalLatest > 0 ? 100 - hitBarPct : 0;
 
@@ -5480,19 +6042,19 @@
 // Description: Wire slot-roll text animations and smooth hit/miss bar gliding in renderCacheCard.
 // ============================================================================
     card.replaceChildren(
-      el('div', { className: 'card-head' },
-        el('div', { className: 'card-title' },
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 10:23:11
 // Description: Replace .card-title-dot with cache SVG icon in renderCacheCard.
 // ============================================================================
-          icon('cache', 14, 'card-title-icon'),
 // ============================================================================
-// [MODIFIED END] 2026-11-20 10:23:11
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Use buildCollapsibleCardHead in renderCacheCard.
 // ============================================================================
-          t('cache.title'),
-        ),
-        renderRollingText('cur:cache:headRate', t('cache.hitRate', { pct: hitPct.toFixed(1) }), hitPct, {
+      buildCollapsibleCardHead({
+        cardId: 'cache',
+        iconName: 'cache',
+        titleText: t('cache.title'),
+        expandedRight: renderRollingText('cur:cache:headRate', t('cache.hitRate', { pct: hitPct.toFixed(1) }), hitPct, {
           className: 'muted-hint tabular-nums',
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 22:07:46
@@ -5503,7 +6065,16 @@
 // [MODIFIED END] 2026-11-17 22:07:46
 // ============================================================================
         }),
-      ),
+        collapsedSummary: cacheCollapsedSummary,
+        collapsedSummaryTone: cacheCollapsedTone,
+        collapsedSummaryTitle: t('cache.hitRate', { pct: hitPct.toFixed(1) }),
+      }),
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:11
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 15:38:42
 // Description: B6 — Localize cache segment track hover tooltip via cache.trackTip.
@@ -5742,6 +6313,28 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-17 21:28:45
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Support unified collapsible state, children/models concise summary, and body-skip in renderChildrenAndModelsCard.
+// ============================================================================
+    const collapsed = isCardCollapsed('children-models');
+    card.classList.toggle('is-collapsed', collapsed);
+    const childrenModelsCollapsedSummary = sortedChildren.length > 0
+      ? (byModel.length === 1
+          ? t('childrenModels.collapsedWithChildrenOneModel', {
+              children: fmtInt(sortedChildren.length),
+              models: 1,
+            })
+          : t('childrenModels.collapsedWithChildren', {
+              children: fmtInt(sortedChildren.length),
+              models: fmtInt(byModel.length),
+            }))
+      : (byModel.length === 1
+          ? t('childrenModels.collapsedModelsOne', { count: 1 })
+          : t('childrenModels.collapsedModelsMany', { count: fmtInt(byModel.length) }));
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 22:07:46
@@ -5751,62 +6344,90 @@
 // [MODIFIED BEGIN] 2026-11-18 11:41:00
 // Description: Include childrenExpanded, killed flag, and formatted relative time in childrenModels dirty signature, and preserve expanded scroll offset across re-renders.
 // ============================================================================
-    const sig = JSON.stringify([
-      state.lang,
-      state.tokenUnit,
-      currency,
-      num(prefs?.cnyRate, 0),
-      state.modelSortBy,
-      state.modelSortDir,
-      Boolean(state.childrenExpanded),
-      current.conversationId || '',
-      isChildView,
-      sortedChildren.map((ch) => [
-        ch?.conversationId || '',
-        ch?.kind || '',
-        ch?.status || '',
-        Boolean(ch?.killed),
-        ch?.updatedAtMs ? fmtRelTime(ch.updatedAtMs) : '',
-        num(ch?.generatingSinceMs, 0),
-        ch?.name || '',
-        ch?.role || '',
-        ch?.model || '',
-        num(ch?.contextTotal, 0),
-        num(ch?.latestTokPerSec, 0),
-        num(ch?.outputTokens, 0),
-        num(ch?.costActual, 0),
-      ]),
-      byModel.map((row) => [
-        row?.model || '',
-        row?.profileId || '',
-        row?.profileLabel || '',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Include collapsed state in renderChildrenAndModelsCard dirty signature and short-circuit collapsed body rendering.
+// ============================================================================
+    const sig = collapsed
+      ? JSON.stringify([
+          true,
+          state.lang,
+          current.conversationId || '',
+          sortedChildren.length,
+          byModel.length,
+        ])
+      : JSON.stringify([
+          false,
+          state.lang,
+          state.tokenUnit,
+          currency,
+          num(prefs?.cnyRate, 0),
+          state.modelSortBy,
+          state.modelSortDir,
+          Boolean(state.childrenExpanded),
+          current.conversationId || '',
+          isChildView,
+          sortedChildren.map((ch) => [
+            ch?.conversationId || '',
+            ch?.kind || '',
+            ch?.status || '',
+            Boolean(ch?.killed),
+            ch?.updatedAtMs ? fmtRelTime(ch.updatedAtMs) : '',
+            num(ch?.generatingSinceMs, 0),
+            ch?.name || '',
+            ch?.role || '',
+            ch?.model || '',
+            num(ch?.contextTotal, 0),
+            num(ch?.latestTokPerSec, 0),
+            num(ch?.outputTokens, 0),
+            num(ch?.costActual, 0),
+          ]),
+          byModel.map((row) => [
+            row?.model || '',
+            row?.profileId || '',
+            row?.profileLabel || '',
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 13:28:17
 // Description: Include merged row.rawModels in childrenModels dirty signature.
 // ============================================================================
-        Array.isArray(row?.rawModels) ? row.rawModels.join(',') : '',
+            Array.isArray(row?.rawModels) ? row.rawModels.join(',') : '',
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:28:17
 // ============================================================================
-        row?.rateDisplay || '',
-        num(row?.stepsCount, 0),
-        num(row?.inputUncachedTokens, 0),
-        num(row?.cacheReadTokens, 0),
+            row?.rateDisplay || '',
+            num(row?.stepsCount, 0),
+            num(row?.inputUncachedTokens, 0),
+            num(row?.cacheReadTokens, 0),
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 20:20:30
 // Description: Include per-model cacheHitRatePct in Tab 1 childrenModels dirty signature.
 // ============================================================================
-        num(row?.cacheHitRatePct, 0),
+            num(row?.cacheHitRatePct, 0),
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:20:30
 // ============================================================================
-        num(row?.outputTokens, 0),
-        num(row?.totalTokens, 0),
-        num(row?.costActual, 0),
-      ]),
-    ]);
+            num(row?.outputTokens, 0),
+            num(row?.totalTokens, 0),
+            num(row?.costActual, 0),
+          ]),
+        ]);
     if (card.childElementCount > 0 && state.cardRenderSigs.childrenModels === sig) return;
     state.cardRenderSigs.childrenModels = sig;
+
+    if (collapsed) {
+      card.replaceChildren(
+        buildCollapsibleCardHead({
+          cardId: 'children-models',
+          iconName: 'agents',
+          titleText: t('childrenModels.title'),
+          collapsedSummary: childrenModelsCollapsedSummary,
+        }),
+      );
+      return;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
     if (state.childrenExpanded) {
       const prevList = card.querySelector('.children-list.is-expanded');
@@ -5822,25 +6443,32 @@
 // ============================================================================
 
     const nodes = [
-      el('div', { className: 'card-head' },
-        el('div', { className: 'card-title' },
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 10:23:11
 // Description: Replace .card-title-dot with agents SVG icon in renderChildrenAndModelsCard.
 // ============================================================================
-          icon('agents', 14, 'card-title-icon'),
 // ============================================================================
-// [MODIFIED END] 2026-11-20 10:23:11
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Use buildCollapsibleCardHead in renderChildrenAndModelsCard.
 // ============================================================================
-          t('childrenModels.title'),
-        ),
-        sortedChildren.length > 0
+      buildCollapsibleCardHead({
+        cardId: 'children-models',
+        iconName: 'agents',
+        titleText: t('childrenModels.title'),
+        expandedRight: sortedChildren.length > 0
           ? el('span', {
               className: 'muted-hint tabular-nums',
               textContent: t('childrenModels.membersCount', { count: sortedChildren.length }),
             })
           : null,
-      ),
+        collapsedSummary: childrenModelsCollapsedSummary,
+      }),
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:11
+// ============================================================================
     ];
 
 // ============================================================================
@@ -6193,6 +6821,14 @@
     const sideQuestions = Array.isArray(current?.sideQuestions) ? current.sideQuestions : [];
     if (sideQuestions.length === 0) {
       card.classList.add('hidden');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Clear .is-collapsed when Side Questions card is hidden (0 side questions).
+// ============================================================================
+      card.classList.remove('is-collapsed');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
       state.cardRenderSigs.sideQuestions = '';
       card.replaceChildren();
       return;
@@ -6230,37 +6866,91 @@
         ? Number(rawTotHit)
         : (totIn > 0 ? (totCached / totIn) * 100 : 0);
 
-    const sig = JSON.stringify([
-      state.lang,
-      state.tokenUnit,
-      currency,
-      num(prefs?.cnyRate, 0),
-      Boolean(state.sideQuestionsExpanded),
-      current.conversationId || '',
-      totCount,
-      totSteps,
-      totTokens,
-      totCost,
-      totHitPct,
-      sideQuestions.map((sq) => [
-        sq?.conversationId || '',
-        sq?.title || '',
-        sq?.model || '',
-        sq?.rawModel || '',
-        sq?.status || '',
-        num(sq?.generatingSinceMs, 0),
-        num(sq?.stepsCount, 0),
-        num(sq?.inputUncachedTokens, 0),
-        num(sq?.cacheReadTokens, 0),
-        num(sq?.outputTokens, 0),
-        num(sq?.totalTokens, 0),
-        num(sq?.cacheHitRatePct, 0),
-        num(sq?.costActual, 0),
-        sq?.updatedAtMs ? fmtRelTime(sq.updatedAtMs) : '',
-      ]),
-    ]);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Support unified collapsible state, branch-toned summary, dirty-sig inclusion, and body-skip in renderSideQuestionsCard.
+// ============================================================================
+    const collapsed = isCardCollapsed('side-questions');
+    card.classList.toggle('is-collapsed', collapsed);
+
+    const sig = collapsed
+      ? JSON.stringify([
+          true,
+          state.lang,
+          state.tokenUnit,
+          currency,
+          num(prefs?.cnyRate, 0),
+          current.conversationId || '',
+          totCount,
+          totSteps,
+          totTokens,
+          totCost,
+          totHitPct,
+        ])
+      : JSON.stringify([
+          false,
+          state.lang,
+          state.tokenUnit,
+          currency,
+          num(prefs?.cnyRate, 0),
+          Boolean(state.sideQuestionsExpanded),
+          current.conversationId || '',
+          totCount,
+          totSteps,
+          totTokens,
+          totCost,
+          totHitPct,
+          sideQuestions.map((sq) => [
+            sq?.conversationId || '',
+            sq?.title || '',
+            sq?.model || '',
+            sq?.rawModel || '',
+            sq?.status || '',
+            num(sq?.generatingSinceMs, 0),
+            num(sq?.stepsCount, 0),
+            num(sq?.inputUncachedTokens, 0),
+            num(sq?.cacheReadTokens, 0),
+            num(sq?.outputTokens, 0),
+            num(sq?.totalTokens, 0),
+            num(sq?.cacheHitRatePct, 0),
+            num(sq?.costActual, 0),
+            sq?.updatedAtMs ? fmtRelTime(sq.updatedAtMs) : '',
+          ]),
+        ]);
     if (card.childElementCount > 0 && state.cardRenderSigs.sideQuestions === sig) return;
     state.cardRenderSigs.sideQuestions = sig;
+
+    const collapsedSummaryText = t('sideQuestions.summaryMeta', {
+      tokens: fmtTokens(totTokens),
+      cost: fmtCostCompact(totCost, currency),
+    });
+    const summaryTip = t('sideQuestions.summaryTip', {
+      count: fmtInt(totCount),
+      steps: fmtInt(totSteps),
+      hit: totIn > 0 ? fmtPct(totHitPct) : '—',
+    });
+    const countBadgeNode = el('span', {
+      className: 'kind-badge side-question tabular-nums',
+      textContent: t('sideQuestions.countBadge', { count: fmtInt(totCount) }),
+    });
+
+    if (collapsed) {
+      card.replaceChildren(
+        buildCollapsibleCardHead({
+          cardId: 'side-questions',
+          iconName: 'branch',
+          titleText: t('sideQuestions.title'),
+          titleExtra: countBadgeNode,
+          collapsedSummary: collapsedSummaryText,
+          collapsedSummaryTone: 'is-branch',
+          collapsedSummaryTitle: summaryTip,
+        }),
+      );
+      return;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
     if (state.sideQuestionsExpanded) {
       const prevList = card.querySelector('.side-questions-list.is-expanded');
@@ -6292,29 +6982,21 @@
       tokens: fmtTokens(totTokens),
       cost: fmtCost(totCost, currency),
     });
-    const summaryTip = t('sideQuestions.summaryTip', {
-      count: fmtInt(totCount),
-      steps: fmtInt(totSteps),
-      hit: totIn > 0 ? fmtPct(totHitPct) : '—',
-    });
 
-    const headEl = el('div', { className: 'card-head' },
-      el('div', { className: 'card-title' },
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 10:23:58
 // Description: Replace .card-title-dot with branch SVG icon in renderSideQuestionsCard.
 // ============================================================================
-        icon('branch', 14, 'card-title-icon'),
 // ============================================================================
-// [MODIFIED END] 2026-11-20 10:23:58
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Use buildCollapsibleCardHead in renderSideQuestionsCard while preserving .side-questions-head-right controls when expanded.
 // ============================================================================
-        t('sideQuestions.title'),
-        el('span', {
-          className: 'kind-badge side-question tabular-nums',
-          textContent: t('sideQuestions.countBadge', { count: fmtInt(totCount) }),
-        }),
-      ),
-      el('div', { className: 'side-questions-head-right' },
+    const headEl = buildCollapsibleCardHead({
+      cardId: 'side-questions',
+      iconName: 'branch',
+      titleText: t('sideQuestions.title'),
+      titleExtra: countBadgeNode,
+      expandedRight: el('div', { className: 'side-questions-head-right' },
         el('span', {
           className: 'side-questions-summary tabular-nums',
           textContent: summaryText,
@@ -6331,7 +7013,16 @@
             })
           : null,
       ),
-    );
+      collapsedSummary: collapsedSummaryText,
+      collapsedSummaryTone: 'is-branch',
+      collapsedSummaryTitle: summaryTip,
+    });
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:23:58
+// ============================================================================
 
     const listEl = el(
       'div',
@@ -6610,11 +7301,22 @@
 
   function expandChildrenFromPixelOffice() {
     state.childrenExpanded = true;
-    const latestCurrent = state.snapshot?.current || state.pixelOfficeLastCurrent;
-    const latestPrefs = state.snapshot?.prefs || state.pixelOfficeLastPrefs;
-    if (latestCurrent) {
-      renderChildrenAndModelsCard(latestCurrent, latestPrefs);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Auto-expand collapsed children-models card when jumping from Pixel Office overflow badge.
+// ============================================================================
+    if (isCardCollapsed('children-models')) {
+      toggleCardCollapsed('children-models');
+    } else {
+      const latestCurrent = state.snapshot?.current || state.pixelOfficeLastCurrent;
+      const latestPrefs = state.snapshot?.prefs || state.pixelOfficeLastPrefs;
+      if (latestCurrent) {
+        renderChildrenAndModelsCard(latestCurrent, latestPrefs);
+      }
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
     const childrenCard = $('card-children-models');
     if (childrenCard && typeof childrenCard.scrollIntoView === 'function') {
       childrenCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -6928,7 +7630,14 @@
     state.pixelOfficeLastCurrent = current;
     state.pixelOfficeLastPrefs = prefs;
     card.classList.remove('hidden');
-    const collapsed = Boolean(state.pixelOfficeCollapsed);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Read Pixel Office collapsed state from unified isCardCollapsed('pixel-office').
+// ============================================================================
+    const collapsed = isCardCollapsed('pixel-office');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
     card.classList.toggle('is-collapsed', collapsed);
 
     const children = Array.isArray(current.children) ? current.children : [];
@@ -7022,8 +7731,18 @@
     const countLabel = subSlotsCount > 0
       ? t('pixelOffice.slotsCount', { count: subSlotsCount })
       : t('pixelOffice.slotsMainOnly');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Replace legacy text .pixel-office-toggle-btn with unified buildCollapsibleCardHead chevron and concise collapsed summary (1 主 + N 子 / 仅主代理 + overflow).
+// ============================================================================
+    const baseCollapsedSummary = subSlotsCount > 0
+      ? t('pixelOffice.slotsCount', { count: subSlotsCount })
+      : t('pixelOffice.collapsedMainOnly');
+    const pixelCollapsedSummary = officeModel.overflowCount > 0
+      ? `${baseCollapsedSummary} ${t('pixelOffice.overflowPill', { count: officeModel.overflowCount })}`
+      : baseCollapsedSummary;
 
-    const overflowBadge = officeModel.overflowCount > 0
+    const overflowBadge = !collapsed && officeModel.overflowCount > 0
       ? el('button', {
           type: 'button',
           className: 'pixel-office-overflow-badge tabular-nums',
@@ -7033,43 +7752,29 @@
         })
       : null;
 
-    const toggleBtn = el('button', {
-      id: 'btn-pixel-office-toggle',
-      type: 'button',
-      className: 'mini-btn pixel-office-toggle-btn',
-      'aria-expanded': String(!collapsed),
-      textContent: collapsed ? t('pixelOffice.expand') : t('pixelOffice.collapse'),
-      onClick: () => {
-        state.pixelOfficeCollapsed = !state.pixelOfficeCollapsed;
-        if (state.snapshot?.prefs) {
-          state.snapshot.prefs.pixelOfficeCollapsed = state.pixelOfficeCollapsed;
-        }
-        state.cardRenderSigs.pixelOffice = '';
-        const latestCurrent = state.snapshot?.current || current;
-        const latestPrefs = state.snapshot?.prefs || prefs;
-        renderPixelOfficeCard(latestCurrent, latestPrefs);
-        patchPrefs({ pixelOfficeCollapsed: state.pixelOfficeCollapsed });
-      },
-    });
-
-    const headEl = el('div', { className: 'card-head' },
-      el('div', { className: 'card-title' },
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 10:23:58
 // Description: Replace .card-title-dot with office SVG icon in renderPixelOfficeCard.
 // ============================================================================
-        icon('office', 14, 'card-title-icon'),
+    const headEl = buildCollapsibleCardHead({
+      cardId: 'pixel-office',
+      iconName: 'office',
+      titleText: t('pixelOffice.title'),
+      buttonId: 'btn-pixel-office-toggle',
+      expandedRight: collapsed
+        ? null
+        : el('div', { className: 'pixel-office-head-right' },
+            el('span', { className: 'pixel-office-count tabular-nums', textContent: countLabel }),
+            overflowBadge,
+          ),
+      collapsedSummary: pixelCollapsedSummary,
+    });
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:23:58
 // ============================================================================
-        t('pixelOffice.title'),
-      ),
-      el('div', { className: 'pixel-office-head-right' },
-        el('span', { className: 'pixel-office-count tabular-nums', textContent: countLabel }),
-        overflowBadge,
-        toggleBtn,
-      ),
-    );
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
     if (collapsed) {
       state.pixelOfficeCanvas = null;
@@ -7167,6 +7872,14 @@
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:21:00
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Hide Tab 1 #current-collapsed-bar when active session is empty.
+// ============================================================================
+      renderCurrentCollapsedBar(null);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
       emptyEl.classList.remove('hidden');
       contentEl.classList.add('hidden');
       return;
@@ -7196,6 +7909,15 @@
     const wsBase = workspaceBase(current.workspace);
     $('conv-workspace').textContent = wsBase;
     $('conv-workspace').title = current.workspace || '';
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Render on-demand Tab 1 #current-collapsed-bar right below #conv-strip.
+// ============================================================================
+    renderCurrentCollapsedBar(current);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 11:49:06
@@ -7391,7 +8113,15 @@
     if (isMounted) return state.globalDom;
 
     const topStack = el('div', { className: 'view-stack' });
-    const recentHead = el('div', { className: 'card-head' });
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Make Tab 2 recentCard (#card-global-recent) collapsible with persistent click-guarded header while keeping C2 filter bar DOM intact across collapse/expand.
+// ============================================================================
+    const recentHead = el('div', { className: 'card-head is-collapsible' });
+    recentHead.addEventListener('click', (e) => {
+      if (isInteractiveHeaderClick(e?.target, recentHead)) return;
+      toggleCardCollapsed('global-recent');
+    });
     const searchInput = el('input', {
       type: 'search',
       className: 'list-search-input',
@@ -7409,7 +8139,10 @@
 
     const filterBar = el('div', { className: 'list-filter-bar' }, searchInput, modelSelect, activeChip);
     const recentListWrap = el('div', { className: 'recent-list-wrap' });
-    const recentCard = el('article', { className: 'card' }, recentHead, filterBar, recentListWrap);
+    const recentCard = el('article', { id: 'card-global-recent', className: 'card' }, recentHead, filterBar, recentListWrap);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
     const triggerListFilter = () => {
       const snap = state.snapshot || state.globalLastSnap;
@@ -7507,6 +8240,14 @@
       state.modelSortBy,
       state.modelSortDir,
       state.workspacesExpanded,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Include all 6 Tab 2 card collapsed states in buildGlobalTopSig so top cards and #global-collapsed-bar stay synchronized.
+// ============================================================================
+      GLOBAL_TAB_CARD_IDS.map((id) => isCardCollapsed(id)),
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
       Boolean(g.ledgerSync?.syncing || g.ledgerSync?.pendingCount),
       period.startDate || '',
       period.endDate || '',
@@ -7631,10 +8372,17 @@
     const modelFilter = state.globalModelFilter;
     const activeOnly = state.globalActiveOnly;
     const hasActiveFilter = Boolean(queryLower || modelFilter || activeOnly);
-
-    dom.filterBar.classList.toggle('hidden', listItems.length === 0 && !hasActiveFilter);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Support collapsing #card-global-recent via .is-collapsed + .hidden on persistent filterBar/recentListWrap (preserving C2 filter state) and skip list DOM rebuild while collapsed.
+// ============================================================================
+    const recentCollapsed = isCardCollapsed('global-recent');
+    dom.recentCard.classList.toggle('is-collapsed', recentCollapsed);
+    dom.filterBar.classList.toggle('hidden', recentCollapsed || (listItems.length === 0 && !hasActiveFilter));
+    dom.recentListWrap.classList.toggle('hidden', recentCollapsed);
 
     const listSig = JSON.stringify([
+      recentCollapsed,
       state.lang,
       state.tokenUnit,
       currency,
@@ -7660,7 +8408,10 @@
         num(item.costActual, 0),
       ]),
     ]);
-    if (dom.recentListWrap.childElementCount > 0 && state.cardRenderSigs.globalList === listSig) {
+    const hasRenderedTarget = recentCollapsed
+      ? dom.recentHead.childElementCount > 0
+      : dom.recentListWrap.childElementCount > 0;
+    if (hasRenderedTarget && state.cardRenderSigs.globalList === listSig) {
       return;
     }
     state.cardRenderSigs.globalList = listSig;
@@ -7690,42 +8441,65 @@
       ? `${filteredItems.length}/${listItems.length}`
       : listItems.length;
 
-    const listToggle = el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('global.convSortAria') },
-      el('button', {
-        type: 'button',
-        className: `seg-btn${listMode === 'recent' ? ' active' : ''}`,
-        textContent: t('global.sortRecent'),
-        onClick: () => {
-          if (state.convListMode !== 'recent') {
-            state.convListMode = 'recent';
-            const s = state.snapshot || state.globalLastSnap;
-            if (s) renderGlobalSessionListSection(dom, s);
-          }
-        },
-      }),
-      el('button', {
-        type: 'button',
-        className: `seg-btn${listMode === 'top' ? ' active' : ''}`,
-        textContent: t('global.sortTop'),
-        onClick: () => {
-          if (state.convListMode !== 'top') {
-            state.convListMode = 'top';
-            const s = state.snapshot || state.globalLastSnap;
-            if (s) renderGlobalSessionListSection(dom, s);
-          }
-        },
+    const recentTitleText = listMode === 'top'
+      ? t('global.topConvsTitle', { period: periodTitle, count: countDisplay })
+      : t('global.recentConvsTitle', { count: countDisplay });
+    const recentShortTitle = listMode === 'top'
+      ? t('global.topConvsShortTitle', { period: periodTitle })
+      : t('global.recentConvsShortTitle');
+    const recentCollapsedSummary = hasActiveFilter
+      ? `${filteredItems.length}/${listItems.length}`
+      : (listItems.length === 1
+          ? t('global.recentCollapsedOne', { count: 1 })
+          : t('global.recentCollapsedMany', { count: fmtInt(listItems.length) }));
+
+    const listToggle = recentCollapsed
+      ? null
+      : el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('global.convSortAria') },
+          el('button', {
+            type: 'button',
+            className: `seg-btn${listMode === 'recent' ? ' active' : ''}`,
+            textContent: t('global.sortRecent'),
+            onClick: () => {
+              if (state.convListMode !== 'recent') {
+                state.convListMode = 'recent';
+                const s = state.snapshot || state.globalLastSnap;
+                if (s) renderGlobalSessionListSection(dom, s);
+              }
+            },
+          }),
+          el('button', {
+            type: 'button',
+            className: `seg-btn${listMode === 'top' ? ' active' : ''}`,
+            textContent: t('global.sortTop'),
+            onClick: () => {
+              if (state.convListMode !== 'top') {
+                state.convListMode = 'top';
+                const s = state.snapshot || state.globalLastSnap;
+                if (s) renderGlobalSessionListSection(dom, s);
+              }
+            },
+          }),
+        );
+
+    dom.recentHead.replaceChildren(
+      ...buildCollapsibleCardHeadChildren({
+        cardId: 'global-recent',
+        iconName: 'receipt',
+        titleText: recentCollapsed ? recentShortTitle : recentTitleText,
+        ariaTitle: recentShortTitle,
+        expandedRight: listToggle,
+        collapsedSummary: recentCollapsedSummary,
+        collapsedSummaryTone: hasActiveFilter ? 'is-accent' : '',
       }),
     );
 
-    dom.recentHead.replaceChildren(
-      el('div', { className: 'card-title' },
-        icon('receipt', 14, 'card-title-icon'),
-        listMode === 'top'
-          ? t('global.topConvsTitle', { period: periodTitle, count: countDisplay })
-          : t('global.recentConvsTitle', { count: countDisplay }),
-      ),
-      listToggle,
-    );
+    if (recentCollapsed) {
+      return;
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 
     const listBodyNode = filteredItems.length > 0
       ? el('div', { className: 'recent-list' },
@@ -7879,212 +8653,259 @@
       el('span', { className: 'period-range-text tabular-nums', textContent: dateRangeLabel }),
     );
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Build on-demand Tab 2 #global-collapsed-bar right below .period-bar.
+// ============================================================================
+    const globalCollapsedCount = getVisibleCollapsedCardIds('global', snap, ctx).length;
+    const globalCollapsedBar = el('div', {
+      id: 'global-collapsed-bar',
+      className: globalCollapsedCount > 0 ? 'collapsed-bar' : 'collapsed-bar hidden',
+    });
+    if (globalCollapsedCount > 0) {
+      populateCollapsedBar(globalCollapsedBar, 'global', globalCollapsedCount);
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
+
     // 2. Subscription Value & Savings Card
     const sub = period.subscription || null;
     let subRoiCard = null;
     if (sub) {
-      const planName = getPlanLabel(sub.planId, sub.planLabel);
-      const planBadgeText = sub.isAutoDetected
-        ? t('roi.autoBadge', { plan: planName, fee: fmtCostCompact(sub.monthlyFee, currency) })
-        : t('roi.manualBadge', { plan: planName, fee: fmtCostCompact(sub.monthlyFee, currency) });
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Make Tab 2 ROI card (#card-global-roi) collapsible with concise ROI summary and body-skip when collapsed.
+// ============================================================================
+      const roiCollapsed = isCardCollapsed('global-roi');
+      const roiBarPct = sub.monthlyFee <= 0 || sub.isPaidOff
+        ? 100
+        : Math.min(100, Math.max(0, num(sub.paybackPct, 0)));
+      const roiCollapsedSummary = sub.monthlyFee <= 0
+        ? t('roi.collapsedFree', { cost: fmtCostCompact(sub.tokenCost, currency) })
+        : sub.isPaidOff
+          ? t('roi.netSaved', { cost: fmtCostCompact(sub.netSavings, currency) })
+          : t('roi.paybackPct', { pct: roiBarPct.toFixed(1) });
+      const roiCollapsedTone = sub.monthlyFee <= 0 || sub.isPaidOff ? 'is-healthy' : '';
+      const roiCollapsedTitle = sub.isPaidOff && sub.monthlyFee > 0 && Number.isFinite(sub.roiMultiplier)
+        ? t('roi.multBadge', { mult: sub.roiMultiplier.toFixed(2) })
+        : roiCollapsedSummary;
 
-      let heroNode;
-      let barPct = 0;
-      let barClass = 'roi-fill';
-      let captionText = '';
+      let roiHeadRight = null;
+      let roiBodyNodes = [];
+      if (!roiCollapsed) {
+        const planName = getPlanLabel(sub.planId, sub.planLabel);
+        const planBadgeText = sub.isAutoDetected
+          ? t('roi.autoBadge', { plan: planName, fee: fmtCostCompact(sub.monthlyFee, currency) })
+          : t('roi.manualBadge', { plan: planName, fee: fmtCostCompact(sub.monthlyFee, currency) });
+
+        let heroNode;
+        let barPct = 0;
+        let barClass = 'roi-fill';
+        let captionText = '';
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 21:28:45
 // Description: Wire slot-roll animations and smooth ROI/KPI/trend bar transitions in renderGlobalTab.
 // ============================================================================
-      if (sub.monthlyFee <= 0) {
-        barPct = 100;
-        barClass = 'roi-fill is-paid';
-        rollingMetricMemory.delete('glb:roi:sub');
-        heroNode = el('div', { className: 'roi-hero is-paid tabular-nums' },
-          renderRollingText(
-            'glb:roi:hero',
-            t('roi.freeHero', { cost: fmtCostCompact(sub.tokenCost, currency) }),
-            num(sub.tokenCost, 0),
-          ),
-        );
-        captionText = t('roi.freeCaption', {
-          period: periodTitle,
-          cost: fmtCostCompact(sub.tokenCost, currency),
-          zero: fmtCostCompact(0, currency),
-        });
-      } else if (sub.isPaidOff) {
-        barPct = 100;
-        barClass = 'roi-fill is-paid';
-        const multText = Number.isFinite(sub.roiMultiplier)
-          ? t('roi.multBadge', { mult: sub.roiMultiplier.toFixed(2) })
-          : '';
-        if (!multText) rollingMetricMemory.delete('glb:roi:sub');
-        heroNode = el('div', { className: 'roi-hero-row tabular-nums' },
-          renderRollingText(
-            'glb:roi:hero',
-            t('roi.netSaved', { cost: fmtCostCompact(sub.netSavings, currency) }),
-            num(sub.netSavings, 0),
-            { className: 'roi-hero is-paid' },
-          ),
-          multText
+        if (sub.monthlyFee <= 0) {
+          barPct = 100;
+          barClass = 'roi-fill is-paid';
+          rollingMetricMemory.delete('glb:roi:sub');
+          heroNode = el('div', { className: 'roi-hero is-paid tabular-nums' },
+            renderRollingText(
+              'glb:roi:hero',
+              t('roi.freeHero', { cost: fmtCostCompact(sub.tokenCost, currency) }),
+              num(sub.tokenCost, 0),
+            ),
+          );
+          captionText = t('roi.freeCaption', {
+            period: periodTitle,
+            cost: fmtCostCompact(sub.tokenCost, currency),
+            zero: fmtCostCompact(0, currency),
+          });
+        } else if (sub.isPaidOff) {
+          barPct = 100;
+          barClass = 'roi-fill is-paid';
+          const multText = Number.isFinite(sub.roiMultiplier)
+            ? t('roi.multBadge', { mult: sub.roiMultiplier.toFixed(2) })
+            : '';
+          if (!multText) rollingMetricMemory.delete('glb:roi:sub');
+          heroNode = el('div', { className: 'roi-hero-row tabular-nums' },
+            renderRollingText(
+              'glb:roi:hero',
+              t('roi.netSaved', { cost: fmtCostCompact(sub.netSavings, currency) }),
+              num(sub.netSavings, 0),
+              { className: 'roi-hero is-paid' },
+            ),
+            multText
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 22:07:46
 // Description: Set alignEnd: true on right-aligned Tab 2 ROI badges, steps count, reset card render sigs on unit toggle, and render two-line .kpi-sub-stack / .kpi-sub-line KPI sub-stats.
 // ============================================================================
-            ? renderRollingText('glb:roi:sub', multText, Number(sub.roiMultiplier), { className: 'roi-mult-badge', alignEnd: true })
-            : null,
-        );
-        captionText = t('roi.paidCaption', {
-          period: periodTitle,
-          cost: fmtCostCompact(sub.tokenCost, currency),
-          prorated: fmtCostCompact(sub.proratedFee, currency),
-          monthly: fmtCostCompact(sub.monthlyFee, currency),
-        });
-      } else {
-        barPct = Math.min(100, Math.max(0, num(sub.paybackPct, 0)));
-        heroNode = el('div', { className: 'roi-hero-row tabular-nums' },
-          renderRollingText(
-            'glb:roi:hero',
-            t('roi.paybackPct', { pct: barPct.toFixed(1) }),
-            barPct,
-            { className: 'roi-hero' },
-          ),
-          renderRollingText(
-            'glb:roi:sub',
-            t('roi.toBreakEven', { cost: fmtCostCompact(-sub.netSavings, currency) }),
-            -num(sub.netSavings, 0),
-            { className: 'muted-hint', alignEnd: true },
-          ),
-        );
-        captionText = t('roi.paidCaption', {
-          period: periodTitle,
-          cost: fmtCostCompact(sub.tokenCost, currency),
-          prorated: fmtCostCompact(sub.proratedFee, currency),
-          monthly: fmtCostCompact(sub.monthlyFee, currency),
-        });
-      }
+              ? renderRollingText('glb:roi:sub', multText, Number(sub.roiMultiplier), { className: 'roi-mult-badge', alignEnd: true })
+              : null,
+          );
+          captionText = t('roi.paidCaption', {
+            period: periodTitle,
+            cost: fmtCostCompact(sub.tokenCost, currency),
+            prorated: fmtCostCompact(sub.proratedFee, currency),
+            monthly: fmtCostCompact(sub.monthlyFee, currency),
+          });
+        } else {
+          barPct = Math.min(100, Math.max(0, num(sub.paybackPct, 0)));
+          heroNode = el('div', { className: 'roi-hero-row tabular-nums' },
+            renderRollingText(
+              'glb:roi:hero',
+              t('roi.paybackPct', { pct: barPct.toFixed(1) }),
+              barPct,
+              { className: 'roi-hero' },
+            ),
+            renderRollingText(
+              'glb:roi:sub',
+              t('roi.toBreakEven', { cost: fmtCostCompact(-sub.netSavings, currency) }),
+              -num(sub.netSavings, 0),
+              { className: 'muted-hint', alignEnd: true },
+            ),
+          );
+          captionText = t('roi.paidCaption', {
+            period: periodTitle,
+            cost: fmtCostCompact(sub.tokenCost, currency),
+            prorated: fmtCostCompact(sub.proratedFee, currency),
+            monthly: fmtCostCompact(sub.monthlyFee, currency),
+          });
+        }
 
-      subRoiCard = el('article', { className: 'card sub-roi-card' },
-        el('div', { className: 'card-head' },
-          el('div', { className: 'card-title' },
-// ============================================================================
-// [MODIFIED BEGIN] 2026-11-20 10:24:50
-// Description: Replace .card-title-dot with wallet SVG icon in Tab 2 ROI card.
-// ============================================================================
-            icon('wallet', 14, 'card-title-icon'),
-// ============================================================================
-// [MODIFIED END] 2026-11-20 10:24:50
-// ============================================================================
-            t('roi.title'),
-          ),
-          el('button', {
-            type: 'button',
-            className: 'mini-btn accent tabular-nums',
-            textContent: planBadgeText,
-            title: t('roi.badgeTitle'),
+        roiHeadRight = el('button', {
+          type: 'button',
+          className: 'mini-btn accent tabular-nums',
+          textContent: planBadgeText,
+          title: t('roi.badgeTitle'),
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 20:29:41
 // Description: Focus #pref-sub-plan selector when opening drawer from ROI badge click.
 // ============================================================================
-            onClick: () => {
-              setDrawerOpen(true);
-              $('pref-sub-plan')?.focus();
-            },
+          onClick: () => {
+            setDrawerOpen(true);
+            $('pref-sub-plan')?.focus();
+          },
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:29:41
 // ============================================================================
-          }),
-        ),
-        heroNode,
-        el('div', { className: 'roi-track' },
-          applySmoothBarSize(el('div', { className: barClass }), 'glb:roi:bar', 'width', barPct),
-        ),
-        el('div', { className: 'roi-caption tabular-nums', textContent: captionText }),
+        });
+        roiBodyNodes = [
+          heroNode,
+          el('div', { className: 'roi-track' },
+            applySmoothBarSize(el('div', { className: barClass }), 'glb:roi:bar', 'width', barPct),
+          ),
+          el('div', { className: 'roi-caption tabular-nums', textContent: captionText }),
+        ];
+      }
+
+      subRoiCard = el('article', {
+        id: 'card-global-roi',
+        className: `card sub-roi-card${roiCollapsed ? ' is-collapsed' : ''}`,
+      },
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:24:50
+// Description: Replace .card-title-dot with wallet SVG icon in Tab 2 ROI card.
+// ============================================================================
+        buildCollapsibleCardHead({
+          cardId: 'global-roi',
+          iconName: 'wallet',
+          titleText: t('roi.title'),
+          expandedRight: roiHeadRight,
+          collapsedSummary: roiCollapsedSummary,
+          collapsedSummaryTone: roiCollapsedTone,
+          collapsedSummaryTitle: roiCollapsedTitle,
+        }),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:24:50
+// ============================================================================
+        ...roiBodyNodes,
       );
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
     }
 
     // 3. Period KPI Strip + 4-mode Unit Switcher Pill
-    const unitDefs = [
-      { key: 'auto', label: 'K/M' },
-      { key: 'wan_yi', label: '万/亿' },
-      { key: 'exact', label: '1,234' },
-      { key: 'm', label: 'M' },
-    ];
-    const unitToggle = el('div', { className: 'seg-toggle unit-toggle', role: 'group', 'aria-label': t('global.unitAria') },
-      unitDefs.map((u) => el('button', {
-        type: 'button',
-        className: `seg-btn${state.tokenUnit === u.key ? ' active' : ''}`,
-        textContent: u.label,
-        onClick: () => {
-          if (state.tokenUnit !== u.key) {
-            state.tokenUnit = u.key;
-            resetCardRenderSigs();
-            const unitSelect = $('pref-token-unit');
-            if (unitSelect) unitSelect.value = u.key;
-            if (state.snapshot?.prefs) state.snapshot.prefs.tokenUnit = u.key;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Make Tab 2 Usage Summary card (#card-global-summary) collapsible with tokens · cost summary and body-skip when collapsed.
+// ============================================================================
+    const summaryCollapsed = isCardCollapsed('global-summary');
+    const summaryCollapsedText = `${fmtTokens(period.totalTokens)} · ${fmtCostCompact(period.costActual, currency)}`;
+    const summaryTitleText = t('global.summaryTitle', { period: periodTitle });
+    let summaryHeadRight = null;
+    let summaryBodyNode = null;
+    if (!summaryCollapsed) {
+      const unitDefs = [
+        { key: 'auto', label: 'K/M' },
+        { key: 'wan_yi', label: '万/亿' },
+        { key: 'exact', label: '1,234' },
+        { key: 'm', label: 'M' },
+      ];
+      const unitToggle = el('div', { className: 'seg-toggle unit-toggle', role: 'group', 'aria-label': t('global.unitAria') },
+        unitDefs.map((u) => el('button', {
+          type: 'button',
+          className: `seg-btn${state.tokenUnit === u.key ? ' active' : ''}`,
+          textContent: u.label,
+          onClick: () => {
+            if (state.tokenUnit !== u.key) {
+              state.tokenUnit = u.key;
+              resetCardRenderSigs();
+              const unitSelect = $('pref-token-unit');
+              if (unitSelect) unitSelect.value = u.key;
+              if (state.snapshot?.prefs) state.snapshot.prefs.tokenUnit = u.key;
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 15:43:31
 // Description: A4 — Re-render only the active tab on token unit toggle (inactive tab updates on switch via cleared sigs).
 // ============================================================================
-            const s = state.snapshot || state.globalLastSnap;
-            if (s) {
-              renderActiveTab(s);
-            }
+              const s = state.snapshot || state.globalLastSnap;
+              if (s) {
+                renderActiveTab(s);
+              }
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:43:31
 // ============================================================================
-            patchPrefs({ tokenUnit: u.key });
-          }
-        },
-      })),
-    );
+              patchPrefs({ tokenUnit: u.key });
+            }
+          },
+        })),
+      );
 
-    const convSubLines = period.archivedConversationsCount > 0
-      ? [
-          el('span', {
-            className: 'kpi-sub-line',
-            textContent: t('global.activeDaysLine', { active: fmtInt(period.activeDaysCount) }),
-          }),
-          el('span', {
-            className: 'kpi-sub-line',
-            textContent: t('global.archivedLine', { archived: fmtInt(period.archivedConversationsCount) }),
-          }),
-        ]
-      : [
-          el('span', {
-            className: 'kpi-sub-line',
-            textContent: t('global.activeDays', {
-              active: fmtInt(period.activeDaysCount),
-              span: fmtInt(period.spanDaysCount),
+      const convSubLines = period.archivedConversationsCount > 0
+        ? [
+            el('span', {
+              className: 'kpi-sub-line',
+              textContent: t('global.activeDaysLine', { active: fmtInt(period.activeDaysCount) }),
             }),
-          }),
-        ];
+            el('span', {
+              className: 'kpi-sub-line',
+              textContent: t('global.archivedLine', { archived: fmtInt(period.archivedConversationsCount) }),
+            }),
+          ]
+        : [
+            el('span', {
+              className: 'kpi-sub-line',
+              textContent: t('global.activeDays', {
+                active: fmtInt(period.activeDaysCount),
+                span: fmtInt(period.spanDaysCount),
+              }),
+            }),
+          ];
 
-    const summaryCard = el('article', { className: 'card' },
-      el('div', { className: 'card-head' },
-        el('div', { className: 'card-title' },
-// ============================================================================
-// [MODIFIED BEGIN] 2026-11-20 10:24:50
-// Description: Replace .card-title-dot with cost SVG icon in Tab 2 Usage Summary card.
-// ============================================================================
-          icon('cost', 14, 'card-title-icon'),
-// ============================================================================
-// [MODIFIED END] 2026-11-20 10:24:50
-// ============================================================================
-          t('global.summaryTitle', { period: periodTitle }),
+      summaryHeadRight = el('div', { className: 'summary-head-right' },
+        renderRollingText(
+          'glb:sum:steps',
+          t('global.stepsCount', { count: fmtInt(period.stepsCount) }),
+          num(period.stepsCount, 0),
+          { className: 'muted-hint tabular-nums', alignEnd: true },
         ),
-        el('div', { className: 'summary-head-right' },
-          renderRollingText(
-            'glb:sum:steps',
-            t('global.stepsCount', { count: fmtInt(period.stepsCount) }),
-            num(period.stepsCount, 0),
-            { className: 'muted-hint tabular-nums', alignEnd: true },
-          ),
-          unitToggle,
-        ),
-      ),
-      el('div', { className: 'kpi-strip tabular-nums' },
+        unitToggle,
+      );
+      summaryBodyNode = el('div', { className: 'kpi-strip tabular-nums' },
         el('div', { className: 'kpi-tile' },
           el('span', { className: 'kpi-label', textContent: t('global.kpiSessions') }),
           renderRollingText('glb:kpi:sessions', fmtInt(period.conversationsCount), num(period.conversationsCount, 0), {
@@ -8150,8 +8971,32 @@
             ),
           ),
         ),
-      ),
+      );
+    }
+
+    const summaryCard = el('article', {
+      id: 'card-global-summary',
+      className: `card${summaryCollapsed ? ' is-collapsed' : ''}`,
+    },
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-20 10:24:50
+// Description: Replace .card-title-dot with cost SVG icon in Tab 2 Usage Summary card.
+// ============================================================================
+      buildCollapsibleCardHead({
+        cardId: 'global-summary',
+        iconName: 'cost',
+        titleText: summaryTitleText,
+        expandedRight: summaryHeadRight,
+        collapsedSummary: summaryCollapsedText,
+      }),
+// ============================================================================
+// [MODIFIED END] 2026-11-20 10:24:50
+// ============================================================================
+      summaryBodyNode,
     );
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:07:46
 // ============================================================================
@@ -8176,30 +9021,11 @@
       state.trendNeedsRightAlign = true;
     }
 
-    const metricToggle = el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('global.trendMetricAria') },
-      el('button', {
-        type: 'button',
-        className: `seg-btn${metricKey === 'cost' ? ' active' : ''}`,
-        textContent: t('global.metricCost'),
-        onClick: () => {
-          if (state.trendMetric !== 'cost') {
-            state.trendMetric = 'cost';
-            if (state.snapshot) renderGlobalTab(state.snapshot);
-          }
-        },
-      }),
-      el('button', {
-        type: 'button',
-        className: `seg-btn${metricKey === 'tokens' ? ' active' : ''}`,
-        textContent: t('global.metricTokens'),
-        onClick: () => {
-          if (state.trendMetric !== 'tokens') {
-            state.trendMetric = 'tokens';
-            if (state.snapshot) renderGlobalTab(state.snapshot);
-          }
-        },
-      }),
-    );
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Make Tab 2 Trend card (#card-global-trend) collapsible with selected/latest bucket summary and body-skip when collapsed.
+// ============================================================================
+    const trendCollapsed = isCardCollapsed('global-trend');
 
     const seriesValues = series.map((s) =>
       metricKey === 'tokens' ? num(s.totalTokens, 0) : num(s.costActual, 0),
@@ -8210,11 +9036,6 @@
 // Description: Compute trend chart nice ceiling scale and render pinned left Y-axis
 // alongside horizontally scrollable bar viewport (.trend-chart-box).
 // ============================================================================
-    const { axisMax, midVal, zeroVal } = computeTrendAxisScale(maxSeriesVal, metricKey);
-    const fmtAxisTick = metricKey === 'tokens'
-      ? (val) => fmtAxisTokens(val)
-      : (val) => fmtAxisCost(val, currency);
-
     let defaultActiveIdx = series.length > 0 ? series.length - 1 : -1;
     if (defaultActiveIdx >= 0 && seriesValues[defaultActiveIdx] === 0) {
       for (let idx = series.length - 1; idx >= 0; idx--) {
@@ -8241,51 +9062,93 @@
       });
     };
 
-    const detailStrip = el('div', {
-      className: 'trend-detail tabular-nums',
-      textContent: activeIdx >= 0 ? formatBucketDetail(series[activeIdx]) : t('global.trendEmptyDetail'),
-    });
+    const activeBucket = activeIdx >= 0 ? series[activeIdx] : null;
+    const trendCollapsedSummary = activeBucket
+      ? (metricKey === 'tokens'
+          ? fmtTokens(activeBucket.totalTokens)
+          : fmtCostCompact(activeBucket.costActual, currency))
+      : '—';
+    const trendCollapsedTitle = activeBucket ? formatBucketDetail(activeBucket) : '';
 
-    let trendChartEl = null;
-    if (series.length > 0) {
-      const trendScrollEl = el('div', { className: 'trend-scroll' },
-        el('div', { className: 'trend-track' },
-          series.map((bucket, idx) => {
-            const v = seriesValues[idx];
-            const hPct = v > 0 ? Math.min(100, Math.max(5, Math.round((v / axisMax) * 100))) : 3;
-            const isZero = v <= 0;
-            const isSelected = idx === activeIdx;
+    let metricToggle = null;
+    let trendBodyNodes = [];
+
+    if (!trendCollapsed) {
+      metricToggle = el('div', { className: 'seg-toggle', role: 'group', 'aria-label': t('global.trendMetricAria') },
+        el('button', {
+          type: 'button',
+          className: `seg-btn${metricKey === 'cost' ? ' active' : ''}`,
+          textContent: t('global.metricCost'),
+          onClick: () => {
+            if (state.trendMetric !== 'cost') {
+              state.trendMetric = 'cost';
+              if (state.snapshot) renderGlobalTab(state.snapshot);
+            }
+          },
+        }),
+        el('button', {
+          type: 'button',
+          className: `seg-btn${metricKey === 'tokens' ? ' active' : ''}`,
+          textContent: t('global.metricTokens'),
+          onClick: () => {
+            if (state.trendMetric !== 'tokens') {
+              state.trendMetric = 'tokens';
+              if (state.snapshot) renderGlobalTab(state.snapshot);
+            }
+          },
+        }),
+      );
+
+      const { axisMax, midVal, zeroVal } = computeTrendAxisScale(maxSeriesVal, metricKey);
+      const fmtAxisTick = metricKey === 'tokens'
+        ? (val) => fmtAxisTokens(val)
+        : (val) => fmtAxisCost(val, currency);
+
+      const detailStrip = el('div', {
+        className: 'trend-detail tabular-nums',
+        textContent: activeIdx >= 0 ? formatBucketDetail(series[activeIdx]) : t('global.trendEmptyDetail'),
+      });
+
+      let trendChartEl = null;
+      if (series.length > 0) {
+        const trendScrollEl = el('div', { className: 'trend-scroll' },
+          el('div', { className: 'trend-track' },
+            series.map((bucket, idx) => {
+              const v = seriesValues[idx];
+              const hPct = v > 0 ? Math.min(100, Math.max(5, Math.round((v / axisMax) * 100))) : 3;
+              const isZero = v <= 0;
+              const isSelected = idx === activeIdx;
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 15:43:31
 // Description: B7 — Sync Tab 2 trend detail strip on keyboard focus and allow clicking the pinned bar again to unpin back to the default latest bucket.
 // ============================================================================
-            const barBtn = el('button', {
-              type: 'button',
-              className: `trend-col${isWeekly ? ' is-weekly' : ''}${isZero ? ' is-zero' : ''}${isSelected ? ' is-selected' : ''}`,
-              'aria-pressed': String(isSelected),
-              title: formatBucketDetail(bucket),
-              onMouseEnter: () => {
-                if (!state.isDraggingTrend) {
+              const barBtn = el('button', {
+                type: 'button',
+                className: `trend-col${isWeekly ? ' is-weekly' : ''}${isZero ? ' is-zero' : ''}${isSelected ? ' is-selected' : ''}`,
+                'aria-pressed': String(isSelected),
+                title: formatBucketDetail(bucket),
+                onMouseEnter: () => {
+                  if (!state.isDraggingTrend) {
+                    detailStrip.textContent = formatBucketDetail(bucket);
+                  }
+                },
+                onFocus: () => {
                   detailStrip.textContent = formatBucketDetail(bucket);
-                }
+                },
+                onClick: () => {
+                  const nextIdx = state.selectedSeriesIdx === idx ? null : idx;
+                  state.selectedSeriesIdx = nextIdx;
+                  const effectiveIdx = nextIdx !== null ? nextIdx : defaultActiveIdx;
+                  detailStrip.textContent = effectiveIdx >= 0
+                    ? formatBucketDetail(series[effectiveIdx])
+                    : t('global.trendEmptyDetail');
+                  barBtn.parentElement?.querySelectorAll('.trend-col').forEach((n, i) => {
+                    const sel = i === effectiveIdx;
+                    n.classList.toggle('is-selected', sel);
+                    n.setAttribute('aria-pressed', String(sel));
+                  });
+                },
               },
-              onFocus: () => {
-                detailStrip.textContent = formatBucketDetail(bucket);
-              },
-              onClick: () => {
-                const nextIdx = state.selectedSeriesIdx === idx ? null : idx;
-                state.selectedSeriesIdx = nextIdx;
-                const effectiveIdx = nextIdx !== null ? nextIdx : defaultActiveIdx;
-                detailStrip.textContent = effectiveIdx >= 0
-                  ? formatBucketDetail(series[effectiveIdx])
-                  : t('global.trendEmptyDetail');
-                barBtn.parentElement?.querySelectorAll('.trend-col').forEach((n, i) => {
-                  const sel = i === effectiveIdx;
-                  n.classList.toggle('is-selected', sel);
-                  n.setAttribute('aria-pressed', String(sel));
-                });
-              },
-            },
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:43:31
 // ============================================================================
@@ -8293,58 +9156,68 @@
 // [MODIFIED BEGIN] 2026-11-17 21:28:45
 // Description: Apply smooth bar height gliding to Tab 2 trend bars via applySmoothBarSize.
 // ============================================================================
-              el('div', { className: 'trend-bar-track' },
-                applySmoothBarSize(
-                  el('div', { className: 'trend-bar-fill' }),
-                  `glb:trend:${periodKey}:${bucket.key || bucket.label || idx}`,
-                  'height',
-                  hPct,
+                el('div', { className: 'trend-bar-track' },
+                  applySmoothBarSize(
+                    el('div', { className: 'trend-bar-fill' }),
+                    `glb:trend:${periodKey}:${bucket.key || bucket.label || idx}`,
+                    'height',
+                    hPct,
+                  ),
                 ),
-              ),
 // ============================================================================
 // [MODIFIED END] 2026-11-17 21:28:45
 // ============================================================================
-              el('span', { className: 'trend-col-label tabular-nums', textContent: bucket.label }),
-            );
-            return barBtn;
-          }),
-        ),
-      );
-      attachTrendChartInteractions(trendScrollEl);
+                el('span', { className: 'trend-col-label tabular-nums', textContent: bucket.label }),
+              );
+              return barBtn;
+            }),
+          ),
+        );
+        attachTrendChartInteractions(trendScrollEl);
 
-      const yAxisEl = el('div', { className: 'trend-yaxis tabular-nums', 'aria-hidden': 'true' },
-        el('div', { className: 'trend-yaxis-plot' },
-          el('span', { className: 'trend-yaxis-tick', textContent: fmtAxisTick(axisMax) }),
-          el('span', { className: 'trend-yaxis-tick', textContent: fmtAxisTick(midVal) }),
-          el('span', { className: 'trend-yaxis-tick', textContent: fmtAxisTick(zeroVal) }),
-        ),
-      );
+        const yAxisEl = el('div', { className: 'trend-yaxis tabular-nums', 'aria-hidden': 'true' },
+          el('div', { className: 'trend-yaxis-plot' },
+            el('span', { className: 'trend-yaxis-tick', textContent: fmtAxisTick(axisMax) }),
+            el('span', { className: 'trend-yaxis-tick', textContent: fmtAxisTick(midVal) }),
+            el('span', { className: 'trend-yaxis-tick', textContent: fmtAxisTick(zeroVal) }),
+          ),
+        );
 
-      trendChartEl = el('div', { className: 'trend-chart-box' },
-        yAxisEl,
-        trendScrollEl,
-      );
+        trendChartEl = el('div', { className: 'trend-chart-box' },
+          yAxisEl,
+          trendScrollEl,
+        );
+      }
+
+      trendBodyNodes = trendChartEl
+        ? [trendChartEl, detailStrip]
+        : [el('div', { className: 'empty-inline', textContent: t('global.trendEmpty') })];
     }
 
-    const trendCard = el('article', { className: 'card' },
-      el('div', { className: 'card-head' },
-        el('div', { className: 'card-title' },
+    const trendCard = el('article', {
+      id: 'card-global-trend',
+      className: `card${trendCollapsed ? ' is-collapsed' : ''}`,
+    },
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 10:24:50
 // Description: Replace .card-title-dot with trend SVG icon in Tab 2 Trend card.
 // ============================================================================
-          icon('trend', 14, 'card-title-icon'),
+      buildCollapsibleCardHead({
+        cardId: 'global-trend',
+        iconName: 'trend',
+        titleText: trendTitle,
+        expandedRight: metricToggle,
+        collapsedSummary: trendCollapsedSummary,
+        collapsedSummaryTitle: trendCollapsedTitle,
+      }),
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:24:50
 // ============================================================================
-          trendTitle,
-        ),
-        metricToggle,
-      ),
-      trendChartEl
-        ? [trendChartEl, detailStrip]
-        : el('div', { className: 'empty-inline', textContent: t('global.trendEmpty') }),
+      ...trendBodyNodes,
     );
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:29:41
 // ============================================================================
@@ -8366,112 +9239,130 @@
     // ============================================================================
     // 5. Period By-Model Breakdown Card
     const periodByModel = Array.isArray(period.byModel) ? period.byModel : [];
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Make Tab 2 Model Breakdown card (#card-global-models) collapsible with model count summary and body-skip when collapsed.
+// ============================================================================
+    const modelsCollapsed = isCardCollapsed('global-models');
+    const modelsCollapsedSummary = periodByModel.length === 1
+      ? t('global.modelsCollapsedOne', { count: 1 })
+      : t('global.modelsCollapsedMany', { count: fmtInt(periodByModel.length) });
     const getTab2TotalTokens = (row) => num(
       row?.totalTokens ?? (num(row?.inputTokens, 0) + num(row?.cacheReadTokens, 0) + num(row?.outputTokens, 0)),
       0,
     );
-    const sortedPeriodByModel = sortModelBreakdownRows(periodByModel, getTab2TotalTokens);
+    const sortedPeriodByModel = modelsCollapsed
+      ? []
+      : sortModelBreakdownRows(periodByModel, getTab2TotalTokens);
 
-    const modelCard = el('article', { className: 'card' },
-      el('div', { className: 'card-head' },
-        el('div', { className: 'card-title' },
+    const modelCard = el('article', {
+      id: 'card-global-models',
+      className: `card${modelsCollapsed ? ' is-collapsed' : ''}`,
+    },
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 10:24:50
 // Description: Replace .card-title-dot with agents SVG icon in Tab 2 Model Breakdown card.
 // ============================================================================
-          icon('agents', 14, 'card-title-icon'),
+      buildCollapsibleCardHead({
+        cardId: 'global-models',
+        iconName: 'agents',
+        titleText: t('global.modelsTitle', { period: periodTitle }),
+        collapsedSummary: modelsCollapsedSummary,
+      }),
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:24:50
 // ============================================================================
-          t('global.modelsTitle', { period: periodTitle }),
-        ),
-      ),
-      sortedPeriodByModel.length > 0
-        ? el('div', { className: 'table-scroll' },
-            el('table', { className: 'data-table tabular-nums' },
-              el('thead', null,
-                el('tr', null,
-                  el('th', null, t('childrenModels.colModel')),
-                  el('th', { className: 'num' }, t('global.colChats')),
-                  el('th', { className: 'num' }, t('childrenModels.colInput')),
-                  el('th', { className: 'num' }, t('childrenModels.colCache')),
+      modelsCollapsed
+        ? null
+        : (sortedPeriodByModel.length > 0
+            ? el('div', { className: 'table-scroll' },
+                el('table', { className: 'data-table tabular-nums' },
+                  el('thead', null,
+                    el('tr', null,
+                      el('th', null, t('childrenModels.colModel')),
+                      el('th', { className: 'num' }, t('global.colChats')),
+                      el('th', { className: 'num' }, t('childrenModels.colInput')),
+                      el('th', { className: 'num' }, t('childrenModels.colCache')),
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 20:21:00
 // Description: Insert per-model Cache Hit Rate column right after Cache in Tab 2 model table.
 // ============================================================================
-                  el('th', { className: 'num cache-hit-col', title: t('childrenModels.colCacheHitTip') }, t('childrenModels.colCacheHit')),
+                      el('th', { className: 'num cache-hit-col', title: t('childrenModels.colCacheHitTip') }, t('childrenModels.colCacheHit')),
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:21:00
 // ============================================================================
-                  el('th', { className: 'num' }, t('childrenModels.colOutput')),
-                  createSortableHeaderCell({
-                    colKey: 'total',
-                    label: t('childrenModels.colTotal'),
-                    baseTitle: t('childrenModels.colTotalTip'),
-                    extraClass: 'total-col',
-                  }),
+                      el('th', { className: 'num' }, t('childrenModels.colOutput')),
+                      createSortableHeaderCell({
+                        colKey: 'total',
+                        label: t('childrenModels.colTotal'),
+                        baseTitle: t('childrenModels.colTotalTip'),
+                        extraClass: 'total-col',
+                      }),
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 10:24:50
 // Description: Move currency unit into Tab 2 model table Cost header via table.costWithCurrency.
 // ============================================================================
-                  createSortableHeaderCell({
-                    colKey: 'cost',
-                    label: t('table.costWithCurrency', { currency }),
-                  }),
+                      createSortableHeaderCell({
+                        colKey: 'cost',
+                        label: t('table.costWithCurrency', { currency }),
+                      }),
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:24:50
 // ============================================================================
-                ),
-              ),
-              el('tbody', null,
+                    ),
+                  ),
+                  el('tbody', null,
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 13:28:17
 // Description: Format Tab 2 byModel canonical model display and merged rawModels tooltip.
 // ============================================================================
-                sortedPeriodByModel.map((row) => {
-                  const { displayModel, title: rateTip } = formatModelBreakdownRowDisplay(row);
-                  const totalTok = getTab2TotalTokens(row);
+                    sortedPeriodByModel.map((row) => {
+                      const { displayModel, title: rateTip } = formatModelBreakdownRowDisplay(row);
+                      const totalTok = getTab2TotalTokens(row);
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 20:21:00
 // Description: Compute and render per-model cache hit rate cell in Tab 2 model table.
 // ============================================================================
-                  const hitMeta = getModelRowCacheHitMeta(row);
+                      const hitMeta = getModelRowCacheHitMeta(row);
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 10:28:34
 // Description: Add model identity .model-dot directly inside Tab 2 td.model-cell (matches .model-cell > .model-dot & ellipsis) and show numeric-only cost cell.
 // ============================================================================
-                  return el('tr', null,
-                    el('td', { className: 'model-cell', title: rateTip },
-                      createModelDot(row.profileId || displayModel, Array.isArray(row.rawModels) ? row.rawModels[0] : ''),
-                      displayModel,
-                    ),
-                    el('td', { className: 'num', textContent: fmtInt(row.conversationsCount) }),
-                    el('td', { className: 'num', title: fmtInt(row.inputTokens), textContent: fmtTokens(row.inputTokens) }),
-                    el('td', { className: 'num', title: fmtInt(row.cacheReadTokens), textContent: fmtTokens(row.cacheReadTokens) }),
-                    el('td', {
-                      className: `num cache-hit-col ${hitMeta.tierClass}`,
-                      title: hitMeta.title || undefined,
-                      textContent: hitMeta.text,
-                    }),
-                    el('td', { className: 'num', title: fmtInt(row.outputTokens), textContent: fmtTokens(row.outputTokens) }),
-                    el('td', { className: 'num total-col', title: fmtInt(totalTok), textContent: fmtTokens(totalTok) }),
-                    el('td', { className: 'num', title: fmtCost(row.costActual, currency), textContent: fmtCostCompactNumber(row.costActual) }),
-                  );
+                      return el('tr', null,
+                        el('td', { className: 'model-cell', title: rateTip },
+                          createModelDot(row.profileId || displayModel, Array.isArray(row.rawModels) ? row.rawModels[0] : ''),
+                          displayModel,
+                        ),
+                        el('td', { className: 'num', textContent: fmtInt(row.conversationsCount) }),
+                        el('td', { className: 'num', title: fmtInt(row.inputTokens), textContent: fmtTokens(row.inputTokens) }),
+                        el('td', { className: 'num', title: fmtInt(row.cacheReadTokens), textContent: fmtTokens(row.cacheReadTokens) }),
+                        el('td', {
+                          className: `num cache-hit-col ${hitMeta.tierClass}`,
+                          title: hitMeta.title || undefined,
+                          textContent: hitMeta.text,
+                        }),
+                        el('td', { className: 'num', title: fmtInt(row.outputTokens), textContent: fmtTokens(row.outputTokens) }),
+                        el('td', { className: 'num total-col', title: fmtInt(totalTok), textContent: fmtTokens(totalTok) }),
+                        el('td', { className: 'num', title: fmtCost(row.costActual, currency), textContent: fmtCostCompactNumber(row.costActual) }),
+                      );
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:24:50
 // ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:21:00
 // ============================================================================
-                }),
+                    }),
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:28:17
 // ============================================================================
-              ),
-            ),
-          )
-        : el('div', { className: 'empty-inline', textContent: t('global.modelsEmpty') }),
+                  ),
+                ),
+              )
+            : el('div', { className: 'empty-inline', textContent: t('global.modelsEmpty') })),
     );
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
     // ============================================================================
     // [MODIFIED END] 2026-11-17 20:29:41
     // ============================================================================
@@ -8488,64 +9379,79 @@
 // ============================================================================
       // 5b. By Project / Workspace Breakdown Card (C1)
       const workspaces = Array.isArray(period.byWorkspace) ? period.byWorkspace : [];
-      const canToggleWorkspaces = workspaces.length > MAX_COLLAPSED_WORKSPACES;
-      const visibleWorkspaces = canToggleWorkspaces && !state.workspacesExpanded
-        ? workspaces.slice(0, MAX_COLLAPSED_WORKSPACES)
-        : workspaces;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Make Tab 2 By Project card (#card-global-projects) collapsible with project count summary, body-skip when collapsed, and mount #global-collapsed-bar in topNodes.
+// ============================================================================
+      const projectsCollapsed = isCardCollapsed('global-projects');
+      const projectsCollapsedSummary = workspaces.length === 1
+        ? t('projects.collapsedOne', { count: 1 })
+        : t('projects.collapsedMany', { count: fmtInt(workspaces.length) });
+      const canToggleWorkspaces = !projectsCollapsed && workspaces.length > MAX_COLLAPSED_WORKSPACES;
+      const visibleWorkspaces = projectsCollapsed
+        ? []
+        : (canToggleWorkspaces && !state.workspacesExpanded
+            ? workspaces.slice(0, MAX_COLLAPSED_WORKSPACES)
+            : workspaces);
       const hiddenWorkspacesCount = Math.max(0, workspaces.length - visibleWorkspaces.length);
 
-      const projectCard = el('article', { className: 'card', id: 'card-global-projects' },
-        el('div', { className: 'card-head' },
-          el('div', { className: 'card-title' },
-            icon('folder', 14, 'card-title-icon'),
-            t('projects.title', { period: periodTitle }),
-          ),
-        ),
-        workspaces.length > 0
-          ? el('div', { className: 'table-scroll' },
-              el('table', { className: 'data-table tabular-nums' },
-                el('thead', null,
-                  el('tr', null,
-                    el('th', { textContent: t('projects.colProject') }),
-                    el('th', { className: 'num', textContent: t('projects.colChats') }),
-                    el('th', { className: 'num total-col', textContent: t('childrenModels.colTotal') }),
-                    el('th', {
-                      className: 'num cache-hit-col',
-                      title: t('childrenModels.colCacheHitTip'),
-                      textContent: t('childrenModels.colCacheHit'),
-                    }),
-                    el('th', { className: 'num cost-col', textContent: t('table.costWithCurrency', { currency }) }),
+      const projectCard = el('article', {
+        className: `card${projectsCollapsed ? ' is-collapsed' : ''}`,
+        id: 'card-global-projects',
+      },
+        buildCollapsibleCardHead({
+          cardId: 'global-projects',
+          iconName: 'folder',
+          titleText: t('projects.title', { period: periodTitle }),
+          collapsedSummary: projectsCollapsedSummary,
+        }),
+        projectsCollapsed
+          ? null
+          : (workspaces.length > 0
+              ? el('div', { className: 'table-scroll' },
+                  el('table', { className: 'data-table tabular-nums' },
+                    el('thead', null,
+                      el('tr', null,
+                        el('th', { textContent: t('projects.colProject') }),
+                        el('th', { className: 'num', textContent: t('projects.colChats') }),
+                        el('th', { className: 'num total-col', textContent: t('childrenModels.colTotal') }),
+                        el('th', {
+                          className: 'num cache-hit-col',
+                          title: t('childrenModels.colCacheHitTip'),
+                          textContent: t('childrenModels.colCacheHit'),
+                        }),
+                        el('th', { className: 'num cost-col', textContent: t('table.costWithCurrency', { currency }) }),
+                      ),
+                    ),
+                    el('tbody', null,
+                      visibleWorkspaces.map((row) => {
+                        const rawWs = String(row.workspace || '').trim();
+                        const wsLabel = rawWs ? (workspaceBase(rawWs) || rawWs) : t('projects.ungrouped');
+                        const totalTok = num(
+                          row.totalTokens,
+                          num(row.inputTokens, 0) + num(row.cacheReadTokens, 0) + num(row.outputTokens, 0),
+                        );
+                        const hitMeta = getModelRowCacheHitMeta(row);
+                        return el('tr', null,
+                          el('td', {
+                            className: rawWs ? 'model-cell project-cell' : 'model-cell project-cell is-ungrouped',
+                            title: rawWs || wsLabel,
+                            textContent: wsLabel,
+                          }),
+                          el('td', { className: 'num', textContent: fmtInt(row.conversationsCount) }),
+                          el('td', { className: 'num total-col', title: fmtInt(totalTok), textContent: fmtTokens(totalTok) }),
+                          el('td', {
+                            className: `num cache-hit-col ${hitMeta.tierClass}`,
+                            title: hitMeta.title || undefined,
+                            textContent: hitMeta.text,
+                          }),
+                          el('td', { className: 'num cost-col', title: fmtCost(row.costActual, currency), textContent: fmtCostCompactNumber(row.costActual) }),
+                        );
+                      }),
+                    ),
                   ),
-                ),
-                el('tbody', null,
-                  visibleWorkspaces.map((row) => {
-                    const rawWs = String(row.workspace || '').trim();
-                    const wsLabel = rawWs ? (workspaceBase(rawWs) || rawWs) : t('projects.ungrouped');
-                    const totalTok = num(
-                      row.totalTokens,
-                      num(row.inputTokens, 0) + num(row.cacheReadTokens, 0) + num(row.outputTokens, 0),
-                    );
-                    const hitMeta = getModelRowCacheHitMeta(row);
-                    return el('tr', null,
-                      el('td', {
-                        className: rawWs ? 'model-cell project-cell' : 'model-cell project-cell is-ungrouped',
-                        title: rawWs || wsLabel,
-                        textContent: wsLabel,
-                      }),
-                      el('td', { className: 'num', textContent: fmtInt(row.conversationsCount) }),
-                      el('td', { className: 'num total-col', title: fmtInt(totalTok), textContent: fmtTokens(totalTok) }),
-                      el('td', {
-                        className: `num cache-hit-col ${hitMeta.tierClass}`,
-                        title: hitMeta.title || undefined,
-                        textContent: hitMeta.text,
-                      }),
-                      el('td', { className: 'num cost-col', title: fmtCost(row.costActual, currency), textContent: fmtCostCompactNumber(row.costActual) }),
-                    );
-                  }),
-                ),
-              ),
-            )
-          : el('div', { className: 'empty-inline', textContent: t('projects.empty') }),
+                )
+              : el('div', { className: 'empty-inline', textContent: t('projects.empty') })),
         canToggleWorkspaces
           ? el('button', {
               type: 'button',
@@ -8562,7 +9468,10 @@
           : null,
       );
 
-      const topNodes = [periodBar, subRoiCard, summaryCard, trendCard, modelCard, projectCard].filter(Boolean);
+      const topNodes = [periodBar, globalCollapsedBar, subRoiCard, summaryCard, trendCard, modelCard, projectCard].filter(Boolean);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
       dom.topStack.replaceChildren(...topNodes);
       syncTrendScrollPosition();
     }
@@ -8756,9 +9665,35 @@
 // [MODIFIED BEGIN] 2026-11-19 11:49:06
 // Description: Sync persisted pixelOfficeCollapsed preference from snapshot inside pendingPrefSaves guard.
 // ============================================================================
-        if (typeof data.prefs.pixelOfficeCollapsed === 'boolean') {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:56:35
+// Description: Sync persisted collapsedCards preference from snapshot (with legacy pixelOfficeCollapsed migration and bidirectional sync).
+// ============================================================================
+        if (
+          data.prefs.collapsedCards &&
+          typeof data.prefs.collapsedCards === 'object' &&
+          !Array.isArray(data.prefs.collapsedCards)
+        ) {
+          const nextCollapsed = {};
+          for (const [k, v] of Object.entries(data.prefs.collapsedCards)) {
+            if (COLLAPSIBLE_CARD_ID_SET.has(k) && v === true) {
+              nextCollapsed[k] = true;
+            }
+          }
+          if (
+            !Object.prototype.hasOwnProperty.call(data.prefs.collapsedCards, 'pixel-office') &&
+            data.prefs.pixelOfficeCollapsed === true
+          ) {
+            nextCollapsed['pixel-office'] = true;
+          }
+          state.collapsedCards = nextCollapsed;
+        } else if (typeof data.prefs.pixelOfficeCollapsed === 'boolean') {
           state.pixelOfficeCollapsed = data.prefs.pixelOfficeCollapsed;
         }
+        state.pixelOfficeCollapsed = Boolean(state.collapsedCards['pixel-office']);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:49:06
 // ============================================================================

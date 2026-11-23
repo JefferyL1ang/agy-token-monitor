@@ -370,6 +370,29 @@ export const VALID_MODEL_SORT_DIRS = Object.freeze(['desc', 'asc']);
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:29:19
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:53:10
+// Description: Export COLLAPSIBLE_CARD_IDS allowlist covering all 13 cards
+// across Tab 1 and Tab 2 for v0.5.3 collapsible card persistence.
+// ============================================================================
+export const COLLAPSIBLE_CARD_IDS = Object.freeze([
+  'pixel-office',
+  'speed',
+  'cost',
+  'context',
+  'cache',
+  'children-models',
+  'side-questions',
+  'global-roi',
+  'global-summary',
+  'global-trend',
+  'global-models',
+  'global-projects',
+  'global-recent',
+]);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:53:10
+// ============================================================================
 
 export const DEFAULT_PREFS = Object.freeze({
 // ============================================================================
@@ -413,6 +436,15 @@ export const DEFAULT_PREFS = Object.freeze({
   pixelOfficeCollapsed: false,
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:53:10
+// Description: Add collapsedCards default map to DEFAULT_PREFS while keeping
+// pixelOfficeCollapsed for backward compatibility (v0.5.3).
+// ============================================================================
+  collapsedCards: Object.freeze({}),
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:53:10
 // ============================================================================
   modelOverrides: Object.freeze({}),
 });

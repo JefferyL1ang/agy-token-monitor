@@ -80,6 +80,14 @@ import vm from 'node:vm';
 // [MODIFIED END] 2026-11-17 22:14:47
 // ============================================================================
 import {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Import COLLAPSIBLE_CARD_IDS for v0.5.3 collapsible cards backend & VM regression tests.
+// ============================================================================
+  COLLAPSIBLE_CARD_IDS,
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
   DEFAULT_PREFS,
   LEDGER_SCHEMA_VERSION,
 // ============================================================================
@@ -6150,11 +6158,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Bump current manifest version assertion from 0.5.1 to 0.5.2.
 // ============================================================================
-  // Manifests bumped to 0.5.2 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Bump current manifest version assertion from 0.5.2 to 0.5.3.
+// ============================================================================
+  // Manifests bumped to 0.5.3 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.5.2');
-  assert.equal(packageJson.version, '0.5.2');
+  assert.equal(pluginJson.version, '0.5.3');
+  assert.equal(packageJson.version, '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -6443,18 +6458,25 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.5.1 to 0.5.2.
 // ============================================================================
-  // Version & docs consistency for current v0.5.2 release
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.5.2 to 0.5.3.
+// ============================================================================
+  // Version & docs consistency for current v0.5.3 release
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.5.2');
-  assert.equal(packageJson.version, '0.5.2');
-  assert.equal(pluginJson.description.includes('v0.5.2 beta'), true);
-  assert.equal(packageJson.description.includes('v0.5.2 beta'), true);
-  assert.equal(mainSource.includes("return '0.5.2'"), true);
-  assert.equal(releaseUpdaterSource.includes(": '0.5.2'"), true);
-  assert.equal(appSource.includes("'0.5.2'"), true);
-  assert.equal(skillMd.includes('# Token Monitor (v0.5.2 Beta)'), true);
-  assert.equal(readmeMd.includes('agy-token-monitor-v0.5.2.zip'), true);
+  assert.equal(pluginJson.version, '0.5.3');
+  assert.equal(packageJson.version, '0.5.3');
+  assert.equal(pluginJson.description.includes('v0.5.3 beta'), true);
+  assert.equal(packageJson.description.includes('v0.5.3 beta'), true);
+  assert.equal(mainSource.includes("return '0.5.3'"), true);
+  assert.equal(releaseUpdaterSource.includes(": '0.5.3'"), true);
+  assert.equal(appSource.includes("'0.5.3'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.5.3 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.5.3.zip'), true);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -7513,7 +7535,14 @@ test('v0.2.8 createSystemProxyManager lifecycle, TTL cache, restore-before-set o
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Update standalone /api/snapshot appVersion assertion from 0.5.1 to 0.5.2.
 // ============================================================================
-    assert.equal(snap.appVersion, '0.5.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Update standalone /api/snapshot appVersion assertion from 0.5.2 to 0.5.3.
+// ============================================================================
+    assert.equal(snap.appVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -8123,8 +8152,15 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Bump current manifest version assertions in v0.2.8 hygiene test from 0.5.1 to 0.5.2.
 // ============================================================================
-  assert.equal(pluginJson.version, '0.5.2');
-  assert.equal(packageJson.version, '0.5.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Bump current manifest version assertions in v0.2.8 hygiene test from 0.5.2 to 0.5.3.
+// ============================================================================
+  assert.equal(pluginJson.version, '0.5.3');
+  assert.equal(packageJson.version, '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -8397,7 +8433,14 @@ test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showTo
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test from 0.5.1 to 0.5.2.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test from 0.5.2 to 0.5.3.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -9940,7 +9983,14 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Bump createReleaseUpdater default currentVersion assertion from 0.5.1 to 0.5.2.
 // ============================================================================
-  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.5.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Bump createReleaseUpdater default currentVersion assertion from 0.5.2 to 0.5.3.
+// ============================================================================
+  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -11542,7 +11592,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Bump standalone /api/snapshot appVersion assertion from 0.5.1 to 0.5.2.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.5.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Bump standalone /api/snapshot appVersion assertion from 0.5.2 to 0.5.3.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -11607,7 +11664,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Bump standalone /api/check-update appVersion assertion from 0.5.1 to 0.5.2.
 // ============================================================================
-      assert.equal(checkBody.appVersion, '0.5.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Bump standalone /api/check-update appVersion assertion from 0.5.2 to 0.5.3.
+// ============================================================================
+      assert.equal(checkBody.appVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -11935,7 +11999,14 @@ test('v0.3.0 headless Node VM Settings tooltip proxy diagnostics and static I18N
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Bump getCurrentAppVersion fallback assertion from 0.5.1 to 0.5.2.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Bump getCurrentAppVersion fallback assertion from 0.5.2 to 0.5.3.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -12566,7 +12637,14 @@ test('v0.3.2 constant 43-char SHA-256 base64url /api/snapshot etag prevents HTTP
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Update v0.3.2 ETag test standalone appVersion assertion from 0.5.1 to 0.5.2.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.5.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Update v0.3.2 ETag test standalone appVersion assertion from 0.5.2 to 0.5.3.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -13458,7 +13536,14 @@ test('v0.4.0 backend DEFAULT_PREFS.pixelOfficeCollapsed, child activeToolLabel, 
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Bump v0.4.0 backend standalone /api/snapshot appVersion assertion from 0.5.1 to 0.5.2.
 // ============================================================================
-      assert.equal(initialSnap.appVersion, '0.5.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Bump v0.4.0 backend standalone /api/snapshot appVersion assertion from 0.5.2 to 0.5.3.
+// ============================================================================
+      assert.equal(initialSnap.appVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -14311,7 +14396,14 @@ test('v0.4.0 update modal nested markdown & section filtering, Pixel Office VM i
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Bump v0.4.0 VM getCurrentAppVersion fallback assertion from 0.5.1 to 0.5.2.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Bump v0.4.0 VM getCurrentAppVersion fallback assertion from 0.5.2 to 0.5.3.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -14483,15 +14575,29 @@ test('v0.4.0 update modal nested markdown & section filtering, Pixel Office VM i
   assert.equal(portrait?.height, 96);
   assert.equal(inspector.textContent.includes('Gemini 4 Neon'), true);
 
-  // Click collapse toggle -> collapses card, stops loop (0ms/cleared), posts pixelOfficeCollapsed: true
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Update v0.4.0 Pixel Office collapse toggle assertion to verify unified .card-collapse-btn (aria-expanded) and collapsedCards + pixelOfficeCollapsed patch payload.
+// ============================================================================
+  // Click collapse toggle -> collapses card, stops loop (0ms/cleared), updates aria-expanded & posts collapsedCards + pixelOfficeCollapsed
   const toggleBtn = pixelCard.querySelector('#btn-pixel-office-toggle');
   assert.ok(toggleBtn);
+  assert.equal(toggleBtn.classList.contains('card-collapse-btn'), true);
+  assert.equal(toggleBtn.getAttribute('aria-expanded'), 'true');
   toggleBtn.click();
   assert.equal(exports.state.pixelOfficeCollapsed, true);
+  assert.equal(exports.state.collapsedCards['pixel-office'], true);
   assert.equal(pixelCard.classList.contains('is-collapsed'), true);
+  assert.equal(pixelCard.querySelector('.card-collapse-btn')?.getAttribute('aria-expanded'), 'false');
   assert.equal(exports.state.pixelOfficeIntervalMs, 0);
   assert.equal(exports.state.pixelOfficeTimer, null);
-  assert.deepEqual(postedPrefs[postedPrefs.length - 1], { pixelOfficeCollapsed: true });
+  assert.deepEqual(postedPrefs[postedPrefs.length - 1], {
+    collapsedCards: { 'pixel-office': true },
+    pixelOfficeCollapsed: true,
+  });
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-20 15:45:47
@@ -17796,7 +17902,14 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Bump v0.4.1 VM getCurrentAppVersion fallback assertion from 0.5.1 to 0.5.2.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Bump v0.4.1 VM getCurrentAppVersion fallback assertion from 0.5.2 to 0.5.3.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -18345,8 +18458,15 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
 // [MODIFIED BEGIN] 2026-11-23 10:35:02
 // Description: Bump manifest version assertions in v0.4.1 static hygiene block from 0.5.1 to 0.5.2.
 // ============================================================================
-  assert.equal(JSON.parse(pluginJsonRaw).version, '0.5.2');
-  assert.equal(JSON.parse(packageJsonRaw).version, '0.5.2');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:16:09
+// Description: Bump manifest version assertions in v0.4.1 static hygiene block from 0.5.2 to 0.5.3.
+// ============================================================================
+  assert.equal(JSON.parse(pluginJsonRaw).version, '0.5.3');
+  assert.equal(JSON.parse(packageJsonRaw).version, '0.5.3');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:16:09
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:35:02
 // ============================================================================
@@ -20029,4 +20149,1330 @@ test('pricing_cache schemaVersion 3 non-destructive migration heals v1 and poiso
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:21:36
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 22:18:30
+// Description: Add v0.5.3 collapsible cards regression tests covering backend
+// COLLAPSIBLE_CARD_IDS, DEFAULT_PREFS.collapsedCards, sanitizeLoadedPrefs legacy
+// migration & filtering, /api/prefs validation/merge/delete/bidirectional sync,
+// frontend VM 13-card collapse/expand, context alert tones, interactive header
+// guard, Pixel Office pause, tab-scoped Expand All bar, C2 filter preservation,
+// and CSS/HTML contracts.
+// ============================================================================
+test('v0.5.3 backend COLLAPSIBLE_CARD_IDS, DEFAULT_PREFS.collapsedCards, sanitizeLoadedPrefs legacy migration, and /api/prefs validation, merge, delete, and bidirectional sync', async () => {
+  const expectedCardIds = [
+    'pixel-office',
+    'speed',
+    'cost',
+    'context',
+    'cache',
+    'children-models',
+    'side-questions',
+    'global-roi',
+    'global-summary',
+    'global-trend',
+    'global-models',
+    'global-projects',
+    'global-recent',
+  ];
+  assert.equal(COLLAPSIBLE_CARD_IDS.length, 13);
+  assert.deepEqual([...COLLAPSIBLE_CARD_IDS], expectedCardIds);
+  assert.equal(Object.isFrozen(COLLAPSIBLE_CARD_IDS), true);
+  assert.deepEqual({ ...DEFAULT_PREFS.collapsedCards }, {});
+  assert.equal(Object.isFrozen(DEFAULT_PREFS.collapsedCards), true);
+  assert.equal(DEFAULT_PREFS.pixelOfficeCollapsed, false);
+
+  const { root, appData } = makeTempEnv();
+  try {
+    const convId = 'b5300001-0530-4530-8530-053000000001';
+    writeConversation(appData, convId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: '2026-11-23T12:00:00Z',
+          content: '<USER_REQUEST>v0.5.3 prefs migration test</USER_REQUEST>',
+        },
+        {
+          step_index: 1,
+          type: 'PLANNER_RESPONSE',
+          status: 'DONE',
+          created_at: '2026-11-23T12:00:02Z',
+          input_tokens: 1000,
+          cache_read_tokens: 4000,
+          output_tokens: 180,
+          tool_calls: [],
+        },
+      ],
+    });
+
+    const fakeHome = join(root, 'home');
+    mkdirSync(fakeHome, { recursive: true });
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    const mainPath = join(__dirname, '..', 'sidecars', 'monitor_pane', 'main.mjs');
+    const sdkCandidates = [
+      process.env.SIDECAR_SDK_PATH,
+      join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+      join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+    ].filter((p) => typeof p === 'string' && p.trim() && existsSync(p));
+
+    function buildEnv(dataDir) {
+      const env = { ...process.env };
+      delete env.ANTIGRAVITY_LS_ADDRESS;
+      delete env.ANTIGRAVITY_CSRF_TOKEN;
+      delete env.ANTIGRAVITY_SIDECAR_WEB_PORT;
+      delete env.ANTIGRAVITY_CONVERSATION_ID;
+      delete env.ANTIGRAVITY_SIDECAR_UI_TOKEN;
+      delete env.ANTIGRAVITY_AGENTAPI_EXE;
+      if (sdkCandidates[0]) env.SIDECAR_SDK_PATH = sdkCandidates[0];
+      env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
+      env.USERPROFILE = fakeHome;
+      env.HOME = fakeHome;
+      env.PRICING_SYNC_DISABLE_AUTO = '1';
+      env.RELEASE_UPDATE_DISABLE_AUTO = '1';
+      env.DISABLE_SYSTEM_PROXY_LOOKUP = '1';
+      return env;
+    }
+
+    async function bootSidecar(port, dataDir) {
+      const child = spawn(process.execPath, [mainPath, '--standalone', String(port)], {
+        env: buildEnv(dataDir),
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      await new Promise((resolveReady, rejectReady) => {
+        if (child.exitCode !== null) {
+          rejectReady(new Error(`Sidecar exited prematurely (${child.exitCode})`));
+          return;
+        }
+        const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 10000);
+        let out = '';
+        child.stdout.on('data', (chunk) => {
+          out += chunk.toString();
+          if (out.includes(`[sidecar] listening on 127.0.0.1:${port}`)) {
+            clearTimeout(timer);
+            resolveReady();
+          }
+        });
+        child.stderr.on('data', (chunk) => {
+          out += chunk.toString();
+        });
+        child.once('exit', (code) => {
+          clearTimeout(timer);
+          rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+        });
+      });
+      return child;
+    }
+
+    async function stopChild(child) {
+      if (!child || child.exitCode !== null || child.signalCode !== null) return;
+      child.kill();
+      await new Promise((r) => {
+        if (child.exitCode !== null || child.signalCode !== null) return r();
+        const t = setTimeout(r, 3000);
+        child.once('exit', () => {
+          clearTimeout(t);
+          r();
+        });
+      });
+    }
+
+    // 1. Legacy monitor_state.json migration: { pixelOfficeCollapsed: true } without collapsedCards
+    const legacyDataDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'legacy_data');
+    mkdirSync(legacyDataDir, { recursive: true });
+    writeFileSync(
+      join(legacyDataDir, 'monitor_state.json'),
+      JSON.stringify({
+        stepEndTimes: {},
+        prefs: {
+          prefsSchemaVersion: 4,
+          pixelOfficeCollapsed: true,
+        },
+      }),
+      'utf-8',
+    );
+
+    let legacyChild = null;
+    try {
+      const portLegacy = await pickFetchSafeFreePort();
+      legacyChild = await bootSidecar(portLegacy, legacyDataDir);
+      const legacySnap = await (
+        await fetch(`http://127.0.0.1:${portLegacy}/api/snapshot?conv=${encodeURIComponent(convId)}`)
+      ).json();
+      assert.equal(legacySnap.appVersion, '0.5.3');
+      assert.deepEqual(legacySnap.prefs.collapsedCards, { 'pixel-office': true });
+      assert.equal(legacySnap.prefs.pixelOfficeCollapsed, true);
+    } finally {
+      await stopChild(legacyChild);
+    }
+
+    // 2. sanitizeLoadedPrefs filtering (unknown/falsy/non-boolean keys + explicit pixel-office: false override)
+    //    plus /api/prefs validation, merge, delete-on-false, bidirectional sync, and clean disk persistence
+    const mainDataDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'main_data');
+    mkdirSync(mainDataDir, { recursive: true });
+    const statePath = join(mainDataDir, 'monitor_state.json');
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        stepEndTimes: {},
+        prefs: {
+          prefsSchemaVersion: 4,
+          pixelOfficeCollapsed: true,
+          collapsedCards: {
+            speed: true,
+            cost: false,
+            'pixel-office': false,
+            'unknown-card': true,
+            'global-trend': 'yes',
+          },
+        },
+      }),
+      'utf-8',
+    );
+
+    let child1 = null;
+    let child2 = null;
+    try {
+      const port1 = await pickFetchSafeFreePort();
+      child1 = await bootSidecar(port1, mainDataDir);
+      const base1 = `http://127.0.0.1:${port1}`;
+
+      const initSnap = await (await fetch(`${base1}/api/snapshot?conv=${encodeURIComponent(convId)}`)).json();
+      assert.deepEqual(initSnap.prefs.collapsedCards, { speed: true });
+      assert.equal(initSnap.prefs.pixelOfficeCollapsed, false);
+
+      const postPrefs = async (payload) => {
+        const res = await fetch(`${base1}/api/prefs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        return { status: res.status, body: await res.json() };
+      };
+
+      // Reject non-object collapsedCards (null, Array, string, number)
+      for (const badCollapsed of [null, ['speed'], 'speed', 123]) {
+        const res = await postPrefs({ collapsedCards: badCollapsed });
+        assert.equal(res.status, 400, `Expected 400 for collapsedCards=${JSON.stringify(badCollapsed)}`);
+        assert.equal(res.body.error, 'collapsedCards must be a plain object.');
+      }
+
+      // Reject non-boolean values inside collapsedCards
+      for (const [k, v] of [['speed', 'true'], ['cost', 1], ['context', null], ['cache', {}]]) {
+        const res = await postPrefs({ collapsedCards: { [k]: v } });
+        assert.equal(res.status, 400, `Expected 400 for collapsedCards.${k}=${JSON.stringify(v)}`);
+        assert.equal(res.body.error, `collapsedCards.${k} must be a boolean.`);
+      }
+
+      // Merge semantics: adding cost + global-trend preserves existing speed, ignores unknown boolean key safely
+      const mergeRes = await postPrefs({
+        collapsedCards: { cost: true, 'global-trend': true, 'unknown-future-card': true },
+      });
+      assert.equal(mergeRes.status, 200);
+      assert.equal(mergeRes.body.ok, true);
+      assert.deepEqual(mergeRes.body.prefs.collapsedCards, {
+        speed: true,
+        cost: true,
+        'global-trend': true,
+      });
+      assert.equal(mergeRes.body.prefs.pixelOfficeCollapsed, false);
+
+      // Delete key cleanly on { speed: false }
+      const delRes = await postPrefs({ collapsedCards: { speed: false } });
+      assert.equal(delRes.status, 200);
+      assert.deepEqual(delRes.body.prefs.collapsedCards, {
+        cost: true,
+        'global-trend': true,
+      });
+      assert.equal(Object.prototype.hasOwnProperty.call(delRes.body.prefs.collapsedCards, 'speed'), false);
+
+      // Bidirectional sync: collapsedCards['pixel-office']: true -> pixelOfficeCollapsed: true
+      const sync1 = await postPrefs({ collapsedCards: { 'pixel-office': true } });
+      assert.equal(sync1.status, 200);
+      assert.equal(sync1.body.prefs.collapsedCards['pixel-office'], true);
+      assert.equal(sync1.body.prefs.pixelOfficeCollapsed, true);
+
+      // Bidirectional sync: legacy pixelOfficeCollapsed: false (without collapsedCards) deletes 'pixel-office' only
+      const sync2 = await postPrefs({ pixelOfficeCollapsed: false });
+      assert.equal(sync2.status, 200);
+      assert.equal(sync2.body.prefs.pixelOfficeCollapsed, false);
+      assert.equal(Object.prototype.hasOwnProperty.call(sync2.body.prefs.collapsedCards, 'pixel-office'), false);
+      assert.deepEqual(sync2.body.prefs.collapsedCards, { cost: true, 'global-trend': true });
+
+      // Bidirectional sync: legacy pixelOfficeCollapsed: true (without collapsedCards) sets 'pixel-office': true
+      const sync3 = await postPrefs({ pixelOfficeCollapsed: true });
+      assert.equal(sync3.status, 200);
+      assert.equal(sync3.body.prefs.pixelOfficeCollapsed, true);
+      assert.equal(sync3.body.prefs.collapsedCards['pixel-office'], true);
+
+      // Precedence when both are sent: collapsedCards['pixel-office'] wins over pixelOfficeCollapsed
+      const sync4 = await postPrefs({
+        collapsedCards: { 'pixel-office': false },
+        pixelOfficeCollapsed: true,
+      });
+      assert.equal(sync4.status, 200);
+      assert.equal(sync4.body.prefs.pixelOfficeCollapsed, false);
+      assert.deepEqual(sync4.body.prefs.collapsedCards, { cost: true, 'global-trend': true });
+
+      await stopChild(child1);
+      child1 = null;
+
+      // Verify clean JSON on disk (only true allowlisted keys persisted, zero false entries)
+      const persistedState = JSON.parse(readFileSync(statePath, 'utf-8'));
+      assert.deepEqual(persistedState.prefs.collapsedCards, { cost: true, 'global-trend': true });
+      assert.equal(persistedState.prefs.pixelOfficeCollapsed, false);
+
+      // Reboot against same dataDir and confirm persistence across restart
+      const port2 = await pickFetchSafeFreePort();
+      child2 = await bootSidecar(port2, mainDataDir);
+      const reloadedSnap = await (
+        await fetch(`http://127.0.0.1:${port2}/api/snapshot?conv=${encodeURIComponent(convId)}`)
+      ).json();
+      assert.deepEqual(reloadedSnap.prefs.collapsedCards, { cost: true, 'global-trend': true });
+      assert.equal(reloadedSnap.prefs.pixelOfficeCollapsed, false);
+    } finally {
+      await stopChild(child1);
+      await stopChild(child2);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.5.3 frontend VM all 13 collapsible cards, context alert tones, interactive header guard, Pixel Office pause, tab-scoped Expand All bar, C2 filter preservation, and CSS/HTML contracts', async () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = join(testDir, '..');
+  const paneDir = join(repoRoot, 'sidecars', 'monitor_pane');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+  const pixelSource = readFileSync(join(paneDir, 'pixel_office.js'), 'utf-8');
+  const indexHtml = readFileSync(join(paneDir, 'index.html'), 'utf-8');
+  const stylesCss = readFileSync(join(paneDir, 'styles.css'), 'utf-8');
+
+  // 1. CSS & HTML structural contracts
+  const heroGridMatch = stylesCss.match(/\.hero-grid\s*\{[^}]*\}/);
+  assert.ok(heroGridMatch, '.hero-grid rule must exist in styles.css');
+  assert.match(heroGridMatch[0], /align-items:\s*start\s*;/, '.hero-grid must set align-items: start');
+
+  const reducedMotionIdx = stylesCss.indexOf('@media (prefers-reduced-motion: reduce)');
+  assert.ok(reducedMotionIdx >= 0, 'prefers-reduced-motion media query must exist in styles.css');
+  let rmBraceDepth = 0;
+  let rmBlockEnd = reducedMotionIdx;
+  for (let i = stylesCss.indexOf('{', reducedMotionIdx); i < stylesCss.length; i += 1) {
+    if (stylesCss[i] === '{') rmBraceDepth += 1;
+    else if (stylesCss[i] === '}') {
+      rmBraceDepth -= 1;
+      if (rmBraceDepth === 0) {
+        rmBlockEnd = i + 1;
+        break;
+      }
+    }
+  }
+  const reducedMotionBlock = stylesCss.slice(reducedMotionIdx, rmBlockEnd);
+  assert.match(
+    reducedMotionBlock,
+    /\.card-collapse-chevron\s*\{[^}]*transition:\s*none/s,
+    'prefers-reduced-motion must disable .card-collapse-chevron transition',
+  );
+  for (const selector of [
+    '.card.is-collapsed',
+    '.card-head.is-collapsible',
+    '.card-head-right',
+    '.card-collapse-btn',
+    '.card-collapse-chevron',
+    '.card-collapsed-summary',
+    '.card-collapsed-summary.is-warning',
+    '.card-collapsed-summary.is-critical',
+    '.collapsed-bar',
+    '.collapsed-expand-all-btn',
+  ]) {
+    assert.equal(stylesCss.includes(selector), true, `styles.css missing ${selector}`);
+  }
+
+  const convStripIdx = indexHtml.indexOf('id="conv-strip"');
+  const collapsedBarIdx = indexHtml.indexOf('id="current-collapsed-bar"');
+  const pixelOfficeIdx = indexHtml.indexOf('id="card-pixel-office"');
+  assert.ok(
+    convStripIdx > 0 && collapsedBarIdx > convStripIdx && pixelOfficeIdx > collapsedBarIdx,
+    'index.html must mount #current-collapsed-bar between #conv-strip and #card-pixel-office',
+  );
+  assert.match(indexHtml, /id="current-collapsed-bar"[^>]*class="collapsed-bar hidden"/);
+
+  // 2. Headless VM harness with full closest(), parentNode/parentElement, click bubbling, and mock /api/prefs
+  class FakeClassList {
+    constructor(owner) {
+      this._owner = owner;
+      this._set = new Set();
+    }
+    _syncFromString(str) {
+      this._set = new Set(String(str || '').trim().split(/\s+/).filter(Boolean));
+    }
+    _syncToOwner() {
+      this._owner._className = [...this._set].join(' ');
+    }
+    add(...cls) {
+      for (const c of cls) if (c) this._set.add(c);
+      this._syncToOwner();
+    }
+    remove(...cls) {
+      for (const c of cls) this._set.delete(c);
+      this._syncToOwner();
+    }
+    toggle(c, force) {
+      const shouldAdd = force === undefined ? !this._set.has(c) : Boolean(force);
+      if (shouldAdd) this._set.add(c);
+      else this._set.delete(c);
+      this._syncToOwner();
+      return this._set.has(c);
+    }
+    contains(c) {
+      return this._set.has(c);
+    }
+  }
+
+  class FakeNode {
+    constructor(tag) {
+      this.tagName = String(tag || 'DIV').toUpperCase();
+      this.children = [];
+      this.childNodes = this.children;
+      this.parentElement = null;
+      this._textContent = '';
+      this._className = '';
+      this.classList = new FakeClassList(this);
+      this.dataset = {};
+      this.style = {
+        setProperty(k, v) { this[k] = String(v); },
+        removeProperty(k) { delete this[k]; },
+      };
+      this.attributes = new Map();
+      this.listeners = new Map();
+      this.title = '';
+      this.value = '';
+      this.placeholder = '';
+      this.disabled = false;
+      this.scrollTop = 0;
+      this.scrollLeft = 0;
+      this.scrollWidth = 0;
+      this.width = 0;
+      this.height = 0;
+      this.isConnected = true;
+      this.offsetParent = {};
+      this.replaceChildrenCalls = 0;
+      this.focusCalls = 0;
+    }
+    get parentNode() { return this.parentElement; }
+    get id() { return this.attributes.get('id') || ''; }
+    set id(v) { this.attributes.set('id', String(v || '')); }
+    get className() { return this._className; }
+    set className(v) {
+      this._className = String(v || '');
+      this.classList._syncFromString(this._className);
+    }
+    get childElementCount() {
+      return this.children.filter((c) => c.tagName !== '#TEXT').length;
+    }
+    get textContent() {
+      if (this.children.length > 0) {
+        return this.children.map((c) => c.textContent).join('');
+      }
+      return this._textContent;
+    }
+    set textContent(v) {
+      this._textContent = String(v ?? '');
+      this.children.length = 0;
+    }
+    setAttribute(name, val) {
+      const k = String(name);
+      const v = String(val);
+      if (k === 'class') { this.className = v; return; }
+      if (k === 'title') this.title = v;
+      if (k === 'value') this.value = v;
+      this.attributes.set(k, v);
+    }
+    getAttribute(name) {
+      if (name === 'class') return this._className;
+      return this.attributes.has(name) ? this.attributes.get(name) : null;
+    }
+    removeAttribute(name) { this.attributes.delete(name); }
+    appendChild(child) {
+      if (!child) return child;
+      child.parentElement = this;
+      this.children.push(child);
+      return child;
+    }
+    insertBefore(newNode, refNode) {
+      if (!newNode) return newNode;
+      newNode.parentElement = this;
+      const idx = this.children.indexOf(refNode);
+      if (idx >= 0) this.children.splice(idx, 0, newNode);
+      else this.children.push(newNode);
+      return newNode;
+    }
+    remove() {
+      if (!this.parentElement) return;
+      const idx = this.parentElement.children.indexOf(this);
+      if (idx >= 0) this.parentElement.children.splice(idx, 1);
+      this.parentElement = null;
+    }
+    replaceChildren(...nodes) {
+      this.replaceChildrenCalls += 1;
+      for (const old of this.children) old.parentElement = null;
+      this.children.length = 0;
+      this._textContent = '';
+      for (const n of nodes) {
+        if (n !== null && n !== undefined && n !== false) {
+          this.appendChild(typeof n === 'string' ? fakeDocument.createTextNode(n) : n);
+        }
+      }
+    }
+    contains(target) {
+      if (target === this) return true;
+      for (const c of this.children) {
+        if (c === target || (typeof c.contains === 'function' && c.contains(target))) return true;
+      }
+      return false;
+    }
+    focus() {
+      this.focusCalls += 1;
+      fakeDocument.activeElement = this;
+    }
+    addEventListener(type, fn) {
+      if (!this.listeners.has(type)) this.listeners.set(type, []);
+      this.listeners.get(type).push(fn);
+    }
+    dispatchEvent(type, ev = {}) {
+      const event = {
+        type,
+        target: ev.target || this,
+        key: ev.key || '',
+        shiftKey: Boolean(ev.shiftKey),
+        propagationStopped: false,
+        defaultPrevented: false,
+        stopPropagation() { this.propagationStopped = true; },
+        preventDefault() { this.defaultPrevented = true; },
+      };
+      let cur = this;
+      while (cur) {
+        for (const fn of cur.listeners.get(type) || []) fn(event);
+        if (event.propagationStopped) break;
+        cur = cur.parentElement;
+      }
+      return event;
+    }
+    click(ev = {}) { return this.dispatchEvent('click', ev); }
+    getContext() {
+      return {
+        imageSmoothingEnabled: false,
+        setTransform() {},
+        clearRect() {},
+        fillRect() {},
+        strokeRect() {},
+        beginPath() {},
+        moveTo() {},
+        lineTo() {},
+        closePath() {},
+        fill() {},
+        stroke() {},
+        arc() {},
+        roundRect() {},
+        drawImage() {},
+        fillText() {},
+        measureText: (txt) => ({ width: String(txt || '').length * 6 }),
+        save() {},
+        restore() {},
+      };
+    }
+    _matches(sel) {
+      const s = String(sel || '').trim();
+      if (!s) return false;
+      if (s.startsWith('#')) return this.id === s.slice(1);
+      const parts = s.split('.');
+      const tagPart = parts[0];
+      if (tagPart && this.tagName !== tagPart.toUpperCase()) return false;
+      for (let i = 1; i < parts.length; i++) {
+        if (!this.classList.contains(parts[i])) return false;
+      }
+      return true;
+    }
+    closest(selector) {
+      const parts = String(selector || '').split(',').map((p) => p.trim()).filter(Boolean);
+      let cur = this;
+      while (cur && cur.tagName !== '#TEXT') {
+        for (const p of parts) {
+          if (cur._matches(p)) return cur;
+        }
+        cur = cur.parentElement;
+      }
+      return null;
+    }
+    querySelectorAll(selector) {
+      const out = [];
+      const selectors = String(selector).split(',').map((p) => p.trim()).filter(Boolean);
+      const walk = (node) => {
+        for (const c of node.children) {
+          if (c.tagName !== '#TEXT') {
+            for (const s of selectors) {
+              const chain = s.split(/\s+/);
+              if (c._matches(chain[chain.length - 1])) {
+                let ok = true;
+                if (chain.length > 1) {
+                  let anc = c.parentElement;
+                  for (let k = chain.length - 2; k >= 0; k--) {
+                    while (anc && !anc._matches(chain[k])) anc = anc.parentElement;
+                    if (!anc) { ok = false; break; }
+                    anc = anc.parentElement;
+                  }
+                }
+                if (ok) { out.push(c); break; }
+              }
+            }
+            walk(c);
+          }
+        }
+      };
+      walk(this);
+      return out;
+    }
+    querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
+  }
+
+  const elementsById = new Map();
+  const rootBody = new FakeNode('BODY');
+  const docListeners = new Map();
+  let intervalSeq = 1;
+  const activeIntervals = new Map();
+  let timeoutSeq = 1;
+  const activeTimeouts = new Map();
+  const postedPrefs = [];
+
+  const fakeDocument = {
+    hidden: false,
+    readyState: 'complete',
+    activeElement: null,
+    documentElement: new FakeNode('HTML'),
+    body: rootBody,
+    createElement(tag) { return new FakeNode(tag); },
+    createElementNS(_ns, tag) { return new FakeNode(tag); },
+    createTextNode(txt) {
+      const n = new FakeNode('#TEXT');
+      n._textContent = String(txt ?? '');
+      return n;
+    },
+    getElementById(id) {
+      const k = String(id);
+      if (!elementsById.has(k)) {
+        const tag = k.startsWith('card-') ? 'ARTICLE' : 'DIV';
+        const n = new FakeNode(tag);
+        n.id = k;
+        if (k === 'current-collapsed-bar') n.className = 'collapsed-bar hidden';
+        else if (k === 'card-pixel-office') n.className = 'card pixel-office-card';
+        else if (k === 'card-side-questions') n.className = 'card hidden';
+        else if (k.startsWith('card-')) n.className = 'card';
+        rootBody.appendChild(n);
+        elementsById.set(k, n);
+      }
+      return elementsById.get(k);
+    },
+    querySelector(sel) { return rootBody.querySelector(sel); },
+    querySelectorAll(sel) { return rootBody.querySelectorAll(sel); },
+    addEventListener(type, fn) {
+      if (!docListeners.has(type)) docListeners.set(type, []);
+      docListeners.get(type).push(fn);
+    },
+  };
+
+  // Pre-seed Tab 1 cards & bar so initial classes match index.html
+  for (const id of [
+    'current-collapsed-bar',
+    'card-pixel-office',
+    'card-speed',
+    'card-cost',
+    'card-context',
+    'card-cache',
+    'card-children-models',
+    'card-side-questions',
+    'global-content',
+  ]) {
+    fakeDocument.getElementById(id);
+  }
+
+  const serverPrefs = {
+    currency: 'USD',
+    language: 'zh',
+    tokenUnit: 'auto',
+    modelSortBy: 'cost',
+    modelSortDir: 'desc',
+    pixelOfficeCollapsed: false,
+    collapsedCards: {},
+  };
+
+  const makeSnap = (rev = 1, {
+    status = 'GENERATING',
+    contextLevel = 'HEALTHY',
+    includeSideQuestions = true,
+    includeSubscription = true,
+  } = {}) => {
+    const ctxTotal =
+      contextLevel === 'CRITICAL' ? 480_000 : contextLevel === 'WARNING' ? 430_000 : 120_000;
+    const recentConvs = [
+      {
+        conversationId: 'conv-alpha-53001',
+        title: 'Alpha Collapse Session',
+        workspace: 'F:\\Work\\alpha-repo',
+        activeModel: 'Gemini 4 Neon',
+        status,
+        onDisk: true,
+        isToday: true,
+        updatedAtMs: Date.now() - 2000,
+        contextTotal: ctxTotal,
+        latestTokPerSec: 88,
+        outputTokens: 1200 + rev * 10,
+        totalTokens: 50000 + rev * 10,
+        costActual: 0.42 + rev * 0.01,
+      },
+      {
+        conversationId: 'conv-beta-53002',
+        title: 'Beta Docs Review',
+        workspace: 'F:\\Work\\beta-repo',
+        activeModel: 'Claude Opus 5.5',
+        status: 'IDLE',
+        onDisk: true,
+        isToday: true,
+        updatedAtMs: Date.now() - 60000,
+        contextTotal: 14000,
+        latestTokPerSec: 60,
+        outputTokens: 800,
+        totalTokens: 20000,
+        costActual: 0.18,
+      },
+      {
+        conversationId: 'conv-gamma-53003',
+        title: 'Gamma Tool Run',
+        workspace: 'F:\\Work\\gamma-repo',
+        activeModel: 'Gemini 4 Neon',
+        status: 'RUNNING_TOOLS',
+        onDisk: true,
+        isToday: false,
+        updatedAtMs: Date.now() - 120000,
+        contextTotal: 9000,
+        latestTokPerSec: 70,
+        outputTokens: 400,
+        totalTokens: 12000,
+        costActual: 0.09,
+      },
+    ];
+    const subscriptionObj = includeSubscription
+      ? {
+          planId: 'ai_pro',
+          planLabel: 'Google AI Pro',
+          isAutoDetected: true,
+          monthlyFee: 19.99,
+          proratedFee: 6.66,
+          tokenCost: 12.92,
+          netSavings: 6.26,
+          paybackPct: 194,
+          roiMultiplier: 1.94,
+          isPaidOff: true,
+          windowDays: 10,
+        }
+      : null;
+    const makePeriod = (rangeKey) => ({
+      rangeKey,
+      startDate: '2026-11-23',
+      endDate: '2026-11-23',
+      spanDaysCount: 1,
+      activeDaysCount: 1,
+      conversationsCount: 3,
+      archivedConversationsCount: 0,
+      stepsCount: 14,
+      inputTokens: 15000,
+      cacheReadTokens: 45000,
+      outputTokens: 2400 + rev * 10,
+      totalTokens: 62400 + rev * 10,
+      cacheHitRatePct: 75,
+      costActual: 0.69 + rev * 0.01,
+      avgDailyCost: 0.69 + rev * 0.01,
+      avgDailyTokens: 62400 + rev * 10,
+      trendGranularity: 'hour',
+      series: [
+        { key: '09', label: '09:00', rangeText: '09:00 - 10:00', costActual: 0.25, totalTokens: 20000, outputTokens: 900 },
+        { key: '10', label: '10:00', rangeText: '10:00 - 11:00', costActual: 0.44 + rev * 0.01, totalTokens: 42400, outputTokens: 1500 },
+      ],
+      byModel: [
+        {
+          profileId: 'gemini-4-neon',
+          model: 'Gemini 4 Neon',
+          rawModels: ['gemini-4-neon'],
+          conversationsCount: 2,
+          inputTokens: 10000,
+          cacheReadTokens: 30000,
+          outputTokens: 1600,
+          totalTokens: 41600,
+          cacheHitRatePct: 75,
+          costActual: 0.51,
+        },
+        {
+          profileId: 'claude-opus-5-5',
+          model: 'Claude Opus 5.5',
+          rawModels: ['claude-opus-5-5'],
+          conversationsCount: 1,
+          inputTokens: 5000,
+          cacheReadTokens: 15000,
+          outputTokens: 800,
+          totalTokens: 20800,
+          cacheHitRatePct: 75,
+          costActual: 0.18,
+        },
+      ],
+      byWorkspace: [
+        {
+          workspace: 'F:\\Work\\alpha-repo',
+          conversationsCount: 2,
+          stepsCount: 10,
+          inputTokens: 10000,
+          cacheReadTokens: 30000,
+          outputTokens: 1600,
+          totalTokens: 41600,
+          cacheHitRatePct: 75,
+          costActual: 0.51,
+        },
+      ],
+      topConversations: recentConvs,
+      subscription: subscriptionObj,
+    });
+    const sideQuestionsList = includeSideQuestions
+      ? [
+          {
+            conversationId: 'sq-branch-53001',
+            title: 'Side Question A',
+            status: 'IDLE',
+            activeModel: 'Gemini 4 Neon',
+            stepsCount: 2,
+            inputTokens: 1000,
+            cacheReadTokens: 9000,
+            outputTokens: 500,
+            totalTokens: 10500,
+            costActual: 0.08,
+            updatedAtMs: Date.now() - 4000,
+          },
+          {
+            conversationId: 'sq-branch-53002',
+            title: 'Side Question B',
+            status: 'IDLE',
+            activeModel: 'Claude Opus 5.5',
+            stepsCount: 1,
+            inputTokens: 500,
+            cacheReadTokens: 4500,
+            outputTokens: 250,
+            totalTokens: 5250,
+            costActual: 0.04,
+            updatedAtMs: Date.now() - 8000,
+          },
+        ]
+      : [];
+
+    return {
+      etag: `etag-v053-${rev}-${status}-${contextLevel}-${includeSideQuestions}-${includeSubscription}`,
+      serverTimeMs: Date.now(),
+      boundConversationId: 'conv-alpha-53001',
+      appVersion: '0.5.3',
+      prefs: {
+        ...serverPrefs,
+        collapsedCards: { ...serverPrefs.collapsedCards },
+      },
+      current: {
+        conversationId: 'conv-alpha-53001',
+        title: 'Alpha Collapse Session',
+        workspace: 'F:\\Work\\alpha-repo',
+        status,
+        generatingSinceMs: status === 'GENERATING' ? Date.now() - 3000 : null,
+        activeModel: 'Gemini 4 Neon',
+        activeRawModel: 'gemini-4-neon',
+        speed: { latestStepTokPerSec: 88.4, weightedAvgTokPerSec: 82.1, peakTokPerSec: 95.0, recentSteps: [] },
+        context: {
+          currentTotal: ctxTotal,
+          softLimit: 409_600,
+          hardLimit: 512_000,
+          hardUsagePct: (ctxTotal / 512_000) * 100,
+          softUsagePct: (ctxTotal / 409_600) * 100,
+          usageLevel: contextLevel,
+          topSpikes: [],
+        },
+        cache: {
+          hitRatePct: 82.5,
+          cacheReadTokens: 82_500,
+          inputUncachedTokens: 17_500,
+          costSavedByCache: 0.31,
+        },
+        totals: {
+          withChildren: {
+            stepsCount: 10,
+            totalTokens: 110_000,
+            outputTokens: 3200,
+            cacheReadTokens: 82_500,
+            inputUncachedTokens: 17_500,
+            costActual: 0.65,
+            costSavedByCache: 0.31,
+            cacheHitRatePct: 82.5,
+          },
+          mainOnly: {
+            stepsCount: 8,
+            totalTokens: 90_000,
+            outputTokens: 2500,
+            cacheReadTokens: 70_000,
+            inputUncachedTokens: 15_000,
+            costActual: 0.48,
+            costSavedByCache: 0.25,
+            cacheHitRatePct: 82.4,
+          },
+          byModel: [
+            {
+              profileId: 'gemini-4-neon',
+              model: 'Gemini 4 Neon',
+              rawModels: ['gemini-4-neon'],
+              stepsCount: 8,
+              inputTokens: 15_000,
+              cacheReadTokens: 70_000,
+              outputTokens: 2500,
+              totalTokens: 87_500,
+              cacheHitRatePct: 82.4,
+              costActual: 0.48,
+            },
+          ],
+        },
+        children: [
+          {
+            conversationId: 'child-worker-53',
+            name: 'worker-53',
+            kind: 'swarm',
+            status: status === 'GENERATING' ? 'RUNNING_TOOLS' : 'IDLE',
+            killed: false,
+            model: 'Gemini 4 Hydrogen',
+            rawModel: 'gemini-flash-worker-agy',
+            activeToolLabel: 'Running tests',
+            contextTotal: 12_000,
+            latestTokPerSec: 54,
+            outputTokens: 700,
+            costActual: 0.17,
+            updatedAtMs: Date.now() - 2000,
+          },
+        ],
+        sideQuestions: sideQuestionsList,
+        sideQuestionsSummary: includeSideQuestions
+          ? {
+              count: 2,
+              stepsCount: 3,
+              inputTokens: 1500,
+              cacheReadTokens: 13_500,
+              outputTokens: 750,
+              totalTokens: 15_750,
+              costActual: 0.12,
+              cacheHitRatePct: 90.0,
+            }
+          : null,
+      },
+      global: {
+        todayDate: '2026-11-23',
+        recentConversations: recentConvs,
+        todayByWorkspace: makePeriod('today').byWorkspace,
+        periods: {
+          today: makePeriod('today'),
+          '7d': makePeriod('7d'),
+          '30d': makePeriod('30d'),
+          all: makePeriod('all'),
+        },
+      },
+    };
+  };
+
+  let snapStateOpts = {
+    rev: 1,
+    status: 'GENERATING',
+    contextLevel: 'HEALTHY',
+    includeSideQuestions: true,
+    includeSubscription: true,
+  };
+  const currentMockSnap = () => makeSnap(snapStateOpts.rev, snapStateOpts);
+
+  const clipboardWrites = [];
+  const sandbox = {
+    window: null,
+    document: fakeDocument,
+    Node: FakeNode,
+    MutationObserver: class { observe() {} },
+    AbortController: globalThis.AbortController,
+    URLSearchParams: globalThis.URLSearchParams,
+    console,
+    Date,
+    Math,
+    Number,
+    String,
+    Array,
+    Object,
+    Set,
+    Map,
+    JSON,
+    Promise,
+    Error,
+    RegExp,
+    Intl,
+    encodeURIComponent,
+    decodeURIComponent,
+    sessionStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    setInterval(fn, ms) {
+      const id = intervalSeq++;
+      activeIntervals.set(id, { fn, ms });
+      return id;
+    },
+    clearInterval(id) { activeIntervals.delete(id); },
+    setTimeout(fn, ms) {
+      const id = timeoutSeq++;
+      activeTimeouts.set(id, { fn, ms });
+      return id;
+    },
+    clearTimeout(id) { activeTimeouts.delete(id); },
+    requestAnimationFrame(fn) { fn(); return 1; },
+    getComputedStyle() {
+      return { color: 'rgb(15, 23, 42)', backgroundColor: 'rgb(255, 255, 255)' };
+    },
+    navigator: {
+      clipboard: {
+        writeText: async (txt) => { clipboardWrites.push(txt); },
+      },
+    },
+    addEventListener() {},
+    removeEventListener() {},
+    innerWidth: 560,
+    devicePixelRatio: 1,
+    matchMedia() { return { matches: false, addEventListener() {} }; },
+    fetch: async (url, init = {}) => {
+      const urlStr = String(url || '');
+      if (urlStr.includes('/api/prefs') && init?.method === 'POST') {
+        const body = JSON.parse(init.body || '{}');
+        postedPrefs.push(body);
+        if (body.collapsedCards && typeof body.collapsedCards === 'object') {
+          for (const [k, v] of Object.entries(body.collapsedCards)) {
+            if (v === true) serverPrefs.collapsedCards[k] = true;
+            else if (v === false) delete serverPrefs.collapsedCards[k];
+          }
+        }
+        if (
+          typeof body.pixelOfficeCollapsed === 'boolean' &&
+          (!body.collapsedCards || !Object.prototype.hasOwnProperty.call(body.collapsedCards, 'pixel-office'))
+        ) {
+          if (body.pixelOfficeCollapsed) serverPrefs.collapsedCards['pixel-office'] = true;
+          else delete serverPrefs.collapsedCards['pixel-office'];
+        }
+        serverPrefs.pixelOfficeCollapsed = Boolean(serverPrefs.collapsedCards['pixel-office']);
+        const resp = {
+          ok: true,
+          prefs: { ...serverPrefs, collapsedCards: { ...serverPrefs.collapsedCards } },
+        };
+        return { ok: true, status: 200, json: async () => resp, text: async () => JSON.stringify(resp) };
+      }
+      const snap = currentMockSnap();
+      return { ok: true, status: 200, json: async () => snap, text: async () => JSON.stringify(snap) };
+    },
+  };
+  sandbox.window = sandbox;
+  sandbox.sidecar = {
+    conversationId: 'conv-alpha-53001',
+    fetch: sandbox.fetch,
+    ui: { toggleConversation() {} },
+  };
+  sandbox.TokenMonitorReceipt = {
+    buildReceiptViewModel: () => ({ title: 'Receipt' }),
+    renderReceiptCanvas: () => ({ toDataURL: () => 'data:image/png;base64,AA==' }),
+  };
+
+  vm.createContext(sandbox);
+  vm.runInContext(pixelSource, sandbox);
+  const controlledSrc = appSource
+    .replace(
+      /if\s*\(document\.readyState\s*===\s*'loading'\)/,
+      'globalThis.__tmV053 = { state, init, pollSnapshot, renderCurrentTab, renderGlobalTab, renderActiveTab, setActiveTab, toggleCardCollapsed, expandAllTabCards, getVisibleCollapsedCardIds };\n  if (document.readyState === \'loading\')',
+    )
+    .replace(
+      /if\s*\(document\.readyState\s*===\s*'loading'\)\s*\{[\s\S]*?\}\s*else\s*\{\s*init\(\);\s*\}/,
+      '/* manual init in test */',
+    );
+  vm.runInContext(controlledSrc, sandbox);
+  const api = sandbox.__tmV053;
+  assert.ok(api, 'VM must expose __tmV053');
+
+  api.init();
+  await new Promise((r) => setImmediate(r));
+
+  // 3. All 7 Tab 1 cards (with sideQuestions present) render .card-collapse-btn with aria-expanded="true"
+  const tab1CardIds = [
+    'card-pixel-office',
+    'card-speed',
+    'card-cost',
+    'card-context',
+    'card-cache',
+    'card-children-models',
+    'card-side-questions',
+  ];
+  for (const domId of tab1CardIds) {
+    const cardEl = fakeDocument.getElementById(domId);
+    assert.equal(cardEl.classList.contains('hidden'), false, `${domId} must be visible on Tab 1`);
+    const head = cardEl.querySelector('.card-head.is-collapsible');
+    const btn = cardEl.querySelector('.card-collapse-btn');
+    assert.ok(head, `${domId} must render .card-head.is-collapsible`);
+    assert.ok(btn, `${domId} must render .card-collapse-btn`);
+    assert.equal(btn.getAttribute('aria-expanded'), 'true', `${domId} must start aria-expanded="true"`);
+    assert.ok(btn.querySelector('.card-collapse-chevron'), `${domId} collapse button must contain chevron icon`);
+  }
+
+  // All 6 Tab 2 cards (with subscription present) render .card-collapse-btn with aria-expanded="true"
+  api.setActiveTab('global');
+  const globalContent = fakeDocument.getElementById('global-content');
+  const tab2CardIds = [
+    'card-global-roi',
+    'card-global-summary',
+    'card-global-trend',
+    'card-global-models',
+    'card-global-projects',
+    'card-global-recent',
+  ];
+  for (const domId of tab2CardIds) {
+    const cardEl = globalContent.querySelector(`#${domId}`);
+    assert.ok(cardEl, `${domId} must render on Tab 2`);
+    const head = cardEl.querySelector('.card-head.is-collapsible');
+    const btn = cardEl.querySelector('.card-collapse-btn');
+    assert.ok(head, `${domId} must render .card-head.is-collapsible`);
+    assert.ok(btn, `${domId} must render .card-collapse-btn`);
+    assert.equal(btn.getAttribute('aria-expanded'), 'true', `${domId} must start aria-expanded="true"`);
+    assert.ok(btn.querySelector('.card-collapse-chevron'), `${domId} collapse button must contain chevron icon`);
+  }
+
+  // Switch back to Tab 1 for interactive header guard & collapse behavior checks
+  api.setActiveTab('current');
+
+  // 4. Clicking interactive controls inside .card-head (#btn-compact, scope .seg-btn) MUST NOT collapse card
+  const costCard = fakeDocument.getElementById('card-cost');
+  const costSegBtns = costCard.querySelectorAll('.card-head .seg-btn');
+  assert.equal(costSegBtns.length, 2, 'Cost card must have 2 scope .seg-btn controls');
+  const postsBeforeSeg = postedPrefs.length;
+  costSegBtns[1].click();
+  assert.equal(api.state.costScope, 'mainOnly', 'Clicking scope .seg-btn must switch costScope');
+  assert.equal(costCard.classList.contains('is-collapsed'), false, 'Clicking scope .seg-btn must NOT collapse cost card');
+  assert.equal(costCard.querySelector('.card-collapse-btn')?.getAttribute('aria-expanded'), 'true');
+  assert.equal(postedPrefs.length, postsBeforeSeg, 'Clicking scope .seg-btn must NOT send collapsedCards patchPrefs');
+
+  const contextCard = fakeDocument.getElementById('card-context');
+  const compactBtn = contextCard.querySelector('#btn-compact');
+  assert.ok(compactBtn, 'Context card must render #btn-compact inside .card-head');
+  const postsBeforeCompact = postedPrefs.length;
+  compactBtn.click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(clipboardWrites.includes('/compact'), true, 'Clicking #btn-compact must copy /compact');
+  assert.equal(contextCard.classList.contains('is-collapsed'), false, 'Clicking #btn-compact must NOT collapse context card');
+  assert.equal(contextCard.querySelector('.card-collapse-btn')?.getAttribute('aria-expanded'), 'true');
+  assert.equal(postedPrefs.length, postsBeforeCompact, 'Clicking #btn-compact must NOT send collapsedCards patchPrefs');
+
+  // 5. Clicking .card-head collapses #card-cost (hides .seg-toggle, shows .card-collapsed-summary, posts patchPrefs)
+  costCard.querySelector('.card-head').click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(costCard.classList.contains('is-collapsed'), true);
+  assert.equal(costCard.querySelector('.card-collapse-btn')?.getAttribute('aria-expanded'), 'false');
+  assert.equal(costCard.querySelector('.seg-toggle'), null, 'Collapsed cost card must hide expanded right controls');
+  assert.equal(
+    costCard.querySelector('.card-collapsed-summary')?.textContent,
+    'USD 0.4800',
+    'Collapsed cost card must show compact cost summary matching active mainOnly scope',
+  );
+  assert.deepEqual(postedPrefs[postedPrefs.length - 1], { collapsedCards: { cost: true } });
+
+  // Clicking .card-collapse-btn collapses #card-context & verifies .is-healthy / .is-warning / .is-critical summary tones
+  contextCard.querySelector('.card-collapse-btn').click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(contextCard.classList.contains('is-collapsed'), true);
+  assert.equal(contextCard.querySelector('.card-collapse-btn')?.getAttribute('aria-expanded'), 'false');
+  assert.equal(contextCard.querySelector('#btn-compact'), null, 'Collapsed context card must hide #btn-compact');
+  let ctxSummary = contextCard.querySelector('.card-collapsed-summary');
+  assert.ok(ctxSummary && ctxSummary.classList.contains('is-healthy'), 'HEALTHY collapsed context summary must have .is-healthy');
+  assert.match(ctxSummary.textContent, /%$/);
+
+  snapStateOpts = { ...snapStateOpts, rev: 2, contextLevel: 'WARNING' };
+  await api.pollSnapshot(true);
+  ctxSummary = contextCard.querySelector('.card-collapsed-summary');
+  assert.ok(ctxSummary && ctxSummary.classList.contains('is-warning'), 'WARNING collapsed context summary must have .is-warning');
+  assert.ok(ctxSummary.textContent.includes('84.0%'));
+
+  snapStateOpts = { ...snapStateOpts, rev: 3, contextLevel: 'CRITICAL' };
+  await api.pollSnapshot(true);
+  ctxSummary = contextCard.querySelector('.card-collapsed-summary');
+  assert.ok(ctxSummary && ctxSummary.classList.contains('is-critical'), 'CRITICAL collapsed context summary must have .is-critical');
+  assert.ok(ctxSummary.textContent.includes('93.8%'));
+
+  // 6. Collapsing pixel-office stops Pixel Office interval timer (0% CPU) and syncs pixelOfficeCollapsed: true
+  assert.ok(api.state.pixelOfficeTimer !== null && api.state.pixelOfficeIntervalMs > 0, 'Pixel Office timer must run when expanded');
+  const runningPixelTimerId = api.state.pixelOfficeTimer;
+  const pixelCard = fakeDocument.getElementById('card-pixel-office');
+  pixelCard.querySelector('.card-collapse-btn').click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(pixelCard.classList.contains('is-collapsed'), true);
+  assert.equal(pixelCard.querySelector('.card-collapse-btn')?.getAttribute('aria-expanded'), 'false');
+  assert.equal(api.state.pixelOfficeTimer, null, 'Collapsing pixel-office must stop interval timer');
+  assert.equal(api.state.pixelOfficeIntervalMs, 0, 'Collapsing pixel-office must set intervalMs to 0');
+  assert.equal(activeIntervals.has(runningPixelTimerId), false, 'Old Pixel Office interval must be cleared');
+  assert.equal(api.state.pixelOfficeCollapsed, true);
+  assert.ok(pixelCard.querySelector('.card-collapsed-summary')?.textContent.includes('1 主 + 1 子'));
+  assert.deepEqual(postedPrefs[postedPrefs.length - 1], {
+    collapsedCards: { 'pixel-office': true },
+    pixelOfficeCollapsed: true,
+  });
+
+  // 7. .collapsed-bar visibility (hidden when 0 visible collapsed incl. hidden side-questions / hidden global-roi)
+  //    + accurate count + tab-scoped .collapsed-expand-all-btn single patchPrefs call
+  // First expand all 3 currently collapsed Tab 1 cards so we start from 0 collapsed
+  const tab1Bar = fakeDocument.getElementById('current-collapsed-bar');
+  assert.equal(tab1Bar.classList.contains('hidden'), false, '#current-collapsed-bar must show when 3 cards collapsed');
+  assert.ok(tab1Bar.querySelector('.collapsed-bar-text')?.textContent.includes('3'));
+  const postsBeforeClearTab1 = postedPrefs.length;
+  tab1Bar.querySelector('.collapsed-expand-all-btn').click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(postedPrefs.length, postsBeforeClearTab1 + 1, 'Expand all must issue a single patchPrefs call');
+  assert.deepEqual(postedPrefs[postedPrefs.length - 1], {
+    collapsedCards: { 'pixel-office': false, cost: false, context: false },
+    pixelOfficeCollapsed: false,
+  });
+  assert.equal(tab1Bar.classList.contains('hidden'), true, '#current-collapsed-bar must hide when 0 visible cards collapsed');
+  assert.ok(api.state.pixelOfficeTimer !== null && api.state.pixelOfficeIntervalMs > 0, 'Expanding pixel-office via Expand All must restart timer');
+
+  // Edge case: hidden side-questions marked collapsed when sideQuestions.length === 0 must keep #current-collapsed-bar hidden
+  serverPrefs.collapsedCards = { 'side-questions': true };
+  snapStateOpts = { ...snapStateOpts, rev: 4, includeSideQuestions: false };
+  await api.pollSnapshot(true);
+  assert.equal(fakeDocument.getElementById('card-side-questions').classList.contains('hidden'), true);
+  assert.equal(api.state.collapsedCards['side-questions'], true);
+  assert.equal(
+    tab1Bar.classList.contains('hidden'),
+    true,
+    '#current-collapsed-bar must remain .hidden when only hidden side-questions is marked collapsed',
+  );
+
+  // Edge case: hidden global-roi marked collapsed when period.subscription === null must keep #global-collapsed-bar hidden
+  serverPrefs.collapsedCards = { 'global-roi': true };
+  snapStateOpts = { ...snapStateOpts, rev: 5, includeSideQuestions: true, includeSubscription: false };
+  api.setActiveTab('global');
+  await api.pollSnapshot(true);
+  assert.equal(globalContent.querySelector('#card-global-roi'), null);
+  assert.equal(
+    globalContent.querySelector('#global-collapsed-bar')?.classList.contains('hidden'),
+    true,
+    '#global-collapsed-bar must remain .hidden when only hidden global-roi is marked collapsed',
+  );
+
+  // Restore clean state with both sideQuestions and subscription present, collapse cards on BOTH tabs
+  serverPrefs.collapsedCards = {};
+  snapStateOpts = { ...snapStateOpts, rev: 6, includeSideQuestions: true, includeSubscription: true, contextLevel: 'HEALTHY' };
+  api.setActiveTab('current');
+  await api.pollSnapshot(true);
+  assert.equal(tab1Bar.classList.contains('hidden'), true);
+
+  // Collapse 2 cards on Tab 1: speed + pixel-office
+  fakeDocument.getElementById('card-speed').querySelector('.card-head').click();
+  await new Promise((r) => setImmediate(r));
+  fakeDocument.getElementById('card-pixel-office').querySelector('.card-collapse-btn').click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(tab1Bar.classList.contains('hidden'), false);
+  assert.ok(tab1Bar.querySelector('.collapsed-bar-text')?.textContent.includes('2'));
+
+  // Switch to Tab 2, collapse 2 cards: global-summary + global-models
+  api.setActiveTab('global');
+  globalContent.querySelector('#card-global-summary .card-head').click();
+  await new Promise((r) => setImmediate(r));
+  globalContent.querySelector('#card-global-models .card-collapse-btn').click();
+  await new Promise((r) => setImmediate(r));
+  const tab2Bar = globalContent.querySelector('#global-collapsed-bar');
+  assert.ok(tab2Bar && !tab2Bar.classList.contains('hidden'), '#global-collapsed-bar must show when 2 Tab 2 cards collapsed');
+  assert.ok(tab2Bar.querySelector('.collapsed-bar-text')?.textContent.includes('2'));
+
+  // Click Tab 2's Expand All -> expands Tab 2 cards in ONE patchPrefs call, leaves Tab 1 cards untouched!
+  const postsBeforeTab2ExpandAll = postedPrefs.length;
+  tab2Bar.querySelector('.collapsed-expand-all-btn').click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(postedPrefs.length, postsBeforeTab2ExpandAll + 1, 'Tab 2 Expand All must issue exactly 1 patchPrefs call');
+  assert.deepEqual(postedPrefs[postedPrefs.length - 1], {
+    collapsedCards: { 'global-summary': false, 'global-models': false },
+  });
+  assert.equal(globalContent.querySelector('#global-collapsed-bar')?.classList.contains('hidden'), true);
+  assert.equal(api.state.collapsedCards.speed, true, 'Tab 2 Expand All must NOT alter Tab 1 collapsed speed card');
+  assert.equal(api.state.collapsedCards['pixel-office'], true, 'Tab 2 Expand All must NOT alter Tab 1 collapsed pixel-office card');
+  assert.equal(api.state.pixelOfficeCollapsed, true);
+
+  // 8. global-recent header .seg-btn does NOT collapse card, and C2 filter input value survives collapse -> poll -> expand -> poll
+  const recentCard = globalContent.querySelector('#card-global-recent');
+  const recentSegBtns = recentCard.querySelectorAll('.card-head .seg-btn');
+  assert.equal(recentSegBtns.length, 2);
+  const postsBeforeRecentSeg = postedPrefs.length;
+  recentSegBtns[1].click();
+  assert.equal(api.state.convListMode, 'top');
+  assert.equal(recentCard.classList.contains('is-collapsed'), false, 'Tab 2 recent .seg-btn must NOT collapse card');
+  assert.equal(postedPrefs.length, postsBeforeRecentSeg);
+  recentSegBtns[0].click();
+
+  const searchInput = recentCard.querySelector('.list-search-input');
+  assert.ok(searchInput, 'C2 .list-search-input must exist inside #card-global-recent');
+  searchInput.value = 'gamma';
+  searchInput.dispatchEvent('input');
+  assert.equal(recentCard.querySelectorAll('.recent-item').length, 1, 'C2 filter "gamma" must match 1 session before collapse');
+
+  // Collapse global-recent -> hides filter bar & list wrap via .hidden, shows 1/3 accent summary
+  recentCard.querySelector('.card-collapse-btn').click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(recentCard.classList.contains('is-collapsed'), true);
+  assert.equal(recentCard.querySelector('.list-filter-bar')?.classList.contains('hidden'), true);
+  assert.equal(recentCard.querySelector('.recent-list-wrap')?.classList.contains('hidden'), true);
+  const recentSummary = recentCard.querySelector('.card-collapsed-summary');
+  assert.ok(recentSummary && recentSummary.textContent.includes('1/3'), 'Collapsed filtered global-recent must show 1/3 summary');
+  assert.equal(recentSummary.classList.contains('is-accent'), true);
+
+  // Poll while collapsed -> stays collapsed and keeps searchInput node + value intact
+  snapStateOpts = { ...snapStateOpts, rev: 7 };
+  await api.pollSnapshot(true);
+  assert.equal(recentCard.classList.contains('is-collapsed'), true);
+  assert.equal(recentCard.querySelector('.list-search-input'), searchInput);
+  assert.equal(searchInput.value, 'gamma');
+
+  // Expand global-recent -> filter bar & list wrap visible again, exact same input value & filtered 1 item preserved!
+  recentCard.querySelector('.card-collapse-btn').click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(recentCard.classList.contains('is-collapsed'), false);
+  assert.equal(recentCard.querySelector('.list-filter-bar')?.classList.contains('hidden'), false);
+  assert.equal(recentCard.querySelector('.recent-list-wrap')?.classList.contains('hidden'), false);
+  assert.equal(recentCard.querySelector('.list-search-input'), searchInput, 'Expanding global-recent must preserve .list-search-input DOM identity');
+  assert.equal(searchInput.value, 'gamma', 'Expanding global-recent must preserve typed C2 filter input value');
+  assert.equal(recentCard.querySelectorAll('.recent-item').length, 1, 'Expanded global-recent must keep filtered 1-item result');
+
+  // Poll after expanding -> C2 filter value still preserved
+  snapStateOpts = { ...snapStateOpts, rev: 8 };
+  await api.pollSnapshot(true);
+  assert.equal(recentCard.querySelector('.list-search-input'), searchInput);
+  assert.equal(searchInput.value, 'gamma');
+  assert.equal(recentCard.querySelectorAll('.recent-item').length, 1);
+
+  // Switch back to Tab 1 -> Tab 1's 2 collapsed cards are STILL collapsed, and Tab 1 Expand All restores them cleanly
+  api.setActiveTab('current');
+  assert.equal(tab1Bar.classList.contains('hidden'), false);
+  assert.ok(tab1Bar.querySelector('.collapsed-bar-text')?.textContent.includes('2'));
+  const postsBeforeTab1FinalExpand = postedPrefs.length;
+  tab1Bar.querySelector('.collapsed-expand-all-btn').click();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(postedPrefs.length, postsBeforeTab1FinalExpand + 1);
+  assert.deepEqual(postedPrefs[postedPrefs.length - 1], {
+    collapsedCards: { 'pixel-office': false, speed: false },
+    pixelOfficeCollapsed: false,
+  });
+  assert.equal(tab1Bar.classList.contains('hidden'), true);
+  assert.equal(fakeDocument.getElementById('card-speed').classList.contains('is-collapsed'), false);
+  assert.equal(fakeDocument.getElementById('card-pixel-office').classList.contains('is-collapsed'), false);
+  assert.ok(api.state.pixelOfficeTimer !== null && api.state.pixelOfficeIntervalMs > 0);
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-23 22:18:30
 // ============================================================================

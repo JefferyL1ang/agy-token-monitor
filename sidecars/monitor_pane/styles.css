@@ -1028,6 +1028,14 @@ Description: Lock Tab 1 card headers, conversation strip, hero value row, and su
 .hero-grid {
   display: grid;
   grid-template-columns: 1fr;
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-23 21:54:05
+Description: Align .hero-grid items to start so a collapsed KPI card stays compact beside an expanded sibling at >=520px.
+============================================================================ */
+  align-items: start;
+/* ============================================================================
+[MODIFIED END] 2026-11-23 21:54:05
+============================================================================ */
   gap: var(--sp-6);
 }
 
@@ -3590,6 +3598,16 @@ Description: Disable all 4 remaining infinite keyframe animations (status dot pu
 /* ============================================================================
 [MODIFIED END] 2026-11-20 15:35:27
 ============================================================================ */
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-23 21:54:05
+Description: Disable collapsible card chevron rotation transition under prefers-reduced-motion.
+============================================================================ */
+  .card-collapse-chevron {
+    transition: none !important;
+  }
+/* ============================================================================
+[MODIFIED END] 2026-11-23 21:54:05
+============================================================================ */
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-17 21:28:45
@@ -3623,14 +3641,13 @@ Description: Keep .pixel-office-card horizontal padding at <=12px (--sp-6) and r
   gap: var(--sp-3);
 }
 
-.pixel-office-card.is-collapsed {
-  padding-top: var(--sp-5);
-  padding-bottom: var(--sp-5);
-}
-
-.pixel-office-card.is-collapsed .card-head {
-  margin-bottom: 0;
-}
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-23 21:54:05
+Description: Remove duplicate .pixel-office-card.is-collapsed padding/margin rules; unified under v0.5.3 .card.is-collapsed.
+============================================================================ */
+/* ============================================================================
+[MODIFIED END] 2026-11-23 21:54:05
+============================================================================ */
 
 .pixel-office-head-right {
   display: inline-flex;
@@ -3968,10 +3985,13 @@ Description: Tighten .pixel-inspector-persona-row and badge ellipsis truncation 
     padding: var(--sp-6);
   }
 
-  .pixel-office-card.is-collapsed {
-    padding-top: var(--sp-4);
-    padding-bottom: var(--sp-4);
-  }
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-23 21:54:05
+Description: Remove Pixel-Office-only <=340px collapse padding override so all 13 cards share uniform v0.5.3 collapsed vertical padding.
+============================================================================ */
+/* ============================================================================
+[MODIFIED END] 2026-11-23 21:54:05
+============================================================================ */
 
   .pixel-office-count {
     font-size: var(--fs-xs);
@@ -3998,10 +4018,13 @@ Description: Cap .pixel-office-card horizontal padding at 12px (--sp-6) even at 
     padding: var(--sp-6);
   }
 
-  .pixel-office-card.is-collapsed {
-    padding-top: var(--sp-5);
-    padding-bottom: var(--sp-5);
-  }
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-23 21:54:05
+Description: Remove duplicate >=520px .pixel-office-card.is-collapsed padding override; unified under v0.5.3 .card.is-collapsed.
+============================================================================ */
+/* ============================================================================
+[MODIFIED END] 2026-11-23 21:54:05
+============================================================================ */
 }
 /* ============================================================================
 [MODIFIED END] 2026-11-20 10:36:55
@@ -4206,6 +4229,191 @@ Description: Remove opacity dimming on .data-table .cache-hit-col.is-none so no-
 ============================================================================ */
 /* ============================================================================
 [MODIFIED END] 2026-11-20 10:23:58
+============================================================================ */
+
+/* ============================================================================
+[MODIFIED BEGIN] 2026-11-23 21:54:05
+Description: Add v0.5.3 unified collapsible card styles (.card.is-collapsed, .card-head.is-collapsible, .card-head-right, .card-collapse-btn, .card-collapse-chevron, .card-collapsed-summary with semantic tones) and on-demand .collapsed-bar across Tab 1 & Tab 2.
+============================================================================ */
+/* ---------------- v0.5.3 Unified Collapsible Cards & Collapsed Bar ---------------- */
+.card.is-collapsed,
+.pixel-office-card.is-collapsed {
+  padding-top: var(--sp-5);
+  padding-bottom: var(--sp-5);
+}
+
+.card.is-collapsed > .card-head,
+.pixel-office-card.is-collapsed > .card-head,
+#card-side-questions.is-collapsed > .card-head {
+  margin-bottom: 0;
+  flex-wrap: nowrap;
+}
+
+.card.is-collapsed > .card-head .card-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-head.is-collapsible {
+  cursor: pointer;
+  user-select: none;
+  min-height: 24px;
+}
+
+.card-head.is-collapsible .card-title {
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.card-head.is-collapsible:hover .card-title {
+  color: var(--tm-fg);
+}
+
+.card-head-right {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  min-width: 0;
+  flex: 0 1 auto;
+  margin-left: auto;
+}
+
+.card-collapse-btn {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--tm-muted-fg);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.card-head.is-collapsible:hover .card-collapse-btn {
+  color: var(--tm-fg);
+}
+
+.card-collapse-btn:hover {
+  background: var(--tm-hover);
+  color: var(--tm-fg);
+}
+
+.card-collapse-btn:active {
+  transform: scale(0.95);
+}
+
+.card-collapse-btn:focus-visible {
+  outline: 2px solid var(--tm-ring);
+  outline-offset: 1px;
+}
+
+.card-collapse-chevron {
+  display: block;
+  transform: rotate(0deg);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.card.is-collapsed .card-collapse-chevron,
+.card-collapse-btn[aria-expanded="false"] .card-collapse-chevron {
+  transform: rotate(-90deg);
+}
+
+.card-collapsed-summary {
+  min-width: 0;
+  max-width: 190px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--tm-muted-fg);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-collapsed-summary.is-healthy {
+  color: var(--tm-success);
+}
+
+.card-collapsed-summary.is-warning {
+  color: var(--tm-warning);
+}
+
+.card-collapsed-summary.is-critical {
+  color: var(--tm-danger);
+}
+
+.card-collapsed-summary.is-accent {
+  color: var(--tm-accent);
+}
+
+.card-collapsed-summary.is-branch {
+  color: var(--tm-branch);
+}
+
+.collapsed-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-2) var(--sp-5);
+  border-radius: var(--r-md);
+  background: var(--tm-inset);
+  font-size: var(--fs-xs);
+  color: var(--tm-muted-fg);
+}
+
+.collapsed-bar-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.collapsed-expand-all-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  height: 20px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-pill);
+  border: 1px solid color-mix(in srgb, var(--tm-accent) 26%, transparent);
+  background: var(--tm-accent-soft);
+  color: var(--tm-accent);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.collapsed-expand-all-btn:hover {
+  background: color-mix(in srgb, var(--tm-accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--tm-accent) 44%, transparent);
+}
+
+.collapsed-expand-all-btn:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 360px) {
+  .card-collapsed-summary {
+    max-width: 120px;
+  }
+}
+/* ============================================================================
+[MODIFIED END] 2026-11-23 21:54:05
 ============================================================================ */
 
 /* ============================================================================

@@ -48,6 +48,15 @@ import { dirname, join, resolve } from 'node:path';
 // ============================================================================
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:53:10
+// Description: Import COLLAPSIBLE_CARD_IDS allowlist from parser.mjs for v0.5.3
+// per-card collapse persistence and validation.
+// ============================================================================
+  COLLAPSIBLE_CARD_IDS,
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:53:10
+// ============================================================================
   DEFAULT_PREFS,
   MODEL_PRICING_CATALOG,
   SUBSCRIPTION_CATALOG,
@@ -174,7 +183,14 @@ function readPluginVersion(rootDir) {
 // [MODIFIED BEGIN] 2026-11-23 10:31:22
 // Description: Bump fallback plugin version string to 0.5.2.
 // ============================================================================
-  return '0.5.2';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:53:10
+// Description: Bump fallback plugin version string to 0.5.3.
+// ============================================================================
+  return '0.5.3';
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:53:10
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 10:31:22
 // ============================================================================
@@ -237,6 +253,15 @@ const VALID_MODEL_SORT_KEY_SET = new Set(VALID_MODEL_SORT_KEYS);
 const VALID_MODEL_SORT_DIR_SET = new Set(VALID_MODEL_SORT_DIRS);
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:30:10
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:53:10
+// Description: Build COLLAPSIBLE_CARD_ID_SET allowlist for v0.5.3 collapsedCards
+// preference sanitization and /api/prefs validation.
+// ============================================================================
+const COLLAPSIBLE_CARD_ID_SET = new Set(COLLAPSIBLE_CARD_IDS);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:53:10
 // ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:26:00
@@ -465,6 +490,42 @@ function sanitizeModelOverrides(
 // ============================================================================
 
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:53:10
+// Description: Add isPlainObject and sanitizeCollapsedCards helpers keeping only
+// allowlisted card IDs with true values (deleting false entries for clean JSON).
+// ============================================================================
+function isPlainObject(val) {
+  if (!val || typeof val !== 'object' || Array.isArray(val)) return false;
+  const proto = Object.getPrototypeOf(val);
+  return proto === Object.prototype || proto === null;
+}
+
+function sanitizeCollapsedCards(rawMap, baseMap = {}) {
+  const next = {};
+  if (isPlainObject(baseMap)) {
+    for (const [cardId, collapsed] of Object.entries(baseMap)) {
+      if (COLLAPSIBLE_CARD_ID_SET.has(cardId) && collapsed === true) {
+        next[cardId] = true;
+      }
+    }
+  }
+  if (isPlainObject(rawMap)) {
+    for (const [cardId, collapsed] of Object.entries(rawMap)) {
+      if (!COLLAPSIBLE_CARD_ID_SET.has(cardId)) continue;
+      if (collapsed === true) {
+        next[cardId] = true;
+      } else if (collapsed === false) {
+        delete next[cardId];
+      }
+    }
+  }
+  return next;
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:53:10
+// ============================================================================
+
+// ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:14:00
 // Description: Validate tokenUnit and language prefs, auto-migrate v1
 // untouched 250k/1M defaults to 400k/500k (prefsSchemaVersion = 2), and persist
@@ -513,6 +574,14 @@ function sanitizeLoadedPrefs(rawPrefs) {
     pixelOfficeCollapsed: DEFAULT_PREFS.pixelOfficeCollapsed,
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:47:54
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:53:10
+// Description: Include collapsedCards default map in sanitizeLoadedPrefs.
+// ============================================================================
+    collapsedCards: {},
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:53:10
 // ============================================================================
     modelOverrides: {},
   };
@@ -598,9 +667,26 @@ function sanitizeLoadedPrefs(rawPrefs) {
 // [MODIFIED BEGIN] 2026-11-19 11:47:54
 // Description: Restore persisted pixelOfficeCollapsed boolean in sanitizeLoadedPrefs.
 // ============================================================================
-  if (typeof rawPrefs.pixelOfficeCollapsed === 'boolean') {
-    merged.pixelOfficeCollapsed = rawPrefs.pixelOfficeCollapsed;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:53:10
+// Description: Restore allowlisted true entries in collapsedCards, migrate legacy
+// pixelOfficeCollapsed === true when collapsedCards omits pixel-office, and keep
+// pixelOfficeCollapsed synced with collapsedCards['pixel-office'] (v0.5.3).
+// ============================================================================
+  const rawCollapsed = isPlainObject(rawPrefs.collapsedCards) ? rawPrefs.collapsedCards : null;
+  merged.collapsedCards = sanitizeCollapsedCards(rawCollapsed, {});
+  const hasExplicitPixelOffice = Boolean(
+    rawCollapsed &&
+      Object.prototype.hasOwnProperty.call(rawCollapsed, 'pixel-office') &&
+      typeof rawCollapsed['pixel-office'] === 'boolean',
+  );
+  if (!hasExplicitPixelOffice && rawPrefs.pixelOfficeCollapsed === true) {
+    merged.collapsedCards['pixel-office'] = true;
   }
+  merged.pixelOfficeCollapsed = Boolean(merged.collapsedCards['pixel-office']);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:53:10
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:47:54
 // ============================================================================
@@ -774,6 +860,19 @@ function validateAndMergePrefs(currentPrefs, input) {
   }
   const next = {
     ...currentPrefs,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:53:10
+// Description: Clone and sanitize currentPrefs.collapsedCards on prefs merge (v0.5.3).
+// ============================================================================
+    collapsedCards: sanitizeCollapsedCards(
+      currentPrefs?.collapsedCards,
+      currentPrefs?.collapsedCards === undefined && currentPrefs?.pixelOfficeCollapsed === true
+        ? { 'pixel-office': true }
+        : {},
+    ),
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:53:10
+// ============================================================================
     modelOverrides: { ...(currentPrefs.modelOverrides || {}) },
   };
 
@@ -910,12 +1009,42 @@ function validateAndMergePrefs(currentPrefs, input) {
 // [MODIFIED BEGIN] 2026-11-19 11:47:54
 // Description: Validate optional pixelOfficeCollapsed boolean preference in /api/prefs.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 21:53:10
+// Description: Validate & merge optional collapsedCards plain boolean map with
+// allowlist filtering and bidirectional sync with pixelOfficeCollapsed (v0.5.3).
+// ============================================================================
   if (input.pixelOfficeCollapsed !== undefined) {
     if (typeof input.pixelOfficeCollapsed !== 'boolean') {
       return { error: 'pixelOfficeCollapsed must be a boolean.' };
     }
-    next.pixelOfficeCollapsed = input.pixelOfficeCollapsed;
   }
+  if (input.collapsedCards !== undefined) {
+    if (!isPlainObject(input.collapsedCards)) {
+      return { error: 'collapsedCards must be a plain object.' };
+    }
+    for (const [cardId, collapsedVal] of Object.entries(input.collapsedCards)) {
+      if (typeof collapsedVal !== 'boolean') {
+        return { error: `collapsedCards.${cardId} must be a boolean.` };
+      }
+    }
+    next.collapsedCards = sanitizeCollapsedCards(input.collapsedCards, next.collapsedCards);
+  }
+  if (
+    input.pixelOfficeCollapsed !== undefined &&
+    (!input.collapsedCards ||
+      !Object.prototype.hasOwnProperty.call(input.collapsedCards, 'pixel-office'))
+  ) {
+    if (input.pixelOfficeCollapsed) {
+      next.collapsedCards['pixel-office'] = true;
+    } else {
+      delete next.collapsedCards['pixel-office'];
+    }
+  }
+  next.pixelOfficeCollapsed = Boolean(next.collapsedCards['pixel-office']);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 21:53:10
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:47:54
 // ============================================================================

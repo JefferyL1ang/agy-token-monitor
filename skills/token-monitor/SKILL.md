@@ -10,7 +10,10 @@ description: >-
   fork-deduplicated incremental cost/tokens, one-click open in Antigravity, and in-panel inspection (`Back to Main Chat`),
   per-model cache hit rate (`Hit %` / `命中率`) across both Tab 1 & Tab 2 model distribution tables, per-project
   usage breakdown (`By Project` / `按项目分布` with Top-8 fold) and live in-memory session search/filter on Tab 2,
-  unified v0.5.2 visual design, cache-pricing accuracy & performance polish (consistent type/spacing/color tokens with WCAG AA light-mode
+  unified v0.5.3 collapsible cards across all 13 cards in Tab 1 & Tab 2 (compact collapsed header summary with key
+  metric and alert tone, clickable header + rotating chevron icon, persistent `collapsedCards` state with automatic
+  Pixel Office migration, on-demand Expand All bar, and zero idle overhead), visual design, cache-pricing accuracy &
+  performance polish (consistent type/spacing/color tokens with WCAG AA light-mode
   contrast, single-color SVG icons, calmer status colors, borderless inset panels, per-model color dots, faster
   big-Swarm refresh, lower idle CPU/disk usage, and keyboard accessibility), Top-5
   recent-active subagent/swarm folding and aggregation, daily official Google Markdoc model/pricing/FX auto-sync
@@ -26,11 +29,13 @@ description: >-
   check or install plugin updates, compare token cost vs subscription price, or open the Token Monitor panel.
 ---
 
-# Token Monitor (v0.5.2 Beta)
+# Token Monitor (v0.5.3 Beta)
 
 The `agy-token-monitor` plugin provides a real-time, pure read-only Auxiliary Pane (`Token Monitor`) backed by the `monitor_pane` sidecar.
 
 ## What Token Monitor Tracks
+
+- **Collapsible Cards Across All 13 Panels (v0.5.3)**: Every card across Tab 1 (`Current`) and Tab 2 (`Analytics`) supports independent collapse/expand via a clickable header and rotating chevron button, displaying a compact single-row metric and semantic alert summary when collapsed, persisting state in `collapsedCards` (with automatic migration and two-way sync for `pixelOfficeCollapsed`), surfacing an on-demand **Expand all** bar only when visible cards on the active tab are collapsed, and skipping body DOM updates / Pixel Office rendering for zero idle overhead while preserving Tab 2 filter inputs.
 
 - **Unified Visual Design, Performance & Project Insights (v0.5.1)**: Uses a consistent type, spacing, and WCAG AA light/dark color token system with calmer status semantics (neutral grey for idle, accent for live activity, amber reserved for warnings), single-color inline SVG icons replacing emoji, borderless inset surfaces, dimmed cost hero decimals, and per-model color dots matching the Pixel Office palette. Includes fast big-Swarm refresh, hidden-tab poll pausing, on-demand idle timers, Windows-safe atomic saves, full keyboard accessibility, a per-period **By Project (`按项目分布`)** 5-column breakdown card (Top-8 folding) in Tab 2, and a persistent in-memory search/model/active-only filter bar for the Tab 2 session list.
 
