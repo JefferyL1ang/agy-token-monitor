@@ -52,7 +52,15 @@ const DEFAULT_FX_FALLBACK_URL = 'https://open.er-api.com/v6/latest/USD';
 // ============================================================================
 const FETCH_TIMEOUT_MS = 8000;
 const RETRY_COOLDOWN_MS = 15 * 60 * 1000;
-const CACHE_SCHEMA_VERSION = 2;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:15:54
+// Description: Bump CACHE_SCHEMA_VERSION to 3 for non-destructive v1/v2 -> v3
+// cache healing of poisoned Claude/GPT-OSS cache rates and reseller Gemini 3.1 Pro.
+// ============================================================================
+const CACHE_SCHEMA_VERSION = 3;
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:15:54
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 14:20:16
 // ============================================================================
@@ -173,6 +181,110 @@ function cleanUpstreamSlug(rawId) {
     .toLowerCase();
 }
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:15:54
+// Description: Add family default cache-discount factor helper and official
+// provider classifier so missing cachedPer1M never charges 1.0x for Claude or
+// GPT-OSS and first-party providers outrank resellers.
+// ============================================================================
+function getDefaultCacheFactor(modelId, isGemini = false) {
+  const id = String(modelId || '').trim();
+  if (isGemini || /^gemini\b/i.test(id)) {
+    return /^gemini[\s_-]*4\b/i.test(id) ? 0.05 : 0.1;
+  }
+  if (/^claude\b/i.test(id)) {
+    return /^claude[\s_-]*(?:opus|sonnet)[\s_-]*5[\s._-]*5\b/i.test(id) ? 0.05 : 0.1;
+  }
+  if (/^gpt[\s_-]*oss/i.test(id)) {
+    return 0.5;
+  }
+  return null;
+}
+
+function isOfficialProviderForModel(provider, modelId) {
+  const prov = String(provider || '').trim().toLowerCase();
+  const id = String(modelId || '').trim().toLowerCase();
+  if (!prov) return false;
+  if (/^gemini\b/i.test(id)) {
+    return (
+      prov === 'gemini' ||
+      prov === 'google' ||
+      prov === 'google-ai-studio' ||
+      prov === 'google-vertex' ||
+      /^vertex_ai(?:$|[-_])/i.test(prov)
+    );
+  }
+  if (/^claude\b/i.test(id)) {
+    return (
+      prov === 'anthropic' ||
+      prov === 'google-vertex' ||
+      prov === 'google-vertex-anthropic' ||
+      /^vertex_ai(?:$|[-_])/i.test(prov)
+    );
+  }
+  if (/^gpt\b|^o[134](?:-|$)/i.test(id)) {
+    return prov === 'openai';
+  }
+  return false;
+}
+
+function scoreLiteLlmProvider(rawKey, prov, slug) {
+  const p = String(prov || '').trim().toLowerCase();
+  const k = String(rawKey || '').trim().toLowerCase();
+  const isGeminiSlug = /^gemini\b/i.test(slug);
+  const isClaudeSlug = /^claude\b/i.test(slug);
+  const isOpenAiOrOssSlug = /^gpt\b|^o[134](?:-|$)/i.test(slug);
+
+  if (
+    (isGeminiSlug && (p === 'gemini' || p === 'google' || p === 'google-ai-studio')) ||
+    (isClaudeSlug && p === 'anthropic') ||
+    (isOpenAiOrOssSlug && p === 'openai') ||
+    (!p && /^(?:gemini|anthropic|openai)\//i.test(k))
+  ) {
+    return 100;
+  }
+  if (
+    /^vertex_ai(?:$|[-_])/i.test(p) ||
+    p === 'google-vertex' ||
+    p === 'google-vertex-anthropic' ||
+    (!p && /^vertex_ai\//i.test(k))
+  ) {
+    return 85;
+  }
+  if (!p && !k.includes('/')) {
+    return 70;
+  }
+  if (
+    p === 'azure' ||
+    p === 'azure_ai' ||
+    p === 'bedrock' ||
+    p === 'bedrock_converse' ||
+    p === 'bedrock_mantle' ||
+    (!p && /^(?:azure|azure_ai|bedrock)\//i.test(k))
+  ) {
+    return 55;
+  }
+  if (p === 'groq' || (!p && /^groq\//i.test(k))) {
+    return 35;
+  }
+  if (p === 'openrouter' || (!p && /^openrouter\//i.test(k))) {
+    return 25;
+  }
+  if (
+    p === 'together_ai' ||
+    p === 'togetherai' ||
+    p === 'fireworks_ai' ||
+    p === 'cerebras' ||
+    (!p && /^(?:together_ai|togetherai|fireworks_ai|cerebras)\//i.test(k))
+  ) {
+    return 20;
+  }
+  return 10;
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:15:54
+// ============================================================================
+
 function validateAndNormalizeRates({
   inputPer1M,
   cachedPer1M,
@@ -195,13 +307,22 @@ function validateAndNormalizeRates({
 // Description: Default missing Gemini 4 cachedPer1M to 5% (95% cache discount)
 // and stop forcing longContextTier=true on Gemini models without >200k pricing.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:15:54
+// Description: Apply family cache discount fallback for Gemini (4: 5%, other: 10%),
+// Claude (Opus/Sonnet 5.5: 5%, other Claude: 10%), and GPT-OSS (50%) when
+// cachedPer1M is missing instead of silently charging 1.0x input rate.
+// ============================================================================
   let cached;
   if (cachedPer1M === undefined || cachedPer1M === null || cachedPer1M === '') {
-    const geminiCacheFactor = /^gemini[\s_-]*4\b/i.test(modelId) ? 0.05 : 0.1;
-    cached = isGemini ? Number((inp * geminiCacheFactor).toFixed(4)) : inp;
+    const defaultCacheFactor = getDefaultCacheFactor(modelId, isGemini);
+    cached = defaultCacheFactor !== null ? roundPrice(inp * defaultCacheFactor) : inp;
   } else {
     cached = roundPrice(cachedPer1M);
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:15:54
+// ============================================================================
   if (!Number.isFinite(cached) || cached < 0 || cached > inp) return null;
 
   const hasLongInput = Number.isFinite(Number(longInputPer1M)) && Number(longInputPer1M) > inp;
@@ -277,7 +398,22 @@ export function isChatModelCandidate(modelId, meta = null) {
 
 function mapBaseProfileMatches(upstreamPool, gptOssBest) {
   const profileRates = {};
-  const assignIfPresent = (profileId, slugCandidates) => {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:15:54
+// Description: Prefer official first-party provider candidates across multi-slug
+// aliases (such as gemini-3.1-pro vs official gemini-3.1-pro-preview) so third-party
+// resellers like deepinfra never hijack base Gemini profiles.
+// ============================================================================
+  const assignIfPresent = (profileId, slugCandidates, { preferOfficial = false } = {}) => {
+    if (preferOfficial) {
+      for (const slug of slugCandidates) {
+        const cand = upstreamPool[slug];
+        if (cand && isOfficialProviderForModel(cand.provider, profileId)) {
+          profileRates[profileId] = { ...cand };
+          return;
+        }
+      }
+    }
     for (const slug of slugCandidates) {
       if (upstreamPool[slug]) {
         profileRates[profileId] = { ...upstreamPool[slug] };
@@ -285,6 +421,9 @@ function mapBaseProfileMatches(upstreamPool, gptOssBest) {
       }
     }
   };
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:15:54
+// ============================================================================
 
   assignIfPresent('gemini-4-argon', ['gemini-4-argon']);
 // ============================================================================
@@ -295,14 +434,23 @@ function mapBaseProfileMatches(upstreamPool, gptOssBest) {
 // ============================================================================
 // [MODIFIED END] 2026-11-19 11:47:54
 // ============================================================================
-  assignIfPresent('gemini-3.1-pro', [
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:15:54
+// Description: Prefer official Google/Vertex alias for gemini-3.1-pro and gemini-3-8-flash.
+// ============================================================================
+  assignIfPresent(
     'gemini-3.1-pro',
-    'gemini-3.1-pro-preview',
-    'gemini-3.1-pro-preview-customtools',
-  ]);
+    ['gemini-3.1-pro', 'gemini-3.1-pro-preview', 'gemini-3.1-pro-preview-customtools'],
+    { preferOfficial: true },
+  );
   assignIfPresent('gemini-4-carbon', ['gemini-4-carbon']);
   assignIfPresent('gemini-4-hydrogen', ['gemini-4-hydrogen']);
-  assignIfPresent('gemini-3-8-flash', ['gemini-3.8-flash', 'gemini-3-8-flash']);
+  assignIfPresent('gemini-3-8-flash', ['gemini-3.8-flash', 'gemini-3-8-flash'], {
+    preferOfficial: true,
+  });
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:15:54
+// ============================================================================
   assignIfPresent('claude-opus-5-5', ['claude-opus-5-5', 'claude-opus-5', 'claude-opus-4-6']);
   assignIfPresent('claude-sonnet-5-5', ['claude-sonnet-5-5', 'claude-sonnet-5', 'claude-sonnet-4-6']);
 
@@ -410,12 +558,25 @@ export function parseModelsDevCatalog(json) {
       }
 
       if (slug === 'gpt-oss-120b') {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:15:54
+// Description: Prefer GPT-OSS 120B providers with genuine cache_read discount
+// (< input) and rank Groq above OpenRouter when OpenRouter has 0% cache discount.
+// ============================================================================
         const hasCache = cost.cache_read !== undefined && cost.cache_read !== null;
-        let score = hasCache ? 10 : 1;
+        const hasCacheDiscount =
+          hasCache &&
+          Number.isFinite(Number(cost.cache_read)) &&
+          Number(cost.cache_read) < normalized.inputPer1M;
+        let score = hasCacheDiscount ? 15 : hasCache ? 5 : 1;
         if (provId === 'openai') score += 100;
-        else if (provId === 'openrouter' || provId === 'groq') score += 50;
+        else if (provId === 'groq') score += 55;
+        else if (provId === 'openrouter') score += 45;
         else if (provId === 'togetherai') score += 30;
         else if (provId === 'google-vertex') score += 10;
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:15:54
+// ============================================================================
         if (score > gptOssScore) {
           gptOssScore = score;
           gptOssBest = entry;
@@ -476,20 +637,62 @@ export function parseLiteLlmCatalog(json) {
     if (!Number.isFinite(rawIn) || !Number.isFinite(rawOut)) continue;
 
     const isGemini = slug.startsWith('gemini');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:15:54
+// Description: Read real LiteLLM cache_read_input_token_cost (with fallback to
+// legacy cache_read_input_cost_per_token) plus above_200k cache cost, and rank
+// first-party official providers strictly above third-party resellers.
+// ============================================================================
+    const rawCacheTokenCost =
+      meta.cache_read_input_token_cost !== undefined && meta.cache_read_input_token_cost !== null
+        ? meta.cache_read_input_token_cost
+        : meta.cache_read_input_cost_per_token !== undefined &&
+            meta.cache_read_input_cost_per_token !== null
+          ? meta.cache_read_input_cost_per_token
+          : undefined;
+    const rawCacheNum = Number(rawCacheTokenCost);
     const rawCache =
-      meta.cache_read_input_cost_per_token !== undefined &&
-      meta.cache_read_input_cost_per_token !== null
-        ? Number(meta.cache_read_input_cost_per_token) * 1e6
+      rawCacheTokenCost !== undefined &&
+      rawCacheTokenCost !== '' &&
+      Number.isFinite(rawCacheNum)
+        ? rawCacheNum * 1e6
         : undefined;
+    const rawLongIn = Number(meta.input_cost_per_token_above_200k_tokens);
     const longIn =
       meta.input_cost_per_token_above_200k_tokens !== undefined &&
-      meta.input_cost_per_token_above_200k_tokens !== null
-        ? Number(meta.input_cost_per_token_above_200k_tokens) * 1e6
+      meta.input_cost_per_token_above_200k_tokens !== null &&
+      meta.input_cost_per_token_above_200k_tokens !== '' &&
+      Number.isFinite(rawLongIn)
+        ? rawLongIn * 1e6
         : undefined;
+    const rawLongOut = Number(meta.output_cost_per_token_above_200k_tokens);
     const longOut =
       meta.output_cost_per_token_above_200k_tokens !== undefined &&
-      meta.output_cost_per_token_above_200k_tokens !== null
-        ? Number(meta.output_cost_per_token_above_200k_tokens) * 1e6
+      meta.output_cost_per_token_above_200k_tokens !== null &&
+      meta.output_cost_per_token_above_200k_tokens !== '' &&
+      Number.isFinite(rawLongOut)
+        ? rawLongOut * 1e6
+        : undefined;
+    const rawLongCache = Number(meta.cache_read_input_token_cost_above_200k_tokens);
+    const longCache =
+      meta.cache_read_input_token_cost_above_200k_tokens !== undefined &&
+      meta.cache_read_input_token_cost_above_200k_tokens !== null &&
+      meta.cache_read_input_token_cost_above_200k_tokens !== '' &&
+      Number.isFinite(rawLongCache)
+        ? rawLongCache * 1e6
+        : undefined;
+
+    const hasLongContext =
+      (Number.isFinite(longIn) && longIn > rawIn * 1e6) ||
+      (Number.isFinite(longOut) && longOut > rawOut * 1e6) ||
+      (Number.isFinite(longCache) && Number.isFinite(rawCache) && longCache > rawCache);
+    const derivedLongInMult =
+      !Number.isFinite(longIn) &&
+      Number.isFinite(longCache) &&
+      Number.isFinite(rawCache) &&
+      rawCache > 0 &&
+      longCache > rawCache
+        ? Number((longCache / rawCache).toFixed(4))
         : undefined;
 
     const normalized = validateAndNormalizeRates({
@@ -498,17 +701,19 @@ export function parseLiteLlmCatalog(json) {
       outputPer1M: rawOut * 1e6,
       longInputPer1M: longIn,
       longOutputPer1M: longOut,
-      longContextTier: Number.isFinite(longIn) || Number.isFinite(longOut),
+      longContextTier: hasLongContext,
+      longInputMultiplier: derivedLongInMult,
       isGemini,
       modelId: slug,
     });
     if (!normalized) continue;
 
-    let priority = 10;
-    if (/^(?:gemini|anthropic|openai)\//i.test(rawKey) || !rawKey.includes('/')) priority = 80;
-    else if (/^vertex_ai\//i.test(rawKey)) priority = 50;
-    else if (/^(?:openrouter|groq)\//i.test(rawKey)) priority = 40;
-    if (rawCache !== undefined) priority += 5;
+    const hasCache = rawCache !== undefined;
+    const hasCacheDiscount = hasCache && rawCache < normalized.inputPer1M;
+    let priority = scoreLiteLlmProvider(rawKey, prov, slug);
+    if (hasCacheDiscount) priority += 8;
+    else if (hasCache) priority += 2;
+    if (hasLongContext) priority += 6;
 
     const entry = {
       id: slug,
@@ -519,13 +724,20 @@ export function parseLiteLlmCatalog(json) {
       source: 'litellm',
     };
 
+    const isOfficialGoogle =
+      isOfficialProviderForModel(prov, 'gemini') ||
+      (!prov && /^(?:gemini|vertex_ai)\//i.test(rawKey));
+
     if ((entryPriority.get(slug) || -1) < priority) {
       entryPriority.set(slug, priority);
       upstreamPool[slug] = entry;
-      if (isGoogle && /^gemini-/i.test(slug)) {
+      if (isOfficialGoogle && /^gemini-/i.test(slug)) {
         googleCandidateMap.set(slug, entry);
       }
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:15:54
+// ============================================================================
 
     if (slug === 'gpt-oss-120b' && priority > gptOssScore) {
       gptOssScore = priority;
@@ -1564,32 +1776,92 @@ function loadPricingCache(cachePath) {
 // Description: Accept schemaVersion 1 -> 2 non-destructive migration, preserving
 // upstreamPool/discoveredModels/FX while stripping legacy Gemini 4 >200k flags.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:15:54
+// Description: Upgrade loadPricingCache() to accept schemaVersion 1/2/3, preserve
+// v1->v2 Gemini 4 longContextTier stripping, heal poisoned Claude/GPT-OSS cachedPer1M,
+// drop third-party LiteLLM reseller gemini-3.1-pro entries, and reset sync dates on migration.
+// ============================================================================
     if (
       !raw ||
       typeof raw !== 'object' ||
-      (raw.schemaVersion !== CACHE_SCHEMA_VERSION && raw.schemaVersion !== 1)
+      (raw.schemaVersion !== CACHE_SCHEMA_VERSION &&
+        raw.schemaVersion !== 2 &&
+        raw.schemaVersion !== 1)
     ) {
       return fallback;
     }
     const isV1Migration = raw.schemaVersion === 1;
+    const needsMigration = raw.schemaVersion < CACHE_SCHEMA_VERSION;
     const gemini4KeyRe = /^gemini[\s_-]*4\b/i;
-    const sanitizeGemini4CacheEntry = (key, item) => {
-      if (
-        !isV1Migration ||
-        !item ||
-        typeof item !== 'object' ||
-        Array.isArray(item) ||
-        (!gemini4KeyRe.test(key) && !gemini4KeyRe.test(String(item.id || '')))
-      ) {
-        return item;
+    const gemini31ProKeyRe = /^gemini[\s_-]*3\.?1[\s_-]*pro(?:$|[-_\s])/i;
+    const claudeOrGptOssKeyRe = /^claude\b|^gpt[\s_-]*oss/i;
+    const sanitizeMigratedCacheEntry = (key, item) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        return { drop: false, value: item };
       }
-      return {
-        ...item,
-        longContextTier: false,
-        longInputMultiplier: 1,
-        longOutputMultiplier: 1,
-      };
+      let next = item;
+      const keyStr = String(key || '').trim();
+      const itemId = typeof next.id === 'string' && next.id.trim() ? next.id.trim() : '';
+
+      if (isV1Migration && (gemini4KeyRe.test(keyStr) || gemini4KeyRe.test(itemId))) {
+        next = {
+          ...next,
+          longContextTier: false,
+          longInputMultiplier: 1,
+          longOutputMultiplier: 1,
+        };
+      }
+
+      if (needsMigration) {
+        const source = String(next.source || '').trim().toLowerCase();
+        const provider = String(next.provider || '').trim().toLowerCase();
+
+        if (
+          (gemini31ProKeyRe.test(keyStr) || gemini31ProKeyRe.test(itemId)) &&
+          source === 'litellm' &&
+          !/^(?:gemini|google|vertex)/i.test(provider) &&
+          next.longContextTier === false
+        ) {
+          return { drop: true, value: null };
+        }
+
+        if (claudeOrGptOssKeyRe.test(itemId) || claudeOrGptOssKeyRe.test(keyStr)) {
+          const inp = Number(next.inputPer1M);
+          const rawCached = next.cachedPer1M;
+          const cachedNum =
+            rawCached === undefined || rawCached === null || rawCached === ''
+              ? NaN
+              : Number(rawCached);
+          if (
+            Number.isFinite(inp) &&
+            inp > 0 &&
+            (!Number.isFinite(cachedNum) || cachedNum < 0 || cachedNum >= inp)
+          ) {
+            if (
+              (/^gpt[\s_-]*oss/i.test(itemId) || /^gpt[\s_-]*oss/i.test(keyStr)) &&
+              provider === 'openrouter' &&
+              source === 'models.dev'
+            ) {
+              return { drop: true, value: null };
+            }
+            const factor =
+              getDefaultCacheFactor(itemId, false) ?? getDefaultCacheFactor(keyStr, false);
+            if (factor !== null) {
+              next = {
+                ...next,
+                cachedPer1M: roundPrice(inp * factor),
+              };
+            }
+          }
+        }
+      }
+
+      return { drop: false, value: next };
     };
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:15:54
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 14:20:16
 // ============================================================================
@@ -1615,7 +1887,17 @@ function loadPricingCache(cachePath) {
 // [MODIFIED BEGIN] 2026-11-19 14:20:16
 // Description: Strip legacy >200k flags on Gemini 4 upstreamPool entries during v1->v2 migration.
 // ============================================================================
-        upstreamPool[key] = sanitizeGemini4CacheEntry(key, normalized);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:15:54
+// Description: Apply v1/v2 -> v3 cache sanitization/dropping to upstreamPool entries.
+// ============================================================================
+        const sanitized = sanitizeMigratedCacheEntry(key, normalized);
+        if (!sanitized.drop) {
+          upstreamPool[key] = sanitized.value;
+        }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:15:54
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 14:20:16
 // ============================================================================
@@ -1631,14 +1913,24 @@ function loadPricingCache(cachePath) {
 // Description: Strip legacy >200k flags on Gemini 4 syncedRates entries and
 // reset pricing sync dates on v1->v2 migration to trigger a fresh sync.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:15:54
+// Description: Apply v1/v2 -> v3 cache sanitization/dropping to syncedRates entries.
+// ============================================================================
     const rawSyncedRates =
       raw.syncedRates && typeof raw.syncedRates === 'object' && !Array.isArray(raw.syncedRates)
         ? raw.syncedRates
         : {};
     const syncedRates = {};
     for (const [key, item] of Object.entries(rawSyncedRates)) {
-      syncedRates[key] = sanitizeGemini4CacheEntry(key, item);
+      const sanitized = sanitizeMigratedCacheEntry(key, item);
+      if (!sanitized.drop) {
+        syncedRates[key] = sanitized.value;
+      }
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:15:54
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 14:20:16
 // ============================================================================
@@ -1649,17 +1941,25 @@ function loadPricingCache(cachePath) {
 // Description: Reset lastSyncLocalDate and lastAttemptAtMs on v1->v2 migration
 // while preserving FX dates and migrated syncedRates.
 // ============================================================================
-      lastSyncLocalDate: isV1Migration
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:15:54
+// Description: Reset lastSyncLocalDate and lastAttemptAtMs whenever migrating
+// from schemaVersion < CACHE_SCHEMA_VERSION (v1 or v2 -> v3).
+// ============================================================================
+      lastSyncLocalDate: needsMigration
         ? ''
         : typeof raw.lastSyncLocalDate === 'string'
           ? raw.lastSyncLocalDate
           : '',
       lastSyncAtMs: Number.isFinite(Number(raw.lastSyncAtMs)) ? Number(raw.lastSyncAtMs) : null,
-      lastAttemptAtMs: isV1Migration
+      lastAttemptAtMs: needsMigration
         ? null
         : Number.isFinite(Number(raw.lastAttemptAtMs))
           ? Number(raw.lastAttemptAtMs)
           : null,
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:15:54
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 14:20:16
 // ============================================================================

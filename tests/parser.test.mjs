@@ -6146,11 +6146,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Bump current manifest version assertion from 0.5.0 to 0.5.1.
 // ============================================================================
-  // Manifests bumped to 0.5.1 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Bump current manifest version assertion from 0.5.1 to 0.5.2.
+// ============================================================================
+  // Manifests bumped to 0.5.2 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.5.1');
-  assert.equal(packageJson.version, '0.5.1');
+  assert.equal(pluginJson.version, '0.5.2');
+  assert.equal(packageJson.version, '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -6432,18 +6439,25 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.5.0 to 0.5.1.
 // ============================================================================
-  // Version & docs consistency for current v0.5.1 release
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.5.1 to 0.5.2.
+// ============================================================================
+  // Version & docs consistency for current v0.5.2 release
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.5.1');
-  assert.equal(packageJson.version, '0.5.1');
-  assert.equal(pluginJson.description.includes('v0.5.1 beta'), true);
-  assert.equal(packageJson.description.includes('v0.5.1 beta'), true);
-  assert.equal(mainSource.includes("return '0.5.1'"), true);
-  assert.equal(releaseUpdaterSource.includes(": '0.5.1'"), true);
-  assert.equal(appSource.includes("'0.5.1'"), true);
-  assert.equal(skillMd.includes('# Token Monitor (v0.5.1 Beta)'), true);
-  assert.equal(readmeMd.includes('agy-token-monitor-v0.5.1.zip'), true);
+  assert.equal(pluginJson.version, '0.5.2');
+  assert.equal(packageJson.version, '0.5.2');
+  assert.equal(pluginJson.description.includes('v0.5.2 beta'), true);
+  assert.equal(packageJson.description.includes('v0.5.2 beta'), true);
+  assert.equal(mainSource.includes("return '0.5.2'"), true);
+  assert.equal(releaseUpdaterSource.includes(": '0.5.2'"), true);
+  assert.equal(appSource.includes("'0.5.2'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.5.2 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.5.2.zip'), true);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -7495,7 +7509,14 @@ test('v0.2.8 createSystemProxyManager lifecycle, TTL cache, restore-before-set o
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Update standalone /api/snapshot appVersion assertion to 0.5.1.
 // ============================================================================
-    assert.equal(snap.appVersion, '0.5.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Update standalone /api/snapshot appVersion assertion from 0.5.1 to 0.5.2.
+// ============================================================================
+    assert.equal(snap.appVersion, '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -8098,8 +8119,15 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Bump current manifest version assertions in v0.2.8 hygiene test to 0.5.1.
 // ============================================================================
-  assert.equal(pluginJson.version, '0.5.1');
-  assert.equal(packageJson.version, '0.5.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Bump current manifest version assertions in v0.2.8 hygiene test from 0.5.1 to 0.5.2.
+// ============================================================================
+  assert.equal(pluginJson.version, '0.5.2');
+  assert.equal(packageJson.version, '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -8365,7 +8393,14 @@ test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showTo
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test to 0.5.1.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test from 0.5.1 to 0.5.2.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -9901,7 +9936,14 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Bump createReleaseUpdater default currentVersion assertion to 0.5.1.
 // ============================================================================
-  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.5.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Bump createReleaseUpdater default currentVersion assertion from 0.5.1 to 0.5.2.
+// ============================================================================
+  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -11496,7 +11538,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Bump standalone /api/snapshot appVersion assertion to 0.5.1.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.5.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Bump standalone /api/snapshot appVersion assertion from 0.5.1 to 0.5.2.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -11554,7 +11603,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Bump standalone /api/check-update appVersion assertion to 0.5.1.
 // ============================================================================
-      assert.equal(checkBody.appVersion, '0.5.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Bump standalone /api/check-update appVersion assertion from 0.5.1 to 0.5.2.
+// ============================================================================
+      assert.equal(checkBody.appVersion, '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -11875,7 +11931,14 @@ test('v0.3.0 headless Node VM Settings tooltip proxy diagnostics and static I18N
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Bump getCurrentAppVersion fallback assertion to 0.5.1.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Bump getCurrentAppVersion fallback assertion from 0.5.1 to 0.5.2.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -12499,7 +12562,14 @@ test('v0.3.2 constant 43-char SHA-256 base64url /api/snapshot etag prevents HTTP
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Update v0.3.2 ETag test standalone appVersion assertion to 0.5.1.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.5.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Update v0.3.2 ETag test standalone appVersion assertion from 0.5.1 to 0.5.2.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -13384,7 +13454,14 @@ test('v0.4.0 backend DEFAULT_PREFS.pixelOfficeCollapsed, child activeToolLabel, 
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Bump v0.4.0 backend standalone /api/snapshot appVersion assertion to 0.5.1.
 // ============================================================================
-      assert.equal(initialSnap.appVersion, '0.5.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Bump v0.4.0 backend standalone /api/snapshot appVersion assertion from 0.5.1 to 0.5.2.
+// ============================================================================
+      assert.equal(initialSnap.appVersion, '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -14230,7 +14307,14 @@ test('v0.4.0 update modal nested markdown & section filtering, Pixel Office VM i
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Bump v0.4.0 VM getCurrentAppVersion fallback assertion to 0.5.1.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Bump v0.4.0 VM getCurrentAppVersion fallback assertion from 0.5.1 to 0.5.2.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -16826,7 +16910,15 @@ test('v0.4.0 Gemini 4 flat-context pricing, 95% cache discount, LiteLLM 5% fallb
     assert.ok(syncFetchCalls > 0);
 
     const persistedCache = JSON.parse(readFileSync(cacheFilePath, 'utf-8'));
-    assert.equal(persistedCache.schemaVersion, 2);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:21:36
+// Description: Update persisted pricing_cache schemaVersion assertion from 2 to 3
+// following CACHE_SCHEMA_VERSION bump for Claude/GPT-OSS cache healing & reseller cleanup.
+// ============================================================================
+    assert.equal(persistedCache.schemaVersion, 3);
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:21:36
+// ============================================================================
     assert.equal(persistedCache.lastSyncLocalDate, todayLocal);
     assert.equal(persistedCache.usdToCnyRate, 7.1234);
     assert.equal(persistedCache.syncedRates['gemini-4-carbon'].longContextTier, false);
@@ -17700,7 +17792,14 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Bump v0.4.1 VM getCurrentAppVersion fallback assertion to 0.5.1.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Bump v0.4.1 VM getCurrentAppVersion fallback assertion from 0.5.1 to 0.5.2.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -18242,8 +18341,15 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
 // [MODIFIED BEGIN] 2026-11-20 15:55:43
 // Description: Bump manifest version assertions in v0.4.1 static hygiene block to 0.5.1.
 // ============================================================================
-  assert.equal(JSON.parse(pluginJsonRaw).version, '0.5.1');
-  assert.equal(JSON.parse(packageJsonRaw).version, '0.5.1');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:35:02
+// Description: Bump manifest version assertions in v0.4.1 static hygiene block from 0.5.1 to 0.5.2.
+// ============================================================================
+  assert.equal(JSON.parse(pluginJsonRaw).version, '0.5.2');
+  assert.equal(JSON.parse(packageJsonRaw).version, '0.5.2');
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:35:02
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:55:43
 // ============================================================================
@@ -19026,4 +19132,901 @@ test('v0.5.1 headless VM: A4/A5/A6 render & timer gating, B5/B6/B7 a11y & UI pol
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:45:47
+// ============================================================================
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-23 10:21:36
+// Description: Add regression tests for LiteLLM cache_read_input_token_cost parsing
+// & legacy fallback, official-vs-reseller provider priority, family default cache
+// discount fallbacks, and pricing_cache schemaVersion 3 v1/v2 non-destructive migration.
+// ============================================================================
+test('parseLiteLlmCatalog reads cache_read_input_token_cost, preserves legacy cache_read_input_cost_per_token fallback, and derives >200k tier from cache cost', () => {
+  const realKeyParsed = parseLiteLlmCatalog({
+    'anthropic/claude-opus-5-5': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 4.0e-6,
+      cache_read_input_token_cost: 0.2e-6,
+      output_cost_per_token: 20.0e-6,
+    },
+    'anthropic/claude-sonnet-5-5': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      cache_read_input_token_cost: 0.1e-6,
+      output_cost_per_token: 10.0e-6,
+    },
+    'anthropic/claude-opus-4-6': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 5.0e-6,
+      cache_read_input_token_cost: 0.5e-6,
+      output_cost_per_token: 25.0e-6,
+    },
+    'anthropic/claude-sonnet-4-6': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 3.0e-6,
+      cache_read_input_token_cost: 0.3e-6,
+      output_cost_per_token: 15.0e-6,
+    },
+    'groq/openai/gpt-oss-120b': {
+      litellm_provider: 'groq',
+      mode: 'chat',
+      input_cost_per_token: 0.15e-6,
+      cache_read_input_token_cost: 0.075e-6,
+      output_cost_per_token: 0.6e-6,
+    },
+  });
+
+  assert.equal(realKeyParsed.profileRates['claude-opus-5-5'].inputPer1M, 4);
+  assert.equal(realKeyParsed.profileRates['claude-opus-5-5'].cachedPer1M, 0.2);
+  assert.equal(realKeyParsed.profileRates['claude-opus-5-5'].outputPer1M, 20);
+
+  assert.equal(realKeyParsed.profileRates['claude-sonnet-5-5'].inputPer1M, 2);
+  assert.equal(realKeyParsed.profileRates['claude-sonnet-5-5'].cachedPer1M, 0.1);
+  assert.equal(realKeyParsed.profileRates['claude-sonnet-5-5'].outputPer1M, 10);
+
+  assert.equal(realKeyParsed.upstreamPool['claude-opus-4-6'].inputPer1M, 5);
+  assert.equal(realKeyParsed.upstreamPool['claude-opus-4-6'].cachedPer1M, 0.5);
+  assert.equal(realKeyParsed.upstreamPool['claude-opus-4-6'].outputPer1M, 25);
+
+  assert.equal(realKeyParsed.upstreamPool['claude-sonnet-4-6'].inputPer1M, 3);
+  assert.equal(realKeyParsed.upstreamPool['claude-sonnet-4-6'].cachedPer1M, 0.3);
+  assert.equal(realKeyParsed.upstreamPool['claude-sonnet-4-6'].outputPer1M, 15);
+
+  assert.equal(realKeyParsed.profileRates['gpt-oss-120b'].inputPer1M, 0.15);
+  assert.equal(realKeyParsed.profileRates['gpt-oss-120b'].cachedPer1M, 0.075);
+  assert.equal(realKeyParsed.profileRates['gpt-oss-120b'].outputPer1M, 0.6);
+  assert.equal(realKeyParsed.upstreamPool['gpt-oss-120b'].cachedPer1M, 0.075);
+
+  // Backward compatibility with legacy cache_read_input_cost_per_token, precedence, zero cache cost, and >200k cache tier
+  const compatParsed = parseLiteLlmCatalog({
+    'anthropic/claude-opus-5-5': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 4.0e-6,
+      cache_read_input_cost_per_token: 0.24e-6,
+      output_cost_per_token: 20.0e-6,
+    },
+    'anthropic/claude-sonnet-5-5': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      cache_read_input_token_cost: 0.1e-6,
+      cache_read_input_cost_per_token: 0.4e-6,
+      output_cost_per_token: 10.0e-6,
+    },
+    'anthropic/claude-haiku-5-5': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 1.0e-6,
+      cache_read_input_token_cost: 0,
+      output_cost_per_token: 5.0e-6,
+    },
+    'gemini/gemini-3.1-pro': {
+      litellm_provider: 'gemini',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      cache_read_input_token_cost: 0.2e-6,
+      cache_read_input_token_cost_above_200k_tokens: 0.4e-6,
+      output_cost_per_token: 12.0e-6,
+    },
+  });
+
+  assert.equal(compatParsed.profileRates['claude-opus-5-5'].cachedPer1M, 0.24);
+  assert.equal(compatParsed.profileRates['claude-sonnet-5-5'].cachedPer1M, 0.1);
+  assert.equal(compatParsed.upstreamPool['claude-haiku-5-5'].cachedPer1M, 0);
+  assert.equal(compatParsed.profileRates['gemini-3.1-pro'].longContextTier, true);
+  assert.equal(compatParsed.profileRates['gemini-3.1-pro'].longInputMultiplier, 2);
+  assert.equal(compatParsed.profileRates['gemini-3.1-pro'].longOutputMultiplier, 1.5);
+});
+
+test('parseLiteLlmCatalog and parseModelsDevCatalog enforce official provider priority over resellers for Gemini 3.1 Pro, Claude, and GPT-OSS 120B', () => {
+  // (a) Same-slug competition: resellers listed first must still lose to gemini / vertex_ai / anthropic
+  const sameSlugParsed = parseLiteLlmCatalog({
+    'deepinfra/google/gemini-3.1-pro': {
+      litellm_provider: 'deepinfra',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      cache_read_input_token_cost: 0.2e-6,
+      output_cost_per_token: 12.0e-6,
+    },
+    'openrouter/google/gemini-3.1-pro': {
+      litellm_provider: 'openrouter',
+      mode: 'chat',
+      input_cost_per_token: 2.5e-6,
+      cache_read_input_token_cost: 0.25e-6,
+      output_cost_per_token: 15.0e-6,
+    },
+    'vertex_ai/gemini-3.1-pro': {
+      litellm_provider: 'vertex_ai-language-models',
+      mode: 'chat',
+      input_cost_per_token: 2.1e-6,
+      cache_read_input_token_cost: 0.21e-6,
+      output_cost_per_token: 12.1e-6,
+      input_cost_per_token_above_200k_tokens: 4.2e-6,
+      output_cost_per_token_above_200k_tokens: 18.15e-6,
+    },
+    'gemini/gemini-3.1-pro': {
+      litellm_provider: 'gemini',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      cache_read_input_token_cost: 0.2e-6,
+      output_cost_per_token: 12.0e-6,
+      input_cost_per_token_above_200k_tokens: 4.0e-6,
+      output_cost_per_token_above_200k_tokens: 18.0e-6,
+    },
+    'deepinfra/anthropic/claude-opus-5-5': {
+      litellm_provider: 'deepinfra',
+      mode: 'chat',
+      input_cost_per_token: 4.8e-6,
+      cache_read_input_token_cost: 0.48e-6,
+      output_cost_per_token: 24.0e-6,
+    },
+    'openrouter/anthropic/claude-opus-5-5': {
+      litellm_provider: 'openrouter',
+      mode: 'chat',
+      input_cost_per_token: 4.4e-6,
+      cache_read_input_token_cost: 0.44e-6,
+      output_cost_per_token: 22.0e-6,
+    },
+    'vertex_ai/claude-opus-5-5': {
+      litellm_provider: 'vertex_ai-anthropic_models',
+      mode: 'chat',
+      input_cost_per_token: 4.4e-6,
+      cache_read_input_token_cost: 0.22e-6,
+      output_cost_per_token: 22.0e-6,
+    },
+    'anthropic/claude-opus-5-5': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 4.0e-6,
+      cache_read_input_token_cost: 0.2e-6,
+      output_cost_per_token: 20.0e-6,
+    },
+    'openrouter/anthropic/claude-sonnet-5-5': {
+      litellm_provider: 'openrouter',
+      mode: 'chat',
+      input_cost_per_token: 2.5e-6,
+      cache_read_input_token_cost: 0.25e-6,
+      output_cost_per_token: 12.5e-6,
+    },
+    'vertex_ai/claude-sonnet-5-5': {
+      litellm_provider: 'vertex_ai-anthropic_models',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      cache_read_input_token_cost: 0.1e-6,
+      output_cost_per_token: 10.0e-6,
+    },
+  });
+
+  assert.equal(sameSlugParsed.profileRates['gemini-3.1-pro'].provider, 'gemini');
+  assert.equal(sameSlugParsed.profileRates['gemini-3.1-pro'].longContextTier, true);
+  assert.equal(sameSlugParsed.profileRates['gemini-3.1-pro'].longInputMultiplier, 2);
+  assert.equal(sameSlugParsed.profileRates['gemini-3.1-pro'].longOutputMultiplier, 1.5);
+
+  assert.equal(sameSlugParsed.profileRates['claude-opus-5-5'].provider, 'anthropic');
+  assert.equal(sameSlugParsed.profileRates['claude-opus-5-5'].inputPer1M, 4);
+  assert.equal(sameSlugParsed.profileRates['claude-opus-5-5'].cachedPer1M, 0.2);
+  assert.equal(sameSlugParsed.profileRates['claude-opus-5-5'].outputPer1M, 20);
+
+  assert.equal(sameSlugParsed.profileRates['claude-sonnet-5-5'].provider, 'vertex_ai-anthropic_models');
+  assert.equal(sameSlugParsed.profileRates['claude-sonnet-5-5'].inputPer1M, 2);
+  assert.equal(sameSlugParsed.profileRates['claude-sonnet-5-5'].cachedPer1M, 0.1);
+  assert.equal(sameSlugParsed.profileRates['claude-sonnet-5-5'].outputPer1M, 10);
+
+  // (b) Cross-alias competition: official gemini/gemini-3.1-pro-preview beats reseller deepinfra/google/gemini-3.1-pro
+  const crossAliasGemini = parseLiteLlmCatalog({
+    'deepinfra/google/gemini-3.1-pro': {
+      litellm_provider: 'deepinfra',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      cache_read_input_token_cost: 0.2e-6,
+      output_cost_per_token: 12.0e-6,
+    },
+    'gemini/gemini-3.1-pro-preview': {
+      litellm_provider: 'gemini',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      cache_read_input_token_cost: 0.2e-6,
+      output_cost_per_token: 12.0e-6,
+      input_cost_per_token_above_200k_tokens: 4.0e-6,
+      output_cost_per_token_above_200k_tokens: 18.0e-6,
+    },
+  });
+
+  assert.equal(crossAliasGemini.profileRates['gemini-3.1-pro'].provider, 'gemini');
+  assert.equal(crossAliasGemini.profileRates['gemini-3.1-pro'].longContextTier, true);
+  assert.equal(crossAliasGemini.profileRates['gemini-3.1-pro'].longInputMultiplier, 2);
+  assert.equal(crossAliasGemini.profileRates['gemini-3.1-pro'].longOutputMultiplier, 1.5);
+  assert.deepEqual(
+    crossAliasGemini.googleCandidates.map((c) => c.id),
+    ['gemini-3.1-pro-preview'],
+  );
+
+  // (c) Unprefixed reseller key with litellm_provider='openrouter' loses to vertex_ai preview alias
+  const vertexVsReseller = parseLiteLlmCatalog({
+    'gemini-3.1-pro': {
+      litellm_provider: 'openrouter',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      cache_read_input_token_cost: 0.2e-6,
+      output_cost_per_token: 12.0e-6,
+    },
+    'vertex_ai/gemini-3.1-pro-preview': {
+      litellm_provider: 'vertex_ai-language-models',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      cache_read_input_token_cost: 0.2e-6,
+      output_cost_per_token: 12.0e-6,
+      input_cost_per_token_above_200k_tokens: 4.0e-6,
+      output_cost_per_token_above_200k_tokens: 18.0e-6,
+    },
+  });
+
+  assert.equal(vertexVsReseller.profileRates['gemini-3.1-pro'].provider, 'vertex_ai-language-models');
+  assert.equal(vertexVsReseller.profileRates['gemini-3.1-pro'].longContextTier, true);
+  assert.deepEqual(
+    vertexVsReseller.googleCandidates.map((c) => c.id),
+    ['gemini-3.1-pro-preview'],
+  );
+
+  // (d) models.dev gpt-oss-120b scoring: discounted Groq beats 0%-discount OpenRouter; OpenAI still beats both
+  const devGroqVsOr = parseModelsDevCatalog({
+    openrouter: {
+      models: {
+        'openai/gpt-oss-120b': {
+          id: 'openai/gpt-oss-120b',
+          name: 'GPT-OSS 120B (OR)',
+          cost: { input: 0.05, cache_read: 0.05, output: 0.25 },
+        },
+      },
+    },
+    groq: {
+      models: {
+        'openai/gpt-oss-120b': {
+          id: 'openai/gpt-oss-120b',
+          name: 'GPT-OSS 120B (Groq)',
+          cost: { input: 0.15, cache_read: 0.075, output: 0.6 },
+        },
+      },
+    },
+  });
+
+  assert.equal(devGroqVsOr.profileRates['gpt-oss-120b'].provider, 'groq');
+  assert.equal(devGroqVsOr.profileRates['gpt-oss-120b'].inputPer1M, 0.15);
+  assert.equal(devGroqVsOr.profileRates['gpt-oss-120b'].cachedPer1M, 0.075);
+  assert.equal(devGroqVsOr.profileRates['gpt-oss-120b'].outputPer1M, 0.6);
+
+  const devOpenAiWins = parseModelsDevCatalog({
+    openrouter: {
+      models: {
+        'openai/gpt-oss-120b': {
+          id: 'openai/gpt-oss-120b',
+          cost: { input: 0.05, cache_read: 0.05, output: 0.25 },
+        },
+      },
+    },
+    groq: {
+      models: {
+        'openai/gpt-oss-120b': {
+          id: 'openai/gpt-oss-120b',
+          cost: { input: 0.15, cache_read: 0.075, output: 0.6 },
+        },
+      },
+    },
+    openai: {
+      models: {
+        'gpt-oss-120b': {
+          id: 'gpt-oss-120b',
+          cost: { input: 0.14, cache_read: 0.07, output: 0.56 },
+        },
+      },
+    },
+  });
+
+  assert.equal(devOpenAiWins.profileRates['gpt-oss-120b'].provider, 'openai');
+  assert.equal(devOpenAiWins.profileRates['gpt-oss-120b'].cachedPer1M, 0.07);
+});
+
+test('missing cache_read fallback defaults to family discount rates (0.05x Opus/Sonnet 5.5, 0.10x older Claude/Haiku, 0.50x GPT-OSS, 1.0x unknown)', () => {
+  // (a) Via parseLiteLlmCatalog when cache_read keys are absent
+  const liteNoCache = parseLiteLlmCatalog({
+    'anthropic/claude-opus-5-5': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 4.0e-6,
+      output_cost_per_token: 20.0e-6,
+    },
+    'anthropic/claude-sonnet-5-5': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 2.0e-6,
+      output_cost_per_token: 10.0e-6,
+    },
+    'anthropic/claude-opus-4-6': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 5.0e-6,
+      output_cost_per_token: 25.0e-6,
+    },
+    'anthropic/claude-sonnet-4-6': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 3.0e-6,
+      output_cost_per_token: 15.0e-6,
+    },
+    'anthropic/claude-haiku-5-5': {
+      litellm_provider: 'anthropic',
+      mode: 'chat',
+      input_cost_per_token: 1.0e-6,
+      output_cost_per_token: 5.0e-6,
+    },
+    'groq/openai/gpt-oss-120b': {
+      litellm_provider: 'groq',
+      mode: 'chat',
+      input_cost_per_token: 0.15e-6,
+      output_cost_per_token: 0.6e-6,
+    },
+    'openai/gpt-5.2': {
+      litellm_provider: 'openai',
+      mode: 'chat',
+      input_cost_per_token: 2.5e-6,
+      output_cost_per_token: 10.0e-6,
+    },
+  });
+
+  assert.equal(liteNoCache.profileRates['claude-opus-5-5'].cachedPer1M, 0.2);
+  assert.equal(liteNoCache.profileRates['claude-sonnet-5-5'].cachedPer1M, 0.1);
+  assert.equal(liteNoCache.upstreamPool['claude-opus-4-6'].cachedPer1M, 0.5);
+  assert.equal(liteNoCache.upstreamPool['claude-sonnet-4-6'].cachedPer1M, 0.3);
+  assert.equal(liteNoCache.upstreamPool['claude-haiku-5-5'].cachedPer1M, 0.1);
+  assert.equal(liteNoCache.profileRates['gpt-oss-120b'].cachedPer1M, 0.075);
+  assert.equal(liteNoCache.upstreamPool['gpt-5.2'].cachedPer1M, 2.5);
+
+  // (b) Via parseModelsDevCatalog when cost.cache_read is undefined / null / empty string
+  const devNoCache = parseModelsDevCatalog({
+    anthropic: {
+      models: {
+        'claude-opus-5-5': { id: 'claude-opus-5-5', cost: { input: 4.0, output: 20.0 } },
+        'claude-sonnet-5-5': { id: 'claude-sonnet-5-5', cost: { input: 2.0, cache_read: null, output: 10.0 } },
+        'claude-opus-4-6': { id: 'claude-opus-4-6', cost: { input: 5.0, cache_read: '', output: 25.0 } },
+        'claude-haiku-5-5': { id: 'claude-haiku-5-5', cost: { input: 1.0, output: 5.0 } },
+      },
+    },
+    groq: {
+      models: {
+        'gpt-oss-120b': { id: 'gpt-oss-120b', cost: { input: 0.15, output: 0.6 } },
+      },
+    },
+    openai: {
+      models: {
+        'gpt-5.2': { id: 'gpt-5.2', cost: { input: 2.5, output: 10.0 } },
+      },
+    },
+  });
+
+  assert.equal(devNoCache.profileRates['claude-opus-5-5'].cachedPer1M, 0.2);
+  assert.equal(devNoCache.profileRates['claude-sonnet-5-5'].cachedPer1M, 0.1);
+  assert.equal(devNoCache.upstreamPool['claude-opus-4-6'].cachedPer1M, 0.5);
+  assert.equal(devNoCache.upstreamPool['claude-haiku-5-5'].cachedPer1M, 0.1);
+  assert.equal(devNoCache.profileRates['gpt-oss-120b'].cachedPer1M, 0.075);
+  assert.equal(devNoCache.upstreamPool['gpt-5.2'].cachedPer1M, 2.5);
+});
+
+test('pricing_cache schemaVersion 3 non-destructive migration heals v1 and poisoned v2 caches offline and bills Claude cache reads accurately', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'tm-v052-cache-v3-migrate-'));
+  const fixedNowMs = Date.UTC(2026, 10, 23, 2, 0, 0);
+  const todayLocal = formatLocalDate(fixedNowMs);
+  try {
+    // (a) v1 -> v3 migration: heals Gemini 4 longContextTier + poisoned Claude/GPT-OSS + reseller gemini-3.1-pro
+    const dirV1 = join(root, 'v1');
+    mkdirSync(dirV1, { recursive: true });
+    writeFileSync(
+      join(dirV1, 'pricing_cache.json'),
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          lastSyncLocalDate: todayLocal,
+          lastSyncAtMs: fixedNowMs - 60000,
+          lastAttemptAtMs: fixedNowMs,
+          status: 'ok',
+          sources: ['litellm'],
+          error: '',
+          usdToCnyRate: 7.2105,
+          fxSource: 'frankfurter.dev',
+          fxLastSyncLocalDate: todayLocal,
+          fxAttemptLocalDate: todayLocal,
+          syncedRates: {
+            'gemini-4-carbon': {
+              inputPer1M: 2.0,
+              cachedPer1M: 0.1,
+              outputPer1M: 10.0,
+              longContextTier: true,
+              longInputMultiplier: 2,
+              longOutputMultiplier: 1.5,
+            },
+            'claude-opus-5-5': {
+              inputPer1M: 4.0,
+              cachedPer1M: 4.0,
+              outputPer1M: 20.0,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'anthropic',
+              source: 'litellm',
+            },
+            'claude-sonnet-5-5': {
+              inputPer1M: 2.0,
+              cachedPer1M: 2.0,
+              outputPer1M: 10.0,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'anthropic',
+              source: 'litellm',
+            },
+            'gpt-oss-120b': {
+              inputPer1M: 0.15,
+              cachedPer1M: 0.15,
+              outputPer1M: 0.6,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'groq',
+              source: 'litellm',
+            },
+            'gemini-3.1-pro': {
+              inputPer1M: 2.0,
+              cachedPer1M: 0.2,
+              outputPer1M: 12.0,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'deepinfra',
+              source: 'litellm',
+            },
+          },
+          upstreamPool: {
+            'gemini-4-carbon': {
+              id: 'gemini-4-carbon',
+              label: 'Gemini 4 Carbon',
+              group: 'Gemini 系列',
+              inputPer1M: 2.0,
+              cachedPer1M: 0.1,
+              outputPer1M: 10.0,
+              longContextTier: true,
+              longInputMultiplier: 2,
+              longOutputMultiplier: 1.5,
+            },
+            'claude-opus-4-6': {
+              id: 'claude-opus-4-6',
+              label: 'Claude Opus 4.6',
+              group: 'Claude 系列',
+              inputPer1M: 5.0,
+              cachedPer1M: 5.0,
+              outputPer1M: 25.0,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'anthropic',
+              source: 'litellm',
+            },
+            'claude-haiku-5-5': {
+              id: 'claude-haiku-5-5',
+              label: 'Claude Haiku 5.5',
+              group: 'Claude 系列',
+              inputPer1M: 1.0,
+              cachedPer1M: 1.0,
+              outputPer1M: 5.0,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'anthropic',
+              source: 'litellm',
+            },
+          },
+          discoveredModels: [],
+        },
+        null,
+        2,
+      ),
+      'utf-8',
+    );
+
+    const mgrV1 = createPricingSyncManager({
+      stateDir: dirV1,
+      baseCatalog: MODEL_PRICING_CATALOG,
+      nowFn: () => fixedNowMs,
+      autoSyncDisabled: true,
+    });
+    const statusV1 = mgrV1.getPublicStatus();
+    assert.equal(statusV1.lastSyncLocalDate, '');
+    assert.equal(statusV1.lastAttemptAtMs, null);
+    assert.equal(statusV1.usdToCnyRate, 7.2105);
+    assert.equal(statusV1.fxSource, 'frankfurter.dev');
+    assert.equal(statusV1.fxLastSyncLocalDate, todayLocal);
+
+    const catV1 = new Map(mgrV1.getRuntimeCatalog().map((m) => [m.id, m]));
+    assert.equal(catV1.get('gemini-4-carbon').longContextTier, false);
+    assert.equal(catV1.get('gemini-4-carbon').longInputMultiplier, 1);
+    assert.equal(catV1.get('gemini-4-carbon').longOutputMultiplier, 1);
+    assert.equal(catV1.get('claude-opus-5-5').cachedPer1M, 0.2);
+    assert.equal(catV1.get('claude-sonnet-5-5').cachedPer1M, 0.1);
+    assert.equal(catV1.get('gpt-oss-120b').cachedPer1M, 0.075);
+    assert.equal(catV1.get('gemini-3.1-pro').longContextTier, true);
+    assert.equal(catV1.get('gemini-3.1-pro').longInputMultiplier, 2);
+    assert.equal(catV1.get('gemini-3.1-pro').longOutputMultiplier, 1.5);
+
+    const poolOnlyV1 = createPricingSyncManager({
+      stateDir: dirV1,
+      baseCatalog: [MODEL_PRICING_CATALOG.at(-1)],
+      nowFn: () => fixedNowMs,
+      autoSyncDisabled: true,
+    });
+    const poolCatV1 = new Map(
+      poolOnlyV1
+        .getRuntimeCatalog(['gemini-4-carbon', 'claude-opus-4-6', 'claude-haiku-5-5'])
+        .map((m) => [m.id, m]),
+    );
+    assert.equal(poolCatV1.get('gemini-4-carbon').longContextTier, false);
+    assert.equal(poolCatV1.get('claude-opus-4-6').cachedPer1M, 0.5);
+    assert.equal(poolCatV1.get('claude-haiku-5-5').cachedPer1M, 0.1);
+
+    // (b) Poisoned v2 -> v3 migration: offline healing, computeStepCost billing, and immediate resync to v3
+    const dirV2 = join(root, 'v2');
+    mkdirSync(dirV2, { recursive: true });
+    const v2CachePath = join(dirV2, 'pricing_cache.json');
+    writeFileSync(
+      v2CachePath,
+      JSON.stringify(
+        {
+          schemaVersion: 2,
+          lastSyncLocalDate: todayLocal,
+          lastSyncAtMs: fixedNowMs - 60000,
+          lastAttemptAtMs: fixedNowMs,
+          status: 'ok',
+          sources: ['litellm', 'google-official'],
+          error: '',
+          usdToCnyRate: 7.1888,
+          fxSource: 'open.er-api.com',
+          fxLastSyncLocalDate: todayLocal,
+          fxAttemptLocalDate: todayLocal,
+          syncedRates: {
+            'claude-opus-5-5': {
+              inputPer1M: 4.0,
+              cachedPer1M: 4.0,
+              outputPer1M: 20.0,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'anthropic',
+              source: 'litellm',
+            },
+            'claude-sonnet-5-5': {
+              inputPer1M: 2.0,
+              cachedPer1M: 2.0,
+              outputPer1M: 10.0,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'anthropic',
+              source: 'litellm',
+            },
+            'gpt-oss-120b': {
+              inputPer1M: 0.15,
+              cachedPer1M: 0.15,
+              outputPer1M: 0.6,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'groq',
+              source: 'litellm',
+            },
+            'gemini-3.1-pro': {
+              inputPer1M: 2.0,
+              cachedPer1M: 0.2,
+              outputPer1M: 12.0,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'deepinfra',
+              source: 'litellm',
+            },
+          },
+          upstreamPool: {
+            'claude-opus-5-5': {
+              id: 'claude-opus-5-5',
+              label: 'Claude Opus 5.5',
+              group: 'Claude 系列',
+              inputPer1M: 4.0,
+              cachedPer1M: 4.0,
+              outputPer1M: 20.0,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'anthropic',
+              source: 'litellm',
+            },
+            'claude-sonnet-5-5': {
+              id: 'claude-sonnet-5-5',
+              label: 'Claude Sonnet 5.5',
+              group: 'Claude 系列',
+              inputPer1M: 2.0,
+              cachedPer1M: 2.0,
+              outputPer1M: 10.0,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'anthropic',
+              source: 'litellm',
+            },
+            'gpt-oss-120b': {
+              id: 'gpt-oss-120b',
+              label: 'GPT-OSS 120B',
+              group: '其他现役模型',
+              inputPer1M: 0.15,
+              cachedPer1M: 0.15,
+              outputPer1M: 0.6,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'groq',
+              source: 'litellm',
+            },
+            'gemini-3.1-pro': {
+              id: 'gemini-3.1-pro',
+              label: 'Gemini 3.1 Pro',
+              group: 'Gemini 系列',
+              inputPer1M: 2.0,
+              cachedPer1M: 0.2,
+              outputPer1M: 12.0,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'deepinfra',
+              source: 'litellm',
+            },
+          },
+          discoveredModels: [],
+        },
+        null,
+        2,
+      ),
+      'utf-8',
+    );
+
+    const mgrV2Offline = createPricingSyncManager({
+      stateDir: dirV2,
+      baseCatalog: MODEL_PRICING_CATALOG,
+      nowFn: () => fixedNowMs,
+      autoSyncDisabled: true,
+    });
+    const statusV2 = mgrV2Offline.getPublicStatus();
+    assert.equal(statusV2.lastSyncLocalDate, '');
+    assert.equal(statusV2.lastAttemptAtMs, null);
+    assert.equal(statusV2.usdToCnyRate, 7.1888);
+    assert.equal(statusV2.fxSource, 'open.er-api.com');
+    assert.equal(statusV2.fxLastSyncLocalDate, todayLocal);
+    assert.equal(mgrV2Offline.getSyncedCnyRate(), 7.1888);
+
+    const healedRuntimeCatalog = mgrV2Offline.getRuntimeCatalog();
+    const catV2 = new Map(healedRuntimeCatalog.map((m) => [m.id, m]));
+    assert.equal(catV2.get('claude-opus-5-5').inputPer1M, 4);
+    assert.equal(catV2.get('claude-opus-5-5').cachedPer1M, 0.2);
+    assert.equal(catV2.get('claude-opus-5-5').outputPer1M, 20);
+    assert.equal(catV2.get('claude-sonnet-5-5').inputPer1M, 2);
+    assert.equal(catV2.get('claude-sonnet-5-5').cachedPer1M, 0.1);
+    assert.equal(catV2.get('claude-sonnet-5-5').outputPer1M, 10);
+    assert.equal(catV2.get('gpt-oss-120b').inputPer1M, 0.15);
+    assert.equal(catV2.get('gpt-oss-120b').cachedPer1M, 0.075);
+    assert.equal(catV2.get('gpt-oss-120b').outputPer1M, 0.6);
+    assert.equal(catV2.get('gemini-3.1-pro').inputPer1M, 2);
+    assert.equal(catV2.get('gemini-3.1-pro').cachedPer1M, 0.2);
+    assert.equal(catV2.get('gemini-3.1-pro').outputPer1M, 12);
+    assert.equal(catV2.get('gemini-3.1-pro').longContextTier, true);
+    assert.equal(catV2.get('gemini-3.1-pro').longInputMultiplier, 2);
+    assert.equal(catV2.get('gemini-3.1-pro').longOutputMultiplier, 1.5);
+
+    // Verify upstreamPool entries were also healed/dropped in v2 -> v3 load
+    const poolOnlyV2 = createPricingSyncManager({
+      stateDir: dirV2,
+      baseCatalog: [MODEL_PRICING_CATALOG.at(-1)],
+      nowFn: () => fixedNowMs,
+      autoSyncDisabled: true,
+    });
+    const poolCatV2 = new Map(
+      poolOnlyV2
+        .getRuntimeCatalog(['claude-opus-5-5', 'claude-sonnet-5-5', 'gpt-oss-120b', 'gemini-3.1-pro'])
+        .map((m) => [m.id, m]),
+    );
+    assert.equal(poolCatV2.get('claude-opus-5-5').cachedPer1M, 0.2);
+    assert.equal(poolCatV2.get('claude-sonnet-5-5').cachedPer1M, 0.1);
+    assert.equal(poolCatV2.get('gpt-oss-120b').cachedPer1M, 0.075);
+    assert.equal(poolCatV2.get('gemini-3.1-pro').longContextTier, true);
+
+    // Verify computeStepCost bills $0.20/1M (Opus 5.5) & $0.10/1M (Sonnet 5.5) on cache reads
+    const healedPrefs = { ...DEFAULT_PREFS, _runtimeCatalog: healedRuntimeCatalog };
+    const oneMillionCacheRead = { input_tokens: 0, cache_read_tokens: 1_000_000, output_tokens: 0 };
+
+    const opusCacheCost = computeStepCost(oneMillionCacheRead, healedPrefs, 'claude-opus-5-5');
+    assert.ok(Math.abs(opusCacheCost.costActual - 0.2) < 1e-9);
+    assert.ok(Math.abs(opusCacheCost.costUncachedBaseline - 4.0) < 1e-9);
+    assert.ok(Math.abs(opusCacheCost.costSavedByCache - 3.8) < 1e-9);
+
+    const sonnetCacheCost = computeStepCost(oneMillionCacheRead, healedPrefs, 'claude-sonnet-5-5');
+    assert.ok(Math.abs(sonnetCacheCost.costActual - 0.1) < 1e-9);
+    assert.ok(Math.abs(sonnetCacheCost.costUncachedBaseline - 2.0) < 1e-9);
+    assert.ok(Math.abs(sonnetCacheCost.costSavedByCache - 1.9) < 1e-9);
+
+    const gptOssCacheCost = computeStepCost(oneMillionCacheRead, healedPrefs, 'gpt-oss-120b');
+    assert.ok(Math.abs(gptOssCacheCost.costActual - 0.075) < 1e-9);
+
+    const opusMixedCost = computeStepCost(
+      { input_tokens: 100_000, cache_read_tokens: 1_000_000, output_tokens: 50_000 },
+      healedPrefs,
+      'claude-opus-5-5',
+    );
+    assert.ok(Math.abs(opusMixedCost.costActual - 1.6) < 1e-9);
+
+    const g31LongCost = computeStepCost(
+      { input_tokens: 100_000, cache_read_tokens: 200_000, output_tokens: 10_000 },
+      healedPrefs,
+      'gemini-3.1-pro',
+    );
+    assert.ok(Math.abs(g31LongCost.costActual - 0.66) < 1e-9);
+
+    // Migrated v2 cache immediately triggers daily sync and persists schemaVersion === 3 while preserving FX
+    const mgrV2Sync = createPricingSyncManager({
+      stateDir: dirV2,
+      baseCatalog: MODEL_PRICING_CATALOG,
+      nowFn: () => fixedNowMs,
+      autoSyncDisabled: false,
+      fetchImpl: async (url) => {
+        if (url.includes('models.dev')) {
+          return { ok: false, status: 503, json: async () => ({}) };
+        }
+        if (url.includes('litellm')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              'anthropic/claude-opus-5-5': {
+                litellm_provider: 'anthropic',
+                mode: 'chat',
+                input_cost_per_token: 4.0e-6,
+                cache_read_input_token_cost: 0.2e-6,
+                output_cost_per_token: 20.0e-6,
+              },
+              'anthropic/claude-sonnet-5-5': {
+                litellm_provider: 'anthropic',
+                mode: 'chat',
+                input_cost_per_token: 2.0e-6,
+                cache_read_input_token_cost: 0.1e-6,
+                output_cost_per_token: 10.0e-6,
+              },
+            }),
+          };
+        }
+        return { ok: false, status: 503, text: async () => '' };
+      },
+    });
+    let resyncResolve;
+    const resyncDone = new Promise((r) => {
+      resyncResolve = r;
+    });
+    assert.equal(
+      mgrV2Sync.maybeTriggerDailySync([], (res) => resyncResolve(res)),
+      true,
+    );
+    const resyncRes = await resyncDone;
+    assert.equal(resyncRes.ok, true);
+
+    const persistedV3 = JSON.parse(readFileSync(v2CachePath, 'utf-8'));
+    assert.equal(persistedV3.schemaVersion, 3);
+    assert.equal(persistedV3.lastSyncLocalDate, todayLocal);
+    assert.equal(persistedV3.usdToCnyRate, 7.1888);
+    assert.equal(persistedV3.fxLastSyncLocalDate, todayLocal);
+    assert.equal(persistedV3.syncedRates['claude-opus-5-5'].cachedPer1M, 0.2);
+    assert.equal(persistedV3.syncedRates['claude-sonnet-5-5'].cachedPer1M, 0.1);
+
+    // Reloading persisted v3 cache on the same day must preserve lastSyncLocalDate and skip redundant resync
+    const mgrV3Reload = createPricingSyncManager({
+      stateDir: dirV2,
+      baseCatalog: MODEL_PRICING_CATALOG,
+      nowFn: () => fixedNowMs,
+      autoSyncDisabled: false,
+      fetchImpl: async () => {
+        throw new Error('should not fetch on same-day v3 cache');
+      },
+    });
+    assert.equal(mgrV3Reload.getPublicStatus().lastSyncLocalDate, todayLocal);
+    assert.equal(mgrV3Reload.maybeTriggerDailySync([], () => {}), false);
+
+    // (c) Poisoned v2 models.dev openrouter 0%-discount gpt-oss-120b is dropped so base $0.15/$0.075/$0.60 applies
+    const dirV2Or = join(root, 'v2-openrouter');
+    mkdirSync(dirV2Or, { recursive: true });
+    writeFileSync(
+      join(dirV2Or, 'pricing_cache.json'),
+      JSON.stringify(
+        {
+          schemaVersion: 2,
+          lastSyncLocalDate: todayLocal,
+          status: 'ok',
+          sources: ['models.dev'],
+          usdToCnyRate: 7.2,
+          fxSource: 'frankfurter.dev',
+          fxLastSyncLocalDate: todayLocal,
+          fxAttemptLocalDate: todayLocal,
+          syncedRates: {
+            'gpt-oss-120b': {
+              inputPer1M: 0.05,
+              cachedPer1M: 0.05,
+              outputPer1M: 0.25,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'openrouter',
+              source: 'models.dev',
+            },
+          },
+          upstreamPool: {
+            'gpt-oss-120b': {
+              id: 'gpt-oss-120b',
+              label: 'GPT-OSS 120B',
+              group: '其他现役模型',
+              inputPer1M: 0.05,
+              cachedPer1M: 0.05,
+              outputPer1M: 0.25,
+              longContextTier: false,
+              longInputMultiplier: 1,
+              longOutputMultiplier: 1,
+              provider: 'openrouter',
+              source: 'models.dev',
+            },
+          },
+          discoveredModels: [],
+        },
+        null,
+        2,
+      ),
+      'utf-8',
+    );
+    const mgrV2Or = createPricingSyncManager({
+      stateDir: dirV2Or,
+      baseCatalog: MODEL_PRICING_CATALOG,
+      nowFn: () => fixedNowMs,
+      autoSyncDisabled: true,
+    });
+    const orHealedGptOss = mgrV2Or.getRuntimeCatalog().find((m) => m.id === 'gpt-oss-120b');
+    assert.equal(orHealedGptOss.inputPer1M, 0.15);
+    assert.equal(orHealedGptOss.cachedPer1M, 0.075);
+    assert.equal(orHealedGptOss.outputPer1M, 0.6);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-23 10:21:36
 // ============================================================================
