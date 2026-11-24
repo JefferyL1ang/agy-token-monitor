@@ -57,7 +57,15 @@ const UTF8_DECODER = new TextDecoder('utf-8');
 // Description: Bump LEDGER_SCHEMA_VERSION to 5 so v4 ledgers rebuild cleanly
 // separating 11/16+ Gemini 4 Hydrogen (Orchestrator) from 11/13-14 Gemini Flash.
 // ============================================================================
-export const LEDGER_SCHEMA_VERSION = 5;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Bump LEDGER_SCHEMA_VERSION to 6 so existing v5 ledgers rebuild
+// cleanly once with per-raw-model daily buckets (byRawModel) and activeRawModel.
+// ============================================================================
+export const LEDGER_SCHEMA_VERSION = 6;
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:30:45
 // ============================================================================
@@ -393,6 +401,15 @@ export const COLLAPSIBLE_CARD_IDS = Object.freeze([
 // ============================================================================
 // [MODIFIED END] 2026-11-23 21:53:10
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Export VALID_MODEL_NAME_MODES ('canonical' | 'routed') for v0.5.4
+// configurable model name display mode preference.
+// ============================================================================
+export const VALID_MODEL_NAME_MODES = Object.freeze(['canonical', 'routed']);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
 
 export const DEFAULT_PREFS = Object.freeze({
 // ============================================================================
@@ -445,6 +462,14 @@ export const DEFAULT_PREFS = Object.freeze({
   collapsedCards: Object.freeze({}),
 // ============================================================================
 // [MODIFIED END] 2026-11-23 21:53:10
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Add modelNameMode default ('canonical') to DEFAULT_PREFS for v0.5.4.
+// ============================================================================
+  modelNameMode: 'canonical',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
 // ============================================================================
   modelOverrides: Object.freeze({}),
 });
@@ -3676,6 +3701,30 @@ function resolveByModelMergeIdentity(pricing, modelName) {
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:33:00
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Add shared resolveModelNameMode() and resolveCanonicalModelLabel()
+// helpers for v0.5.4 canonical vs routed display mode across Tab 1 & Tab 2.
+// ============================================================================
+function resolveModelNameMode(prefs) {
+  return prefs?.modelNameMode === 'routed' ? 'routed' : 'canonical';
+}
+
+function resolveCanonicalModelLabel(modelId, rawSlug = '', runtimeCatalog = null) {
+  const candidate = typeof modelId === 'string' ? modelId.trim() : '';
+  if (!candidate || AUTO_UNKNOWN_RE.test(candidate)) return 'Auto';
+  const profile = resolveModelProfile(candidate, runtimeCatalog);
+  if (profile && profile.id !== 'auto') return profile.label;
+  const raw = typeof rawSlug === 'string' ? rawSlug.trim() : '';
+  if (raw && raw !== candidate && !AUTO_UNKNOWN_RE.test(raw)) {
+    const rawProfile = resolveModelProfile(raw, runtimeCatalog);
+    if (rawProfile && rawProfile.id !== 'auto') return rawProfile.label;
+  }
+  return candidate;
+}
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
 
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-16 22:04:00
@@ -3724,9 +3773,24 @@ function accumulateStepsInto(
 // Description: Accumulate Tab 1 byModel rows under canonical profile key/label
 // and track _rawModels / _stepModels Sets.
 // ============================================================================
-      const { mergeKey, mergedLabel } = resolveByModelMergeIdentity(pricing, model);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Split Tab 1 byModel/mainOnlyByModel rows by exact routed rawSlug
+// when prefs.modelNameMode === 'routed' while preserving canonical pricing.
+// ============================================================================
+      const isRoutedMode = resolveModelNameMode(prefs) === 'routed';
+      const rawCandidate = typeof step.rawDbModel === 'string' ? step.rawDbModel.trim() : '';
       const rawSlug =
-        (typeof step.rawDbModel === 'string' && step.rawDbModel.trim()) || model;
+        rawCandidate && !AUTO_UNKNOWN_RE.test(rawCandidate) ? rawCandidate : model;
+      const { mergeKey, mergedLabel } = isRoutedMode
+        ? {
+            mergeKey: `raw:${rawSlug.toLowerCase()}`,
+            mergedLabel: rawSlug,
+          }
+        : resolveByModelMergeIdentity(pricing, model);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
       let entry = byModelMap.get(mergeKey);
       if (!entry) {
         entry = {
@@ -4047,6 +4111,17 @@ function extractSubagentCallDescriptors(parsed, modelByStepIdx) {
             name: rawName || summaryLabel || childId.slice(0, 8),
             role: rawRole || 'subagent',
             defaultModel: resolvedModel,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Preserve rawDefaultModel on subagent call descriptors for routed mode.
+// ============================================================================
+            rawDefaultModel:
+              rawModel && rawModel.toLowerCase() !== 'inherit' && !AUTO_UNKNOWN_RE.test(rawModel)
+                ? rawModel
+                : '',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
             killed: false,
             spawnOrder: nextSpawnOrder++,
             invokedAtMs,
@@ -4144,14 +4219,31 @@ export function resolveChildrenAndSwarm(convId, parsed, modelByStepIdx, appDataD
 // ============================================================================
       const phaseStr = String(member?.phase || '').toUpperCase();
       const desiredStr = String(member?.desired_state || '').toUpperCase();
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Preserve rawDefaultModel on swarm member descriptors for routed mode.
+// ============================================================================
+      const rawMemberModel = String(
+        member?.model || member?.applied_model || member?.desired_model || '',
+      ).trim();
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
       directDescriptors.push({
         conversationId: mId,
         kind: 'swarm',
         name: memberName,
         role: typeof member?.role === 'string' && member.role ? member.role : 'worker',
-        defaultModel: normalizeModelId(
-          member?.model || member?.applied_model || member?.desired_model || 'Auto',
-        ),
+        defaultModel: normalizeModelId(rawMemberModel || 'Auto'),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Attach rawDefaultModel on swarm member descriptor.
+// ============================================================================
+        rawDefaultModel:
+          rawMemberModel && !AUTO_UNKNOWN_RE.test(rawMemberModel) ? rawMemberModel : '',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
         killed: Boolean(member?.killed || phaseStr === 'KILLED' || desiredStr === 'KILLED'),
         lastSeq: Math.max(
           Number(member?.last_read_seq) || 0,
@@ -4640,6 +4732,15 @@ function addStepIntoReceiptState(state, step, model, pricing, stepCost, childMet
           name: childMeta.name,
           role: childMeta.role,
           model: childMeta.model,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Preserve rawModel and modelLabel on receipt child metadata.
+// ============================================================================
+          rawModel: childMeta.rawModel || childMeta.model,
+          modelLabel: childMeta.modelLabel || '',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
         },
         bucket: emptyBucket(),
       };
@@ -4668,11 +4769,41 @@ function addStepIntoReceiptState(state, step, model, pricing, stepCost, childMet
       profileLabel: pricing.profileLabel,
       totalTokens: 0,
       costActual: 0,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Track per-raw-slug usage inside receipt byModelMap entries so
+// receipt.{today,all}.primaryModel exposes the exact routed rawModel slug.
+// ============================================================================
+      rawMap: new Map(),
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
     };
     state.byModelMap.set(model, modelEntry);
   }
   modelEntry.totalTokens += inTok + cacheTok + outTok;
   modelEntry.costActual += stepCost.costActual;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Accumulate routed rawSlug tokens and cost on receipt modelEntry.
+// ============================================================================
+  const rawCandidate = typeof step?.rawDbModel === 'string' ? step.rawDbModel.trim() : '';
+  const rawSlug = rawCandidate && !AUTO_UNKNOWN_RE.test(rawCandidate) ? rawCandidate : model;
+  const rawKey = rawSlug.toLowerCase();
+  let rawEntry = modelEntry.rawMap.get(rawKey);
+  if (!rawEntry) {
+    rawEntry = {
+      rawModel: rawSlug,
+      totalTokens: 0,
+      costActual: 0,
+    };
+    modelEntry.rawMap.set(rawKey, rawEntry);
+  }
+  rawEntry.totalTokens += inTok + cacheTok + outTok;
+  rawEntry.costActual += stepCost.costActual;
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
 }
 
 function addBucketInto(dst, src) {
@@ -4792,7 +4923,23 @@ function accumulateReceiptConversation(
   }
 }
 
-function finalizeReceiptScope(scope, state, todayDate, activeModel, effectivePrefs, totalChildrenCount) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Accept activeRawModel fallback in finalizeReceiptScope() and
+// expose primaryModel.rawModel for v0.5.4 routed model name display on receipts.
+// ============================================================================
+function finalizeReceiptScope(
+  scope,
+  state,
+  todayDate,
+  activeModel,
+  effectivePrefs,
+  totalChildrenCount,
+  activeRawModel = '',
+) {
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
   let startedAtMs = null;
   let endedAtMs = null;
   for (let i = 0; i < state.intervals.length; i++) {
@@ -4831,6 +4978,17 @@ function finalizeReceiptScope(scope, state, todayDate, activeModel, effectivePre
   addBucketInto(grandTotal, childrenSubtotal);
   finalizeBucket(grandTotal);
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Populate primaryModel.rawModel from top raw slug in scope
+// (with activeRawModel fallback) for routed receipt rendering.
+// ============================================================================
+  const cleanActiveRaw =
+    typeof activeRawModel === 'string' &&
+    activeRawModel.trim() &&
+    !AUTO_UNKNOWN_RE.test(activeRawModel.trim())
+      ? activeRawModel.trim()
+      : '';
   let primaryModel = null;
   if (state.byModelMap.size > 0) {
     const sortedModels = [...state.byModelMap.values()].sort(
@@ -4840,8 +4998,19 @@ function finalizeReceiptScope(scope, state, todayDate, activeModel, effectivePre
         String(a.model || '').localeCompare(String(b.model || '')),
     );
     const top = sortedModels[0];
+    let topRawModel = '';
+    if (top.rawMap && top.rawMap.size > 0) {
+      const sortedRaws = [...top.rawMap.values()].sort(
+        (a, b) =>
+          b.costActual - a.costActual ||
+          b.totalTokens - a.totalTokens ||
+          String(a.rawModel || '').localeCompare(String(b.rawModel || '')),
+      );
+      topRawModel = sortedRaws[0]?.rawModel || '';
+    }
     primaryModel = {
       model: top.model,
+      rawModel: topRawModel || cleanActiveRaw || top.model,
       profileId: top.profileId,
       profileLabel: top.profileLabel,
     };
@@ -4850,10 +5019,14 @@ function finalizeReceiptScope(scope, state, todayDate, activeModel, effectivePre
     const fallbackPricing = resolveModelPricing(fallbackModel, effectivePrefs);
     primaryModel = {
       model: fallbackModel,
+      rawModel: cleanActiveRaw || fallbackModel,
       profileId: fallbackPricing.profileId,
       profileLabel: fallbackPricing.profileLabel,
     };
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
 
   return {
     scope,
@@ -5083,18 +5256,15 @@ export function analyzeConversation(convId, options = {}) {
 // Description: Add resolveLabel() helper to map normalized model IDs to
 // canonical profile labels via runtimeCatalog.
 // ============================================================================
-  const resolveLabel = (modelId, rawSlug = '') => {
-    const candidate = typeof modelId === 'string' ? modelId.trim() : '';
-    if (!candidate || AUTO_UNKNOWN_RE.test(candidate)) return 'Auto';
-    const profile = resolveModelProfile(candidate, runtimeCatalog);
-    if (profile && profile.id !== 'auto') return profile.label;
-    const raw = typeof rawSlug === 'string' ? rawSlug.trim() : '';
-    if (raw && raw !== candidate && !AUTO_UNKNOWN_RE.test(raw)) {
-      const rawProfile = resolveModelProfile(raw, runtimeCatalog);
-      if (rawProfile && rawProfile.id !== 'auto') return rawProfile.label;
-    }
-    return candidate;
-  };
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Delegate resolveLabel() to shared resolveCanonicalModelLabel().
+// ============================================================================
+  const resolveLabel = (modelId, rawSlug = '') =>
+    resolveCanonicalModelLabel(modelId, rawSlug, runtimeCatalog);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:34:00
 // ============================================================================
@@ -5133,14 +5303,39 @@ export function analyzeConversation(convId, options = {}) {
 // [MODIFIED END] 2026-11-17 21:28:27
 // ============================================================================
   let defaultModel = normalizeModelId(options.defaultModel || 'Auto');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Track rawDefaultModel alongside normalized defaultModel so
+// conversations without DB steps yet retain exact routed fallback slug.
+// ============================================================================
+  let rawDefaultModel =
+    typeof options.defaultModel === 'string' &&
+    options.defaultModel.trim() &&
+    !AUTO_UNKNOWN_RE.test(options.defaultModel.trim())
+      ? options.defaultModel.trim()
+      : '';
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
   let subagentHint = null;
   if (defaultModel === 'Auto' && swarmInfo && !swarmInfo.isCoordinator && swarmInfo.selfMember) {
-    defaultModel = normalizeModelId(
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Capture raw swarm selfMember model before normalization.
+// ============================================================================
+    const rawSelfModel = String(
       swarmInfo.selfMember.model ||
         swarmInfo.selfMember.applied_model ||
         swarmInfo.selfMember.desired_model ||
-        'Auto',
-    );
+        '',
+    ).trim();
+    if (rawSelfModel && !AUTO_UNKNOWN_RE.test(rawSelfModel)) {
+      rawDefaultModel = rawSelfModel;
+    }
+    defaultModel = normalizeModelId(rawSelfModel || 'Auto');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
   }
   if (defaultModel === 'Auto' && !swarmInfo && !parsed.hasDbTelemetry) {
     subagentHint = findSubagentParentHint(convId, appDataDirs);
@@ -5153,7 +5348,17 @@ export function analyzeConversation(convId, options = {}) {
 // [MODIFIED BEGIN] 2026-11-19 13:34:05
 // Description: Capture activeRawModel from resolveModelTimeline().
 // ============================================================================
-  const { activeModel, activeRawModel, modelByStepIdx } = resolveModelTimeline(parsed, defaultModel);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Pass rawDefaultModel when present into resolveModelTimeline().
+// ============================================================================
+  const { activeModel, activeRawModel, modelByStepIdx } = resolveModelTimeline(
+    parsed,
+    rawDefaultModel || defaultModel,
+  );
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:34:05
 // ============================================================================
@@ -5337,7 +5542,18 @@ export function analyzeConversation(convId, options = {}) {
 // ============================================================================
 // [MODIFIED END] 2026-11-18 11:41:14
 // ============================================================================
-      const childTimeline = resolveModelTimeline(childParsed, desc.defaultModel || 'Auto');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Pass desc.rawDefaultModel into child resolveModelTimeline() so
+// freshly spawned children without DB steps preserve exact routed fallback slug.
+// ============================================================================
+      const childTimeline = resolveModelTimeline(
+        childParsed,
+        desc.rawDefaultModel || desc.defaultModel || 'Auto',
+      );
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
       localObservedProfiles.add(resolveModelProfile(childTimeline.activeModel, runtimeCatalog).id);
       const childLive = computeLiveStatus(childParsed);
 // ============================================================================
@@ -5399,6 +5615,18 @@ export function analyzeConversation(convId, options = {}) {
           name: desc.name,
           role: desc.role,
           model: childTimeline.activeModel,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Attach rawModel and modelLabel onto receipt child metadata.
+// ============================================================================
+          rawModel: childTimeline.activeRawModel || childTimeline.activeModel || 'Auto',
+          modelLabel: resolveLabel(
+            childTimeline.activeModel,
+            childTimeline.activeRawModel || childTimeline.activeModel || 'Auto',
+          ),
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
         },
       );
 
@@ -5479,6 +5707,14 @@ export function analyzeConversation(convId, options = {}) {
       activeModel,
       effectivePrefs,
       children.length,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Pass activeRawModel fallback to finalizeReceiptScope() for today & all scopes.
+// ============================================================================
+      activeRawModel,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
     ),
     all: finalizeReceiptScope(
       'all',
@@ -5487,6 +5723,14 @@ export function analyzeConversation(convId, options = {}) {
       activeModel,
       effectivePrefs,
       children.length,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Pass activeRawModel fallback to finalizeReceiptScope() for all scope.
+// ============================================================================
+      activeRawModel,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
     ),
   };
 // ============================================================================
@@ -5721,7 +5965,15 @@ export function analyzeConversation(convId, options = {}) {
 // ============================================================================
     sideQuestions,
     sideQuestionsTotals,
-    _etagPart: `${parsed.cacheKey}|${childEtagParts.join(',')}|${sqEtagParts.join(',')}|${isChildSession ? `${childKind}:${parentConversationId}${isSideQuestion && sqParentMeta?.title ? `:${sqParentMeta.title}` : ''}` : ''}`,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Include modelNameMode in analyzeConversation _etagPart so mode
+// changes invalidate snapshots immediately.
+// ============================================================================
+    _etagPart: `${parsed.cacheKey}|${childEtagParts.join(',')}|${sqEtagParts.join(',')}|${isChildSession ? `${childKind}:${parentConversationId}${isSideQuestion && sqParentMeta?.title ? `:${sqParentMeta.title}` : ''}` : ''}|mn:${resolveModelNameMode(effectivePrefs)}`,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:21:11
 // ============================================================================
@@ -5802,7 +6054,22 @@ function addDatedStepToDays(days, stepMs, stepModel, step, threshold) {
   const dateKey = formatLocalDate(stepMs);
   const hourKey = String(new Date(stepMs).getHours());
   if (!Object.hasOwn(days, dateKey)) {
-    days[dateKey] = { byModel: {}, hours: {} };
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Initialize byRawModel alongside byModel and hours in daily
+// ledger records (schema v6) for routed-mode Tab 2 table splitting.
+// ============================================================================
+    days[dateKey] = { byModel: {}, byRawModel: {}, hours: {} };
+  }
+  if (
+    !Object.hasOwn(days[dateKey], 'byRawModel') ||
+    !days[dateKey].byRawModel ||
+    typeof days[dateKey].byRawModel !== 'object'
+  ) {
+    days[dateKey].byRawModel = {};
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
   }
   if (!Object.hasOwn(days[dateKey].byModel, stepModel)) {
     defineOwnModelBucket(days[dateKey].byModel, stepModel);
@@ -5813,10 +6080,16 @@ function addDatedStepToDays(days, stepMs, stepModel, step, threshold) {
 // Description: Record underlying rawDbModel slugs on daily ledger byModel
 // buckets so Tab 2 preserves rawModels across canonical profile merges.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Normalize rawSlug fallback (ignoring Auto/unknown rawDbModel)
+// and populate prototype-safe days[dateKey].byRawModel[rawSlug] with
+// canonicalModel (plus rare same-day byCanonical split guard) for exact
+// routed vs canonical Tab 2 cost conservation.
+// ============================================================================
+  const rawCandidate = typeof step?.rawDbModel === 'string' ? step.rawDbModel.trim() : '';
   const rawSlug =
-    typeof step?.rawDbModel === 'string' && step.rawDbModel.trim()
-      ? step.rawDbModel.trim()
-      : stepModel;
+    rawCandidate && !AUTO_UNKNOWN_RE.test(rawCandidate) ? rawCandidate : stepModel;
   if (rawSlug && !AUTO_UNKNOWN_RE.test(rawSlug)) {
     const modelBucket = days[dateKey].byModel[stepModel];
     if (!Array.isArray(modelBucket.rawModels)) {
@@ -5826,6 +6099,52 @@ function addDatedStepToDays(days, stepMs, stepModel, step, threshold) {
       modelBucket.rawModels.push(rawSlug);
     }
   }
+
+  if (!Object.hasOwn(days[dateKey].byRawModel, rawSlug)) {
+    const initRawBucket = emptyRawTokenCounts();
+    initRawBucket.canonicalModel = stepModel;
+    Object.defineProperty(days[dateKey].byRawModel, rawSlug, {
+      value: initRawBucket,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
+  }
+  const rawBucket = days[dateKey].byRawModel[rawSlug];
+  if (rawBucket.canonicalModel !== stepModel) {
+    if (!rawBucket.byCanonical || typeof rawBucket.byCanonical !== 'object') {
+      const prevCanonical = rawBucket.canonicalModel || stepModel;
+      const byCanonical = {};
+      Object.defineProperty(byCanonical, prevCanonical, {
+        value: {
+          steps: rawBucket.steps,
+          stdIn: rawBucket.stdIn,
+          stdCache: rawBucket.stdCache,
+          stdOut: rawBucket.stdOut,
+          longIn: rawBucket.longIn,
+          longCache: rawBucket.longCache,
+          longOut: rawBucket.longOut,
+        },
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
+      rawBucket.byCanonical = byCanonical;
+    }
+    if (!Object.hasOwn(rawBucket.byCanonical, stepModel)) {
+      defineOwnModelBucket(rawBucket.byCanonical, stepModel);
+    }
+    addStepToRawCounts(rawBucket.byCanonical[stepModel], step, threshold);
+  } else if (rawBucket.byCanonical && typeof rawBucket.byCanonical === 'object') {
+    if (!Object.hasOwn(rawBucket.byCanonical, stepModel)) {
+      defineOwnModelBucket(rawBucket.byCanonical, stepModel);
+    }
+    addStepToRawCounts(rawBucket.byCanonical[stepModel], step, threshold);
+  }
+  addStepToRawCounts(rawBucket, step, threshold);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:35:00
 // ============================================================================
@@ -5992,6 +6311,14 @@ export function createUsageLedger(initialData = null) {
       let totalOutputTokens = 0;
       let latestContextTotal = 0;
       let activeModel = 'Auto';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Track activeRawModel on synthesized recovered-parent ledger records.
+// ============================================================================
+      let activeRawModel = 'Auto';
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
       let maxUpdatedAtMs = 0;
 
       const sortedItems = [...group.items].sort(
@@ -6000,6 +6327,22 @@ export function createUsageLedger(initialData = null) {
       for (const item of sortedItems) {
         const stepModel = normalizeModelId(item.model || 'Auto');
         if (stepModel !== 'Auto') activeModel = stepModel;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Capture latest non-Auto rawDbModel slug for recovered-parent activeRawModel.
+// ============================================================================
+        const itemRawCandidate =
+          typeof item.rawDbModel === 'string' ? item.rawDbModel.trim() : '';
+        const itemRawModel =
+          itemRawCandidate && !AUTO_UNKNOWN_RE.test(itemRawCandidate)
+            ? itemRawCandidate
+            : stepModel;
+        if (itemRawModel && !AUTO_UNKNOWN_RE.test(itemRawModel)) {
+          activeRawModel = itemRawModel;
+        }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
         observedProfiles.add(resolveModelProfile(stepModel).id);
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 16:09:30
@@ -6028,6 +6371,14 @@ export function createUsageLedger(initialData = null) {
         updatedAtMs: maxUpdatedAtMs,
         onDisk: false,
         activeModel,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Persist activeRawModel on recovered-parent ledger records.
+// ============================================================================
+        activeRawModel: activeRawModel || activeModel,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
         latestContextTotal,
         latestTokPerSec: null,
         status: 'ARCHIVED',
@@ -6057,6 +6408,14 @@ export function createUsageLedger(initialData = null) {
       updatedAtMs: cand.updatedAtMs,
       onDisk: true,
       activeModel: 'Auto',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Initialize activeRawModel on empty fallback ledger entries.
+// ============================================================================
+      activeRawModel: 'Auto',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
       latestContextTotal: 0,
       latestTokPerSec: null,
       status: 'IDLE',
@@ -6292,14 +6651,24 @@ export function createUsageLedger(initialData = null) {
         if (s.roster.title) swarmTitleByCoord.set(s.coordinatorId, s.roster.title);
         for (const [mName, member] of Object.entries(s.roster.members || {})) {
           if (isValidConversationId(member?.conversation_id)) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Preserve rawModel on swarmMemberLookup entries in ledger sync().
+// ============================================================================
+            const rawSwarmModel = String(
+              member.model || member.applied_model || member.desired_model || '',
+            ).trim();
             swarmMemberLookup.set(member.conversation_id, {
               coordinatorId: s.coordinatorId,
               swarmTitle: s.roster.title || '',
               name: mName,
-              model: normalizeModelId(
-                member.model || member.applied_model || member.desired_model || '',
-              ),
+              model: normalizeModelId(rawSwarmModel),
+              rawModel:
+                rawSwarmModel && !AUTO_UNKNOWN_RE.test(rawSwarmModel) ? rawSwarmModel : '',
             });
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
           }
         }
       }
@@ -6350,10 +6719,24 @@ export function createUsageLedger(initialData = null) {
           const convLower = c.convId.toLowerCase();
           const memberMeta = swarmMemberLookup.get(c.convId);
           const subHint = directSubagentHints.get(convLower) || subagentHintMap.get(convLower);
-          const defaultModel = normalizeModelId(
-            memberMeta?.model || subHint?.defaultModel || 'Auto',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Pass raw default model into resolveModelTimeline() and capture
+// activeRawModel when syncing ledger entries (schema v6).
+// ============================================================================
+          const defaultRawModel =
+            memberMeta?.rawModel ||
+            memberMeta?.model ||
+            subHint?.rawDefaultModel ||
+            subHint?.defaultModel ||
+            'Auto';
+          const { activeModel, activeRawModel, modelByStepIdx } = resolveModelTimeline(
+            parsed,
+            defaultRawModel,
           );
-          const { activeModel, modelByStepIdx } = resolveModelTimeline(parsed, defaultModel);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
           const live = computeLiveStatus(parsed);
 // ============================================================================
 // [MODIFIED END] 2026-11-17 17:19:56
@@ -6483,6 +6866,14 @@ export function createUsageLedger(initialData = null) {
           updatedAtMs: c.updatedAtMs,
           onDisk: true,
           activeModel,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Persist activeRawModel on ledger conversation records (schema v6).
+// ============================================================================
+          activeRawModel: activeRawModel || activeModel,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
           latestContextTotal,
           latestTokPerSec: speed.latestStepTokPerSec,
           status: live.status,
@@ -6621,6 +7012,19 @@ function buildPeriodSummary({
     }
     return pricingByModel.get(modelName);
   };
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Resolve modelNameMode and runtimeCatalog once per buildPeriodSummary()
+// for Tab 2 routed-mode splitting and canonical activeModelLabel derivation.
+// ============================================================================
+  const isRoutedMode = resolveModelNameMode(prefs) === 'routed';
+  const runtimeCatalog =
+    Array.isArray(prefs?._runtimeCatalog) && prefs._runtimeCatalog.length > 0
+      ? prefs._runtimeCatalog
+      : null;
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
 
   const activeDayKeys = new Set();
   const byModelMap = new Map();
@@ -6673,10 +7077,45 @@ function buildPeriodSummary({
         dayBuckets.set(dateKey, dBucket);
       }
 
-      for (const [rawModelName, raw] of Object.entries(dayObj?.byModel || {})) {
-        const modelName = normalizeModelId(rawModelName);
-        const pricing = getPricing(modelName);
-        const priced = priceBucketWithProfile(raw, pricing);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: In routed mode, iterate dayObj.byRawModel (falling back to
+// dayObj.byModel on legacy synthetic buckets), price with canonicalModel
+// (or per-canonical split buckets) for exact cost conservation, and group
+// byModelMap by raw:<slug.toLowerCase()> preserving canonical profile metadata.
+// ============================================================================
+      const hasRawBuckets =
+        isRoutedMode &&
+        dayObj?.byRawModel &&
+        typeof dayObj.byRawModel === 'object' &&
+        Object.keys(dayObj.byRawModel).length > 0;
+      const modelEntries = Object.entries(
+        hasRawBuckets ? dayObj.byRawModel : dayObj?.byModel || {},
+      );
+
+      for (const [entryKey, raw] of modelEntries) {
+        let modelName;
+        let pricing;
+        let priced;
+        if (hasRawBuckets) {
+          modelName = normalizeModelId(raw?.canonicalModel || entryKey);
+          pricing = getPricing(modelName);
+          if (raw?.byCanonical && typeof raw.byCanonical === 'object') {
+            priced = { costActual: 0, costUncachedBaseline: 0, costSavedByCache: 0 };
+            for (const [cModel, cCounts] of Object.entries(raw.byCanonical)) {
+              const cPriced = priceBucketWithProfile(cCounts, getPricing(normalizeModelId(cModel)));
+              priced.costActual += cPriced.costActual;
+              priced.costUncachedBaseline += cPriced.costUncachedBaseline;
+              priced.costSavedByCache += cPriced.costSavedByCache;
+            }
+          } else {
+            priced = priceBucketWithProfile(raw, pricing);
+          }
+        } else {
+          modelName = normalizeModelId(entryKey);
+          pricing = getPricing(modelName);
+          priced = priceBucketWithProfile(raw, pricing);
+        }
         const rawIn = (raw.stdIn || 0) + (raw.longIn || 0);
         const rawCache = (raw.stdCache || 0) + (raw.longCache || 0);
         const rawOut = (raw.stdOut || 0) + (raw.longOut || 0);
@@ -6704,7 +7143,16 @@ function buildPeriodSummary({
 // Description: Merge Tab 2 period byModel rows by canonical profileId/label
 // (keeping unknown models separate) and accumulate underlying rawModels.
 // ============================================================================
-        const { mergeKey, mergedLabel } = resolveByModelMergeIdentity(pricing, modelName);
+        let mergeKey;
+        let mergedLabel;
+        if (isRoutedMode) {
+          const rawSlug =
+            typeof entryKey === 'string' && entryKey.trim() ? entryKey.trim() : modelName;
+          mergeKey = `raw:${rawSlug.toLowerCase()}`;
+          mergedLabel = rawSlug;
+        } else {
+          ({ mergeKey, mergedLabel } = resolveByModelMergeIdentity(pricing, modelName));
+        }
 
         let mEntry = byModelMap.get(mergeKey);
         if (!mEntry) {
@@ -6713,6 +7161,7 @@ function buildPeriodSummary({
             profileId: pricing.profileId,
             profileLabel: pricing.profileLabel,
             rateDisplay: formatRateSummary(pricing),
+            _latestDateKey: dateKey,
             _rawModels: new Set(),
             convIds: new Set(),
             inputTokens: 0,
@@ -6721,15 +7170,28 @@ function buildPeriodSummary({
             costActual: 0,
           };
           byModelMap.set(mergeKey, mEntry);
+        } else if (
+          isRoutedMode &&
+          dateKey > (mEntry._latestDateKey || '') &&
+          pricing.profileId !== 'auto'
+        ) {
+          mEntry.profileId = pricing.profileId;
+          mEntry.profileLabel = pricing.profileLabel;
+          mEntry.rateDisplay = formatRateSummary(pricing);
+          mEntry._latestDateKey = dateKey;
         }
-        if (Array.isArray(raw?.rawModels) && raw.rawModels.length > 0) {
+        if (isRoutedMode) {
+          if (mergedLabel && !AUTO_UNKNOWN_RE.test(mergedLabel)) {
+            mEntry._rawModels.add(mergedLabel);
+          }
+        } else if (Array.isArray(raw?.rawModels) && raw.rawModels.length > 0) {
           for (const rm of raw.rawModels) {
             if (typeof rm === 'string' && rm && !AUTO_UNKNOWN_RE.test(rm)) {
               mEntry._rawModels.add(rm);
             }
           }
-        } else if (rawModelName && !AUTO_UNKNOWN_RE.test(rawModelName)) {
-          mEntry._rawModels.add(rawModelName);
+        } else if (entryKey && !AUTO_UNKNOWN_RE.test(entryKey)) {
+          mEntry._rawModels.add(entryKey);
         }
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:35:10
@@ -6740,6 +7202,9 @@ function buildPeriodSummary({
         mEntry.outputTokens += rawOut;
         mEntry.costActual += priced.costActual;
       }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
 
       if (rangeKey === 'today' && dayObj?.hours) {
         for (const [hrStr, hrModels] of Object.entries(dayObj.hours)) {
@@ -6810,11 +7275,33 @@ function buildPeriodSummary({
 // [MODIFIED END] 2026-11-20 15:35:18
 // ============================================================================
       const title = conv.title || conv.fallbackTitle || convId.slice(0, 8);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Expose activeModelLabel and activeRawModel on Tab 2 period
+// convSummaries / topConversations items for canonical vs routed UI rendering.
+// ============================================================================
+      const convActiveModel = normalizeModelId(conv.activeModel || 'Auto');
+      const convRawCandidate =
+        typeof conv.activeRawModel === 'string' ? conv.activeRawModel.trim() : '';
+      const convActiveRawModel =
+        convRawCandidate && !AUTO_UNKNOWN_RE.test(convRawCandidate)
+          ? convRawCandidate
+          : convActiveModel;
+      const convActiveModelLabel = resolveCanonicalModelLabel(
+        convActiveModel,
+        convActiveRawModel,
+        runtimeCatalog,
+      );
       convSummaries.push({
         conversationId: convId,
         title,
         workspace: conv.workspace || '',
-        activeModel: normalizeModelId(conv.activeModel || 'Auto'),
+        activeModel: convActiveModel,
+        activeModelLabel: convActiveModelLabel,
+        activeRawModel: convActiveRawModel,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
         status: conv.onDisk === false ? 'ARCHIVED' : conv.status || 'IDLE',
         onDisk: conv.onDisk !== false,
         contextTotal: conv.latestContextTotal || 0,
@@ -7283,11 +7770,33 @@ export function summarizeGlobalAndRecent(options = {}) {
         totalCost += priceBucketWithProfile(raw, getPricing(modelName)).costActual;
       }
     }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Expose activeModelLabel and activeRawModel on Tab 2 recentConversations
+// items so UI rows and C2 model filter switch cleanly between canonical and routed modes.
+// ============================================================================
+    const convActiveModel = normalizeModelId(conv.activeModel || 'Auto');
+    const convRawCandidate =
+      typeof conv.activeRawModel === 'string' ? conv.activeRawModel.trim() : '';
+    const convActiveRawModel =
+      convRawCandidate && !AUTO_UNKNOWN_RE.test(convRawCandidate)
+        ? convRawCandidate
+        : convActiveModel;
+    const convActiveModelLabel = resolveCanonicalModelLabel(
+      convActiveModel,
+      convActiveRawModel,
+      runtimeCatalog,
+    );
     return {
       conversationId: convId,
       title: conv.title || conv.fallbackTitle || convId.slice(0, 8),
       workspace: conv.workspace || '',
-      activeModel: normalizeModelId(conv.activeModel || 'Auto'),
+      activeModel: convActiveModel,
+      activeModelLabel: convActiveModelLabel,
+      activeRawModel: convActiveRawModel,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
       status: conv.status || 'IDLE',
       onDisk: true,
       contextTotal: conv.latestContextTotal || 0,
@@ -7348,7 +7857,15 @@ export function summarizeGlobalAndRecent(options = {}) {
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:29:19
 // ============================================================================
-    _etagPart: `${todayDate}|${onDiskCount}|${Object.keys(conversations).length}|p${pendingRebuildCount}|${etagParts.join(',')}`,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:50:59
+// Description: Include modelNameMode in summarizeGlobalAndRecent _etagPart so
+// mode switches invalidate snapshots immediately.
+// ============================================================================
+    _etagPart: `${todayDate}|${onDiskCount}|${Object.keys(conversations).length}|p${pendingRebuildCount}|mn:${resolveModelNameMode(effectivePrefs)}|${etagParts.join(',')}`,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:50:59
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-17 17:19:56
 // ============================================================================

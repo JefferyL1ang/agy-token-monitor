@@ -83,6 +83,15 @@ import {
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:30:10
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:55:01
+// Description: Import VALID_MODEL_NAME_MODES from parser.mjs for v0.5.4
+// configurable model name display mode validation.
+// ============================================================================
+  VALID_MODEL_NAME_MODES,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:55:01
+// ============================================================================
   VALID_TOKEN_UNITS,
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:14:00
@@ -93,6 +102,14 @@ import {
   createUsageLedger,
   discoverAppDataDirs,
   isValidConversationId,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:55:01
+// Description: Import normalizeModelId to keep observedRawModels canonical in routed mode.
+// ============================================================================
+  normalizeModelId,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:55:01
+// ============================================================================
   parseTranscript,
   resolveConversationPaths,
   summarizeGlobalAndRecent,
@@ -187,7 +204,14 @@ function readPluginVersion(rootDir) {
 // [MODIFIED BEGIN] 2026-11-23 21:53:10
 // Description: Bump fallback plugin version string to 0.5.3.
 // ============================================================================
-  return '0.5.3';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:55:01
+// Description: Bump fallback plugin version string to 0.5.4.
+// ============================================================================
+  return '0.5.4';
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:55:01
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 21:53:10
 // ============================================================================
@@ -262,6 +286,15 @@ const VALID_MODEL_SORT_DIR_SET = new Set(VALID_MODEL_SORT_DIRS);
 const COLLAPSIBLE_CARD_ID_SET = new Set(COLLAPSIBLE_CARD_IDS);
 // ============================================================================
 // [MODIFIED END] 2026-11-23 21:53:10
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:55:01
+// Description: Build VALID_MODEL_NAME_MODE_SET allowlist ('canonical' | 'routed')
+// for v0.5.4 modelNameMode sanitization and /api/prefs validation.
+// ============================================================================
+const VALID_MODEL_NAME_MODE_SET = new Set(VALID_MODEL_NAME_MODES);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:55:01
 // ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 10:26:00
@@ -583,6 +616,14 @@ function sanitizeLoadedPrefs(rawPrefs) {
 // ============================================================================
 // [MODIFIED END] 2026-11-23 21:53:10
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:55:01
+// Description: Include modelNameMode default ('canonical') in sanitizeLoadedPrefs.
+// ============================================================================
+    modelNameMode: DEFAULT_PREFS.modelNameMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:55:01
+// ============================================================================
     modelOverrides: {},
   };
   if (!rawPrefs || typeof rawPrefs !== 'object') return merged;
@@ -662,6 +703,20 @@ function sanitizeLoadedPrefs(rawPrefs) {
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:30:10
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:55:01
+// Description: Restore persisted modelNameMode when valid ('canonical' | 'routed'),
+// falling back to 'canonical' otherwise (v0.5.4).
+// ============================================================================
+  if (
+    typeof rawPrefs.modelNameMode === 'string' &&
+    VALID_MODEL_NAME_MODE_SET.has(rawPrefs.modelNameMode)
+  ) {
+    merged.modelNameMode = rawPrefs.modelNameMode;
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:55:01
 // ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 11:47:54
@@ -1004,6 +1059,23 @@ function validateAndMergePrefs(currentPrefs, input) {
   }
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:30:10
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:55:01
+// Description: Validate optional modelNameMode ('canonical' | 'routed') in
+// /api/prefs and persist into next.modelNameMode (v0.5.4).
+// ============================================================================
+  if (input.modelNameMode !== undefined) {
+    if (
+      typeof input.modelNameMode !== 'string' ||
+      !VALID_MODEL_NAME_MODE_SET.has(input.modelNameMode)
+    ) {
+      return { error: 'modelNameMode must be canonical or routed.' };
+    }
+    next.modelNameMode = input.modelNameMode;
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:55:01
 // ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-19 11:47:54
@@ -1462,7 +1534,15 @@ app.api(
       }
       if (Array.isArray(currentRaw?.totals?.byModel)) {
         for (const entry of currentRaw.totals.byModel) {
-          const m = typeof entry?.model === 'string' ? entry.model.trim() : '';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:55:01
+// Description: Normalize currentRaw.totals.byModel model names before adding to
+// observedRawModels so routed tier slugs never promote duplicate catalog entries.
+// ============================================================================
+          const m = normalizeModelId(typeof entry?.model === 'string' ? entry.model.trim() : '');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:55:01
+// ============================================================================
           if (m && !/^(?:auto|unknown|none)$/i.test(m)) {
             observedRawModels.add(m);
           }
@@ -1569,6 +1649,15 @@ app.api(
       const rawEtag = [
         targetConv || '-',
         `p${prefsVersion}`,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:55:01
+// Description: Include prefs.modelNameMode directly in snapshot ETag input so
+// switching between canonical and routed always invalidates cached responses.
+// ============================================================================
+        `mn:${state.prefs.modelNameMode || 'canonical'}`,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:55:01
+// ============================================================================
         `m${metadataStore.getVersion()}`,
         currentRaw?._etagPart || '-',
         globalRaw._etagPart || '-',

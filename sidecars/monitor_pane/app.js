@@ -36,6 +36,14 @@
   const VALID_TOKEN_UNITS = ['auto', 'wan_yi', 'exact', 'm'];
   const VALID_LANGUAGES = ['zh', 'en'];
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Add VALID_MODEL_NAME_MODES constant ('canonical' | 'routed') for v0.5.4 model display toggle.
+// ============================================================================
+  const VALID_MODEL_NAME_MODES = ['canonical', 'routed'];
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
+// ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 20:29:41
 // Description: Add model sort option constants and SVG namespace constant for v0.2.5.
 // ============================================================================
@@ -148,6 +156,14 @@
     // v0.2.2 bilingual, token unit, /compact & trend scroll state
     lang: 'zh',
     tokenUnit: 'auto',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Add state.modelNameMode ('canonical' default vs 'routed') for v0.5.4 model display toggle.
+// ============================================================================
+    modelNameMode: 'canonical',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
     pendingPrefSaves: 0,
     compactCopiedUntil: 0,
     compactTimer: null,
@@ -935,6 +951,17 @@
 // [MODIFIED END] 2026-11-23 21:56:35
 // ============================================================================
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Add v0.5.4 model name display mode settings and routed model family tooltip i18n keys (zh).
+// ============================================================================
+      'settings.modelNameModeLabel': '模型名称显示',
+      'settings.modelModeCanonical': '笼统名称 (默认)',
+      'settings.modelModeRouted': '具体路由型号',
+      'childrenModels.routedRateTip': '{model}\n所属模型族: {profile} ({rate})',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
+// ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:10
 // ============================================================================
     },
@@ -1541,6 +1568,17 @@
       'global.recentCollapsedMany': '{count} chats',
 // ============================================================================
 // [MODIFIED END] 2026-11-23 21:56:35
+// ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Add v0.5.4 model name display mode settings and routed model family tooltip i18n keys (en).
+// ============================================================================
+      'settings.modelNameModeLabel': 'Model Name Display',
+      'settings.modelModeCanonical': 'Canonical Name (Default)',
+      'settings.modelModeRouted': 'Exact Routed Model',
+      'childrenModels.routedRateTip': '{model}\nModel Family: {profile} ({rate})',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
 // ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 20:19:10
@@ -3425,6 +3463,19 @@
     if (unitSelect) {
       unitSelect.value = VALID_TOKEN_UNITS.includes(prefs.tokenUnit) ? prefs.tokenUnit : 'auto';
     }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Populate #pref-model-name-mode select from prefs.modelNameMode in populateSettingsForm.
+// ============================================================================
+    const modelNameModeSelect = $('pref-model-name-mode');
+    if (modelNameModeSelect) {
+      modelNameModeSelect.value = VALID_MODEL_NAME_MODES.includes(prefs.modelNameMode)
+        ? prefs.modelNameMode
+        : 'canonical';
+    }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
     $('pref-currency').value = prefs.currency === 'CNY' ? 'CNY' : 'USD';
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 15:48:00
@@ -3479,6 +3530,15 @@
     const hardContextLimit = Number($('pref-hard-limit').value);
     const rawUnit = $('pref-token-unit')?.value || 'auto';
     const tokenUnit = VALID_TOKEN_UNITS.includes(rawUnit) ? rawUnit : 'auto';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Read and validate #pref-model-name-mode in saveSettings.
+// ============================================================================
+    const rawModelNameMode = $('pref-model-name-mode')?.value || state.modelNameMode || 'canonical';
+    const modelNameMode = VALID_MODEL_NAME_MODES.includes(rawModelNameMode) ? rawModelNameMode : 'canonical';
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
     const currency = $('pref-currency').value === 'CNY' ? 'CNY' : 'USD';
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 15:48:00
@@ -3537,6 +3597,14 @@
         softContextLimit: Math.round(softContextLimit),
         hardContextLimit: Math.round(hardContextLimit),
         tokenUnit,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Include modelNameMode in POST /api/prefs payload.
+// ============================================================================
+        modelNameMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
         language: state.lang,
         currency,
 // ============================================================================
@@ -3580,15 +3648,37 @@
       }
       state.tokenUnit = tokenUnit;
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Apply saved modelNameMode immediately, invalidate receipt/card signatures, and re-render header + active tab right away before forced poll.
+// ============================================================================
+// ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 22:07:46
 // Description: Reset Tab 1 card memoization signatures after saving settings.
 // ============================================================================
+      prefMutationSeq += 1;
+      state.modelNameMode = modelNameMode;
+      if (state.snapshot) {
+        if (data.prefs && typeof data.prefs === 'object') {
+          state.snapshot.prefs = data.prefs;
+        } else if (state.snapshot.prefs && typeof state.snapshot.prefs === 'object') {
+          state.snapshot.prefs.modelNameMode = modelNameMode;
+          state.snapshot.prefs.tokenUnit = tokenUnit;
+        }
+      }
       resetCardRenderSigs();
+      state.lastReceiptDataSig = '';
 // ============================================================================
 // [MODIFIED END] 2026-11-17 22:07:46
 // ============================================================================
       lastEtag = '';
       setDrawerOpen(false);
+      if (state.snapshot) {
+        renderHeader(state.snapshot);
+        renderActiveTab(state.snapshot);
+      }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
       showToast(t('settings.savedToast'));
       await pollSnapshot(true);
 // ============================================================================
@@ -3891,12 +3981,19 @@
 // [MODIFIED BEGIN] 2026-11-23 21:56:35
 // Description: Bump fallback app version from 0.5.2 to 0.5.3.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Bump fallback app version from 0.5.3 to 0.5.4.
+// ============================================================================
     const raw =
       state.snapshot?.appVersion ||
       state.snapshot?.updateStatus?.currentVersion ||
       state.activeUpdateStatus?.currentVersion ||
-      '0.5.3';
-    return String(raw).trim().replace(/^[vV]/, '') || '0.5.3';
+      '0.5.4';
+    return String(raw).trim().replace(/^[vV]/, '') || '0.5.4';
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 21:56:35
 // ============================================================================
@@ -4720,6 +4817,14 @@
         : current.receipt?.all;
     return JSON.stringify([
       state.lang,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Include state.modelNameMode and primaryModel.rawModel / activeRawModel in computeReceiptDataSig.
+// ============================================================================
+      state.modelNameMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
       prefs?.currency || 'USD',
       num(prefs?.cnyRate, 0),
       state.receiptScope,
@@ -4737,6 +4842,14 @@
             Math.round(num(scopeObj.activeDurationMs, 0) / 60000),
             num(scopeObj.compactionsCount, 0),
             scopeObj.primaryModel?.model || '',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Track scopeObj.primaryModel.rawModel in computeReceiptDataSig.
+// ============================================================================
+            scopeObj.primaryModel?.rawModel || '',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
             scopeObj.primaryModel?.profileLabel || '',
             num(scopeObj.subagentsCount, 0),
             num(scopeObj.grandTotal?.stepsCount, 0),
@@ -4745,6 +4858,15 @@
             Array.isArray(scopeObj.children) ? scopeObj.children.length : 0,
           ]
         : [
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Track activeModel and activeRawModel in fallback receipt dirty signature.
+// ============================================================================
+            current.activeModel || '',
+            current.activeRawModel || '',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
             num(current.totals?.withChildren?.stepsCount, 0),
             num(current.totals?.withChildren?.totalTokens, 0),
             num(current.totals?.withChildren?.costActual, 0),
@@ -4779,6 +4901,14 @@
       lang: state.lang,
       scope: state.receiptScope,
       detailMode: state.receiptDetailMode,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Forward state.modelNameMode to buildReceiptViewModel in renderReceiptModal.
+// ============================================================================
+      modelNameMode: state.modelNameMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
       sessionTitle,
       isChildView,
     });
@@ -4923,6 +5053,31 @@
 // [MODIFIED BEGIN] 2026-11-19 13:28:17
 // Description: Add Scheme A canonical model formatters (formatHeaderModelDisplay, formatModelBreakdownRowDisplay) and show activeRawModel in #model-pill tooltip.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Add isRoutedModelMode() and formatScopedModelPair() helpers and adapt header, byModel tables, and tooltips for 'canonical' vs 'routed' display mode.
+// ============================================================================
+  function isRoutedModelMode() {
+    return state.modelNameMode === 'routed';
+  }
+
+  function formatScopedModelPair(canonical, raw) {
+    const canonStr = String(canonical || '').trim();
+    const rawStr = String(raw || '').trim();
+    const routed = isRoutedModelMode();
+    const primary = routed
+      ? (rawStr || canonStr || 'Auto')
+      : (canonStr || rawStr || 'Auto');
+    const other = routed ? canonStr : rawStr;
+    const isAutoVal = (v) => /^auto(?:\s*[（(].*)?$/i.test(v) || /^unknown$/i.test(v);
+    const secondary =
+      other && other.toLowerCase() !== primary.toLowerCase() && !(isAutoVal(primary) && isAutoVal(other))
+        ? other
+        : '';
+    const title = secondary ? `${primary} (${secondary})` : primary;
+    return { display: primary, secondary, title };
+  }
+
   function formatHeaderModelDisplay(current) {
     if (!current || typeof current !== 'object') return '—';
     const explicitLabel = String(current.activeModelLabel || '').trim();
@@ -4932,7 +5087,7 @@
       }
       return explicitLabel;
     }
-    const rawActive = String(current.activeModel || '').trim();
+    const rawActive = String(current.activeModel || current.activeRawModel || '').trim();
     if (!rawActive) return '—';
     if (/^auto(?:\s*[（(].*)?$/i.test(rawActive) || /^unknown$/i.test(rawActive)) {
       return state.lang === 'en' ? 'Auto' : 'Auto (默认)';
@@ -4952,6 +5107,23 @@
     const isAutoRow =
       (row?.profileId === 'auto' || !row?.profileId) &&
       /^auto(?:\s*[（(]|$)/i.test(rawModelText);
+    const profLabel =
+      state.lang === 'en' && row?.profileId && MODEL_PROFILE_EN[row.profileId]
+        ? MODEL_PROFILE_EN[row.profileId].label
+        : row?.profileLabel;
+
+    if (isRoutedModelMode()) {
+      const displayModel = isAutoRow ? 'Auto' : rawModelText;
+      const title = profLabel
+        ? t('childrenModels.routedRateTip', {
+            model: displayModel,
+            profile: profLabel,
+            rate: row?.rateDisplay || '',
+          })
+        : displayModel;
+      return { displayModel, title };
+    }
+
     const displayModel = isAutoRow
       ? (state.lang === 'en' ? 'Auto' : 'Auto (默认)')
       : rawModelText;
@@ -4963,10 +5135,6 @@
       rawSlugs.length > 0 && rawSummary.toLowerCase() !== displayModel.toLowerCase()
         ? `${displayModel} (${rawSummary})`
         : displayModel;
-    const profLabel =
-      state.lang === 'en' && row?.profileId && MODEL_PROFILE_EN[row.profileId]
-        ? MODEL_PROFILE_EN[row.profileId].label
-        : row?.profileLabel;
     const title = profLabel
       ? t('childrenModels.rateTip', {
           model: tipModel,
@@ -4976,6 +5144,9 @@
       : tipModel;
     return { displayModel, title };
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
 
   function renderHeader(snap) {
     const current = snap?.current || null;
@@ -5019,13 +5190,21 @@
     statusPill.title = nextText;
     state.lastStopwatchText = nextText;
 
-    const displayName = formatHeaderModelDisplay(current);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Switch header #model-pill label between canonical name and activeRawModel according to state.modelNameMode while preserving model dot color.
+// ============================================================================
+    const canonicalName = formatHeaderModelDisplay(current);
     const rawModel = String(current?.activeRawModel || current?.activeModel || '').trim();
+    const headerModelPair = canonicalName !== '—'
+      ? formatScopedModelPair(canonicalName, rawModel)
+      : { display: '—', secondary: '', title: '' };
+    const displayName = headerModelPair.display;
     modelText.textContent = displayName;
     const modelPillEl = $('model-pill');
     const modelDot = typeof modelPillEl?.querySelector === 'function' ? modelPillEl.querySelector('.model-dot') : null;
     if (modelDot && modelDot.style) {
-      const modelAccent = displayName !== '—' ? getModelAccent(displayName, rawModel) : '';
+      const modelAccent = displayName !== '—' ? getModelAccent(canonicalName, rawModel) : '';
       if (modelAccent) {
         if (typeof modelDot.style.setProperty === 'function') {
           modelDot.style.setProperty('--model-accent', modelAccent);
@@ -5039,19 +5218,23 @@
       }
     }
 // ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
+// ============================================================================
 // [MODIFIED END] 2026-11-20 10:30:56
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Format #model-pill tooltip from headerModelPair so routed mode shows canonical name and canonical mode preserves raw slug tooltip.
+// ============================================================================
     if (displayName !== '—') {
-      const showRaw = Boolean(
-        rawModel &&
-        rawModel.toLowerCase() !== displayName.toLowerCase() &&
-        !(/^auto$/i.test(rawModel) && /^auto(?:\s*[（(]|$)/i.test(displayName)),
-      );
-      const titleModel = showRaw ? `${displayName} (${rawModel})` : displayName;
-      $('model-pill').title = t('header.modelTitle', { model: titleModel });
+      $('model-pill').title = t('header.modelTitle', { model: headerModelPair.title });
     } else {
       $('model-pill').title = t('header.currentModel');
     }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-19 13:28:17
 // ============================================================================
@@ -6352,6 +6535,14 @@
       ? JSON.stringify([
           true,
           state.lang,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Include state.modelNameMode and child modelLabel/rawModel in childrenModels dirty signature.
+// ============================================================================
+          state.modelNameMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
           current.conversationId || '',
           sortedChildren.length,
           byModel.length,
@@ -6360,6 +6551,14 @@
           false,
           state.lang,
           state.tokenUnit,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Include state.modelNameMode in expanded childrenModels dirty signature.
+// ============================================================================
+          state.modelNameMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
           currency,
           num(prefs?.cnyRate, 0),
           state.modelSortBy,
@@ -6377,6 +6576,15 @@
             ch?.name || '',
             ch?.role || '',
             ch?.model || '',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Track child modelLabel and rawModel in childrenModels dirty signature.
+// ============================================================================
+            ch?.modelLabel || '',
+            ch?.rawModel || '',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
             num(ch?.contextTotal, 0),
             num(ch?.latestTokPerSec, 0),
             num(ch?.outputTokens, 0),
@@ -6575,6 +6783,17 @@
             statusSpan,
           );
 
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Format Tab 1 child row model name and tooltip via formatScopedModelPair (canonical modelLabel default vs routed rawModel) while keeping accurate model dot color.
+// ============================================================================
+          const childCanonical = ch.modelLabel || ch.model || 'Auto';
+          const childRaw = ch.rawModel || ch.model || '';
+          const childModelPair = formatScopedModelPair(childCanonical, childRaw);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
+
           return el('div', { className: isKilled ? 'child-row is-ended' : 'child-row' },
             el('div', { className: 'child-top' },
               el('div', { className: 'child-id-group' },
@@ -6592,10 +6811,17 @@
 // [MODIFIED BEGIN] 2026-11-20 10:28:34
 // Description: Prepend model identity .model-dot next to child row model name.
 // ============================================================================
-                el('span', null,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Render scoped child model display and tooltip in Tab 1 child row.
+// ============================================================================
+                el('span', { title: childModelPair.title },
                   createModelDot(ch.modelLabel || ch.model, ch.rawModel),
-                  ch.model || 'Auto',
+                  childModelPair.display,
                 ),
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:28:34
 // ============================================================================
@@ -6758,7 +6984,17 @@
 // ============================================================================
                   return el('tr', null,
                     el('td', { className: 'model-cell', title: rateTip },
-                      createModelDot(row.profileId || displayModel, Array.isArray(row.rawModels) ? row.rawModels[0] : ''),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Resolve Tab 1 byModel dot accent via profileId / profileLabel / model fallback so routed rows retain exact family colors.
+// ============================================================================
+                      createModelDot(
+                        row.profileId || row.profileLabel || row.model,
+                        (Array.isArray(row.rawModels) && row.rawModels[0]) || row.model || '',
+                      ),
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
                       displayModel,
                     ),
                     el('td', { className: 'num', textContent: fmtInt(row.stepsCount) }),
@@ -6891,6 +7127,14 @@
           false,
           state.lang,
           state.tokenUnit,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Include state.modelNameMode in renderSideQuestionsCard dirty signature.
+// ============================================================================
+          state.modelNameMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
           currency,
           num(prefs?.cnyRate, 0),
           Boolean(state.sideQuestionsExpanded),
@@ -7066,10 +7310,16 @@
         const hasValidUpdatedAt = Number.isFinite(updatedAtNum) && updatedAtNum > 0;
         const relTime = hasValidUpdatedAt ? fmtRelTime(updatedAtNum) : '';
 
-        const sqModel = sq.model || 'Auto';
-        const sqModelTip = sq.rawModel && sq.rawModel !== sqModel
-          ? `${sqModel} (${sq.rawModel})`
-          : sqModel;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Format Side Question row model label and tooltip via formatScopedModelPair according to state.modelNameMode.
+// ============================================================================
+        const sqCanonical = sq.model || 'Auto';
+        const sqRaw = sq.rawModel || sq.model || '';
+        const sqModelPair = formatScopedModelPair(sqCanonical, sqRaw);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
         const sqHitMeta = getModelRowCacheHitMeta(sq);
         const sqTotalTokens = num(
           sq.totalTokens,
@@ -7114,10 +7364,17 @@
 // [MODIFIED BEGIN] 2026-11-20 10:28:34
 // Description: Add model identity .model-dot to side-question rows and .btn-soft + external icon to open-session button.
 // ============================================================================
-              el('span', { title: sqModelTip },
-                createModelDot(sqModel, sq.rawModel),
-                sqModel,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Render scoped Side Question model display and tooltip while preserving canonical dot accent.
+// ============================================================================
+              el('span', { title: sqModelPair.title },
+                createModelDot(sqCanonical, sq.rawModel),
+                sqModelPair.display,
               ),
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
               el('span', { textContent: t('global.stepsCount', { count: fmtInt(sq.stepsCount) }) }),
               el('span', { title: fmtInt(sqTotalTokens), textContent: fmtTokens(sqTotalTokens) }),
               sqHitMeta.hasInput
@@ -7420,6 +7677,16 @@
       : rawPillLabel;
     const rawSlug = slot.rawModel || slot.model || 'Auto';
 // ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Compute Pixel Office Inspector primary badge and muted secondary label for 'canonical' vs 'routed' display mode.
+// ============================================================================
+    const inspectorModelPair = formatScopedModelPair(modelPillLabel, rawSlug);
+    const inspectorBadgeLabel = isRoutedModelMode() ? inspectorModelPair.display : modelPillLabel;
+    const inspectorSecondaryLabel = isRoutedModelMode() ? inspectorModelPair.secondary : rawSlug;
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
+// ============================================================================
 // [MODIFIED END] 2026-11-19 13:28:17
 // ============================================================================
 
@@ -7579,14 +7846,18 @@
 // [MODIFIED BEGIN] 2026-11-20 10:23:58
 // Description: Use .model-dot with --model-accent (deskAccent) in Pixel Inspector model chip and prepend stroke status icon.
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Render Pixel Inspector model badge and secondary status-row model label according to state.modelNameMode.
+// ============================================================================
           el('div', { className: 'pixel-inspector-persona-row' },
-            el('span', { className: 'pixel-inspector-persona-badge', title: modelPillLabel },
+            el('span', { className: 'pixel-inspector-persona-badge', title: inspectorModelPair.title || inspectorBadgeLabel },
               el('span', {
                 className: 'model-dot',
                 'aria-hidden': 'true',
                 style: deskAccent ? { '--model-accent': deskAccent } : null,
               }),
-              el('span', { textContent: modelPillLabel }),
+              el('span', { textContent: inspectorBadgeLabel }),
             ),
           ),
           el('div', { className: 'pixel-inspector-status-row' },
@@ -7594,8 +7865,17 @@
               statusIconName ? icon(statusIconName, 12) : null,
               statusText,
             ),
-            el('span', { className: 'pixel-inspector-model', textContent: rawSlug, title: rawSlug }),
+            inspectorSecondaryLabel
+              ? el('span', {
+                  className: 'pixel-inspector-model',
+                  textContent: inspectorSecondaryLabel,
+                  title: inspectorSecondaryLabel,
+                })
+              : null,
           ),
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-20 10:23:58
 // ============================================================================
@@ -7667,6 +7947,14 @@
       state.lang,
       currency,
       state.tokenUnit,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Include state.modelNameMode in renderPixelOfficeCard dirty signature so open inspector updates immediately on mode toggle.
+// ============================================================================
+      state.modelNameMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
       num(prefs?.cnyRate, 0),
       collapsed,
       state.pixelOfficeSelectedKey || '',
@@ -8175,6 +8463,14 @@
       activeChip,
       recentListWrap,
       modelOptionsSig: '',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Track lastModelNameMode on persistent Tab 2 DOM state for graceful model filter reset on mode switch.
+// ============================================================================
+      lastModelNameMode: state.modelNameMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
     };
     state.globalDom = dom;
     state.cardRenderSigs.globalTop = '';
@@ -8233,6 +8529,14 @@
     return JSON.stringify([
       state.lang,
       state.tokenUnit,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Include state.modelNameMode in buildGlobalTopSig so Tab 2 top cards re-render on model display mode switch.
+// ============================================================================
+      state.modelNameMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
       currency,
       periodKey,
       effectiveRangeKey,
@@ -8290,6 +8594,15 @@
       byModel.map((r) => [
         r.profileId || r.model || '',
         r.model || '',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Include profileLabel and rateDisplay in Tab 2 globalTop byModel signature.
+// ============================================================================
+        r.profileLabel || '',
+        r.rateDisplay || '',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
         Array.isArray(r.rawModels) ? r.rawModels.join(',') : '',
         num(r.conversationsCount, 0),
         num(r.inputTokens, 0),
@@ -8311,6 +8624,20 @@
       ]),
     ]);
   }
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Add getGlobalConvModelInfo helper and adapt Tab 2 C2 model filter dropdown, listSig, filtering, and row labels for 'canonical' vs 'routed' display mode.
+// ============================================================================
+  function getGlobalConvModelInfo(item) {
+    const canonical = String(item?.activeModelLabel || item?.activeModel || '').trim() || 'Auto';
+    const raw = String(item?.activeRawModel || item?.activeModel || '').trim();
+    const pair = formatScopedModelPair(canonical, raw);
+    return { canonical, raw, ...pair };
+  }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
 
   function renderGlobalSessionListSection(dom, snap, preCtx = null) {
     if (!dom) return;
@@ -8337,15 +8664,28 @@
     if (dom.modelSelect.getAttribute('aria-label') !== nextModelAria) {
       dom.modelSelect.setAttribute('aria-label', nextModelAria);
     }
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Populate C2 model filter dropdown by active modelNameMode and gracefully reset state.globalModelFilter when absent after mode switch.
+// ============================================================================
     const modelSet = new Set();
     for (const item of listItems) {
-      modelSet.add(String(item?.activeModel || 'Auto'));
+      modelSet.add(getGlobalConvModelInfo(item).display);
     }
-    if (state.globalModelFilter) {
-      modelSet.add(state.globalModelFilter);
+    const modeChanged = Boolean(dom.lastModelNameMode && dom.lastModelNameMode !== state.modelNameMode);
+    dom.lastModelNameMode = state.modelNameMode;
+    if (state.globalModelFilter && !modelSet.has(state.globalModelFilter)) {
+      if (modeChanged || listItems.length > 0) {
+        state.globalModelFilter = '';
+      } else {
+        modelSet.add(state.globalModelFilter);
+      }
     }
     const sortedModels = Array.from(modelSet).sort((a, b) => a.localeCompare(b));
-    const nextModelOptSig = `${state.lang}|${sortedModels.join('\u0001')}`;
+    const nextModelOptSig = `${state.lang}|${state.modelNameMode}|${sortedModels.join('\u0001')}`;
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
     if (dom.modelOptionsSig !== nextModelOptSig) {
       dom.modelOptionsSig = nextModelOptSig;
       const optAll = el('option', { value: '', textContent: t('global.filterAllModels') });
@@ -8385,6 +8725,14 @@
       recentCollapsed,
       state.lang,
       state.tokenUnit,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Include state.modelNameMode and item activeModelLabel/activeRawModel in Tab 2 globalList dirty signature.
+// ============================================================================
+      state.modelNameMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
       currency,
       listMode,
       periodTitle,
@@ -8398,6 +8746,15 @@
         Boolean(item.isToday),
         item.status || 'IDLE',
         item.activeModel || 'Auto',
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Track activeModelLabel and activeRawModel per item in globalList dirty signature.
+// ============================================================================
+        item.activeModelLabel || '',
+        item.activeRawModel || '',
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
         item.workspace || '',
         item.title || '',
         num(item.updatedAtMs, 0),
@@ -8423,16 +8780,23 @@
           if (activeOnly && (!onDisk || (itemStatus !== 'GENERATING' && itemStatus !== 'RUNNING_TOOLS'))) {
             return false;
           }
-          const itemModel = String(item.activeModel || 'Auto');
-          if (modelFilter && itemModel !== modelFilter) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Filter Tab 2 sessions by mode-scoped model label and search across both canonical and routed model names.
+// ============================================================================
+          const itemModelInfo = getGlobalConvModelInfo(item);
+          if (modelFilter && itemModelInfo.display !== modelFilter) {
             return false;
           }
           if (queryLower) {
             const locTitle = localizeConvTitle(item.title) || t('common.sessionPrefix', { id: shortId(item.conversationId) });
             const ws = workspaceBase(item.workspace);
-            const hay = `${locTitle}\n${item.title || ''}\n${ws}\n${item.workspace || ''}\n${itemModel}\n${item.conversationId || ''}`.toLowerCase();
+            const hay = `${locTitle}\n${item.title || ''}\n${ws}\n${item.workspace || ''}\n${itemModelInfo.display}\n${itemModelInfo.canonical}\n${itemModelInfo.raw}\n${item.conversationId || ''}`.toLowerCase();
             if (!hay.includes(queryLower)) return false;
           }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
           return true;
         })
       : listItems;
@@ -8510,6 +8874,14 @@
             const ws = workspaceBase(item.workspace);
             const itemStatus = item.status || 'IDLE';
             const itemTotalTok = num(item.totalTokens, num(item.outputTokens, 0));
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Resolve mode-scoped model label, tooltip, and dot accent for Tab 2 Recent/Top conversation rows.
+// ============================================================================
+            const itemModelInfo = getGlobalConvModelInfo(item);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
 
             const rowProps = {
               className: `recent-item${isSelected ? ' is-selected' : ''}${onDisk ? '' : ' is-archived'}`,
@@ -8570,11 +8942,18 @@
                             : t('global.itemIdle'),
                       )
                     : null,
-                  el('span', null,
-                    createModelDot(item.activeModel),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Display canonical activeModelLabel or routed activeRawModel with tooltip and canonical dot color in Tab 2 conversation rows.
+// ============================================================================
+                  el('span', { title: itemModelInfo.title },
+                    createModelDot(itemModelInfo.canonical, itemModelInfo.raw),
                     ' ',
-                    item.activeModel || 'Auto',
+                    itemModelInfo.display,
                   ),
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
                   ws ? el('span', { textContent: ws }) : null,
                   el('span', { textContent: fmtRelTime(item.updatedAtMs) }),
                 ),
@@ -9330,7 +9709,17 @@
 // ============================================================================
                       return el('tr', null,
                         el('td', { className: 'model-cell', title: rateTip },
-                          createModelDot(row.profileId || displayModel, Array.isArray(row.rawModels) ? row.rawModels[0] : ''),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Resolve Tab 2 byModel dot accent via profileId / profileLabel / model fallback so routed rows retain exact family colors.
+// ============================================================================
+                          createModelDot(
+                            row.profileId || row.profileLabel || row.model,
+                            (Array.isArray(row.rawModels) && row.rawModels[0]) || row.model || '',
+                          ),
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
                           displayModel,
                         ),
                         el('td', { className: 'num', textContent: fmtInt(row.conversationsCount) }),
@@ -9648,6 +10037,21 @@
           applyStaticTranslations();
         }
         state.tokenUnit = nextUnit;
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Sync persisted modelNameMode preference from snapshot inside pendingPrefSaves guard and reset render signatures when changed.
+// ============================================================================
+        const nextModelNameMode = VALID_MODEL_NAME_MODES.includes(data.prefs.modelNameMode)
+          ? data.prefs.modelNameMode
+          : 'canonical';
+        if (nextModelNameMode !== state.modelNameMode) {
+          state.modelNameMode = nextModelNameMode;
+          state.lastReceiptDataSig = '';
+          resetCardRenderSigs();
+        }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
 // ============================================================================
 // [MODIFIED BEGIN] 2026-11-17 20:29:41
 // Description: Sync modelSortBy and modelSortDir preferences from snapshot in pollSnapshot.

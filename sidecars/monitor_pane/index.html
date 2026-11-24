@@ -165,6 +165,20 @@ Description: Update default soft/hard context limit placeholders to 409600 and 5
                   <option value="m" data-i18n="settings.unitM">固定 M (百万)</option>
                 </select>
               </label>
+<!-- ============================================================================
+[MODIFIED BEGIN] 2026-11-24 09:52:03
+Description: Add model name display mode selector (#pref-model-name-mode) to Settings Drawer Section 1 for v0.5.4.
+============================================================================ -->
+              <label class="field">
+                <span class="field-label" data-i18n="settings.modelNameModeLabel">模型名称显示</span>
+                <select id="pref-model-name-mode" class="field-input">
+                  <option value="canonical" data-i18n="settings.modelModeCanonical">笼统名称 (默认)</option>
+                  <option value="routed" data-i18n="settings.modelModeRouted">具体路由型号</option>
+                </select>
+              </label>
+<!-- ============================================================================
+[MODIFIED END] 2026-11-24 09:52:03
+============================================================================ -->
               <label class="field">
                 <span class="field-label" data-i18n="settings.currencyLabel">货币单位</span>
                 <select id="pref-currency" class="field-input">

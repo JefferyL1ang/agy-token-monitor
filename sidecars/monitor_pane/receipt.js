@@ -131,7 +131,25 @@
       .join(' ');
   }
 
-  function formatReceiptModelLabel(scopeObj, current, lang) {
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Support modelNameMode ('canonical' | 'routed') in formatReceiptModelLabel without collapsing routed slugs through KNOWN_MODEL_SLUGS.
+// ============================================================================
+  function formatReceiptModelLabel(scopeObj, current, lang, modelNameMode = 'canonical') {
+    if (modelNameMode === 'routed') {
+      const routed = String(
+        scopeObj?.primaryModel?.rawModel ||
+        scopeObj?.primaryModel?.model ||
+        current?.activeRawModel ||
+        current?.activeModel ||
+        '',
+      ).trim();
+      if (!routed || /^auto(?:\s*[（(].*[）)])?$/i.test(routed) || /^unknown$/i.test(routed)) {
+        return 'Auto';
+      }
+      return routed;
+    }
+
     const rawProfileLabel = String(scopeObj?.primaryModel?.profileLabel || '').trim();
     const rawSlug = String(
       scopeObj?.primaryModel?.profileId ||
@@ -168,6 +186,9 @@
 
     return candidate || 'Auto';
   }
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
 
   function sumBucketTokens(bucket) {
     if (!bucket || typeof bucket !== 'object') return 0;
@@ -244,17 +265,32 @@
       endedAtMs: null,
       activeDurationMs: 0,
       compactionsCount: Math.max(0, Number(current?.context?.compactionsCount) || 0),
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Populate primaryModel.rawModel in buildFallbackScope so routed mode works on fallback scopes.
+// ============================================================================
       primaryModel: topModel
         ? {
             model: topModel.model || current?.activeModel || '',
+            rawModel:
+              (Array.isArray(topModel.rawModels) && topModel.rawModels[0]) ||
+              topModel.rawModel ||
+              topModel.model ||
+              current?.activeRawModel ||
+              current?.activeModel ||
+              '',
             profileId: topModel.profileId || '',
             profileLabel: topModel.profileLabel || topModel.label || '',
           }
         : {
             model: current?.activeModel || '',
+            rawModel: current?.activeRawModel || current?.activeModel || '',
             profileId: '',
             profileLabel: '',
           },
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
       subagentsCount: isChildView ? 0 : rawChildren.length,
       main: {
         totalTokens: mainTok,
@@ -348,6 +384,15 @@
         ? Boolean(options.isChildView)
         : Boolean(current?.isChildSession);
     const currency = prefs?.currency === 'CNY' ? 'CNY' : 'USD';
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Resolve modelNameMode from options/prefs and pass it to formatReceiptModelLabel in buildReceiptViewModel.
+// ============================================================================
+    const rawModelNameMode = options?.modelNameMode || prefs?.modelNameMode || 'canonical';
+    const modelNameMode = rawModelNameMode === 'routed' ? 'routed' : 'canonical';
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
 
     const fallbackYmd = current?.receipt?.todayDate || formatLocalYmd(Date.now());
     const rawScopeObj = scope === 'today' ? current?.receipt?.today : current?.receipt?.all;
@@ -358,7 +403,14 @@
     const startDate = scopeObj?.startDate || endDate;
     const dateStr = formatReceiptDateRange(startDate, endDate, fallbackYmd);
     const timeRangeStr = formatReceiptTimeRange(scopeObj?.startedAtMs, scopeObj?.endedAtMs);
-    const modelLabel = formatReceiptModelLabel(scopeObj, current, lang);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Forward modelNameMode into formatReceiptModelLabel for primaryModel row.
+// ============================================================================
+    const modelLabel = formatReceiptModelLabel(scopeObj, current, lang, modelNameMode);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
 
     const activeDurationMs = Math.max(0, Number(scopeObj?.activeDurationMs) || 0);
     let durationMins = 0;
@@ -538,6 +590,14 @@
       lang,
       scope,
       detailMode,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Expose effective modelNameMode on built receipt view model.
+// ============================================================================
+      modelNameMode,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
       currency,
       hasData,
       isChildView,
@@ -1090,6 +1150,14 @@
   root.TokenMonitorReceipt = {
     fmtReceiptTokens,
     fmtReceiptCost,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 09:52:03
+// Description: Export formatReceiptModelLabel on TokenMonitorReceipt namespace.
+// ============================================================================
+    formatReceiptModelLabel,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 09:52:03
+// ============================================================================
     buildReceiptViewModel,
     renderReceiptCanvas,
     canvasToBlob,

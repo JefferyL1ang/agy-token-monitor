@@ -1,6 +1,6 @@
 # agy-token-monitor
 
-![Version](https://img.shields.io/badge/version-v0.5.3--beta-4285F4) ![Platform](https://img.shields.io/badge/Antigravity-Aux%20Pane-6366F1) ![Mode](https://img.shields.io/badge/mode-Read--Only-10B981)
+![Version](https://img.shields.io/badge/version-v0.5.4--beta-4285F4) ![Platform](https://img.shields.io/badge/Antigravity-Aux%20Pane-6366F1) ![Mode](https://img.shields.io/badge/mode-Read--Only-10B981)
 
 [English](#english) | [中文](#中文)
 
@@ -8,11 +8,16 @@
 
 ## English
 
-**agy-token-monitor** is a lightweight Token & Context monitor plugin built for **Antigravity** (`v0.5.3 beta`). It runs in the right-hand side panel with a low memory footprint, reading local session data in read-only mode without modifying any Antigravity databases, transcripts, or host settings.
+**agy-token-monitor** is a lightweight Token & Context monitor plugin built for **Antigravity** (`v0.5.4 beta`). It runs in the right-hand side panel with a low memory footprint, reading local session data in read-only mode without modifying any Antigravity databases, transcripts, or host settings.
 
 ### Changelog
 
-- **v0.5.3 Collapsible Cards Across All Panels (Latest)**:
+- **v0.5.4 Configurable Model Name Display Mode (Latest)**:
+  - **Switch Between Canonical Names and Exact Routed Slugs**: Added a Model Name Display selector in Settings so you can choose between **Canonical Name (Default)** (such as `Gemini 4 Hydrogen` or `Claude Opus 5.5`) and **Exact Routed Slug** (such as `gemini-flash-worker-agy`, `gemini-4-hydrogen`, `claude-opus-5-5-high`, or `claude-opus-5-5-low`).
+  - **Split Tab 1 & Tab 2 Model Tables with Identical Totals**: In Exact Routed Slug mode, both the Current Session and Usage Statistics model breakdown tables split into separate rows per routed slug while keeping canonical pricing, model color dots, token totals, and total costs mathematically identical (showing the canonical model family and rate in row tooltips).
+  - **Synced Across Panel Surfaces While Keeping Canvas Clean**: Switching modes updates the top header model pill, subagent and Swarm worker rows, Side Questions rows, Usage Statistics recent sessions and model filter dropdown, Pixel Office click-to-inspect details card, and the checkout receipt primary model — while keeping the Pixel Office canvas mini-nameplates short and uncluttered.
+  - **Automatic Ledger v6 Upgrade**: Upgraded `usage_ledger.json` to schema `v6` (`LEDGER_SCHEMA_VERSION = 6`) to store per-raw-model daily buckets (`byRawModel`) alongside canonical attribution, automatically rebuilding existing `v5` ledgers cleanly on startup.
+- **v0.5.3 Collapsible Cards Across All Panels**:
   - **Collapse Any Card Across Both Tabs**: Every card in Current Session and Usage Statistics (all 13 cards, unified with Pixel Office) can now be collapsed or expanded individually so you can focus on the metrics you need most.
   - **Compact Collapsed Summary Header**: When collapsed, each card folds into a clean single-row header showing its key live metric — such as speed, cost, context percentage, cache hit rate, worker/model counts, or session count — while keeping healthy, warning, and critical alert colors clearly visible.
   - **Clickable Header & Rotating Chevron Icon**: Click anywhere on a card header (without blocking action buttons, switches, or links inside it) or use the compact rotating chevron button on the right to collapse and expand smoothly.
@@ -80,7 +85,7 @@
   - Custom per-model price edits (`*`) and manual FX rate locks always take priority over auto-synced defaults, and clicking any row in the rate table loads that model for quick editing.
 - **Multi-Period Usage Analytics**:
   - Aggregates usage across **Today** (24-hour bars), **7 Days**, **30 Days**, and **All Time** with two-line KPI summaries (active days / archived sessions and daily average / output tokens) in horizontally scrollable, mouse-draggable trend charts with a compact left Y-axis and a unified canonical model breakdown table featuring the per-model **`Hit %` (`命中率`)** column right after `Cache` (with `Cache Read / Total Input (%)` hover tooltips) plus clickable **Total** / **Cost** sorting (with raw model slugs surfaced in row tooltips).
-  - Deduplicates forked, branched, and rewound conversations so inherited history is never double-counted, and automatically rebuilds historical model attribution via `usage_ledger.json` schema `v5`.
+  - Deduplicates forked, branched, and rewound conversations so inherited history is never double-counted, and automatically rebuilds historical model attribution and per-raw-model daily buckets via `usage_ledger.json` schema `v6` (supporting optional Exact Routed Slug table splitting in Settings with identical totals).
 - **Bilingual UI & Flexible Token Units**:
   - Switch between **English** and **Chinese** (`EN / 中`) in one click from the top bar.
   - Choose between `K / M / B`, `万 / 亿`, exact integers (`1,234,567`), or fixed `M` token units.
@@ -100,7 +105,7 @@
 
 **Option 1 — Download Release Archive**
 
-Download `agy-token-monitor-v0.5.3.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
+Download `agy-token-monitor-v0.5.4.zip` from [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) and extract the `agy-token-monitor` folder into:
 - Windows: `%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux: `~/.gemini/config/plugins/agy-token-monitor`
 
@@ -171,11 +176,16 @@ node --test tests/parser.test.mjs
 
 ## 中文
 
-**agy-token-monitor** 是一个面向 **Antigravity** 的轻量级 Token 与上下文监控插件（`v0.5.3 beta`）。它运行在右侧辅助面板中，内存占用低，仅以只读方式读取本地会话数据，不修改任何 Antigravity 数据库、聊天记录或全局配置。
+**agy-token-monitor** 是一个面向 **Antigravity** 的轻量级 Token 与上下文监控插件（`v0.5.4 beta`）。它运行在右侧辅助面板中，内存占用低，仅以只读方式读取本地会话数据，不修改任何 Antigravity 数据库、聊天记录或全局配置。
 
 ### 更新日志
 
-- **v0.5.3 全局卡片自由折叠（最新）**：
+- **v0.5.4 模型名称显示模式切换（最新）**：
+  - **支持在笼统名称与具体路由型号间自由切换**：在设置抽屉新增「模型名称显示」选项，可在 **笼统名称 (默认)**（如 `Gemini 4 Hydrogen`、`Claude Opus 5.5`）与 **具体路由型号**（如 `gemini-flash-worker-agy`、`gemini-4-hydrogen`、`claude-opus-5-5-high`、`claude-opus-5-5-low`）之间一键切换。
+  - **当前会话与用量统计双表按路由型号拆分且总额完全守恒**：切换为具体路由型号模式后，当前会话（Tab 1）与用量统计（Tab 2）的模型分布明细表均按真实路由型号独立分行展示，同时保持规范定价、模型色点、总 Token 数与总费用数学完全一致（行悬停提示展示所属规范模型家族与费率）。
+  - **全界面联动同步且保持像素工位画布简洁**：切换显示模式后，顶部模型胶囊、子代理与 Swarm 节点列表、支线问题列表、历史会话列表及模型筛选下拉框、像素工位点击详情卡与结账收工票根主力模型均同步生效；像素工位画布上的猫咪短名牌保持精炼简洁不遮挡画面。
+  - **历史账本自动升级至 v6**：将 `usage_ledger.json` 升级至 `v6`（`LEDGER_SCHEMA_VERSION = 6`），在保留规范模型归因的同时新增每日按原始路由型号统计桶（`byRawModel`），升级启动时自动无损重建旧版 `v5` 账本。
+- **v0.5.3 全局卡片自由折叠**：
   - **双标签全部 13 张卡片均可自由折叠**：当前会话（Tab 1）与用量统计（Tab 2）全部 13 张卡片均已统一支持独立折叠与展开（与像素工位保持统一交互），方便按需精简右侧面板视图。
   - **收起态核心指标与告警摘要**：卡片折叠后收拢为紧凑单行标题栏，右侧实时显示关键指标（如速率、花费、上下文占比、缓存命中率、子代理/模型数或会话数），并保留正常、提醒与告警配色，关键状态一目了然。
   - **可点击标题栏与旋转箭头图标**：直接点击卡片标题栏空白区域或右侧旋转箭头按钮即可平滑折叠/展开，同时不影响标题栏内按钮、切换开关与链接的正常点击。
@@ -243,7 +253,7 @@ node --test tests/parser.test.mjs
   - 手动修改过的模型单价（带 `*` 标记）与手动固定汇率始终优先于自动同步值；展开下方费率表后可直接点击任意模型行切换编辑。
 - **多周期历史统计与分支去重**：
   - 支持查看 **今日**（24 小时分时）、**近 7 天**、**近 30 天** 与 **全部历史** 用量趋势，概览 KPI 采用双行摘要展示（含已归档会话数与日均/输出用量），柱状图左侧固定显示紧凑 Y 轴刻度并支持鼠标按住横向拖动与滚轮横滑；周期模型明细表同样按规范名称合并展示（悬停提示显示合并的原始 slug），内置分模型 **`命中率`（`Hit %`）** 列（位于 `缓存` 列右侧，悬停显示 `缓存读取 / 总输入 (%)`）并支持点击 **总计 / 费用** 列头排序。
-  - 自动识别分支（Fork）、并行对比及回退重生的会话，避免继承的历史步骤被重复计费；`usage_ledger.json`（`v5`）会在启动时自动无损重建历史模型归因。
+  - 自动识别分支（Fork）、并行对比及回退重生的会话，避免继承的历史步骤被重复计费；`usage_ledger.json`（`v6`）会在启动时自动无损重建历史模型归因与每日按原始路由型号分桶（支持在设置中切换为具体路由型号拆分明细表且总计完全一致）。
 - **中英双语切换与多种 Token 单位**：
   - 顶部栏设置按钮旁支持一键切换 **中文 / 英文**（`EN / 中`）。
   - 支持 `K / M / B`、`万 / 亿`、精确整数（`1,234,567`）和固定 `M` 四种 Token 显示单位。
@@ -263,7 +273,7 @@ node --test tests/parser.test.mjs
 
 **方式一 — 下载 Release 压缩包**
 
-前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.5.3.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
+前往 [GitHub Releases](https://github.com/JefferyL1ang/agy-token-monitor/releases) 下载 `agy-token-monitor-v0.5.4.zip`，将其中的 `agy-token-monitor` 文件夹解压至：
 - Windows：`%USERPROFILE%\.gemini\config\plugins\agy-token-monitor`
 - macOS / Linux：`~/.gemini/config/plugins/agy-token-monitor`
 

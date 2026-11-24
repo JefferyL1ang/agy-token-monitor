@@ -108,6 +108,14 @@ import {
 // ============================================================================
 // [MODIFIED END] 2026-11-17 20:27:23
 // ============================================================================
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Import VALID_MODEL_NAME_MODES for v0.5.4 modelNameMode backend & ledger v6 regression tests.
+// ============================================================================
+  VALID_MODEL_NAME_MODES,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
   VALID_TOKEN_UNITS,
 // ============================================================================
 // [MODIFIED END] 2026-11-17 10:15:00
@@ -2108,7 +2116,14 @@ test('createUsageLedger auto-migrates stale v1/v2/v3/v4 ledgers to v5 and normal
       );
     db1016.close();
 
-    assert.equal(LEDGER_SCHEMA_VERSION, 5);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Update LEDGER_SCHEMA_VERSION assertion from 5 to 6 for v0.5.4 byRawModel schema.
+// ============================================================================
+    assert.equal(LEDGER_SCHEMA_VERSION, 6);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 
     // 1) Stale v1 ledger auto-migrates to v5
     const staleV1Data = {
@@ -2132,7 +2147,14 @@ test('createUsageLedger auto-migrates stale v1/v2/v3/v4 ledgers to v5 and normal
       },
     };
     const migratedFromV1 = createUsageLedger(staleV1Data);
-    assert.equal(migratedFromV1.getData().version, 5);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Update migratedFromV1 version assertion from 5 to 6 for v0.5.4 ledger schema.
+// ============================================================================
+    assert.equal(migratedFromV1.getData().version, 6);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
     assert.equal(migratedFromV1.isDirty(), true);
     assert.deepEqual(migratedFromV1.getData().conversations, {});
 
@@ -6162,11 +6184,18 @@ test('v0.2.6 slot-roll motion, child badge, DOM/I18N safety, and private maintai
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Bump current manifest version assertion from 0.5.2 to 0.5.3.
 // ============================================================================
-  // Manifests bumped to 0.5.3 without comment corruption
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Bump current manifest version assertion from 0.5.3 to 0.5.4.
+// ============================================================================
+  // Manifests bumped to 0.5.4 without comment corruption
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.5.3');
-  assert.equal(packageJson.version, '0.5.3');
+  assert.equal(pluginJson.version, '0.5.4');
+  assert.equal(packageJson.version, '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -6462,18 +6491,25 @@ test('v0.2.7 Zero-Layout-Shift (CLS = 0) CSS, app.js memoization, sparkline key,
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.5.2 to 0.5.3.
 // ============================================================================
-  // Version & docs consistency for current v0.5.3 release
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Bump current manifest, fallback version (main.mjs, release_updater.mjs, app.js), and documentation assertions from 0.5.3 to 0.5.4.
+// ============================================================================
+  // Version & docs consistency for current v0.5.4 release
   const pluginJson = JSON.parse(readFileSync(join(repoRoot, 'plugin.json'), 'utf-8'));
   const packageJson = JSON.parse(readFileSync(join(paneDir, 'package.json'), 'utf-8'));
-  assert.equal(pluginJson.version, '0.5.3');
-  assert.equal(packageJson.version, '0.5.3');
-  assert.equal(pluginJson.description.includes('v0.5.3 beta'), true);
-  assert.equal(packageJson.description.includes('v0.5.3 beta'), true);
-  assert.equal(mainSource.includes("return '0.5.3'"), true);
-  assert.equal(releaseUpdaterSource.includes(": '0.5.3'"), true);
-  assert.equal(appSource.includes("'0.5.3'"), true);
-  assert.equal(skillMd.includes('# Token Monitor (v0.5.3 Beta)'), true);
-  assert.equal(readmeMd.includes('agy-token-monitor-v0.5.3.zip'), true);
+  assert.equal(pluginJson.version, '0.5.4');
+  assert.equal(packageJson.version, '0.5.4');
+  assert.equal(pluginJson.description.includes('v0.5.4 beta'), true);
+  assert.equal(packageJson.description.includes('v0.5.4 beta'), true);
+  assert.equal(mainSource.includes("return '0.5.4'"), true);
+  assert.equal(releaseUpdaterSource.includes(": '0.5.4'"), true);
+  assert.equal(appSource.includes("'0.5.4'"), true);
+  assert.equal(skillMd.includes('# Token Monitor (v0.5.4 Beta)'), true);
+  assert.equal(readmeMd.includes('agy-token-monitor-v0.5.4.zip'), true);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -7539,7 +7575,14 @@ test('v0.2.8 createSystemProxyManager lifecycle, TTL cache, restore-before-set o
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Update standalone /api/snapshot appVersion assertion from 0.5.2 to 0.5.3.
 // ============================================================================
-    assert.equal(snap.appVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Update standalone /api/snapshot appVersion assertion from 0.5.3 to 0.5.4.
+// ============================================================================
+    assert.equal(snap.appVersion, '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -8156,8 +8199,15 @@ test('v0.2.8 toast tones, I18N update error parity, static hygiene, SQLite invar
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Bump current manifest version assertions in v0.2.8 hygiene test from 0.5.2 to 0.5.3.
 // ============================================================================
-  assert.equal(pluginJson.version, '0.5.3');
-  assert.equal(packageJson.version, '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Bump current manifest version assertions in v0.2.8 hygiene test from 0.5.3 to 0.5.4.
+// ============================================================================
+  assert.equal(pluginJson.version, '0.5.4');
+  assert.equal(packageJson.version, '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -8437,7 +8487,14 @@ test('v0.2.8 headless Node VM behavioral tests: formatUpdateErrorMessage, showTo
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test from 0.5.2 to 0.5.3.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Update getCurrentAppVersion fallback assertion in v0.2.8 VM test from 0.5.3 to 0.5.4.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -9987,7 +10044,14 @@ test('v0.2.9 frontend static hygiene, CSS/HTML contracts, I18N parity, banned-te
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Bump createReleaseUpdater default currentVersion assertion from 0.5.2 to 0.5.3.
 // ============================================================================
-  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Bump createReleaseUpdater default currentVersion assertion from 0.5.3 to 0.5.4.
+// ============================================================================
+  assert.equal(defaultUpdater.getPublicStatus().currentVersion, '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -11596,7 +11660,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Bump standalone /api/snapshot appVersion assertion from 0.5.2 to 0.5.3.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Bump standalone /api/snapshot appVersion assertion from 0.5.3 to 0.5.4.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -11668,7 +11739,14 @@ test('v0.3.0 live TCP CONNECT proxy half-open blackhole E2E recovery + release_u
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Bump standalone /api/check-update appVersion assertion from 0.5.2 to 0.5.3.
 // ============================================================================
-      assert.equal(checkBody.appVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Bump standalone /api/check-update appVersion assertion from 0.5.3 to 0.5.4.
+// ============================================================================
+      assert.equal(checkBody.appVersion, '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -12003,7 +12081,14 @@ test('v0.3.0 headless Node VM Settings tooltip proxy diagnostics and static I18N
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Bump getCurrentAppVersion fallback assertion from 0.5.2 to 0.5.3.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Bump getCurrentAppVersion fallback assertion from 0.5.3 to 0.5.4.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -12641,7 +12726,14 @@ test('v0.3.2 constant 43-char SHA-256 base64url /api/snapshot etag prevents HTTP
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Update v0.3.2 ETag test standalone appVersion assertion from 0.5.2 to 0.5.3.
 // ============================================================================
-      assert.equal(snap.appVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Update v0.3.2 ETag test standalone appVersion assertion from 0.5.3 to 0.5.4.
+// ============================================================================
+      assert.equal(snap.appVersion, '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -13540,7 +13632,14 @@ test('v0.4.0 backend DEFAULT_PREFS.pixelOfficeCollapsed, child activeToolLabel, 
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Bump v0.4.0 backend standalone /api/snapshot appVersion assertion from 0.5.2 to 0.5.3.
 // ============================================================================
-      assert.equal(initialSnap.appVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Bump v0.4.0 backend standalone /api/snapshot appVersion assertion from 0.5.3 to 0.5.4.
+// ============================================================================
+      assert.equal(initialSnap.appVersion, '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -14400,7 +14499,14 @@ test('v0.4.0 update modal nested markdown & section filtering, Pixel Office VM i
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Bump v0.4.0 VM getCurrentAppVersion fallback assertion from 0.5.2 to 0.5.3.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Bump v0.4.0 VM getCurrentAppVersion fallback assertion from 0.5.3 to 0.5.4.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -15111,8 +15217,15 @@ test('v0.4.0-r2 Test 2: Scheme A canonical byModel merging, unknown model isolat
     const mainQuantum = res.totals.mainOnlyByModel.find((r) => r.model === 'gemini-5-quantum');
     assert.equal(mainQuantum.totalTokens, 1050);
 
-    // Verify LEDGER_SCHEMA_VERSION === 5 automatically rebuilds stale v4 ledger and fixes Hydrogen vs Flash attribution
-    assert.equal(LEDGER_SCHEMA_VERSION, 5);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Update v0.4.0-r2 Test 2 LEDGER_SCHEMA_VERSION assertion from 5 to 6 for v0.5.4 byRawModel ledger schema.
+// ============================================================================
+    // Verify LEDGER_SCHEMA_VERSION === 6 automatically rebuilds stale v4 ledger and fixes Hydrogen vs Flash attribution
+    assert.equal(LEDGER_SCHEMA_VERSION, 6);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
     const staleV4Ledger = {
       version: 4,
       threshold: 200000,
@@ -15142,7 +15255,14 @@ test('v0.4.0-r2 Test 2: Scheme A canonical byModel merging, unknown model isolat
       },
     };
     const ledger = createUsageLedger(staleV4Ledger);
-    assert.equal(ledger.getData().version, 5);
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Update rebuilt staleV4Ledger version assertion from 5 to 6.
+// ============================================================================
+    assert.equal(ledger.getData().version, 6);
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
     assert.equal(ledger.isDirty(), true);
     assert.deepEqual(ledger.getData().conversations, {});
 
@@ -17906,7 +18026,14 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Bump v0.4.1 VM getCurrentAppVersion fallback assertion from 0.5.2 to 0.5.3.
 // ============================================================================
-  assert.equal(exports.getCurrentAppVersion(), '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Bump v0.4.1 VM getCurrentAppVersion fallback assertion from 0.5.3 to 0.5.4.
+// ============================================================================
+  assert.equal(exports.getCurrentAppVersion(), '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -18462,8 +18589,15 @@ test('v0.4.1 headless VM Side Questions card (Top-5 fold, one-click open stopPro
 // [MODIFIED BEGIN] 2026-11-23 22:16:09
 // Description: Bump manifest version assertions in v0.4.1 static hygiene block from 0.5.2 to 0.5.3.
 // ============================================================================
-  assert.equal(JSON.parse(pluginJsonRaw).version, '0.5.3');
-  assert.equal(JSON.parse(packageJsonRaw).version, '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Bump manifest version assertions in v0.4.1 static hygiene block from 0.5.3 to 0.5.4.
+// ============================================================================
+  assert.equal(JSON.parse(pluginJsonRaw).version, '0.5.4');
+  assert.equal(JSON.parse(packageJsonRaw).version, '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:16:09
 // ============================================================================
@@ -20301,7 +20435,14 @@ test('v0.5.3 backend COLLAPSIBLE_CARD_IDS, DEFAULT_PREFS.collapsedCards, sanitiz
       const legacySnap = await (
         await fetch(`http://127.0.0.1:${portLegacy}/api/snapshot?conv=${encodeURIComponent(convId)}`)
       ).json();
-      assert.equal(legacySnap.appVersion, '0.5.3');
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:06:24
+// Description: Bump v0.5.3 backend standalone /api/snapshot appVersion assertion from 0.5.3 to 0.5.4.
+// ============================================================================
+      assert.equal(legacySnap.appVersion, '0.5.4');
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:06:24
+// ============================================================================
       assert.deepEqual(legacySnap.prefs.collapsedCards, { 'pixel-office': true });
       assert.equal(legacySnap.prefs.pixelOfficeCollapsed, true);
     } finally {
@@ -21475,4 +21616,2416 @@ test('v0.5.3 frontend VM all 13 collapsible cards, context alert tones, interact
 });
 // ============================================================================
 // [MODIFIED END] 2026-11-23 22:18:30
+// ============================================================================
+
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:07:37
+// Description: Add v0.5.4 backend & Ledger v6 regression tests for modelNameMode
+// ('canonical' vs 'routed'): exports & /api/prefs HTTP validation/persistence/ETag,
+// Tab 1 analyzeConversation canonical merge vs routed split with 1e-9 token/cost
+// conservation + children/sideQuestions/receipt fields, and Tab 2 Ledger v6
+// byRawModel + stale v5 auto-rebuild + fork preservation + recent activeRawModel.
+// ============================================================================
+test('v0.5.4 backend VALID_MODEL_NAME_MODES, DEFAULT_PREFS.modelNameMode, /api/prefs validation, persistence across reload, and ETag invalidation', async () => {
+  assert.deepEqual(VALID_MODEL_NAME_MODES, ['canonical', 'routed']);
+  assert.equal(Object.isFrozen(VALID_MODEL_NAME_MODES), true);
+  assert.equal(DEFAULT_PREFS.modelNameMode, 'canonical');
+  assert.equal(LEDGER_SCHEMA_VERSION, 6);
+
+  clearParserCache();
+  const { root, appData } = makeTempEnv();
+  try {
+    const convsDir = join(appData, 'conversations');
+    mkdirSync(convsDir, { recursive: true });
+    const convId = '05400001-0000-4000-8000-000000000001';
+    const baseMs = Date.now() - 120_000;
+
+    // Build DB conversation mixing 4 routed slugs across 2 canonical families
+    const db = new DatabaseSync(join(convsDir, `${convId}.db`));
+    db.exec(`
+      CREATE TABLE gen_metadata (idx INTEGER PRIMARY KEY, data BLOB, size INTEGER NOT NULL DEFAULT 0);
+      CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INTEGER NOT NULL DEFAULT 0, status INTEGER NOT NULL DEFAULT 0, metadata BLOB);
+    `);
+    const insGen = db.prepare('INSERT INTO gen_metadata (idx, data, size) VALUES (?, ?, ?)');
+    const insStep = db.prepare('INSERT INTO steps (idx, step_type, status, metadata) VALUES (?, ?, ?, ?)');
+    const specs = [
+      {
+        stepIdx: 1,
+        enumId: 1669,
+        rawModel: 'gemini-flash-worker-agy',
+        displayModel: 'Gemini 4 Hydrogen (Orchestrator)',
+        botId: 'v054-http-bot-1',
+        input: 12_000,
+        cacheRead: 36_000,
+        output: 1_200,
+        createdMs: baseMs + 1000,
+      },
+      {
+        stepIdx: 3,
+        enumId: 1525,
+        rawModel: 'gemini-4-hydrogen',
+        displayModel: 'Gemini 4 Hydrogen (High)',
+        botId: 'v054-http-bot-2',
+        input: 8_000,
+        cacheRead: 24_000,
+        output: 900,
+        createdMs: baseMs + 2000,
+      },
+      {
+        stepIdx: 5,
+        enumId: 1501,
+        rawModel: 'claude-opus-5-5-high',
+        displayModel: 'Claude Opus 5.5 (High)',
+        botId: 'v054-http-bot-3',
+        input: 6_000,
+        cacheRead: 18_000,
+        output: 700,
+        createdMs: baseMs + 3000,
+      },
+      {
+        stepIdx: 7,
+        enumId: 1502,
+        rawModel: 'claude-opus-5-5-low',
+        displayModel: 'Claude Opus 5.5 (Low)',
+        botId: 'v054-http-bot-4',
+        input: 4_000,
+        cacheRead: 12_000,
+        output: 500,
+        createdMs: baseMs + 4000,
+      },
+    ];
+    specs.forEach((sp, idx) => {
+      const usageBuf = encodeTokenUsage({
+        enumId: sp.enumId,
+        input: sp.input,
+        cacheRead: sp.cacheRead,
+        output: sp.output,
+        botId: sp.botId,
+      });
+      const genInner = Buffer.concat([
+        encodeBytesField(4, usageBuf),
+        encodeBytesField(19, sp.rawModel),
+        encodeBytesField(20, encodeGenKv('cascade_id', convId)),
+        encodeBytesField(21, sp.displayModel),
+      ]);
+      const genTop = Buffer.concat([
+        encodeBytesField(1, genInner),
+        encodeBytesField(2, encodeVarint(sp.stepIdx)),
+      ]);
+      insGen.run(idx, genTop, genTop.length);
+
+      const metaBuf = Buffer.concat([
+        encodeBytesField(1, encodeTimestampMs(sp.createdMs)),
+        encodeBytesField(7, encodeTimestampMs(sp.createdMs + 1000)),
+        encodeBytesField(9, usageBuf),
+        encodeBytesField(20, encodeStepField20({ stepIdx: sp.stepIdx, genIdx: idx, originCascadeId: convId })),
+      ]);
+      insStep.run(sp.stepIdx, 15, 3, metaBuf);
+    });
+    db.close();
+
+    writeConversation(appData, convId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(baseMs).toISOString(),
+          content: '<USER_REQUEST>v0.5.4 modelNameMode HTTP E2E</USER_REQUEST>',
+        },
+      ],
+      mtimeMs: baseMs + 5000,
+    });
+
+    const dataDir = join(appData, 'sidecar_data', 'agy-token-monitor', 'monitor_pane', 'v054_data');
+    mkdirSync(dataDir, { recursive: true });
+    // Seed invalid persisted modelNameMode to verify sanitizeLoadedPrefs recovers cleanly to 'canonical'
+    writeFileSync(
+      join(dataDir, 'monitor_state.json'),
+      JSON.stringify({
+        stepEndTimes: {},
+        prefs: {
+          prefsSchemaVersion: 4,
+          modelNameMode: 'bogus-invalid-mode',
+        },
+      }),
+      'utf-8',
+    );
+
+    const fakeHome = join(root, 'home');
+    mkdirSync(fakeHome, { recursive: true });
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    const mainPath = join(__dirname, '..', 'sidecars', 'monitor_pane', 'main.mjs');
+    const sdkCandidates = [
+      join(homedir(), '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+      join(homedir(), '.gemini', 'config', 'node_modules', 'sidecar_sdk', 'index.mjs'),
+    ].filter((p) => existsSync(p));
+
+    const bootSidecar = async (port) => {
+      const env = { ...process.env };
+      delete env.ANTIGRAVITY_LS_ADDRESS;
+      delete env.ANTIGRAVITY_CSRF_TOKEN;
+      delete env.ANTIGRAVITY_SIDECAR_WEB_PORT;
+      delete env.ANTIGRAVITY_CONVERSATION_ID;
+      delete env.ANTIGRAVITY_SIDECAR_UI_TOKEN;
+      delete env.ANTIGRAVITY_AGENTAPI_EXE;
+      if (sdkCandidates[0]) env.SIDECAR_SDK_PATH = sdkCandidates[0];
+      env.ANTIGRAVITY_EXECUTABLE_DATA_DIR = dataDir;
+      env.USERPROFILE = fakeHome;
+      env.HOME = fakeHome;
+      env.PRICING_SYNC_DISABLE_AUTO = '1';
+      env.RELEASE_UPDATE_DISABLE_AUTO = '1';
+      env.DISABLE_SYSTEM_PROXY_LOOKUP = '1';
+
+      const child = spawn(process.execPath, [mainPath, '--standalone', String(port)], {
+        env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      await new Promise((resolveReady, rejectReady) => {
+        const timer = setTimeout(() => rejectReady(new Error('Sidecar startup timeout')), 10000);
+        let out = '';
+        child.stdout.on('data', (chunk) => {
+          out += chunk.toString();
+          if (out.includes(`[sidecar] listening on 127.0.0.1:${port}`)) {
+            clearTimeout(timer);
+            resolveReady();
+          }
+        });
+        child.stderr.on('data', (chunk) => {
+          out += chunk.toString();
+        });
+        child.once('exit', (code) => {
+          clearTimeout(timer);
+          rejectReady(new Error(`Sidecar exited prematurely (${code}): ${out}`));
+        });
+      });
+      return child;
+    };
+
+    const stopChild = async (child) => {
+      if (!child || child.exitCode !== null || child.signalCode !== null) return;
+      child.kill();
+      await new Promise((r) => {
+        if (child.exitCode !== null || child.signalCode !== null) return r();
+        const t = setTimeout(r, 3000);
+        child.once('exit', () => {
+          clearTimeout(t);
+          r();
+        });
+      });
+    };
+
+    let child1 = null;
+    let child2 = null;
+    try {
+      const port1 = await pickFetchSafeFreePort();
+      child1 = await bootSidecar(port1);
+      const base1 = `http://127.0.0.1:${port1}`;
+
+      // Ensure cold-start ledger sync is complete before snapshot comparison
+      const resync1 = await fetch(`${base1}/api/resync-ledger`, { method: 'POST' });
+      assert.equal(resync1.status, 200);
+
+      // 1. Initial sanitized state defaults to 'canonical' and merges into 2 canonical rows
+      const snapCanon = await (
+        await fetch(`${base1}/api/snapshot?conv=${encodeURIComponent(convId)}`)
+      ).json();
+      assert.equal(snapCanon.appVersion, '0.5.4');
+      assert.equal(snapCanon.prefs.modelNameMode, 'canonical');
+      assert.deepEqual(
+        snapCanon.current.totals.byModel.map((r) => r.model).sort(),
+        ['Claude Opus 5.5', 'Gemini 4 Hydrogen'],
+      );
+      assert.deepEqual(
+        snapCanon.global.periods.all.byModel.map((r) => r.model).sort(),
+        ['Claude Opus 5.5', 'Gemini 4 Hydrogen'],
+      );
+      const etagCanon = snapCanon.etag;
+
+      // 2. /api/prefs rejects invalid strings & non-string types with HTTP 400
+      for (const badMode of ['raw', '', 'CANONICAL', 'ROUTED', 123, true, null, {}, []]) {
+        const badRes = await fetch(`${base1}/api/prefs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ modelNameMode: badMode }),
+        });
+        assert.equal(badRes.status, 400, `Expected HTTP 400 for modelNameMode=${JSON.stringify(badMode)}`);
+        const badBody = await badRes.json();
+        assert.equal(typeof badBody.error, 'string');
+        assert.ok(badBody.error.length > 0);
+      }
+
+      // 3. /api/prefs accepts 'routed', immediately invalidates ETag, and splits Tab 1 & Tab 2 byModel
+      const setRoutedRes = await fetch(`${base1}/api/prefs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelNameMode: 'routed' }),
+      });
+      assert.equal(setRoutedRes.status, 200);
+      const setRoutedBody = await setRoutedRes.json();
+      assert.equal(setRoutedBody.ok, true);
+      assert.equal(setRoutedBody.prefs.modelNameMode, 'routed');
+
+      const snapRouted = await (
+        await fetch(
+          `${base1}/api/snapshot?conv=${encodeURIComponent(convId)}&etag=${encodeURIComponent(etagCanon)}`,
+        )
+      ).json();
+      assert.equal(snapRouted.unchanged, false, 'Switching modelNameMode must immediately invalidate ETag');
+      assert.notEqual(snapRouted.etag, etagCanon);
+      assert.equal(snapRouted.prefs.modelNameMode, 'routed');
+      assert.deepEqual(
+        snapRouted.current.totals.byModel.map((r) => r.model).sort(),
+        [
+          'claude-opus-5-5-high',
+          'claude-opus-5-5-low',
+          'gemini-4-hydrogen',
+          'gemini-flash-worker-agy',
+        ],
+      );
+      assert.deepEqual(
+        snapRouted.global.periods.all.byModel.map((r) => r.model).sort(),
+        [
+          'claude-opus-5-5-high',
+          'claude-opus-5-5-low',
+          'gemini-4-hydrogen',
+          'gemini-flash-worker-agy',
+        ],
+      );
+      assert.equal(
+        snapRouted.current.totals.withChildren.totalTokens,
+        snapCanon.current.totals.withChildren.totalTokens,
+      );
+      assert.ok(
+        Math.abs(
+          snapRouted.current.totals.withChildren.costActual -
+            snapCanon.current.totals.withChildren.costActual,
+        ) < 1e-9,
+      );
+      assert.equal(
+        snapRouted.global.periods.all.totalTokens,
+        snapCanon.global.periods.all.totalTokens,
+      );
+      assert.ok(
+        Math.abs(
+          snapRouted.global.periods.all.costActual - snapCanon.global.periods.all.costActual,
+        ) < 1e-9,
+      );
+
+      await stopChild(child1);
+      child1 = null;
+
+      // 4. Restart against same dataDir and verify modelNameMode: 'routed' persisted across reload
+      const port2 = await pickFetchSafeFreePort();
+      child2 = await bootSidecar(port2);
+      const base2 = `http://127.0.0.1:${port2}`;
+      await fetch(`${base2}/api/resync-ledger`, { method: 'POST' });
+
+      const snapReloaded = await (
+        await fetch(`${base2}/api/snapshot?conv=${encodeURIComponent(convId)}`)
+      ).json();
+      assert.equal(snapReloaded.prefs.modelNameMode, 'routed');
+      assert.deepEqual(
+        snapReloaded.current.totals.byModel.map((r) => r.model).sort(),
+        [
+          'claude-opus-5-5-high',
+          'claude-opus-5-5-low',
+          'gemini-4-hydrogen',
+          'gemini-flash-worker-agy',
+        ],
+      );
+      assert.deepEqual(
+        snapReloaded.global.periods.all.byModel.map((r) => r.model).sort(),
+        [
+          'claude-opus-5-5-high',
+          'claude-opus-5-5-low',
+          'gemini-4-hydrogen',
+          'gemini-flash-worker-agy',
+        ],
+      );
+      const etagRouted = snapReloaded.etag;
+
+      // 5. Switch back to 'canonical' via /api/prefs -> invalidates ETag & merges back cleanly
+      const setCanonRes = await fetch(`${base2}/api/prefs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelNameMode: 'canonical' }),
+      });
+      assert.equal(setCanonRes.status, 200);
+      assert.equal((await setCanonRes.json()).prefs.modelNameMode, 'canonical');
+
+      const snapBack = await (
+        await fetch(
+          `${base2}/api/snapshot?conv=${encodeURIComponent(convId)}&etag=${encodeURIComponent(etagRouted)}`,
+        )
+      ).json();
+      assert.equal(snapBack.unchanged, false);
+      assert.notEqual(snapBack.etag, etagRouted);
+      assert.equal(snapBack.prefs.modelNameMode, 'canonical');
+      assert.deepEqual(
+        snapBack.current.totals.byModel.map((r) => r.model).sort(),
+        ['Claude Opus 5.5', 'Gemini 4 Hydrogen'],
+      );
+    } finally {
+      await stopChild(child1);
+      await stopChild(child2);
+    }
+  } finally {
+    clearParserCache();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.5.4 Tab 1 analyzeConversation canonical merge vs routed split, exact 1e-9 token/cost conservation, children modelLabel/rawModel, and receipt primaryModel.rawModel', () => {
+  clearParserCache();
+  const { root, appData } = makeTempEnv();
+  try {
+    const convsDir = join(appData, 'conversations');
+    mkdirSync(convsDir, { recursive: true });
+
+    const nowMs = Date.parse('2026-11-24T06:00:00Z');
+    const yesterdayMs = nowMs - 26 * 3600 * 1000;
+
+    const coordId = '05400002-0000-4000-8000-000000000000';
+    const childActiveId = '05400002-0000-4000-8000-000000000001';
+    const childFreshId = '05400002-0000-4000-8000-000000000002';
+    const sideQuestionId = '05400002-0000-4000-8000-000000000003';
+
+    function writeDbConv(cid, specs) {
+      const db = new DatabaseSync(join(convsDir, `${cid}.db`));
+      db.exec(`
+        CREATE TABLE gen_metadata (idx INTEGER PRIMARY KEY, data BLOB, size INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INTEGER NOT NULL DEFAULT 0, status INTEGER NOT NULL DEFAULT 0, metadata BLOB);
+      `);
+      const insGen = db.prepare('INSERT INTO gen_metadata (idx, data, size) VALUES (?, ?, ?)');
+      const insStep = db.prepare('INSERT INTO steps (idx, step_type, status, metadata) VALUES (?, ?, ?, ?)');
+      specs.forEach((sp, idx) => {
+        const usageBuf = encodeTokenUsage({
+          enumId: sp.enumId,
+          input: sp.input,
+          cacheRead: sp.cacheRead,
+          output: sp.output,
+          botId: sp.botId,
+        });
+        const genInner = Buffer.concat([
+          encodeBytesField(4, usageBuf),
+          encodeBytesField(19, sp.rawModel),
+          encodeBytesField(20, encodeGenKv('cascade_id', cid)),
+          encodeBytesField(21, sp.displayModel),
+        ]);
+        const genTop = Buffer.concat([
+          encodeBytesField(1, genInner),
+          encodeBytesField(2, encodeVarint(sp.stepIdx)),
+        ]);
+        insGen.run(idx, genTop, genTop.length);
+
+        const metaBuf = Buffer.concat([
+          encodeBytesField(1, encodeTimestampMs(sp.createdMs)),
+          encodeBytesField(7, encodeTimestampMs(sp.createdMs + 1000)),
+          encodeBytesField(9, usageBuf),
+          encodeBytesField(20, encodeStepField20({ stepIdx: sp.stepIdx, genIdx: idx, originCascadeId: cid })),
+        ]);
+        insStep.run(sp.stepIdx, 15, 3, metaBuf);
+      });
+      db.close();
+    }
+
+    // Coordinator mixes 4 routed slugs across yesterday + today:
+    // - Yesterday heavy claude-opus-5-5-high makes it the all-time primaryModel.rawModel
+    // - Today heavy gemini-flash-worker-agy (plus worker child) makes it today's primaryModel.rawModel
+    writeDbConv(coordId, [
+      {
+        stepIdx: 1,
+        enumId: 1501,
+        rawModel: 'claude-opus-5-5-high',
+        displayModel: 'Claude Opus 5.5 (High)',
+        botId: 't1-bot-opus-hi',
+        input: 90_000,
+        cacheRead: 160_000,
+        output: 12_000,
+        createdMs: yesterdayMs + 1000,
+      },
+      {
+        stepIdx: 3,
+        enumId: 1502,
+        rawModel: 'claude-opus-5-5-low',
+        displayModel: 'Claude Opus 5.5 (Low)',
+        botId: 't1-bot-opus-lo',
+        input: 10_000,
+        cacheRead: 20_000,
+        output: 1_500,
+        createdMs: yesterdayMs + 5000,
+      },
+      {
+        stepIdx: 5,
+        enumId: 1669,
+        rawModel: 'gemini-flash-worker-agy',
+        displayModel: 'Gemini 4 Hydrogen (Orchestrator)',
+        botId: 't1-bot-hydro-worker',
+        input: 45_000,
+        cacheRead: 120_000,
+        output: 6_000,
+        createdMs: nowMs - 30_000,
+      },
+      {
+        stepIdx: 7,
+        enumId: 1525,
+        rawModel: 'gemini-4-hydrogen',
+        displayModel: 'Gemini 4 Hydrogen (High)',
+        botId: 't1-bot-hydro-std',
+        input: 15_000,
+        cacheRead: 35_000,
+        output: 2_000,
+        createdMs: nowMs - 10_000,
+      },
+    ]);
+
+    // Swarm active worker child with DB telemetry (gemini-flash-worker-agy)
+    writeDbConv(childActiveId, [
+      {
+        stepIdx: 1,
+        enumId: 1669,
+        rawModel: 'gemini-flash-worker-agy',
+        displayModel: 'Gemini 4 Hydrogen (Orchestrator)',
+        botId: 't1-child-bot-1',
+        input: 20_000,
+        cacheRead: 50_000,
+        output: 2_500,
+        createdMs: nowMs - 20_000,
+      },
+    ]);
+
+    // Side question child with DB telemetry (gemini-flash-worker-agy)
+    writeDbConv(sideQuestionId, [
+      {
+        stepIdx: 1,
+        enumId: 1669,
+        rawModel: 'gemini-flash-worker-agy',
+        displayModel: 'Gemini 4 Hydrogen (Orchestrator)',
+        botId: 't1-sq-bot-1',
+        input: 5_000,
+        cacheRead: 15_000,
+        output: 500,
+        createdMs: nowMs - 15_000,
+      },
+    ]);
+
+    writeConversation(appData, coordId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(yesterdayMs).toISOString(),
+          content: '<USER_REQUEST>v0.5.4 Tab 1 routed split test</USER_REQUEST>',
+        },
+      ],
+      members: {
+        title: 'v0.5.4 Tab 1 Swarm',
+        members: {
+          coordinator: { conversation_id: coordId, role: 'coordinator', model: 'gemini-4-hydrogen' },
+          'worker-hydro': {
+            conversation_id: childActiveId,
+            role: 'worker',
+            model: 'gemini-flash-worker-agy',
+            killed: false,
+            phase: 'WORKING',
+          },
+          'worker-fresh': {
+            conversation_id: childFreshId,
+            role: 'worker',
+            model: 'claude-opus-5-5-high',
+            killed: false,
+            phase: 'WAITING',
+          },
+        },
+      },
+      mtimeMs: nowMs - 5_000,
+    });
+
+    writeConversation(appData, childActiveId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(nowMs - 25_000).toISOString(),
+          content: 'active worker',
+        },
+      ],
+      mtimeMs: nowMs - 18_000,
+    });
+
+    // Fresh worker with no DB steps yet -> must retain rawDefaultModel 'claude-opus-5-5-high'
+    writeConversation(appData, childFreshId, {
+      compactLines: [
+        {
+          step_index: 0,
+          type: 'USER_INPUT',
+          status: 'DONE',
+          created_at: new Date(nowMs - 8_000).toISOString(),
+          content: 'fresh worker',
+        },
+      ],
+      mtimeMs: nowMs - 7_000,
+    });
+
+    // Register sideQuestion in conversation_summaries.db (conversation_parents)
+    const sumDb = new DatabaseSync(join(appData, 'conversation_summaries.db'));
+    sumDb.exec(`
+      CREATE TABLE conversation_summaries (
+        conversation_id TEXT PRIMARY KEY,
+        title TEXT,
+        preview TEXT,
+        workspace_uris TEXT,
+        agent_name TEXT,
+        parent_conversation_id TEXT
+      );
+      CREATE TABLE conversation_parents (
+        conversation_id TEXT,
+        parent_id TEXT
+      );
+    `);
+    sumDb
+      .prepare(
+        'INSERT INTO conversation_summaries (conversation_id, title, workspace_uris) VALUES (?, ?, ?)',
+      )
+      .run(coordId, 'Tab 1 Coordinator', JSON.stringify(['file:///F:/Work/v054-repo']));
+    sumDb
+      .prepare(
+        'INSERT INTO conversation_summaries (conversation_id, title, parent_conversation_id) VALUES (?, ?, ?)',
+      )
+      .run(sideQuestionId, 'Side Q Hydrogen', coordId);
+    sumDb
+      .prepare('INSERT INTO conversation_parents (conversation_id, parent_id) VALUES (?, ?)')
+      .run(sideQuestionId, coordId);
+    sumDb.close();
+
+    const canonicalRes = analyzeConversation(coordId, {
+      appDataDirs: [appData],
+      prefs: { ...DEFAULT_PREFS, modelNameMode: 'canonical' },
+      nowMs,
+      disableAgentApi: true,
+    });
+    const routedRes = analyzeConversation(coordId, {
+      appDataDirs: [appData],
+      prefs: { ...DEFAULT_PREFS, modelNameMode: 'routed' },
+      nowMs,
+      disableAgentApi: true,
+    });
+
+    // 1. Canonical mode merges into 2 families; routed mode splits into 4 exact slugs
+    assert.deepEqual(
+      canonicalRes.totals.byModel.map((r) => r.model).sort(),
+      ['Claude Opus 5.5', 'Gemini 4 Hydrogen'],
+    );
+    assert.deepEqual(
+      canonicalRes.totals.mainOnlyByModel.map((r) => r.model).sort(),
+      ['Claude Opus 5.5', 'Gemini 4 Hydrogen'],
+    );
+    const canonHydro = canonicalRes.totals.byModel.find((r) => r.model === 'Gemini 4 Hydrogen');
+    const canonOpus = canonicalRes.totals.byModel.find((r) => r.model === 'Claude Opus 5.5');
+    assert.deepEqual(canonHydro.rawModels, ['gemini-4-hydrogen', 'gemini-flash-worker-agy']);
+    assert.deepEqual(canonOpus.rawModels, ['claude-opus-5-5-high', 'claude-opus-5-5-low']);
+
+    const expectedRoutedSlugs = [
+      'claude-opus-5-5-high',
+      'claude-opus-5-5-low',
+      'gemini-4-hydrogen',
+      'gemini-flash-worker-agy',
+    ];
+    assert.deepEqual(
+      routedRes.totals.byModel.map((r) => r.model).sort(),
+      expectedRoutedSlugs,
+    );
+    assert.deepEqual(
+      routedRes.totals.mainOnlyByModel.map((r) => r.model).sort(),
+      expectedRoutedSlugs,
+    );
+
+    const routedBySlug = new Map(routedRes.totals.byModel.map((r) => [r.model, r]));
+    assert.equal(routedBySlug.get('gemini-flash-worker-agy').profileId, 'gemini-4-hydrogen');
+    assert.equal(routedBySlug.get('gemini-flash-worker-agy').profileLabel, 'Gemini 4 Hydrogen');
+    assert.deepEqual(routedBySlug.get('gemini-flash-worker-agy').rawModels, ['gemini-flash-worker-agy']);
+    assert.equal(routedBySlug.get('gemini-4-hydrogen').profileId, 'gemini-4-hydrogen');
+    assert.equal(routedBySlug.get('gemini-4-hydrogen').profileLabel, 'Gemini 4 Hydrogen');
+    assert.equal(routedBySlug.get('claude-opus-5-5-high').profileId, 'claude-opus-5-5');
+    assert.equal(routedBySlug.get('claude-opus-5-5-high').profileLabel, 'Claude Opus 5.5');
+    assert.equal(routedBySlug.get('claude-opus-5-5-low').profileId, 'claude-opus-5-5');
+    assert.equal(routedBySlug.get('claude-opus-5-5-low').profileLabel, 'Claude Opus 5.5');
+    assert.ok(routedBySlug.get('claude-opus-5-5-high').rateDisplay.length > 0);
+
+    // 2. Exact conservation (within 1e-9) of totalTokens & costActual across withChildren, mainOnly, and byModel sums
+    assert.equal(routedRes.totals.withChildren.totalTokens, canonicalRes.totals.withChildren.totalTokens);
+    assert.equal(routedRes.totals.mainOnly.totalTokens, canonicalRes.totals.mainOnly.totalTokens);
+    assert.ok(
+      Math.abs(routedRes.totals.withChildren.costActual - canonicalRes.totals.withChildren.costActual) < 1e-9,
+    );
+    assert.ok(
+      Math.abs(routedRes.totals.mainOnly.costActual - canonicalRes.totals.mainOnly.costActual) < 1e-9,
+    );
+
+    const sumTok = (rows) => rows.reduce((acc, r) => acc + r.totalTokens, 0);
+    const sumCost = (rows) => rows.reduce((acc, r) => acc + r.costActual, 0);
+    assert.equal(sumTok(routedRes.totals.byModel), sumTok(canonicalRes.totals.byModel));
+    assert.equal(sumTok(routedRes.totals.mainOnlyByModel), sumTok(canonicalRes.totals.mainOnlyByModel));
+    assert.ok(Math.abs(sumCost(routedRes.totals.byModel) - sumCost(canonicalRes.totals.byModel)) < 1e-9);
+    assert.ok(
+      Math.abs(sumCost(routedRes.totals.mainOnlyByModel) - sumCost(canonicalRes.totals.mainOnlyByModel)) < 1e-9,
+    );
+
+    // Per-family conservation: split rows sum back exactly to their canonical family row
+    const routedHydroTok =
+      routedBySlug.get('gemini-flash-worker-agy').totalTokens +
+      routedBySlug.get('gemini-4-hydrogen').totalTokens;
+    const routedHydroCost =
+      routedBySlug.get('gemini-flash-worker-agy').costActual +
+      routedBySlug.get('gemini-4-hydrogen').costActual;
+    assert.equal(routedHydroTok, canonHydro.totalTokens);
+    assert.ok(Math.abs(routedHydroCost - canonHydro.costActual) < 1e-9);
+
+    const routedOpusTok =
+      routedBySlug.get('claude-opus-5-5-high').totalTokens +
+      routedBySlug.get('claude-opus-5-5-low').totalTokens;
+    const routedOpusCost =
+      routedBySlug.get('claude-opus-5-5-high').costActual +
+      routedBySlug.get('claude-opus-5-5-low').costActual;
+    assert.equal(routedOpusTok, canonOpus.totalTokens);
+    assert.ok(Math.abs(routedOpusCost - canonOpus.costActual) < 1e-9);
+
+    // 3. ETag part includes modelNameMode
+    assert.notEqual(canonicalRes._etagPart, routedRes._etagPart);
+    assert.equal(canonicalRes._etagPart.includes('|mn:canonical'), true);
+    assert.equal(routedRes._etagPart.includes('|mn:routed'), true);
+
+    // 4. children[] expose both modelLabel and rawModel (including fresh worker with no DB steps yet)
+    const childByName = new Map(routedRes.children.map((c) => [c.name, c]));
+    assert.equal(childByName.get('worker-hydro')?.modelLabel, 'Gemini 4 Hydrogen');
+    assert.equal(childByName.get('worker-hydro')?.rawModel, 'gemini-flash-worker-agy');
+    assert.equal(childByName.get('worker-fresh')?.modelLabel, 'Claude Opus 5.5');
+    assert.equal(childByName.get('worker-fresh')?.rawModel, 'claude-opus-5-5-high');
+
+    // 5. sideQuestions[] expose both canonical model and rawModel
+    assert.equal(routedRes.sideQuestions.length, 1);
+    assert.equal(routedRes.sideQuestions[0].model, 'Gemini 4 Hydrogen');
+    assert.equal(routedRes.sideQuestions[0].rawModel, 'gemini-flash-worker-agy');
+
+    // 6. receipt.{today,all}.primaryModel.rawModel accurately reflects top routed slug in each scope
+    assert.equal(canonicalRes.receipt.today.primaryModel.rawModel, 'gemini-flash-worker-agy');
+    assert.equal(canonicalRes.receipt.all.primaryModel.rawModel, 'claude-opus-5-5-high');
+    assert.equal(routedRes.receipt.today.primaryModel.rawModel, 'gemini-flash-worker-agy');
+    assert.equal(routedRes.receipt.all.primaryModel.rawModel, 'claude-opus-5-5-high');
+    const receiptHydroChild = routedRes.receipt.all.children.find((c) => c.name === 'worker-hydro');
+    assert.equal(receiptHydroChild?.rawModel, 'gemini-flash-worker-agy');
+    assert.equal(receiptHydroChild?.modelLabel, 'Gemini 4 Hydrogen');
+  } finally {
+    clearParserCache();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('v0.5.4 Tab 2 Ledger v6 byRawModel, stale v5 auto-rebuild, canonical vs routed splitting with 1e-9 conservation, fork preservation, and recent activeModelLabel/activeRawModel', () => {
+  clearParserCache();
+  const { root, appData } = makeTempEnv();
+  try {
+    assert.equal(LEDGER_SCHEMA_VERSION, 6);
+
+    const convsDir = join(appData, 'conversations');
+    mkdirSync(convsDir, { recursive: true });
+
+    const nowMs = Date.parse('2026-11-24T06:00:00Z');
+    const todayKey = formatLocalDate(nowMs);
+    const fiveDaysAgoMs = nowMs - 5 * 86400 * 1000;
+    const fifteenDaysAgoMs = nowMs - 15 * 86400 * 1000;
+
+    const convMixedId = '05400003-0000-4000-8000-000000000001';
+    const convDualCanonId = '05400003-0000-4000-8000-000000000002';
+    const convParentId = '05400003-0000-4000-8000-000000000003';
+    const convForkChildId = '05400003-0000-4000-8000-000000000004';
+    const convOldId = '05400003-0000-4000-8000-000000000005';
+
+    // 1. Stale v5 ledger (lacking byRawModel / activeRawModel) auto-migrates/rebuilds cleanly to v6
+    const staleV5Ledger = {
+      version: 5,
+      threshold: 200000,
+      conversations: {
+        [convMixedId]: {
+          cacheKey: 'stale-v5-no-byRawModel',
+          updatedAtMs: nowMs - 1000,
+          onDisk: true,
+          activeModel: 'gemini-4-hydrogen',
+          days: {
+            [todayKey]: {
+              byModel: {
+                'gemini-4-hydrogen': {
+                  steps: 2,
+                  stdIn: 5000,
+                  stdCache: 15000,
+                  stdOut: 500,
+                  longIn: 0,
+                  longCache: 0,
+                  longOut: 0,
+                  rawModels: ['gemini-flash-worker-agy', 'gemini-4-hydrogen'],
+                },
+              },
+              hours: {},
+            },
+          },
+        },
+      },
+    };
+    const ledger = createUsageLedger(staleV5Ledger);
+    assert.equal(ledger.getData().version, 6);
+    assert.equal(ledger.isDirty(), true);
+    assert.deepEqual(ledger.getData().conversations, {});
+
+    function writeDbConv(cid, specs) {
+      const db = new DatabaseSync(join(convsDir, `${cid}.db`));
+      db.exec(`
+        CREATE TABLE gen_metadata (idx INTEGER PRIMARY KEY, data BLOB, size INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INTEGER NOT NULL DEFAULT 0, status INTEGER NOT NULL DEFAULT 0, metadata BLOB);
+      `);
+      const insGen = db.prepare('INSERT INTO gen_metadata (idx, data, size) VALUES (?, ?, ?)');
+      const insStep = db.prepare('INSERT INTO steps (idx, step_type, status, metadata) VALUES (?, ?, ?, ?)');
+      specs.forEach((sp, idx) => {
+        const usageBuf = encodeTokenUsage({
+          enumId: sp.enumId,
+          input: sp.input,
+          cacheRead: sp.cacheRead,
+          output: sp.output,
+          botId: sp.botId,
+        });
+        const genInner = Buffer.concat([
+          encodeBytesField(4, usageBuf),
+          encodeBytesField(19, sp.rawModel),
+          encodeBytesField(20, encodeGenKv('cascade_id', sp.originCascadeId || cid)),
+          encodeBytesField(21, sp.displayModel),
+        ]);
+        const genTop = Buffer.concat([
+          encodeBytesField(1, genInner),
+          encodeBytesField(2, encodeVarint(sp.stepIdx)),
+        ]);
+        insGen.run(idx, genTop, genTop.length);
+
+        const metaBuf = Buffer.concat([
+          encodeBytesField(1, encodeTimestampMs(sp.createdMs)),
+          encodeBytesField(7, encodeTimestampMs(sp.createdMs + 1000)),
+          encodeBytesField(9, usageBuf),
+          encodeBytesField(
+            20,
+            encodeStepField20({
+              stepIdx: sp.stepIdx,
+              genIdx: idx,
+              originCascadeId: sp.originCascadeId || cid,
+            }),
+          ),
+        ]);
+        insStep.run(sp.stepIdx, 15, 3, metaBuf);
+      });
+      db.close();
+    }
+
+    // Conv 1 (today): mixes 4 routed slugs across Hydrogen + Opus 5.5, ending on claude-opus-5-5-high
+    writeDbConv(convMixedId, [
+      {
+        stepIdx: 1,
+        enumId: 1669,
+        rawModel: 'gemini-flash-worker-agy',
+        displayModel: 'Gemini 4 Hydrogen (Orchestrator)',
+        botId: 't2-mix-1',
+        input: 30_000,
+        cacheRead: 70_000,
+        output: 3_000,
+        createdMs: nowMs - 40_000,
+      },
+      {
+        stepIdx: 3,
+        enumId: 1525,
+        rawModel: 'gemini-4-hydrogen',
+        displayModel: 'Gemini 4 Hydrogen (High)',
+        botId: 't2-mix-2',
+        input: 20_000,
+        cacheRead: 40_000,
+        output: 2_000,
+        createdMs: nowMs - 30_000,
+      },
+      {
+        stepIdx: 5,
+        enumId: 1502,
+        rawModel: 'claude-opus-5-5-low',
+        displayModel: 'Claude Opus 5.5 (Low)',
+        botId: 't2-mix-3',
+        input: 12_000,
+        cacheRead: 28_000,
+        output: 1_200,
+        createdMs: nowMs - 20_000,
+      },
+      {
+        stepIdx: 7,
+        enumId: 1501,
+        rawModel: 'claude-opus-5-5-high',
+        displayModel: 'Claude Opus 5.5 (High)',
+        botId: 't2-mix-4',
+        input: 18_000,
+        cacheRead: 42_000,
+        output: 1_800,
+        createdMs: nowMs - 10_000,
+      },
+    ]);
+
+    // Conv 2 (today): same raw slug 'gemini-flash-worker-agy' billed under two different canonical models on the same day
+    // (Gemini Flash -> gemini-3.8-flash vs Gemini 4 Hydrogen (Orchestrator) -> gemini-4-hydrogen) to verify byCanonical exact pricing
+    writeDbConv(convDualCanonId, [
+      {
+        stepIdx: 1,
+        enumId: 1669,
+        rawModel: 'gemini-flash-worker-agy',
+        displayModel: 'Gemini Flash',
+        botId: 't2-dual-1',
+        input: 15_000,
+        cacheRead: 45_000,
+        output: 1_500,
+        createdMs: nowMs - 35_000,
+      },
+      {
+        stepIdx: 3,
+        enumId: 1669,
+        rawModel: 'gemini-flash-worker-agy',
+        displayModel: 'Gemini 4 Hydrogen (Orchestrator)',
+        botId: 't2-dual-2',
+        input: 10_000,
+        cacheRead: 30_000,
+        output: 1_000,
+        createdMs: nowMs - 15_000,
+      },
+    ]);
+
+    // Conv 3 (5 days ago): parent with claude-opus-5-5-low, forked by Conv 4 (today)
+    const sharedOriginStep = {
+      stepIdx: 1,
+      enumId: 1502,
+      rawModel: 'claude-opus-5-5-low',
+      displayModel: 'Claude Opus 5.5 (Low)',
+      botId: 't2-fork-origin-1',
+      input: 25_000,
+      cacheRead: 75_000,
+      output: 2_500,
+      createdMs: fiveDaysAgoMs + 1000,
+      originCascadeId: convParentId,
+    };
+    writeDbConv(convParentId, [sharedOriginStep]);
+    writeDbConv(convForkChildId, [
+      sharedOriginStep,
+      {
+        stepIdx: 3,
+        enumId: 1669,
+        rawModel: 'gemini-flash-worker-agy',
+        displayModel: 'Gemini 4 Hydrogen (Orchestrator)',
+        botId: 't2-fork-own-2',
+        input: 9_000,
+        cacheRead: 21_000,
+        output: 900,
+        createdMs: nowMs - 5_000,
+        originCascadeId: convForkChildId,
+      },
+    ]);
+
+    // Conv 5 (15 days ago): in 30d/all only, uses gemini-4-hydrogen
+    writeDbConv(convOldId, [
+      {
+        stepIdx: 1,
+        enumId: 1525,
+        rawModel: 'gemini-4-hydrogen',
+        displayModel: 'Gemini 4 Hydrogen (High)',
+        botId: 't2-old-1',
+        input: 50_000,
+        cacheRead: 150_000,
+        output: 5_000,
+        createdMs: fifteenDaysAgoMs + 1000,
+      },
+    ]);
+
+    const sumDb = new DatabaseSync(join(appData, 'conversation_summaries.db'));
+    sumDb.exec(`
+      CREATE TABLE conversation_summaries (
+        conversation_id TEXT PRIMARY KEY,
+        title TEXT,
+        preview TEXT,
+        workspace_uris TEXT,
+        agent_name TEXT,
+        parent_conversation_id TEXT
+      );
+      CREATE TABLE conversation_parents (
+        conversation_id TEXT,
+        parent_id TEXT
+      );
+    `);
+    const insSum = sumDb.prepare(
+      'INSERT INTO conversation_summaries (conversation_id, title, workspace_uris) VALUES (?, ?, ?)',
+    );
+    insSum.run(convMixedId, 'Mixed Models Conv', JSON.stringify(['file:///F:/Work/ws-alpha']));
+    insSum.run(convDualCanonId, 'Dual Canonical Conv', JSON.stringify(['file:///F:/Work/ws-alpha']));
+    insSum.run(convParentId, 'Fork Parent Conv', JSON.stringify(['file:///F:/Work/ws-beta']));
+    insSum.run(convForkChildId, 'Fork Child Conv', JSON.stringify(['file:///F:/Work/ws-beta']));
+    insSum.run(convOldId, 'Old 15d Conv', JSON.stringify(['file:///F:/Work/ws-gamma']));
+    sumDb.close();
+
+    const metadataStore = createMetadataStore({ disableAgentApi: true });
+    const globalCanon = summarizeGlobalAndRecent({
+      appDataDirs: [appData],
+      prefs: { ...DEFAULT_PREFS, modelNameMode: 'canonical' },
+      metadataStore,
+      ledger,
+      runtimeCatalog: MODEL_PRICING_CATALOG,
+      nowMs,
+      disableAgentApi: true,
+    });
+    const globalRouted = summarizeGlobalAndRecent({
+      appDataDirs: [appData],
+      prefs: { ...DEFAULT_PREFS, modelNameMode: 'routed' },
+      metadataStore,
+      ledger,
+      runtimeCatalog: MODEL_PRICING_CATALOG,
+      nowMs,
+      disableAgentApi: true,
+    });
+
+    // 2. Verify ledger v6 structure: byRawModel with canonicalModel + byCanonical + activeRawModel
+    const ledgerData = ledger.getData();
+    assert.equal(ledgerData.version, 6);
+    const mixedRec = ledgerData.conversations[convMixedId];
+    assert.equal(mixedRec.activeRawModel, 'claude-opus-5-5-high');
+    assert.ok(mixedRec.days[todayKey]?.byRawModel, 'v6 ledger day must record byRawModel');
+    assert.equal(
+      mixedRec.days[todayKey].byRawModel['gemini-flash-worker-agy']?.canonicalModel,
+      'gemini-4-hydrogen',
+    );
+    assert.equal(
+      mixedRec.days[todayKey].byRawModel['claude-opus-5-5-high']?.canonicalModel,
+      'claude-opus-5-5',
+    );
+
+    const dualRec = ledgerData.conversations[convDualCanonId];
+    assert.ok(
+      dualRec.days[todayKey]?.byRawModel?.['gemini-flash-worker-agy']?.byCanonical,
+      'Same-day dual-canonical rawSlug must preserve byCanonical sub-buckets',
+    );
+
+    const forkChildRec = ledgerData.conversations[convForkChildId];
+    assert.equal(forkChildRec.activeRawModel, 'gemini-flash-worker-agy');
+    assert.ok(
+      forkChildRec.days[todayKey]?.byRawModel?.['gemini-flash-worker-agy'],
+      'Forked child ownDays must preserve byRawModel',
+    );
+    assert.equal(
+      Object.hasOwn(forkChildRec.days, formatLocalDate(fiveDaysAgoMs)),
+      false,
+      'Forked child must deduplicate cloned parent day out of ownDays',
+    );
+
+    // 3. Canonical merges vs Routed splits across Tab 2 periods
+    assert.deepEqual(
+      globalCanon.periods.all.byModel.map((r) => r.model).sort(),
+      ['Claude Opus 5.5', 'Gemini 3.8 Flash', 'Gemini 4 Hydrogen'],
+    );
+    assert.deepEqual(
+      globalRouted.periods.all.byModel.map((r) => r.model).sort(),
+      [
+        'claude-opus-5-5-high',
+        'claude-opus-5-5-low',
+        'gemini-4-hydrogen',
+        'gemini-flash-worker-agy',
+      ],
+    );
+    assert.deepEqual(
+      globalRouted.todayByModel.map((r) => r.model).sort(),
+      [
+        'claude-opus-5-5-high',
+        'claude-opus-5-5-low',
+        'gemini-4-hydrogen',
+        'gemini-flash-worker-agy',
+      ],
+    );
+    const routedOpusLow = globalRouted.periods.all.byModel.find((r) => r.model === 'claude-opus-5-5-low');
+    assert.equal(routedOpusLow.profileId, 'claude-opus-5-5');
+    assert.equal(routedOpusLow.profileLabel, 'Claude Opus 5.5');
+    assert.deepEqual(routedOpusLow.rawModels, ['claude-opus-5-5-low']);
+    assert.ok(routedOpusLow.rateDisplay.length > 0);
+
+    // 4. Exact 1e-9 conservation across all 4 periods (today, 7d, 30d, all) for totalTokens, costActual, byModel sums, and byWorkspace
+    for (const pKey of ['today', '7d', '30d', 'all']) {
+      const pCanon = globalCanon.periods[pKey];
+      const pRouted = globalRouted.periods[pKey];
+      assert.equal(pRouted.totalTokens, pCanon.totalTokens, `${pKey} totalTokens must match`);
+      assert.ok(
+        Math.abs(pRouted.costActual - pCanon.costActual) < 1e-9,
+        `${pKey} costActual diff=${Math.abs(pRouted.costActual - pCanon.costActual)}`,
+      );
+      const sumCanonTok = pCanon.byModel.reduce((acc, r) => acc + r.totalTokens, 0);
+      const sumRoutedTok = pRouted.byModel.reduce((acc, r) => acc + r.totalTokens, 0);
+      const sumCanonCost = pCanon.byModel.reduce((acc, r) => acc + r.costActual, 0);
+      const sumRoutedCost = pRouted.byModel.reduce((acc, r) => acc + r.costActual, 0);
+      assert.equal(sumRoutedTok, sumCanonTok, `${pKey} byModel token sum mismatch`);
+      assert.equal(sumRoutedTok, pRouted.totalTokens, `${pKey} byModel token sum vs period mismatch`);
+      assert.ok(Math.abs(sumRoutedCost - sumCanonCost) < 1e-9, `${pKey} byModel cost sum mismatch`);
+      assert.ok(Math.abs(sumRoutedCost - pRouted.costActual) < 1e-9, `${pKey} byModel vs period cost mismatch`);
+      assert.deepEqual(
+        pRouted.byWorkspace.map((w) => [w.workspace, w.totalTokens]),
+        pCanon.byWorkspace.map((w) => [w.workspace, w.totalTokens]),
+      );
+      for (let i = 0; i < pCanon.byWorkspace.length; i += 1) {
+        assert.ok(
+          Math.abs(pRouted.byWorkspace[i].costActual - pCanon.byWorkspace[i].costActual) < 1e-9,
+        );
+      }
+    }
+
+    // 5. _etagPart includes modelNameMode
+    assert.notEqual(globalCanon._etagPart, globalRouted._etagPart);
+    assert.equal(globalCanon._etagPart.includes('|mn:canonical|'), true);
+    assert.equal(globalRouted._etagPart.includes('|mn:routed|'), true);
+
+    // 6. Recent conversations and topConversations expose activeModelLabel (canonical) + activeRawModel (routed)
+    const recentById = new Map(globalRouted.recentConversations.map((c) => [c.conversationId, c]));
+    assert.equal(recentById.get(convMixedId)?.activeModelLabel, 'Claude Opus 5.5');
+    assert.equal(recentById.get(convMixedId)?.activeRawModel, 'claude-opus-5-5-high');
+    assert.equal(recentById.get(convForkChildId)?.activeModelLabel, 'Gemini 4 Hydrogen');
+    assert.equal(recentById.get(convForkChildId)?.activeRawModel, 'gemini-flash-worker-agy');
+    assert.equal(recentById.get(convParentId)?.activeModelLabel, 'Claude Opus 5.5');
+    assert.equal(recentById.get(convParentId)?.activeRawModel, 'claude-opus-5-5-low');
+
+    const topById = new Map(globalRouted.periods.all.topConversations.map((c) => [c.conversationId, c]));
+    assert.equal(topById.get(convMixedId)?.activeModelLabel, 'Claude Opus 5.5');
+    assert.equal(topById.get(convMixedId)?.activeRawModel, 'claude-opus-5-5-high');
+    assert.equal(topById.get(convForkChildId)?.activeModelLabel, 'Gemini 4 Hydrogen');
+    assert.equal(topById.get(convForkChildId)?.activeRawModel, 'gemini-flash-worker-agy');
+  } finally {
+    clearParserCache();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:07:37
+// ============================================================================
+
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:09:56
+// Description: Add v0.5.4 receipt.js VM tests and full frontend VM integration
+// tests covering #pref-model-name-mode, settings populate/save, canonical vs
+// routed switching across all 7 UI surfaces + receipt preview, concise Pixel
+// Office canvas mini-nameplates, and static HTML/I18N/DOM-safety contracts.
+// ============================================================================
+test('v0.5.4 receipt.js buildReceiptViewModel & formatReceiptModelLabel canonical vs routed display', () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const receiptPath = join(testDir, '..', 'sidecars', 'monitor_pane', 'receipt.js');
+  const receiptSource = readFileSync(receiptPath, 'utf-8');
+
+  const sandbox = {
+    window: null,
+    globalThis: null,
+    Date,
+    Math,
+    Number,
+    String,
+    Array,
+    Object,
+    RegExp,
+    Intl,
+    console,
+  };
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+  vm.runInNewContext(receiptSource, sandbox);
+
+  const api = sandbox.TokenMonitorReceipt;
+  assert.ok(api, 'TokenMonitorReceipt must be exported');
+  assert.equal(typeof api.buildReceiptViewModel, 'function');
+  assert.equal(typeof api.formatReceiptModelLabel, 'function');
+
+  const currentWithReceipt = {
+    conversationId: 'conv-v054-receipt',
+    title: 'Hydrogen Worker Checkout',
+    activeModel: 'gemini-4-hydrogen',
+    activeModelLabel: 'Gemini 4 Hydrogen',
+    activeRawModel: 'gemini-flash-worker-agy',
+    isChildSession: false,
+    receipt: {
+      todayDate: '2026-11-24',
+      today: {
+        scope: 'today',
+        hasData: true,
+        startDate: '2026-11-24',
+        endDate: '2026-11-24',
+        startedAtMs: Date.parse('2026-11-24T01:00:00Z'),
+        endedAtMs: Date.parse('2026-11-24T01:30:00Z'),
+        activeDurationMs: 1_800_000,
+        compactionsCount: 1,
+        primaryModel: {
+          model: 'gemini-4-hydrogen',
+          rawModel: 'gemini-flash-worker-agy',
+          profileId: 'gemini-4-hydrogen',
+          profileLabel: 'Gemini 4 Hydrogen',
+        },
+        subagentsCount: 1,
+        main: { stepsCount: 5, totalTokens: 80_000, costActual: 0.25 },
+        childrenSubtotal: { stepsCount: 2, totalTokens: 20_000, costActual: 0.05 },
+        grandTotal: { stepsCount: 7, totalTokens: 100_000, costActual: 0.30 },
+        children: [
+          {
+            name: 'worker-hydro',
+            role: 'worker',
+            model: 'gemini-4-hydrogen',
+            modelLabel: 'Gemini 4 Hydrogen',
+            rawModel: 'gemini-flash-worker-agy',
+            totalTokens: 20_000,
+            costActual: 0.05,
+          },
+        ],
+      },
+      all: {
+        scope: 'all',
+        hasData: true,
+        startDate: '2026-11-23',
+        endDate: '2026-11-24',
+        startedAtMs: Date.parse('2026-11-23T08:00:00Z'),
+        endedAtMs: Date.parse('2026-11-24T01:30:00Z'),
+        activeDurationMs: 3_600_000,
+        compactionsCount: 2,
+        primaryModel: {
+          model: 'claude-opus-5-5',
+          rawModel: 'claude-opus-5-5-high',
+          profileId: 'claude-opus-5-5',
+          profileLabel: 'Claude Opus 5.5',
+        },
+        subagentsCount: 1,
+        main: { stepsCount: 12, totalTokens: 200_000, costActual: 1.2 },
+        childrenSubtotal: { stepsCount: 2, totalTokens: 20_000, costActual: 0.05 },
+        grandTotal: { stepsCount: 14, totalTokens: 220_000, costActual: 1.25 },
+        children: [],
+      },
+    },
+  };
+
+  // 1. Canonical mode (explicit & default) displays canonical 'Gemini 4 Hydrogen'
+  const vmCanon = api.buildReceiptViewModel(
+    currentWithReceipt,
+    { currency: 'USD', modelNameMode: 'canonical' },
+    { lang: 'zh', scope: 'today', modelNameMode: 'canonical' },
+  );
+  assert.equal(vmCanon.modelNameMode, 'canonical');
+  assert.equal(
+    vmCanon.metaRows.find((r) => r.key === 'primaryModel')?.value,
+    'Gemini 4 Hydrogen',
+  );
+
+  // 2. Routed mode (via options.modelNameMode) displays exact slug 'gemini-flash-worker-agy' without collapsing
+  const vmRoutedOpt = api.buildReceiptViewModel(
+    currentWithReceipt,
+    { currency: 'USD', modelNameMode: 'canonical' },
+    { lang: 'en', scope: 'today', modelNameMode: 'routed' },
+  );
+  assert.equal(vmRoutedOpt.modelNameMode, 'routed');
+  assert.equal(
+    vmRoutedOpt.metaRows.find((r) => r.key === 'primaryModel')?.value,
+    'gemini-flash-worker-agy',
+  );
+
+  // 3. Routed mode via prefs.modelNameMode fallback (when options.modelNameMode omitted) + 'all' scope
+  const vmRoutedPrefs = api.buildReceiptViewModel(
+    currentWithReceipt,
+    { currency: 'USD', modelNameMode: 'routed' },
+    { lang: 'zh', scope: 'all' },
+  );
+  assert.equal(vmRoutedPrefs.modelNameMode, 'routed');
+  assert.equal(
+    vmRoutedPrefs.metaRows.find((r) => r.key === 'primaryModel')?.value,
+    'claude-opus-5-5-high',
+  );
+
+  // 4. Direct formatReceiptModelLabel checks (canonical vs routed + Auto handling)
+  assert.equal(
+    api.formatReceiptModelLabel(currentWithReceipt.receipt.today, currentWithReceipt, 'zh', 'canonical'),
+    'Gemini 4 Hydrogen',
+  );
+  assert.equal(
+    api.formatReceiptModelLabel(currentWithReceipt.receipt.today, currentWithReceipt, 'zh', 'routed'),
+    'gemini-flash-worker-agy',
+  );
+  assert.equal(
+    api.formatReceiptModelLabel({ primaryModel: { model: 'Auto', rawModel: 'Auto' } }, { activeModel: 'Auto' }, 'zh', 'routed'),
+    'Auto',
+  );
+
+  // 5. Fallback scope (no current.receipt) preserves rawModel from totals.byModel / activeRawModel
+  const currentFallback = {
+    conversationId: 'conv-v054-fallback',
+    title: 'Fallback Scope Test',
+    activeModel: 'gemini-4-hydrogen',
+    activeRawModel: 'gemini-flash-worker-agy',
+    totals: {
+      withChildren: { stepsCount: 3, totalTokens: 50_000, costActual: 0.15 },
+      mainOnly: { stepsCount: 3, totalTokens: 50_000, costActual: 0.15 },
+      byModel: [
+        {
+          model: 'Gemini 4 Hydrogen',
+          profileId: 'gemini-4-hydrogen',
+          profileLabel: 'Gemini 4 Hydrogen',
+          rawModels: ['gemini-flash-worker-agy'],
+          totalTokens: 50_000,
+          costActual: 0.15,
+        },
+      ],
+    },
+    children: [],
+  };
+  const vmFallbackCanon = api.buildReceiptViewModel(
+    currentFallback,
+    { currency: 'USD', modelNameMode: 'canonical' },
+    { lang: 'en', scope: 'all' },
+  );
+  const vmFallbackRouted = api.buildReceiptViewModel(
+    currentFallback,
+    { currency: 'USD', modelNameMode: 'routed' },
+    { lang: 'en', scope: 'all' },
+  );
+  assert.equal(
+    vmFallbackCanon.metaRows.find((r) => r.key === 'primaryModel')?.value,
+    'Gemini 4 Hydrogen',
+  );
+  assert.equal(
+    vmFallbackRouted.metaRows.find((r) => r.key === 'primaryModel')?.value,
+    'gemini-flash-worker-agy',
+  );
+});
+
+test('v0.5.4 frontend VM #pref-model-name-mode, settings save, canonical/routed toggle across all 7 surfaces + receipt preview, concise Pixel Office canvas nameplates, and static contracts', async () => {
+  const testDir = dirname(fileURLToPath(import.meta.url));
+  const paneDir = join(testDir, '..', 'sidecars', 'monitor_pane');
+  const indexHtml = readFileSync(join(paneDir, 'index.html'), 'utf-8');
+  const appSource = readFileSync(join(paneDir, 'app.js'), 'utf-8');
+  const receiptSource = readFileSync(join(paneDir, 'receipt.js'), 'utf-8');
+  const pixelSource = readFileSync(join(paneDir, 'pixel_office.js'), 'utf-8');
+
+  // 1. Static HTML & I18N contracts
+  assert.match(indexHtml, /data-i18n="settings\.sec1Title"/);
+  assert.match(indexHtml, /data-i18n="settings\.modelNameModeLabel"/);
+  assert.match(indexHtml, /<select\s+id="pref-model-name-mode"\s+class="field-input">/);
+  assert.match(indexHtml, /<option\s+value="canonical"\s+data-i18n="settings\.modelModeCanonical">/);
+  assert.match(indexHtml, /<option\s+value="routed"\s+data-i18n="settings\.modelModeRouted">/);
+
+  const i18nStart = appSource.indexOf('const I18N = {');
+  assert.ok(i18nStart >= 0);
+  const i18nMatch = appSource
+    .slice(i18nStart)
+    .match(/zh:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(i18nMatch, 'Both zh and en blocks must be extractable from I18N');
+  const extractEntries = (block) => {
+    const map = new Map();
+    for (const m of block.matchAll(/^\s*'([^']+)'\s*:\s*'((?:\\.|[^'\\])*)'/gm)) {
+      map.set(m[1], m[2]);
+    }
+    return map;
+  };
+  const zhEntries = extractEntries(i18nMatch[1]);
+  const enEntries = extractEntries(i18nMatch[2]);
+  assert.deepEqual([...zhEntries.keys()].sort(), [...enEntries.keys()].sort());
+  const extractPlaceholders = (str) =>
+    [...str.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
+  for (const key of [
+    'settings.modelNameModeLabel',
+    'settings.modelModeCanonical',
+    'settings.modelModeRouted',
+    'childrenModels.routedRateTip',
+  ]) {
+    assert.ok(zhEntries.has(key) && zhEntries.get(key).length > 0, `I18N.zh missing ${key}`);
+    assert.ok(enEntries.has(key) && enEntries.get(key).length > 0, `I18N.en missing ${key}`);
+    assert.deepEqual(
+      extractPlaceholders(zhEntries.get(key)),
+      extractPlaceholders(enEntries.get(key)),
+      `Placeholder mismatch for ${key}`,
+    );
+    assert.equal(zhEntries.get(key).startsWith('\u25cf '), false);
+    assert.equal(enEntries.get(key).startsWith('\u25cf '), false);
+  }
+  const unsafeDomRe = /\b(?:innerHTML|outerHTML|insertAdjacentHTML|document\.write)\b/;
+  assert.equal(unsafeDomRe.test(appSource), false);
+  assert.equal(unsafeDomRe.test(receiptSource), false);
+
+  // 2. Headless Node VM sandbox running real receipt.js + pixel_office.js + app.js
+  const canvasTextCalls = [];
+  class FakeNode {
+    constructor(tag) {
+      this.tagName = String(tag || 'DIV').toUpperCase();
+      this.id = '';
+      this.className = '';
+      this.children = [];
+      this.parentElement = null;
+      this.parentNode = null;
+      this.dataset = {};
+      this._attrs = new Map();
+      this._listeners = new Map();
+      this._textContent = '';
+      this.title = '';
+      this.value = '';
+      this.type = '';
+      this.src = '';
+      this.alt = '';
+      this.disabled = false;
+      this.checked = false;
+      this.scrollTop = 0;
+      this.clientWidth = 420;
+      this.width = 420;
+      this.height = 180;
+      this._ctx2d = null;
+      this.style = {
+        _vars: {},
+        setProperty(k, v) {
+          this._vars[String(k)] = String(v);
+        },
+        getPropertyValue(k) {
+          return this._vars[String(k)] ?? '';
+        },
+        removeProperty(k) {
+          delete this._vars[String(k)];
+        },
+      };
+      this.classList = {
+        _set: () => new Set(this.className.split(/\s+/).filter(Boolean)),
+        contains: (c) => this.classList._set().has(c),
+        add: (...cs) => {
+          const s = this.classList._set();
+          for (const c of cs) if (c) s.add(c);
+          this.className = [...s].join(' ');
+        },
+        remove: (...cs) => {
+          const s = this.classList._set();
+          for (const c of cs) s.delete(c);
+          this.className = [...s].join(' ');
+        },
+        toggle: (c, force) => {
+          const s = this.classList._set();
+          const has = s.has(c);
+          const next = force === undefined ? !has : Boolean(force);
+          if (next) s.add(c);
+          else s.delete(c);
+          this.className = [...s].join(' ');
+          return next;
+        },
+      };
+    }
+    get childElementCount() {
+      return this.children.filter((c) => c.tagName !== '#TEXT').length;
+    }
+    get textContent() {
+      if (this.tagName === '#TEXT') return this._textContent;
+      if (this.children.length === 0) return this._textContent;
+      return this.children.map((c) => c.textContent).join('');
+    }
+    set textContent(v) {
+      this.children = [];
+      this._textContent = String(v ?? '');
+    }
+    setAttribute(k, v) {
+      const key = String(k);
+      const val = String(v);
+      this._attrs.set(key, val);
+      if (key === 'id') this.id = val;
+      else if (key === 'class') this.className = val;
+      else if (key === 'title') this.title = val;
+    }
+    getAttribute(k) {
+      const key = String(k);
+      if (key === 'id') return this.id || null;
+      if (key === 'class') return this.className || null;
+      if (key === 'title') return this.title || null;
+      return this._attrs.has(key) ? this._attrs.get(key) : null;
+    }
+    removeAttribute(k) {
+      this._attrs.delete(String(k));
+    }
+    appendChild(child) {
+      if (!child) return child;
+      child.parentElement = this;
+      child.parentNode = this;
+      this.children.push(child);
+      return child;
+    }
+    replaceChildren(...nodes) {
+      for (const c of this.children) {
+        c.parentElement = null;
+        c.parentNode = null;
+      }
+      this.children = [];
+      this._textContent = '';
+      for (const n of nodes) {
+        if (n === null || n === undefined) continue;
+        if (typeof n === 'string') {
+          const tn = new FakeNode('#TEXT');
+          tn._textContent = n;
+          this.appendChild(tn);
+        } else {
+          this.appendChild(n);
+        }
+      }
+    }
+    remove() {
+      if (this.parentElement) {
+        const idx = this.parentElement.children.indexOf(this);
+        if (idx >= 0) this.parentElement.children.splice(idx, 1);
+        this.parentElement = null;
+        this.parentNode = null;
+      }
+    }
+    addEventListener(type, fn) {
+      if (!this._listeners.has(type)) this._listeners.set(type, []);
+      this._listeners.get(type).push(fn);
+    }
+    dispatchEvent(typeOrEvent) {
+      const evt =
+        typeof typeOrEvent === 'string'
+          ? { type: typeOrEvent, target: this, currentTarget: this, preventDefault() {}, stopPropagation() {} }
+          : typeOrEvent;
+      let stopped = false;
+      const origStop = evt.stopPropagation ? evt.stopPropagation.bind(evt) : () => {};
+      evt.stopPropagation = () => {
+        stopped = true;
+        origStop();
+      };
+      let cur = this;
+      while (cur) {
+        evt.currentTarget = cur;
+        for (const fn of cur._listeners.get(evt.type) || []) fn(evt);
+        if (stopped) break;
+        cur = cur.parentElement;
+      }
+    }
+    click(extra = {}) {
+      this.dispatchEvent({
+        type: 'click',
+        target: this,
+        currentTarget: this,
+        preventDefault() {},
+        stopPropagation() {},
+        ...extra,
+      });
+    }
+    focus() {}
+    scrollIntoView() {}
+    getBoundingClientRect() {
+      const w = this.clientWidth || 420;
+      const h =
+        this.tagName === 'CANVAS' && this.width > 0 && this.height > 0
+          ? Math.round(w * (this.height / this.width))
+          : 180;
+      return { left: 0, top: 0, width: w, height: h };
+    }
+    getContext(kind) {
+      if (this.tagName !== 'CANVAS' || kind !== '2d') return null;
+      if (!this._ctx2d) {
+        const ownerCanvas = this;
+        this._ctx2d = {
+          font: '',
+          fillStyle: '',
+          strokeStyle: '',
+          lineWidth: 1,
+          textAlign: 'left',
+          textBaseline: 'alphabetic',
+          imageSmoothingEnabled: true,
+          setTransform() {},
+          save() {},
+          restore() {},
+          scale() {},
+          beginPath() {},
+          moveTo() {},
+          lineTo() {},
+          closePath() {},
+          arc() {},
+          quadraticCurveTo() {},
+          fill() {},
+          stroke() {},
+          fillRect() {},
+          strokeRect() {},
+          clearRect() {},
+          setLineDash() {},
+          createLinearGradient() {
+            return { addColorStop() {} };
+          },
+          measureText(str) {
+            return { width: String(str || '').length * 6.0 };
+          },
+          fillText(txt) {
+            if (ownerCanvas.classList.contains('pixel-office-canvas')) {
+              canvasTextCalls.push(String(txt ?? ''));
+            }
+          },
+          drawImage() {},
+        };
+      }
+      return this._ctx2d;
+    }
+    toDataURL(mime = 'image/png') {
+      return `data:${mime};base64,${Buffer.from('V054_MOCK_PNG').toString('base64')}`;
+    }
+    _matches(sel) {
+      const s = sel.trim();
+      if (!s) return false;
+      if (s.startsWith('#')) return this.id === s.slice(1);
+      if (s.startsWith('.')) {
+        return s.slice(1).split('.').filter(Boolean).every((c) => this.classList.contains(c));
+      }
+      const parts = s.split('.');
+      if (parts[0] && this.tagName !== parts[0].toUpperCase()) return false;
+      return parts.slice(1).every((c) => this.classList.contains(c));
+    }
+    closest(selector) {
+      const parts = String(selector).split(',').map((p) => p.trim()).filter(Boolean);
+      let cur = this;
+      while (cur && cur.tagName !== '#TEXT') {
+        for (const p of parts) {
+          if (cur._matches(p)) return cur;
+        }
+        cur = cur.parentElement;
+      }
+      return null;
+    }
+    querySelectorAll(selector) {
+      const out = [];
+      const selectors = String(selector).split(',').map((p) => p.trim()).filter(Boolean);
+      const walk = (node) => {
+        for (const c of node.children) {
+          if (c.tagName !== '#TEXT') {
+            for (const s of selectors) {
+              const chain = s.split(/\s+/);
+              if (c._matches(chain[chain.length - 1])) {
+                let ok = true;
+                if (chain.length > 1) {
+                  let anc = c.parentElement;
+                  for (let k = chain.length - 2; k >= 0; k--) {
+                    while (anc && !anc._matches(chain[k])) anc = anc.parentElement;
+                    if (!anc) {
+                      ok = false;
+                      break;
+                    }
+                    anc = anc.parentElement;
+                  }
+                }
+                if (ok) {
+                  out.push(c);
+                  break;
+                }
+              }
+            }
+            walk(c);
+          }
+        }
+      };
+      walk(this);
+      return out;
+    }
+    querySelector(selector) {
+      return this.querySelectorAll(selector)[0] || null;
+    }
+  }
+
+  const elementsById = new Map();
+  const rootBody = new FakeNode('BODY');
+  const fakeDocument = {
+    hidden: false,
+    readyState: 'complete',
+    activeElement: null,
+    documentElement: new FakeNode('HTML'),
+    body: rootBody,
+    createElement(tag) {
+      return new FakeNode(tag);
+    },
+    createElementNS(_ns, tag) {
+      return new FakeNode(tag);
+    },
+    createTextNode(txt) {
+      const n = new FakeNode('#TEXT');
+      n._textContent = String(txt ?? '');
+      return n;
+    },
+    getElementById(id) {
+      const k = String(id);
+      if (!elementsById.has(k)) {
+        const tag = k.startsWith('card-')
+          ? 'ARTICLE'
+          : k.startsWith('pref-') && (k.includes('unit') || k.includes('mode') || k.includes('currency') || k.includes('plan') || k.includes('select'))
+            ? 'SELECT'
+            : k.startsWith('pref-')
+              ? 'INPUT'
+              : 'DIV';
+        const n = new FakeNode(tag);
+        n.id = k;
+        if (k === 'current-collapsed-bar') n.className = 'collapsed-bar hidden';
+        else if (k === 'card-pixel-office') n.className = 'card pixel-office-card';
+        else if (k === 'card-side-questions') n.className = 'card hidden';
+        else if (k.startsWith('card-')) n.className = 'card';
+        rootBody.appendChild(n);
+        elementsById.set(k, n);
+      }
+      return elementsById.get(k);
+    },
+    querySelector(sel) {
+      return rootBody.querySelector(sel);
+    },
+    querySelectorAll(sel) {
+      return rootBody.querySelectorAll(sel);
+    },
+    addEventListener() {},
+  };
+
+  // Pre-seed header #model-pill with .model-dot and #model-text matching index.html
+  const modelPillNode = fakeDocument.getElementById('model-pill');
+  const headerDotNode = new FakeNode('SPAN');
+  headerDotNode.className = 'model-dot';
+  const modelTextNode = new FakeNode('SPAN');
+  modelTextNode.id = 'model-text';
+  elementsById.set('model-text', modelTextNode);
+  modelPillNode.appendChild(headerDotNode);
+  modelPillNode.appendChild(modelTextNode);
+
+  // Pre-seed #pref-model-name-mode options matching index.html
+  const prefModeSelect = fakeDocument.getElementById('pref-model-name-mode');
+  for (const val of ['canonical', 'routed']) {
+    const opt = new FakeNode('OPTION');
+    opt.value = val;
+    prefModeSelect.appendChild(opt);
+  }
+  prefModeSelect.value = 'canonical';
+
+  const serverPrefs = {
+    ...DEFAULT_PREFS,
+    currency: 'USD',
+    language: 'zh',
+    tokenUnit: 'auto',
+    modelNameMode: 'canonical',
+    modelSortBy: 'cost',
+    modelSortDir: 'desc',
+    pixelOfficeCollapsed: false,
+    collapsedCards: {},
+    modelOverrides: {},
+  };
+
+  const canonicalByModel = [
+    {
+      profileId: 'gemini-4-hydrogen',
+      profileLabel: 'Gemini 4 Hydrogen',
+      model: 'Gemini 4 Hydrogen',
+      rawModels: ['gemini-4-hydrogen', 'gemini-flash-worker-agy'],
+      rateDisplay: 'USD 1.50 / 0.075 / 7.50',
+      stepsCount: 6,
+      conversationsCount: 2,
+      inputUncachedTokens: 60_000,
+      inputTokens: 60_000,
+      cacheReadTokens: 170_000,
+      outputTokens: 8_000,
+      totalTokens: 238_000,
+      cacheHitRatePct: 73.9,
+      costActual: 0.16275,
+    },
+    {
+      profileId: 'claude-opus-5-5',
+      profileLabel: 'Claude Opus 5.5',
+      model: 'Claude Opus 5.5',
+      rawModels: ['claude-opus-5-5-high', 'claude-opus-5-5-low'],
+      rateDisplay: 'USD 4.00 / 0.20 / 20.00',
+      stepsCount: 4,
+      conversationsCount: 1,
+      inputUncachedTokens: 20_000,
+      inputTokens: 20_000,
+      cacheReadTokens: 60_000,
+      outputTokens: 2_000,
+      totalTokens: 82_000,
+      cacheHitRatePct: 75.0,
+      costActual: 0.132,
+    },
+  ];
+
+  const routedByModel = [
+    {
+      profileId: 'gemini-4-hydrogen',
+      profileLabel: 'Gemini 4 Hydrogen',
+      model: 'gemini-flash-worker-agy',
+      rawModels: ['gemini-flash-worker-agy'],
+      rateDisplay: 'USD 1.50 / 0.075 / 7.50',
+      stepsCount: 4,
+      conversationsCount: 2,
+      inputUncachedTokens: 45_000,
+      inputTokens: 45_000,
+      cacheReadTokens: 130_000,
+      outputTokens: 6_000,
+      totalTokens: 181_000,
+      cacheHitRatePct: 74.3,
+      costActual: 0.12225,
+    },
+    {
+      profileId: 'claude-opus-5-5',
+      profileLabel: 'Claude Opus 5.5',
+      model: 'claude-opus-5-5-high',
+      rawModels: ['claude-opus-5-5-high'],
+      rateDisplay: 'USD 4.00 / 0.20 / 20.00',
+      stepsCount: 3,
+      conversationsCount: 1,
+      inputUncachedTokens: 15_000,
+      inputTokens: 15_000,
+      cacheReadTokens: 45_000,
+      outputTokens: 1_500,
+      totalTokens: 61_500,
+      cacheHitRatePct: 75.0,
+      costActual: 0.099,
+    },
+    {
+      profileId: 'gemini-4-hydrogen',
+      profileLabel: 'Gemini 4 Hydrogen',
+      model: 'gemini-4-hydrogen',
+      rawModels: ['gemini-4-hydrogen'],
+      rateDisplay: 'USD 1.50 / 0.075 / 7.50',
+      stepsCount: 2,
+      conversationsCount: 1,
+      inputUncachedTokens: 15_000,
+      inputTokens: 15_000,
+      cacheReadTokens: 40_000,
+      outputTokens: 2_000,
+      totalTokens: 57_000,
+      cacheHitRatePct: 72.7,
+      costActual: 0.0405,
+    },
+    {
+      profileId: 'claude-opus-5-5',
+      profileLabel: 'Claude Opus 5.5',
+      model: 'claude-opus-5-5-low',
+      rawModels: ['claude-opus-5-5-low'],
+      rateDisplay: 'USD 4.00 / 0.20 / 20.00',
+      stepsCount: 1,
+      conversationsCount: 1,
+      inputUncachedTokens: 5_000,
+      inputTokens: 5_000,
+      cacheReadTokens: 15_000,
+      outputTokens: 500,
+      totalTokens: 20_500,
+      cacheHitRatePct: 75.0,
+      costActual: 0.033,
+    },
+  ];
+
+  let snapRev = 1;
+  const buildMockSnap = () => {
+    const mode = serverPrefs.modelNameMode === 'routed' ? 'routed' : 'canonical';
+    const byModelRows = mode === 'routed' ? routedByModel : canonicalByModel;
+    const now = Date.now();
+    const recentConvs = [
+      {
+        conversationId: 'conv-v054-main',
+        title: 'Hydrogen Routed Session',
+        workspace: 'F:\\Work\\v054-repo',
+        activeModel: 'gemini-4-hydrogen',
+        activeModelLabel: 'Gemini 4 Hydrogen',
+        activeRawModel: 'gemini-flash-worker-agy',
+        status: 'GENERATING',
+        onDisk: true,
+        isToday: true,
+        updatedAtMs: now - 2_000,
+        contextTotal: 110_000,
+        latestTokPerSec: 92,
+        outputTokens: 6_000,
+        totalTokens: 181_000,
+        costActual: 0.12225,
+      },
+      {
+        conversationId: 'conv-v054-opus',
+        title: 'Opus High Review',
+        workspace: 'F:\\Work\\v054-repo',
+        activeModel: 'claude-opus-5-5',
+        activeModelLabel: 'Claude Opus 5.5',
+        activeRawModel: 'claude-opus-5-5-high',
+        status: 'IDLE',
+        onDisk: true,
+        isToday: true,
+        updatedAtMs: now - 25_000,
+        contextTotal: 42_000,
+        latestTokPerSec: 65,
+        outputTokens: 1_500,
+        totalTokens: 61_500,
+        costActual: 0.099,
+      },
+    ];
+    const makePeriod = (rangeKey) => ({
+      rangeKey,
+      startDate: '2026-11-24',
+      endDate: '2026-11-24',
+      spanDaysCount: 1,
+      activeDaysCount: 1,
+      conversationsCount: 2,
+      archivedConversationsCount: 0,
+      stepsCount: 10,
+      inputTokens: 80_000,
+      cacheReadTokens: 230_000,
+      outputTokens: 10_000,
+      totalTokens: 320_000,
+      cacheHitRatePct: 74.2,
+      costActual: 0.29475,
+      avgDailyCost: 0.29475,
+      avgDailyTokens: 320_000,
+      trendGranularity: 'hour',
+      series: [
+        { key: '09', label: '09:00', rangeText: '09:00 - 10:00', costActual: 0.29475, totalTokens: 320_000, outputTokens: 10_000 },
+      ],
+      byModel: byModelRows,
+      byWorkspace: [
+        {
+          workspace: 'F:\\Work\\v054-repo',
+          conversationsCount: 2,
+          stepsCount: 10,
+          inputTokens: 80_000,
+          cacheReadTokens: 230_000,
+          outputTokens: 10_000,
+          totalTokens: 320_000,
+          cacheHitRatePct: 74.2,
+          costActual: 0.29475,
+        },
+      ],
+      topConversations: recentConvs,
+      subscription: null,
+    });
+
+    return {
+      etag: `etag-v054-${snapRev++}-${mode}`,
+      serverTimeMs: now,
+      boundConversationId: 'conv-v054-main',
+      appVersion: '0.5.4',
+      pricingCatalog: buildEffectivePricingCatalog(serverPrefs, MODEL_PRICING_CATALOG),
+      prefs: {
+        ...serverPrefs,
+        collapsedCards: { ...serverPrefs.collapsedCards },
+        modelOverrides: { ...serverPrefs.modelOverrides },
+      },
+      current: {
+        conversationId: 'conv-v054-main',
+        title: 'Hydrogen Routed Session',
+        workspace: 'F:\\Work\\v054-repo',
+        status: 'GENERATING',
+        generatingSinceMs: now - 4_000,
+        activeModel: 'gemini-4-hydrogen',
+        activeModelLabel: 'Gemini 4 Hydrogen',
+        activeRawModel: 'gemini-flash-worker-agy',
+        userTurnTimestampsMs: [now - 30_000],
+        speed: { latestStepTokPerSec: 92, weightedAvgTokPerSec: 88, peakTokPerSec: 105, recentSteps: [] },
+        context: {
+          currentTotal: 110_000,
+          softLimit: 409_600,
+          hardLimit: 512_000,
+          hardUsagePct: 21.5,
+          softUsagePct: 26.9,
+          usageLevel: 'HEALTHY',
+          compactionsCount: 0,
+          topSpikes: [],
+        },
+        cache: {
+          hitRatePct: 74.2,
+          cacheReadTokens: 230_000,
+          inputUncachedTokens: 80_000,
+          costSavedByCache: 0.35,
+        },
+        totals: {
+          withChildren: {
+            stepsCount: 10,
+            totalTokens: 320_000,
+            outputTokens: 10_000,
+            cacheReadTokens: 230_000,
+            inputUncachedTokens: 80_000,
+            costActual: 0.29475,
+            costSavedByCache: 0.35,
+            cacheHitRatePct: 74.2,
+          },
+          mainOnly: {
+            stepsCount: 8,
+            totalTokens: 260_000,
+            outputTokens: 8_000,
+            cacheReadTokens: 190_000,
+            inputUncachedTokens: 62_000,
+            costActual: 0.24,
+            costSavedByCache: 0.29,
+            cacheHitRatePct: 75.4,
+          },
+          byModel: byModelRows,
+          mainOnlyByModel: byModelRows,
+        },
+        children: [
+          {
+            conversationId: 'child-v054-hydro',
+            name: 'worker-h',
+            kind: 'swarm',
+            role: 'worker',
+            status: 'RUNNING_TOOLS',
+            killed: false,
+            model: 'gemini-4-hydrogen',
+            modelLabel: 'Gemini 4 Hydrogen',
+            rawModel: 'gemini-flash-worker-agy',
+            activeToolLabel: 'Running tests',
+            contextTotal: 18_000,
+            latestTokPerSec: 64,
+            outputTokens: 2_000,
+            costActual: 0.05475,
+            createdAtMs: now - 20_000,
+            updatedAtMs: now - 1_500,
+          },
+        ],
+        sideQuestions: [
+          {
+            conversationId: 'sq-v054-hydro',
+            title: 'Side Q Hydrogen Slug',
+            status: 'IDLE',
+            model: 'Gemini 4 Hydrogen',
+            rawModel: 'gemini-flash-worker-agy',
+            stepsCount: 2,
+            inputUncachedTokens: 3_000,
+            cacheReadTokens: 12_000,
+            outputTokens: 600,
+            totalTokens: 15_600,
+            cacheHitRatePct: 80,
+            costActual: 0.01,
+            updatedAtMs: now - 5_000,
+          },
+        ],
+        sideQuestionsTotals: {
+          count: 1,
+          stepsCount: 2,
+          inputUncachedTokens: 3_000,
+          cacheReadTokens: 12_000,
+          outputTokens: 600,
+          totalTokens: 15_600,
+          cacheHitRatePct: 80,
+          costActual: 0.01,
+        },
+        receipt: {
+          todayDate: '2026-11-24',
+          today: {
+            scope: 'today',
+            hasData: true,
+            startDate: '2026-11-24',
+            endDate: '2026-11-24',
+            startedAtMs: now - 600_000,
+            endedAtMs: now - 1_000,
+            activeDurationMs: 600_000,
+            compactionsCount: 0,
+            primaryModel: {
+              model: 'gemini-4-hydrogen',
+              rawModel: 'gemini-flash-worker-agy',
+              profileId: 'gemini-4-hydrogen',
+              profileLabel: 'Gemini 4 Hydrogen',
+            },
+            subagentsCount: 1,
+            main: { stepsCount: 8, totalTokens: 260_000, costActual: 0.24 },
+            childrenSubtotal: { stepsCount: 2, totalTokens: 60_000, costActual: 0.05475 },
+            grandTotal: { stepsCount: 10, totalTokens: 320_000, costActual: 0.29475 },
+            children: [
+              {
+                name: 'worker-h',
+                role: 'worker',
+                model: 'gemini-4-hydrogen',
+                modelLabel: 'Gemini 4 Hydrogen',
+                rawModel: 'gemini-flash-worker-agy',
+                totalTokens: 60_000,
+                costActual: 0.05475,
+              },
+            ],
+          },
+          all: {
+            scope: 'all',
+            hasData: true,
+            startDate: '2026-11-24',
+            endDate: '2026-11-24',
+            startedAtMs: now - 600_000,
+            endedAtMs: now - 1_000,
+            activeDurationMs: 600_000,
+            compactionsCount: 0,
+            primaryModel: {
+              model: 'gemini-4-hydrogen',
+              rawModel: 'gemini-flash-worker-agy',
+              profileId: 'gemini-4-hydrogen',
+              profileLabel: 'Gemini 4 Hydrogen',
+            },
+            subagentsCount: 1,
+            main: { stepsCount: 8, totalTokens: 260_000, costActual: 0.24 },
+            childrenSubtotal: { stepsCount: 2, totalTokens: 60_000, costActual: 0.05475 },
+            grandTotal: { stepsCount: 10, totalTokens: 320_000, costActual: 0.29475 },
+            children: [],
+          },
+        },
+      },
+      global: {
+        todayDate: '2026-11-24',
+        recentConversations: recentConvs,
+        todayByWorkspace: makePeriod('today').byWorkspace,
+        periods: {
+          today: makePeriod('today'),
+          '7d': makePeriod('7d'),
+          '30d': makePeriod('30d'),
+          all: makePeriod('all'),
+        },
+      },
+    };
+  };
+
+  const postedPrefs = [];
+  let timerSeq = 1;
+  const sandbox = {
+    window: null,
+    globalThis: null,
+    document: fakeDocument,
+    Node: FakeNode,
+    MutationObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+    AbortController: globalThis.AbortController,
+    URLSearchParams: globalThis.URLSearchParams,
+    console,
+    Date,
+    Math,
+    Number,
+    String,
+    Array,
+    Object,
+    Set,
+    Map,
+    JSON,
+    Promise,
+    Error,
+    RegExp,
+    Intl,
+    encodeURIComponent,
+    decodeURIComponent,
+    sessionStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    setInterval: () => timerSeq++,
+    clearInterval: () => {},
+    setTimeout: () => timerSeq++,
+    clearTimeout: () => {},
+    requestAnimationFrame(fn) {
+      fn();
+      return 1;
+    },
+    getComputedStyle() {
+      return { color: 'rgb(15, 23, 42)', backgroundColor: 'rgb(255, 255, 255)', getPropertyValue: () => '' };
+    },
+    navigator: { clipboard: { writeText: async () => {} } },
+    addEventListener() {},
+    removeEventListener() {},
+    innerWidth: 560,
+    devicePixelRatio: 1,
+    matchMedia() {
+      return { matches: false, addEventListener() {} };
+    },
+    fetch: async (url, init = {}) => {
+      const urlStr = String(url || '');
+      if (urlStr.includes('/api/prefs') && init?.method === 'POST') {
+        const body = JSON.parse(init.body || '{}');
+        postedPrefs.push(body);
+        if (body.modelNameMode === 'canonical' || body.modelNameMode === 'routed') {
+          serverPrefs.modelNameMode = body.modelNameMode;
+        }
+        const resp = {
+          ok: true,
+          prefs: {
+            ...serverPrefs,
+            collapsedCards: { ...serverPrefs.collapsedCards },
+            modelOverrides: { ...serverPrefs.modelOverrides },
+          },
+        };
+        return { ok: true, status: 200, json: async () => resp, text: async () => JSON.stringify(resp) };
+      }
+      const snap = buildMockSnap();
+      return { ok: true, status: 200, json: async () => snap, text: async () => JSON.stringify(snap) };
+    },
+  };
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+  sandbox.sidecar = {
+    conversationId: 'conv-v054-main',
+    fetch: sandbox.fetch,
+    ui: { toggleConversation() {} },
+  };
+
+  vm.createContext(sandbox);
+  vm.runInContext(receiptSource, sandbox);
+  vm.runInContext(pixelSource, sandbox);
+  const controlledAppSrc = appSource
+    .replace(
+      /if\s*\(document\.readyState\s*===\s*'loading'\)/,
+      'globalThis.__tmV054 = { state, init, pollSnapshot, populateSettingsForm, saveSettings, getCurrentAppVersion, renderHeader, renderCurrentTab, renderGlobalTab, setActiveTab, openReceiptModal, renderReceiptModal, closeReceiptModal };\n  if (document.readyState === \'loading\')',
+    )
+    .replace(
+      /if\s*\(document\.readyState\s*===\s*'loading'\)\s*\{[\s\S]*?\}\s*else\s*\{\s*init\(\);\s*\}/,
+      '/* manual init in test */',
+    );
+  vm.runInContext(controlledAppSrc, sandbox);
+  const api = sandbox.__tmV054;
+  assert.ok(api, 'VM must expose __tmV054');
+  assert.equal(api.getCurrentAppVersion(), '0.5.4');
+
+  // Boot & initial canonical render
+  api.init();
+  await new Promise((r) => setImmediate(r));
+
+  // Verify Settings form populates #pref-model-name-mode === 'canonical'
+  api.populateSettingsForm(api.state.snapshot.prefs);
+  assert.equal(fakeDocument.getElementById('pref-model-name-mode').value, 'canonical');
+  assert.equal(api.state.modelNameMode, 'canonical');
+
+  // --- Verify ALL 7 surfaces + Receipt in 'canonical' mode ---
+  // 1) Header #model-pill
+  assert.equal(fakeDocument.getElementById('model-text').textContent, 'Gemini 4 Hydrogen');
+  assert.equal(
+    fakeDocument.getElementById('model-pill').title.includes('gemini-flash-worker-agy'),
+    true,
+  );
+  const canonHeaderAccent = headerDotNode.style.getPropertyValue('--model-accent');
+  assert.ok(canonHeaderAccent.length > 0, 'Header .model-dot must have --model-accent in canonical mode');
+
+  // 2) Tab 1 byModel table (2 merged canonical rows + model dots)
+  const modelsCard = fakeDocument.getElementById('card-children-models');
+  const tab1CanonCells = modelsCard.querySelectorAll('td.model-cell');
+  assert.deepEqual(
+    tab1CanonCells.map((td) => td.textContent),
+    ['Gemini 4 Hydrogen', 'Claude Opus 5.5'],
+  );
+  const canonHydroDotColor = tab1CanonCells[0].querySelector('.model-dot')?.style.getPropertyValue('--model-accent');
+  const canonOpusDotColor = tab1CanonCells[1].querySelector('.model-dot')?.style.getPropertyValue('--model-accent');
+  assert.ok(canonHydroDotColor && canonOpusDotColor, 'Tab 1 canonical rows must carry .model-dot accents');
+
+  // 3) Tab 1 child row (canonical modelLabel default + rawModel tooltip)
+  const childRowCanon = modelsCard.querySelector('.child-row');
+  assert.ok(childRowCanon);
+  const childModelSpanCanon = childRowCanon.querySelectorAll('.child-meta span')[0];
+  assert.equal(childModelSpanCanon.textContent, 'Gemini 4 Hydrogen');
+  assert.equal(childModelSpanCanon.title.includes('gemini-flash-worker-agy'), true);
+  assert.equal(
+    childModelSpanCanon.querySelector('.model-dot')?.style.getPropertyValue('--model-accent'),
+    canonHydroDotColor,
+  );
+
+  // 4) Tab 1 side-question row (canonical default + rawModel tooltip)
+  const sqCard = fakeDocument.getElementById('card-side-questions');
+  const sqModelSpanCanon = sqCard.querySelector('.side-q-meta span');
+  assert.equal(sqModelSpanCanon.textContent, 'Gemini 4 Hydrogen');
+  assert.equal(sqModelSpanCanon.title.includes('gemini-flash-worker-agy'), true);
+
+  // 5) Pixel Office Inspector (canonical badge + raw secondary) AND concise canvas mini-nameplates
+  const pixelCard = fakeDocument.getElementById('card-pixel-office');
+  const childBoxCanon = api.state.pixelOfficeHitBoxes.find(
+    (b) => b.type === 'slot' && b.key === 'child-v054-hydro',
+  );
+  assert.ok(childBoxCanon, 'Pixel Office must expose child workstation hitbox');
+  canvasTextCalls.length = 0;
+  api.state.pixelOfficeCanvas.click({
+    clientX: childBoxCanon.x + childBoxCanon.w / 2,
+    clientY: childBoxCanon.y + childBoxCanon.h / 2,
+  });
+  assert.equal(
+    pixelCard.querySelector('.pixel-inspector-persona-badge')?.textContent,
+    'Gemini 4 Hydrogen',
+  );
+  assert.equal(
+    pixelCard.querySelector('.pixel-inspector-model')?.textContent,
+    'gemini-flash-worker-agy',
+  );
+  assert.ok(canvasTextCalls.length > 0, 'Pixel Office canvas must draw mini-nameplate text');
+  assert.equal(
+    canvasTextCalls.some((txt) => txt.includes('gemini-flash-worker-agy')),
+    false,
+    'Pixel Office canvas mini-nameplates must stay concise (canonical mode)',
+  );
+
+  // 6) Checkout Receipt modal preview in canonical mode
+  api.openReceiptModal();
+  assert.equal(api.state.lastReceiptVm.modelNameMode, 'canonical');
+  assert.equal(
+    api.state.lastReceiptVm.metaRows.find((r) => r.key === 'primaryModel')?.value,
+    'Gemini 4 Hydrogen',
+  );
+  const receiptSigCanon = api.state.lastReceiptDataSig;
+  api.closeReceiptModal();
+
+  // 7) Tab 2 byModel table, recent rows, and C2 model filter dropdown in canonical mode
+  api.setActiveTab('global');
+  const globalContent = fakeDocument.getElementById('global-content');
+  const tab2CanonCells = globalContent.querySelectorAll('#card-global-models td.model-cell');
+  assert.deepEqual(
+    tab2CanonCells.map((td) => td.textContent),
+    ['Gemini 4 Hydrogen', 'Claude Opus 5.5'],
+  );
+  const c2Select = globalContent.querySelector('select.list-filter-select');
+  assert.ok(c2Select, 'Tab 2 C2 model filter select must exist');
+  assert.deepEqual(
+    c2Select.querySelectorAll('option').map((o) => o.value),
+    ['', 'Claude Opus 5.5', 'Gemini 4 Hydrogen'],
+  );
+  const recentRowsCanon = globalContent.querySelectorAll('.recent-item');
+  assert.equal(recentRowsCanon.length, 2);
+  assert.equal(recentRowsCanon[0].textContent.includes('Gemini 4 Hydrogen'), true);
+  assert.equal(recentRowsCanon[1].textContent.includes('Claude Opus 5.5'), true);
+
+  // Select canonical filter 'Gemini 4 Hydrogen' before switching mode to verify graceful reset!
+  c2Select.value = 'Gemini 4 Hydrogen';
+  c2Select.dispatchEvent('change');
+  assert.equal(api.state.globalModelFilter, 'Gemini 4 Hydrogen');
+  assert.equal(globalContent.querySelectorAll('.recent-item').length, 1);
+
+  // --- Switch to 'routed' via #pref-model-name-mode + saveSettings() ---
+  api.populateSettingsForm(api.state.snapshot.prefs);
+  fakeDocument.getElementById('pref-model-name-mode').value = 'routed';
+  await api.saveSettings({ preventDefault() {} });
+  await new Promise((r) => setImmediate(r));
+
+  assert.ok(postedPrefs.length >= 1, 'saveSettings must POST /api/prefs');
+  assert.equal(postedPrefs[postedPrefs.length - 1].modelNameMode, 'routed');
+  assert.equal(api.state.modelNameMode, 'routed');
+
+  // Verify #pref-model-name-mode repopulates 'routed' from persisted prefs
+  api.populateSettingsForm(api.state.snapshot.prefs);
+  assert.equal(fakeDocument.getElementById('pref-model-name-mode').value, 'routed');
+
+  // --- Verify ALL 7 surfaces + Receipt in 'routed' mode ---
+  // 1) Header #model-pill shows exact routed slug, tooltip shows canonical name, dot color preserved!
+  assert.equal(fakeDocument.getElementById('model-text').textContent, 'gemini-flash-worker-agy');
+  assert.equal(
+    fakeDocument.getElementById('model-pill').title.includes('Gemini 4 Hydrogen'),
+    true,
+  );
+  assert.equal(
+    headerDotNode.style.getPropertyValue('--model-accent'),
+    canonHeaderAccent,
+    'Header .model-dot accent color must stay identical in routed mode',
+  );
+
+  // 2) Tab 2 (currently active) splits into 4 routed rows with preserved family dot colors,
+  //    recent rows show routed slugs, and C2 dropdown repopulates & gracefully resets stale canonical filter!
+  const tab2RoutedCells = globalContent.querySelectorAll('#card-global-models td.model-cell');
+  assert.deepEqual(
+    tab2RoutedCells.map((td) => td.textContent),
+    [
+      'gemini-flash-worker-agy',
+      'claude-opus-5-5-high',
+      'gemini-4-hydrogen',
+      'claude-opus-5-5-low',
+    ],
+  );
+  assert.equal(
+    tab2RoutedCells[0].querySelector('.model-dot')?.style.getPropertyValue('--model-accent'),
+    canonHydroDotColor,
+    'Tab 2 routed Hydrogen worker row must keep Hydrogen dot color',
+  );
+  assert.equal(
+    tab2RoutedCells[1].querySelector('.model-dot')?.style.getPropertyValue('--model-accent'),
+    canonOpusDotColor,
+    'Tab 2 routed Opus high row must keep Opus dot color',
+  );
+  assert.equal(tab2RoutedCells[0].title.includes('Gemini 4 Hydrogen'), true);
+
+  assert.equal(
+    api.state.globalModelFilter,
+    '',
+    'Stale canonical C2 filter must gracefully reset when switching to routed mode',
+  );
+  const c2SelectRouted = globalContent.querySelector('select.list-filter-select');
+  assert.deepEqual(
+    c2SelectRouted.querySelectorAll('option').map((o) => o.value),
+    ['', 'claude-opus-5-5-high', 'gemini-flash-worker-agy'],
+  );
+  const recentRowsRouted = globalContent.querySelectorAll('.recent-item');
+  assert.equal(recentRowsRouted.length, 2);
+  assert.equal(recentRowsRouted[0].textContent.includes('gemini-flash-worker-agy'), true);
+  assert.equal(recentRowsRouted[1].textContent.includes('claude-opus-5-5-high'), true);
+
+  // Filtering by exact routed slug works cleanly
+  c2SelectRouted.value = 'gemini-flash-worker-agy';
+  c2SelectRouted.dispatchEvent('change');
+  assert.equal(globalContent.querySelectorAll('.recent-item').length, 1);
+
+  // 3) Switch back to Tab 1 -> verify Tab 1 byModel, child rows, side questions, Pixel Inspector & concise canvas, Receipt!
+  api.setActiveTab('current');
+  const tab1RoutedCells = modelsCard.querySelectorAll('td.model-cell');
+  assert.deepEqual(
+    tab1RoutedCells.map((td) => td.textContent),
+    [
+      'gemini-flash-worker-agy',
+      'claude-opus-5-5-high',
+      'gemini-4-hydrogen',
+      'claude-opus-5-5-low',
+    ],
+  );
+  assert.equal(
+    tab1RoutedCells[0].querySelector('.model-dot')?.style.getPropertyValue('--model-accent'),
+    canonHydroDotColor,
+  );
+  assert.equal(
+    tab1RoutedCells[1].querySelector('.model-dot')?.style.getPropertyValue('--model-accent'),
+    canonOpusDotColor,
+  );
+  assert.equal(tab1RoutedCells[0].title.includes('Gemini 4 Hydrogen'), true);
+
+  // Child row flips to routed slug + canonical tooltip + preserved Hydrogen dot
+  const childModelSpanRouted = modelsCard.querySelector('.child-row').querySelectorAll('.child-meta span')[0];
+  assert.equal(childModelSpanRouted.textContent, 'gemini-flash-worker-agy');
+  assert.equal(childModelSpanRouted.title.includes('Gemini 4 Hydrogen'), true);
+  assert.equal(
+    childModelSpanRouted.querySelector('.model-dot')?.style.getPropertyValue('--model-accent'),
+    canonHydroDotColor,
+  );
+
+  // Side-question row flips to routed slug + canonical tooltip
+  const sqModelSpanRouted = sqCard.querySelector('.side-q-meta span');
+  assert.equal(sqModelSpanRouted.textContent, 'gemini-flash-worker-agy');
+  assert.equal(sqModelSpanRouted.title.includes('Gemini 4 Hydrogen'), true);
+
+  // Pixel Office Inspector flips badge to routed slug & secondary to canonical, while canvas mini-nameplates stay concise!
+  canvasTextCalls.length = 0;
+  api.renderCurrentTab(api.state.snapshot);
+  assert.equal(
+    pixelCard.querySelector('.pixel-inspector-persona-badge')?.textContent,
+    'gemini-flash-worker-agy',
+  );
+  assert.equal(
+    pixelCard.querySelector('.pixel-inspector-model')?.textContent,
+    'Gemini 4 Hydrogen',
+  );
+  assert.equal(
+    canvasTextCalls.some((txt) => txt.includes('gemini-flash-worker-agy')),
+    false,
+    'Pixel Office canvas mini-nameplates must STAY concise even in routed mode!',
+  );
+
+  // Checkout Receipt modal updates to routed slug & new dirty signature
+  api.openReceiptModal();
+  assert.equal(api.state.lastReceiptVm.modelNameMode, 'routed');
+  assert.equal(
+    api.state.lastReceiptVm.metaRows.find((r) => r.key === 'primaryModel')?.value,
+    'gemini-flash-worker-agy',
+  );
+  assert.notEqual(api.state.lastReceiptDataSig, receiptSigCanon);
+  api.closeReceiptModal();
+
+  // --- Switch back to 'canonical' via saveSettings() -> verifies full clean round-trip ---
+  api.populateSettingsForm(api.state.snapshot.prefs);
+  fakeDocument.getElementById('pref-model-name-mode').value = 'canonical';
+  await api.saveSettings({ preventDefault() {} });
+  await new Promise((r) => setImmediate(r));
+  assert.equal(api.state.modelNameMode, 'canonical');
+  assert.equal(fakeDocument.getElementById('model-text').textContent, 'Gemini 4 Hydrogen');
+  assert.equal(
+    modelsCard.querySelector('.child-row').querySelectorAll('.child-meta span')[0].textContent,
+    'Gemini 4 Hydrogen',
+  );
+  assert.equal(
+    pixelCard.querySelector('.pixel-inspector-persona-badge')?.textContent,
+    'Gemini 4 Hydrogen',
+  );
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:09:56
 // ============================================================================

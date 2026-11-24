@@ -24,7 +24,24 @@ import { fileURLToPath } from 'node:url';
 
 import {
   DEFAULT_PREFS,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:13:17
+// Description: Import LEDGER_SCHEMA_VERSION and VALID_MODEL_NAME_MODES for
+// v0.5.4 Tab 2 ledger v6 byWorkspace & byModel canonical vs routed parity test.
+// ============================================================================
+  LEDGER_SCHEMA_VERSION,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:13:17
+// ============================================================================
   MODEL_PRICING_CATALOG,
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:13:17
+// Description: Import VALID_MODEL_NAME_MODES for v0.5.4 routed-mode parity checks.
+// ============================================================================
+  VALID_MODEL_NAME_MODES,
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:13:17
+// ============================================================================
   analyzeConversation,
   clearParserCache,
   createMetadataStore,
@@ -658,4 +675,203 @@ test('C1: summarizeGlobalAndRecent aggregates per-period byWorkspace with exact 
 
 // ============================================================================
 // [MODIFIED END] 2026-11-20 15:40:53
+// ============================================================================
+
+
+// ============================================================================
+// [MODIFIED BEGIN] 2026-11-24 10:13:17
+// Description: Add v0.5.4 C1+routed test verifying Ledger v6 byRawModel and
+// Tab 2 byWorkspace/byModel 1e-9 conservation across canonical vs routed modes
+// over multi-day spans and multiple workspaces.
+// ============================================================================
+test('v0.5.4 C1+routed: Ledger v6 byRawModel preserves exact byWorkspace and period totals across canonical vs routed modes', () => {
+  assert.equal(LEDGER_SCHEMA_VERSION, 6);
+  assert.deepEqual(VALID_MODEL_NAME_MODES, ['canonical', 'routed']);
+
+  clearParserCache();
+  const appData = makeTempDir('agy-tm-v054-c1-');
+  try {
+    const convA = 'a5400000-0000-4000-8000-000000000001';
+    const convB = 'b5400000-0000-4000-8000-000000000002';
+    const convC = 'c5400000-0000-4000-8000-000000000003';
+
+    const nowMs = Date.UTC(2026, 10, 24, 12, 0, 0);
+
+    createSummariesDb(appData, [
+      {
+        conversation_id: convA,
+        title: 'Alpha Worker',
+        workspace_uris: JSON.stringify(['file:///F:/Work/project-alpha']),
+      },
+      {
+        conversation_id: convB,
+        title: 'Alpha Main',
+        workspace_uris: JSON.stringify(['file:///F:/Work/project-alpha']),
+      },
+      {
+        conversation_id: convC,
+        title: 'Beta Opus',
+        workspace_uris: JSON.stringify(['file:///F:/Work/project-beta']),
+      },
+    ]);
+
+    const convsDir = join(appData, 'conversations');
+    mkdirSync(convsDir, { recursive: true });
+
+    const encodeVarint = (num) => {
+      let v = BigInt(num);
+      const out = [];
+      while (v >= 0x80n) {
+        out.push(Number((v & 0x7fn) | 0x80n));
+        v >>= 7n;
+      }
+      out.push(Number(v));
+      return Buffer.from(out);
+    };
+    const encodeVarintField = (fieldNo, val) =>
+      Buffer.concat([encodeVarint((fieldNo << 3) | 0), encodeVarint(val)]);
+    const encodeBytesField = (fieldNo, buf) => {
+      const b = Buffer.isBuffer(buf) ? buf : Buffer.from(buf, 'utf-8');
+      return Buffer.concat([encodeVarint((fieldNo << 3) | 2), encodeVarint(b.length), b]);
+    };
+    const encodeTimestampMs = (ms) => {
+      const sec = Math.floor(ms / 1000);
+      const nanos = (ms % 1000) * 1000000;
+      const parts = [encodeVarintField(1, sec)];
+      if (nanos > 0) parts.push(encodeVarintField(2, nanos));
+      return Buffer.concat(parts);
+    };
+    const writeDbStep = (cid, { enumId, rawModel, displayModel, input, cacheRead, output, createdMs, botId }) => {
+      const db = new DatabaseSync(join(convsDir, `${cid}.db`));
+      db.exec(`
+        CREATE TABLE gen_metadata (idx INTEGER PRIMARY KEY, data BLOB, size INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INTEGER NOT NULL DEFAULT 0, status INTEGER NOT NULL DEFAULT 0, metadata BLOB);
+      `);
+      const usageBuf = Buffer.concat([
+        encodeVarintField(1, enumId),
+        encodeVarintField(2, input),
+        encodeVarintField(3, output),
+        encodeVarintField(5, cacheRead),
+        encodeBytesField(7, botId),
+      ]);
+      const genInner = Buffer.concat([
+        encodeBytesField(4, usageBuf),
+        encodeBytesField(19, rawModel),
+        encodeBytesField(20, Buffer.concat([encodeBytesField(1, 'cascade_id'), encodeBytesField(2, cid)])),
+        encodeBytesField(21, displayModel),
+      ]);
+      const genTop = Buffer.concat([encodeBytesField(1, genInner), encodeBytesField(2, encodeVarint(1))]);
+      db.prepare('INSERT INTO gen_metadata (idx, data, size) VALUES (?, ?, ?)').run(0, genTop, genTop.length);
+      const stepField20 = Buffer.concat([encodeVarintField(2, 1), encodeBytesField(4, cid)]);
+      const metaBuf = Buffer.concat([
+        encodeBytesField(1, encodeTimestampMs(createdMs)),
+        encodeBytesField(7, encodeTimestampMs(createdMs + 1000)),
+        encodeBytesField(9, usageBuf),
+        encodeBytesField(20, stepField20),
+      ]);
+      db.prepare('INSERT INTO steps (idx, step_type, status, metadata) VALUES (?, ?, ?, ?)').run(1, 15, 3, metaBuf);
+      db.close();
+    };
+
+    writeDbStep(convA, {
+      enumId: 1669,
+      rawModel: 'gemini-flash-worker-agy',
+      displayModel: 'Gemini 4 Hydrogen (Orchestrator)',
+      input: 40_000,
+      cacheRead: 120_000,
+      output: 4_000,
+      createdMs: nowMs,
+      botId: 'perf-v054-a',
+    });
+    writeDbStep(convB, {
+      enumId: 1525,
+      rawModel: 'gemini-4-hydrogen',
+      displayModel: 'Gemini 4 Hydrogen (High)',
+      input: 25_000,
+      cacheRead: 75_000,
+      output: 2_500,
+      createdMs: nowMs + 1000,
+      botId: 'perf-v054-b',
+    });
+    writeDbStep(convC, {
+      enumId: 1501,
+      rawModel: 'claude-opus-5-5-high',
+      displayModel: 'Claude Opus 5.5 (High)',
+      input: 60_000,
+      cacheRead: 140_000,
+      output: 6_000,
+      createdMs: nowMs - 8 * 86400000,
+      botId: 'perf-v054-c',
+    });
+
+    const metadataStore = createMetadataStore({ disableAgentApi: true });
+    const ledger = createUsageLedger(null);
+
+    const canon = summarizeGlobalAndRecent({
+      appDataDirs: [appData],
+      prefs: { ...DEFAULT_PREFS, modelNameMode: 'canonical' },
+      metadataStore,
+      ledger,
+      runtimeCatalog: MODEL_PRICING_CATALOG,
+      nowMs,
+    });
+    const routed = summarizeGlobalAndRecent({
+      appDataDirs: [appData],
+      prefs: { ...DEFAULT_PREFS, modelNameMode: 'routed' },
+      metadataStore,
+      ledger,
+      runtimeCatalog: MODEL_PRICING_CATALOG,
+      nowMs,
+    });
+
+    assert.equal(ledger.getData().version, 6);
+    assert.notEqual(canon._etagPart, routed._etagPart);
+
+    // Today merges into 1 canonical Hydrogen row vs splits into 2 routed Hydrogen slugs
+    assert.deepEqual(
+      canon.periods.today.byModel.map((m) => m.model),
+      ['Gemini 4 Hydrogen'],
+    );
+    assert.deepEqual(
+      routed.periods.today.byModel.map((m) => m.model).sort(),
+      ['gemini-4-hydrogen', 'gemini-flash-worker-agy'],
+    );
+
+    // All periods conserve totalTokens, costActual, byModel sums, and byWorkspace within 1e-9
+    for (const key of ['today', '7d', '30d', 'all']) {
+      const pC = canon.periods[key];
+      const pR = routed.periods[key];
+      assert.equal(pR.totalTokens, pC.totalTokens, `${key} totalTokens mismatch`);
+      assert.ok(Math.abs(pR.costActual - pC.costActual) < 1e-9, `${key} costActual mismatch`);
+      assert.equal(
+        pR.byModel.reduce((a, r) => a + r.totalTokens, 0),
+        pR.totalTokens,
+        `${key} routed byModel tokens vs period`,
+      );
+      assert.ok(
+        Math.abs(pR.byModel.reduce((a, r) => a + r.costActual, 0) - pR.costActual) < 1e-9,
+        `${key} routed byModel cost vs period`,
+      );
+      assert.deepEqual(
+        pR.byWorkspace.map((w) => [w.workspace, w.totalTokens, w.conversationsCount]),
+        pC.byWorkspace.map((w) => [w.workspace, w.totalTokens, w.conversationsCount]),
+      );
+      for (let i = 0; i < pC.byWorkspace.length; i += 1) {
+        assert.ok(Math.abs(pR.byWorkspace[i].costActual - pC.byWorkspace[i].costActual) < 1e-9);
+      }
+    }
+
+    // Recent sessions carry canonical activeModelLabel and exact activeRawModel
+    const recentById = new Map(routed.recentConversations.map((c) => [c.conversationId, c]));
+    assert.equal(recentById.get(convA)?.activeModelLabel, 'Gemini 4 Hydrogen');
+    assert.equal(recentById.get(convA)?.activeRawModel, 'gemini-flash-worker-agy');
+    assert.equal(recentById.get(convB)?.activeModelLabel, 'Gemini 4 Hydrogen');
+    assert.equal(recentById.get(convB)?.activeRawModel, 'gemini-4-hydrogen');
+  } finally {
+    clearParserCache();
+    rmSync(appData, { recursive: true, force: true });
+  }
+});
+// ============================================================================
+// [MODIFIED END] 2026-11-24 10:13:17
 // ============================================================================
